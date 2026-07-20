@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b3d91">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="ผู้ช่วย อปท.">
+  <meta name="description" content="AI ผู้ช่วยงานท้องถิ่น: คลัง Prompt เครื่องมือร่างหนังสือราชการ และผู้ช่วยวิเคราะห์งานกฎหมาย">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="./assets/styles.css">
+  <title>AI ผู้ช่วยงานท้องถิ่น</title>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-mark">อปท.</div>
+        <div><strong>AI ผู้ช่วยงานท้องถิ่น</strong><small>Local Government Workspace</small></div>
+      </div>
+      <nav>
+        <button class="nav-item active" data-view="home">🏠 ภาพรวม</button>
+        <button class="nav-item" data-view="prompts">✨ คลัง Prompt</button>
+        <button class="nav-item" data-view="documents">📄 ร่างหนังสือราชการ</button>
+        <button class="nav-item" data-view="legal">⚖️ ผู้ช่วยงานกฎหมาย</button>
+        <button class="nav-item" data-view="favorites">⭐ รายการโปรด</button>
+        <button class="nav-item" data-view="settings">⚙️ ตั้งค่าหน่วยงาน</button>
+      </nav>
+      <div class="sidebar-note">
+        <strong>เวอร์ชัน 1.2</strong>
+        <span>ทำงานบนอุปกรณ์ของคุณ ข้อมูลแบบร่างไม่ถูกส่งออกไปภายนอก</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button id="menuBtn" class="icon-btn" aria-label="เปิดเมนู">☰</button>
+        <div>
+          <h1 id="pageTitle">ภาพรวม</h1>
+          <p id="pageSubtitle">เครื่องมือช่วยงานราชการและงานท้องถิ่นในที่เดียว</p>
+        </div>
+        <button id="themeBtn" class="icon-btn" aria-label="เปลี่ยนธีม">◐</button>
+      </header>
+
+      <section class="view active" id="home">
+        <div class="hero">
+          <div>
+            <span class="eyebrow">AI WORKSPACE FOR LOCAL GOVERNMENT</span>
+            <h2>ทำงานราชการให้เร็วขึ้น<br>โดยยังคงความเป็นทางการ</h2>
+            <p>ค้นหา Prompt, สร้างแบบร่างหนังสือราชการ และจัดโครงประเด็นกฎหมายได้จากหน้าจอเดียว</p>
+            <div class="hero-actions">
+              <button class="primary" data-go="documents">เริ่มร่างเอกสาร</button>
+              <button class="secondary" data-go="prompts">เปิดคลัง Prompt</button>
+            </div>
+          </div>
+          <div class="hero-card">
+            <span>งานด่วนวันนี้</span>
+            <strong>สร้างบันทึกข้อความ</strong>
+            <p>กรอกหัวข้อ หน่วยงาน และข้อเท็จจริง ระบบจะจัดโครงร่างให้ทันที</p>
+            <button class="text-btn" data-go="documents">เริ่มทำ →</button>
+          </div>
+        </div>
+
+        <div class="stats">
+          <article><strong id="promptCount">0</strong><span>Prompt พร้อมใช้</span></article>
+          <article><strong>5</strong><span>ประเภทเอกสาร</span></article>
+          <article><strong id="favoriteCount">0</strong><span>รายการโปรด</span></article>
+        </div>
+
+        <h3>เครื่องมือหลัก</h3>
+        <div class="tool-grid">
+          <article class="tool-card" data-go="prompts"><div class="tool-icon">✨</div><h4>คลัง Prompt</h4><p>ค้นหาและปรับ Prompt ตามงาน กลุ่มเป้าหมาย และรูปแบบผลลัพธ์</p></article>
+          <article class="tool-card" data-go="documents"><div class="tool-icon">📄</div><h4>ร่างหนังสือราชการ</h4><p>สร้างโครงบันทึกข้อความ หนังสือภายนอก ประกาศ คำสั่ง และรายงาน</p></article>
+          <article class="tool-card" data-go="legal"><div class="tool-icon">⚖️</div><h4>ผู้ช่วยงานกฎหมาย</h4><p>จัดประเด็นข้อเท็จจริง ประเด็นกฎหมาย ความเสี่ยง และรายการตรวจสอบ</p></article>
+        </div>
+      </section>
+
+      <section class="view" id="prompts">
+        <div class="panel">
+          <div class="filters">
+            <input id="searchInput" type="search" placeholder="ค้นหา Prompt เช่น งบประมาณ, ประชาคม, หนังสือราชการ">
+            <select id="categoryFilter"><option value="">ทุกหมวด</option></select>
+          </div>
+          <details class="custom-prompt">
+            <summary>＋ เพิ่ม Prompt ของหน่วยงาน</summary>
+            <form id="customPromptForm" class="custom-prompt-form">
+              <input id="customTitle" required placeholder="ชื่อ Prompt">
+              <input id="customCategory" required placeholder="หมวดหมู่">
+              <textarea id="customText" required rows="5" placeholder="ข้อความ Prompt"></textarea>
+              <button class="primary" type="submit">บันทึก Prompt</button>
+            </form>
+          </details>
+          <div id="promptGrid" class="prompt-grid"></div>
+        </div>
+      </section>
+
+      <section class="view" id="documents">
+        <div class="split">
+          <form id="documentForm" class="panel form-panel">
+            <h3>ข้อมูลสำหรับร่างเอกสาร</h3>
+            <label>ประเภทเอกสาร
+              <select id="docType">
+                <option>บันทึกข้อความ</option>
+                <option>หนังสือภายนอก</option>
+                <option>ประกาศ</option>
+                <option>คำสั่ง</option>
+                <option>รายงานสรุปเสนอผู้บริหาร</option>
+              </select>
+            </label>
+            <label>ส่วนราชการ / หน่วยงาน<input id="agency" required placeholder="เช่น สำนักปลัด องค์การบริหารส่วนตำบล..."></label>
+            <label>เลขที่หนังสือ<input id="docNumber" placeholder="เช่น กค 0001/123"></label>
+            <label>วันที่<input id="docDate" type="date"></label>
+            <label>เรื่อง<input id="subject" required placeholder="ระบุชื่อเรื่อง"></label>
+            <label>เรียน<input id="recipient" placeholder="เช่น นายกองค์การบริหารส่วนตำบล..."></label>
+            <label>ข้อเท็จจริง / รายละเอียด<textarea id="facts" rows="6" required placeholder="พิมพ์ข้อมูลสำคัญ เหตุการณ์ วันที่ บุคคล หรือจำนวนเงิน"></textarea></label>
+            <label>สิ่งที่ส่งมาด้วย<input id="attachments" placeholder="เช่น สำเนาโครงการ จำนวน 1 ชุด"></label>
+            <label>ข้อเสนอ / สิ่งที่ต้องการให้พิจารณา<textarea id="request" rows="4" placeholder="เช่น โปรดพิจารณาอนุมัติ / เห็นชอบ / สั่งการ"></textarea></label>
+            <div class="form-actions"><button class="primary" type="submit">สร้างแบบร่าง</button><button class="secondary" id="saveDraft" type="button">บันทึกร่าง</button><button class="secondary" id="newDraft" type="button">ร่างใหม่</button></div>
+          </form>
+          <div class="panel output-panel">
+            <div class="output-head"><h3>แบบร่าง</h3><div><button id="copyDocument" class="secondary">คัดลอก</button><button id="downloadWord" class="secondary">Word</button><button id="printDocument" class="secondary">พิมพ์/PDF</button><button id="downloadDocument" class="secondary">TXT</button></div></div>
+            <pre id="documentOutput">กรอกข้อมูลด้านซ้าย แล้วกด “สร้างแบบร่าง”</pre>
+          </div>
+        </div>
+        <div class="panel draft-panel"><div class="output-head"><h3>ร่างที่บันทึกไว้</h3><button id="clearDrafts" class="danger">ล้างร่างทั้งหมด</button></div><div id="draftList" class="draft-list"></div></div>
+      </section>
+
+      <section class="view" id="legal">
+        <div class="split">
+          <form id="legalForm" class="panel form-panel">
+            <h3>จัดโครงวิเคราะห์เรื่องกฎหมาย</h3>
+            <label>หัวข้อเรื่อง<input id="legalTopic" required placeholder="เช่น การจัดซื้อจัดจ้าง / วินัย / ภาษีท้องถิ่น"></label>
+            <label>ข้อเท็จจริง<textarea id="legalFacts" rows="7" required placeholder="บรรยายข้อเท็จจริงที่ทราบ โดยแยกวัน เวลา บุคคล และเอกสารที่เกี่ยวข้อง"></textarea></label>
+            <label>คำถามที่ต้องการวิเคราะห์<textarea id="legalQuestion" rows="4" required placeholder="เช่น หน่วยงานมีอำนาจดำเนินการหรือไม่ และมีความเสี่ยงใด"></textarea></label>
+            <button class="primary" type="submit">สร้างกรอบวิเคราะห์</button>
+          </form>
+          <div class="panel output-panel">
+            <div class="notice">เครื่องมือนี้ช่วยจัดโครงคิด ไม่ใช่คำปรึกษากฎหมาย และควรตรวจสอบกฎหมาย/ระเบียบฉบับปัจจุบันก่อนใช้งานจริง</div>
+            <div class="output-head"><h3>กรอบวิเคราะห์</h3><button id="copyLegal" class="secondary">คัดลอก</button></div>
+            <pre id="legalOutput">กรอกข้อเท็จจริงและคำถามด้านซ้าย</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="settings">
+        <div class="split">
+          <form id="settingsForm" class="panel form-panel">
+            <h3>ข้อมูลหน่วยงาน</h3>
+            <label>ชื่อหน่วยงาน<input id="settingAgency" placeholder="เช่น องค์การบริหารส่วนตำบล..."></label>
+            <label>ที่อยู่<textarea id="settingAddress" rows="3" placeholder="ที่อยู่สำหรับหัวหนังสือ"></textarea></label>
+            <label>ชื่อผู้ลงนาม<input id="settingSigner" placeholder="ชื่อ–นามสกุล"></label>
+            <label>ตำแหน่งผู้ลงนาม<input id="settingPosition" placeholder="เช่น นายกองค์การบริหารส่วนตำบล..."></label>
+            <label>โทรศัพท์ / อีเมล<input id="settingContact" placeholder="ข้อมูลติดต่อท้ายหนังสือ"></label>
+            <button class="primary" type="submit">บันทึกการตั้งค่า</button>
+          </form>
+          <div class="panel">
+            <h3>สำรองและย้ายข้อมูล</h3>
+            <p class="muted">ข้อมูลถูกเก็บไว้ในเบราว์เซอร์ของอุปกรณ์นี้ สามารถส่งออกเพื่อสำรองหรือย้ายเครื่องได้</p>
+            <div class="stack-actions">
+              <button id="exportData" class="secondary">ส่งออกข้อมูลสำรอง</button>
+              <label class="file-button">นำเข้าข้อมูลสำรอง<input id="importData" type="file" accept="application/json" hidden></label>
+              <button id="clearData" class="danger">ล้างข้อมูลบนอุปกรณ์</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="favorites">
+        <div class="panel">
+          <h3>Prompt ที่บันทึกไว้</h3>
+          <div id="favoriteGrid" class="prompt-grid"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="./assets/app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js")
+          .catch(error => console.error("ลงทะเบียน Service Worker ไม่สำเร็จ", error));
+      });
+    }
+  </script>
+</body>
+</html>
