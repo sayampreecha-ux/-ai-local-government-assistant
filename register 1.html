@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b3d91">
+<meta name="description" content="สมัครสมาชิก GovPrompt Thailand เพื่อรับชุดทดลองใช้ฟรี 20 Prompt">
+<title>สมัครสมาชิก | GovPrompt Thailand</title>
+<style>
+:root{--navy:#082b68;--blue:#0b3d91;--sky:#1769aa;--ink:#172033;--muted:#617085;--line:#dce5f1;--soft:#f4f7fb;--shadow:0 18px 50px rgba(8,43,104,.15)}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Noto Sans Thai",Tahoma,system-ui,sans-serif;color:var(--ink);background:linear-gradient(135deg,#edf4ff,#f9fbff)}
+a{text-decoration:none;color:inherit}
+.wrap{width:min(920px,calc(100% - 28px));margin:auto;padding:28px 0 48px}
+.brand{display:flex;align-items:center;gap:11px;margin-bottom:22px}
+.logo{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--navy),var(--sky));color:#fff;font-weight:900;box-shadow:0 8px 22px rgba(11,61,145,.25)}
+.brand strong{display:block}.brand small{color:var(--muted)}
+.card{display:grid;grid-template-columns:.8fr 1.2fr;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow)}
+.intro{padding:clamp(26px,5vw,46px);background:linear-gradient(145deg,var(--navy),var(--blue));color:#fff}
+.intro h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.15;margin:15px 0}
+.intro p{line-height:1.8;color:rgba(255,255,255,.86)}
+.intro ul{padding-left:20px;line-height:2}
+.badge{display:inline-flex;padding:7px 11px;border-radius:999px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);font-size:.8rem;font-weight:800}
+.formbox{padding:clamp(24px,5vw,46px)}
+form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label{font-size:.88rem;font-weight:800}
+input,select{width:100%;margin-top:6px;padding:13px;border:1px solid #cbd6e5;border-radius:11px;font:inherit;background:#fff}
+.full{grid-column:1/-1}
+.check{display:flex;align-items:flex-start;gap:9px;font-weight:400;color:var(--muted);line-height:1.55}
+.check input{width:auto;margin-top:4px}
+.btn{grid-column:1/-1;border:0;border-radius:12px;min-height:50px;padding:0 18px;background:var(--blue);color:#fff;font-weight:900;font-size:1rem;cursor:pointer;box-shadow:0 9px 24px rgba(11,61,145,.23)}
+.notice{font-size:.78rem;color:var(--muted);line-height:1.6;margin-top:16px}
+.back{display:inline-flex;margin-top:18px;color:var(--blue);font-weight:800}
+@media(max-width:760px){.card{grid-template-columns:1fr}.intro{padding:28px 22px}.formbox{padding:26px 20px}}
+@media(max-width:520px){form{grid-template-columns:1fr}.full,.btn{grid-column:auto}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<a class="brand" href="./"><div class="logo">GP</div><div><strong>GovPrompt Thailand</strong><small>Government AI Workspace</small></div></a>
+<section class="card">
+<div class="intro">
+<span class="badge">EARLY ACCESS</span>
+<h1>สมัครสมาชิกฟรี</h1>
+<p>ลงทะเบียนเพื่อรับชุดทดลองใช้ฟรี 20 Prompt คู่มือเริ่มต้น และข่าวเปิดตัว GovPrompt Thailand</p>
+<ul><li>ใช้ฟรี ไม่มีค่าลงทะเบียน</li><li>ข้อมูลส่งตรงถึงผู้ดูแลโครงการ</li><li>ยกเลิกการรับข่าวสารได้ภายหลัง</li></ul>
+</div>
+<div class="formbox">
+<form action="https://formsubmit.co/sayampreecha@gmail.com" method="POST">
+<input type="hidden" name="_subject" value="สมาชิกใหม่ GovPrompt Thailand">
+<input type="hidden" name="_captcha" value="false">
+<input type="hidden" name="_template" value="table">
+<input type="hidden" name="_next" value="https://sayampreecha-ux.github.io/-ai-local-government-assistant/thanks.html">
+<input type="hidden" name="แหล่งที่มา" value="เว็บไซต์ GovPrompt Thailand">
+<label>ชื่อ–นามสกุล<input name="ชื่อ-นามสกุล" required autocomplete="name" placeholder="ชื่อผู้สนใจ"></label>
+<label>อีเมล<input name="อีเมล" type="email" required autocomplete="email" placeholder="name@example.com"></label>
+<label>หน่วยงาน<input name="หน่วยงาน" placeholder="ชื่อหน่วยงาน"></label>
+<label>จังหวัด<input name="จังหวัด" placeholder="จังหวัด"></label>
+<label>LINE ID<input name="LINE ID" placeholder="LINE ID (ไม่บังคับ)"></label>
+<label>โทรศัพท์<input name="โทรศัพท์" type="tel" autocomplete="tel" placeholder="เบอร์โทร (ไม่บังคับ)"></label>
+<label class="full">กลุ่มงานที่สนใจ
+<select name="กลุ่มงานที่สนใจ">
+<option>หนังสือราชการ</option>
+<option>กฎหมายและหนังสือหารือ</option>
+<option>ผู้บริหารและการตัดสินใจ</option>
+<option>TOR / จัดซื้อจัดจ้าง</option>
+<option>ข่าวและประชาสัมพันธ์</option>
+<option>ใช้งานระดับองค์กร</option>
+</select>
+</label>
+<label class="full check"><input type="checkbox" name="ยินยอมรับข่าวสาร" value="ยินยอม" required><span>ข้าพเจ้ายินยอมให้ใช้ข้อมูลเพื่อส่งชุดทดลอง คู่มือ ข่าวสาร และติดต่อเกี่ยวกับ GovPrompt Thailand โดยจะไม่เก็บข้อมูลที่ไม่จำเป็นหรือเปิดเผยแก่บุคคลภายนอกโดยไม่มีฐานทางกฎหมาย</span></label>
+<button class="btn" type="submit">🎁 ลงทะเบียนรับ 20 Prompt ฟรี</button>
+</form>
+<p class="notice">ครั้งแรก ระบบ FormSubmit จะส่งอีเมลยืนยันไปที่ sayampreecha@gmail.com กรุณากด “Activate Form” เพียงครั้งเดียว หลังจากนั้นข้อมูลผู้สมัครทุกคนจะเข้าอีเมลอัตโนมัติ</p>
+<a class="back" href="./#trial">← กลับไปทดลองใช้</a>
+</div>
+</section>
+</main>
+</body>
+</html>
