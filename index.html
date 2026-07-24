@@ -1,36 +1,66 @@
-<!doctype html>
-<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GovPrompt Thailand | หน้าแรก</title><meta name="description" content="GovPrompt Thailand Government AI Copilot สำหรับงานราชการไทย">
-<link rel="stylesheet" href="assets/css/style.css"></head><body>
-<header class="site-header"><div class="wrap nav">
-<a class="brand" href="index.html">GovPrompt Thailand</a>
-<nav class="nav-links">
-<a href="index.html">หน้าแรก</a>
-<a href="prompts.html">20 Prompt ฟรี</a>
-<a href="professional.html">Professional</a>
-<a href="about.html">เกี่ยวกับเรา</a>
-<a href="contact.html">ติดต่อ</a>
-</nav></div></header>
-
-<section class="hero"><div class="wrap">
-<span class="badge">Government AI Copilot สำหรับงานราชการไทย</span>
-<h1>GovPrompt Thailand</h1>
-<p>เครื่องมือ AI สำหรับช่วยร่าง วิเคราะห์ สรุป และตรวจทานงานราชการ โดยยึดข้อเท็จจริงเป็นหลักและไม่สมมติข้อมูลสำคัญ</p>
-<div class="actions"><a class="btn btn-gold" href="prompts.html">🎁 ใช้งาน 20 Prompt ฟรี</a>
-<a class="btn btn-light" href="https://docs.google.com/forms/d/e/1FAIpQLScshjhmm5LtRwOGjiAyTjT_3Rj66--30NRDyq3BX2heFWKQ_w/viewform?usp=header" target="_blank">สมัครสมาชิกฟรี</a></div>
-</div></section>
-<section><div class="wrap"><h2 class="section-title">เริ่มใช้งานได้ทันที</h2>
-<p class="section-sub">ไม่ต้องดาวน์โหลดเอกสารหลายไฟล์ ผู้ใช้เปิดเว็บไซต์ เลือก Prompt คัดลอก และนำไปใช้กับ ChatGPT ได้โดยตรง</p>
-<div class="feature">
-<div class="card"><div class="icon">📄</div><h3>งานสารบรรณ</h3><p>หนังสือภายนอก บันทึกข้อความ หนังสือเชิญ และรายงานการประชุม</p></div>
-<div class="card"><div class="icon">⚖️</div><h3>งานกฎหมาย</h3><p>แยกข้อเท็จจริง ประเด็นกฎหมาย ความเสี่ยง และสิ่งที่ต้องตรวจสอบ</p></div>
-<div class="card"><div class="icon">📊</div><h3>งานบริหาร</h3><p>สรุปผู้บริหาร โครงการ ตัวชี้วัด ความเสี่ยง และ Checklist</p></div>
-<div class="card"><div class="icon">📣</div><h3>ประชาสัมพันธ์</h3><p>ข่าว โพสต์ Facebook และคำกล่าว โดยไม่เติมข้อเท็จจริงเกินจริง</p></div>
-</div></div></section>
-<section class="cta"><div class="wrap cta-box"><h2>ทดลองฟรีก่อนอัปเกรด</h2>
-<p>ชุดฟรีออกแบบให้เห็นคุณภาพและแนวทางการทำงานจริง ส่วนชุด Professional GP001–GP222 จะครอบคลุมงานราชการที่ลึกและเฉพาะทางมากขึ้น</p>
-<a class="btn btn-gold" href="professional.html">ดูชุด Professional</a></div></section>
-
-<footer><div class="wrap">© 2026 GovPrompt Thailand • Government AI Copilot สำหรับงานราชการไทย</div></footer>
-
-<script src="assets/js/app.js"></script></body></html>
+:root{
+  --navy:#082b55;--blue:#0e5aa7;--blue2:#1b6fc2;--gold:#d6a53a;
+  --bg:#f5f8fc;--ink:#172033;--muted:#667085;--card:#fff;--line:#dfe7f1;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans Thai",sans-serif;background:var(--bg);color:var(--ink)}
+a{text-decoration:none;color:inherit}
+.wrap{max-width:1160px;margin:auto;padding:0 20px}
+.site-header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;min-height:68px;gap:20px}
+.brand{font-weight:900;color:var(--navy);font-size:20px}
+.nav-links{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.nav-links a{color:#344054;font-weight:700;font-size:14px}
+.hero{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:78px 0 68px}
+.badge{display:inline-block;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);padding:8px 14px;border-radius:999px;font-weight:800}
+.hero h1{font-size:clamp(40px,7vw,74px);line-height:1.05;margin:18px 0 14px}
+.hero p{font-size:20px;max-width:780px;line-height:1.75;color:#eaf2ff}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:13px 20px;border-radius:12px;font-weight:850;border:0;cursor:pointer}
+.btn-gold{background:var(--gold);color:#1c2736}
+.btn-light{background:#fff;color:var(--navy)}
+.btn-blue{background:var(--blue);color:#fff}
+section{padding:60px 0}
+.section-title{text-align:center;margin:0 0 12px;font-size:34px}
+.section-sub{text-align:center;color:var(--muted);margin:0 auto 34px;max-width:780px;line-height:1.75}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 10px 28px rgba(17,42,78,.06);display:flex;flex-direction:column;gap:10px}
+.code{font-size:12px;font-weight:900;color:var(--blue);letter-spacing:.05em}
+.card h3{margin:0;font-size:21px}
+.card p{margin:0;color:var(--muted);line-height:1.65}
+.card .btn{margin-top:auto}
+.feature{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.feature .card{text-align:center}
+.icon{font-size:36px}
+.cta{background:#fff7e2;border-top:1px solid #f0d89f;border-bottom:1px solid #f0d89f}
+.cta-box{text-align:center;max-width:850px;margin:auto}
+.cta h2{font-size:36px;margin:0 0 12px}
+.cta p{color:#5d5137;line-height:1.75}
+.page-head{background:linear-gradient(135deg,var(--navy),var(--blue2));color:#fff;padding:52px 0}
+.page-head h1{margin:0 0 10px;font-size:42px}
+.page-head p{margin:0;color:#eaf2ff;line-height:1.7}
+.content{background:#fff;border:1px solid var(--line);border-radius:18px;padding:28px;line-height:1.8}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+label{font-weight:800;font-size:14px}
+input,textarea,select{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
+textarea{min-height:140px}
+.modal{position:fixed;inset:0;background:rgba(5,20,40,.68);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+.modal.show{display:flex}
+.panel{background:#fff;max-width:760px;width:100%;max-height:88vh;overflow:auto;border-radius:20px;padding:26px}
+.panel-head{display:flex;justify-content:space-between;gap:20px}
+.close{border:0;background:#eef3f9;border-radius:10px;padding:8px 12px;font-weight:800}
+.prompt{white-space:pre-wrap;background:#f7f9fc;border:1px solid var(--line);border-radius:14px;padding:18px;line-height:1.75;margin:18px 0}
+footer{background:#071d38;color:#dbe7f5;padding:34px 0;text-align:center}
+.small{font-size:13px;color:var(--muted)}
+.list{line-height:1.9}
+.notice{background:#fff8e8;border:1px solid #f1d49a;border-radius:14px;padding:16px}
+@media(max-width:760px){
+  .nav{align-items:flex-start;padding:14px 0;flex-direction:column}
+  .nav-links{gap:12px}
+  .hero{padding:56px 0 48px}
+  .hero p{font-size:17px}
+  .section-title{font-size:28px}
+  .page-head h1{font-size:34px}
+  .form-grid{grid-template-columns:1fr}
+}
