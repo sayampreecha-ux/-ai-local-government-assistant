@@ -4,187 +4,231 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b3d91">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="ผู้ช่วย อปท.">
-  <meta name="description" content="AI ผู้ช่วยงานท้องถิ่น: คลัง Prompt เครื่องมือร่างหนังสือราชการ และผู้ช่วยวิเคราะห์งานกฎหมาย">
-  <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="./assets/styles.css">
-  <title>AI ผู้ช่วยงานท้องถิ่น</title>
+  <meta name="description" content="GovPrompt Thailand — AI ผู้ช่วยงานราชการไทย">
+  <meta property="og:title" content="GovPrompt Thailand | AI ผู้ช่วยงานราชการไทย">
+  <meta property="og:description" content="ร่างหนังสือราชการ สรุปผู้บริหาร วิเคราะห์กฎหมาย และงานภาครัฐได้เป็นระบบ">
+  <title>GovPrompt Thailand | AI ผู้ช่วยงานราชการไทย</title>
+  <style>
+    :root{
+      --navy:#082b68;--blue:#0b3d91;--sky:#1769aa;--gold:#d7a928;
+      --ink:#172033;--muted:#617085;--line:#dce5f1;--soft:#f4f7fb;
+      --panel:#fff;--ok:#0f8a5f;--shadow:0 18px 50px rgba(8,43,104,.14)
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:"Noto Sans Thai","Tahoma",system-ui,sans-serif;color:var(--ink);background:#f7f9fc}
+    button,input,select,textarea{font:inherit}
+    a{text-decoration:none;color:inherit}
+    .container{width:min(1160px,calc(100% - 32px));margin:auto}
+    .topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+    .nav{min-height:72px;display:flex;align-items:center;gap:24px}
+    .brand{display:flex;align-items:center;gap:11px;margin-right:auto}
+    .logo{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--navy),var(--sky));color:#fff;font-weight:900;box-shadow:0 8px 22px rgba(11,61,145,.25)}
+    .brand strong{display:block;font-size:1.05rem}.brand small{color:var(--muted)}
+    .navlinks{display:flex;gap:18px;font-size:.92rem;color:#40506a}
+    .btn{border:0;border-radius:12px;min-height:46px;padding:0 18px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+    .btn-primary{background:var(--blue);color:#fff;box-shadow:0 9px 24px rgba(11,61,145,.22)}
+    .btn-light{background:#fff;color:var(--blue);border:1px solid var(--line)}
+    .hero{padding:72px 0 45px}
+    .hero-box{position:relative;overflow:hidden;border-radius:30px;padding:clamp(28px,6vw,66px);background:linear-gradient(135deg,var(--navy),var(--blue) 57%,var(--sky));color:#fff;display:grid;grid-template-columns:1.3fr .7fr;gap:42px;box-shadow:var(--shadow)}
+    .hero-box:before,.hero-box:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.07)}
+    .hero-box:before{width:420px;height:420px;right:-170px;top:-220px}.hero-box:after{width:260px;height:260px;left:-150px;bottom:-160px}
+    .hero-content,.proof{position:relative;z-index:1}
+    .badge{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);border-radius:999px;font-size:.78rem;font-weight:800}
+    h1{font-size:clamp(2.3rem,5vw,4.7rem);line-height:1.05;letter-spacing:-.04em;margin:18px 0}
+    .lead{font-size:clamp(1rem,2vw,1.22rem);line-height:1.85;color:rgba(255,255,255,.9);max-width:760px}
+    .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:25px}
+    .hero .btn-primary{background:#fff;color:var(--blue)}.hero .btn-light{background:transparent;color:#fff;border-color:rgba(255,255,255,.38)}
+    .proof{align-self:center;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .proof article{padding:20px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.11);border-radius:18px;backdrop-filter:blur(8px)}
+    .proof strong{display:block;font-size:1.65rem}.proof span{font-size:.82rem;color:rgba(255,255,255,.78)}
+    section{padding:42px 0}
+    .section-head{text-align:center;max-width:760px;margin:0 auto 24px}
+    .section-head h2{font-size:clamp(1.65rem,3vw,2.5rem);margin:0 0 9px}.section-head p{color:var(--muted);line-height:1.75;margin:0}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 7px 25px rgba(15,23,42,.05)}
+    .icon{font-size:1.75rem}.card h3{margin:12px 0 7px}.card p{color:var(--muted);line-height:1.7;margin:0}
+    .examples{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .example{padding:18px;border-radius:17px;border:1px solid #d7e4f8;background:linear-gradient(180deg,#fff,#edf4ff)}
+    .example strong{display:block;margin-bottom:6px;color:#173e74}.example span{color:#5e718a;font-size:.9rem;line-height:1.6}
+    .trial{background:#fff;border-block:1px solid var(--line)}
+    .trial-layout{display:grid;grid-template-columns:.8fr 1.2fr;gap:24px;align-items:start}
+    .prompt-list{display:grid;gap:9px}
+    .prompt-item{display:flex;gap:10px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:13px;background:#fff}
+    .prompt-item b{color:var(--blue);font-size:.78rem;min-width:45px}
+    .prompt-item span{font-size:.92rem}
+    .workspace{background:var(--soft);border:1px solid var(--line);border-radius:22px;padding:20px}
+    .workspace label{font-weight:700;font-size:.88rem;display:block;margin-bottom:12px}
+    .workspace textarea,.form input,.form select{width:100%;border:1px solid #cbd6e5;border-radius:11px;padding:12px;background:#fff;margin-top:6px}
+    .workspace textarea{min-height:170px;resize:vertical}
+    .output{margin-top:14px;background:#fff;border:1px dashed #b9c9df;border-radius:13px;padding:15px;min-height:110px;white-space:pre-wrap;line-height:1.7;color:#35455d}
+    .price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .price{position:relative}.price.featured{border:2px solid var(--blue);transform:translateY(-7px);box-shadow:var(--shadow)}
+    .tag{position:absolute;right:15px;top:15px;background:var(--blue);color:#fff;border-radius:999px;padding:5px 9px;font-size:.72rem}
+    .price h3{font-size:1.25rem}.amount{font-size:1.8rem;color:var(--blue);font-weight:900;margin:10px 0}.price ul{padding-left:20px;line-height:2;color:var(--muted)}
+    .register{background:linear-gradient(135deg,#eef4ff,#fff)}
+    .register-box{display:grid;grid-template-columns:.8fr 1.2fr;gap:32px;background:#fff;border:1px solid var(--line);border-radius:25px;padding:clamp(22px,4vw,38px);box-shadow:var(--shadow)}
+    .register-copy h2{font-size:2rem;margin:8px 0}.register-copy p{color:var(--muted);line-height:1.8}
+    .form{display:grid;grid-template-columns:1fr 1fr;gap:13px}.form label{font-size:.86rem;font-weight:700}.form .full{grid-column:1/-1}.form .btn{grid-column:1/-1}
+    .notice{font-size:.78rem;color:#6a788d;line-height:1.6}
+    footer{background:#091e43;color:#fff;padding:34px 0}.footer{display:flex;justify-content:space-between;gap:30px;align-items:center}.footer p{color:rgba(255,255,255,.68);font-size:.84rem}
+    .toast{position:fixed;right:20px;bottom:20px;background:#102a54;color:#fff;padding:13px 17px;border-radius:12px;opacity:0;transform:translateY(10px);transition:.25s;z-index:99}.toast.show{opacity:1;transform:none}
+    @media(max-width:900px){.navlinks{display:none}.hero-box,.trial-layout,.register-box{grid-template-columns:1fr}.grid,.price-grid{grid-template-columns:1fr 1fr}.examples{grid-template-columns:1fr 1fr}}
+    @media(max-width:600px){.container{width:min(100% - 20px,1160px)}.hero{padding-top:24px}.hero-box{border-radius:20px;padding:24px 18px}.grid,.price-grid,.examples,.form{grid-template-columns:1fr}.form .full,.form .btn{grid-column:auto}.proof{grid-template-columns:1fr 1fr}.footer{display:block}.nav .btn-light{display:none}}
+  </style>
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar" id="sidebar">
-      <div class="brand">
-        <div class="brand-mark">อปท.</div>
-        <div><strong>AI ผู้ช่วยงานท้องถิ่น</strong><small>Local Government Workspace</small></div>
-      </div>
-      <nav>
-        <button class="nav-item active" data-view="home">🏠 ภาพรวม</button>
-        <button class="nav-item" data-view="prompts">✨ คลัง Prompt</button>
-        <button class="nav-item" data-view="documents">📄 ร่างหนังสือราชการ</button>
-        <button class="nav-item" data-view="legal">⚖️ ผู้ช่วยงานกฎหมาย</button>
-        <button class="nav-item" data-view="favorites">⭐ รายการโปรด</button>
-        <button class="nav-item" data-view="settings">⚙️ ตั้งค่าหน่วยงาน</button>
-      </nav>
-      <div class="sidebar-note">
-        <strong>เวอร์ชัน 1.2</strong>
-        <span>ทำงานบนอุปกรณ์ของคุณ ข้อมูลแบบร่างไม่ถูกส่งออกไปภายนอก</span>
-      </div>
-    </aside>
-
-    <main class="main">
-      <header class="topbar">
-        <button id="menuBtn" class="icon-btn" aria-label="เปิดเมนู">☰</button>
-        <div>
-          <h1 id="pageTitle">ภาพรวม</h1>
-          <p id="pageSubtitle">เครื่องมือช่วยงานราชการและงานท้องถิ่นในที่เดียว</p>
-        </div>
-        <button id="themeBtn" class="icon-btn" aria-label="เปลี่ยนธีม">◐</button>
-      </header>
-
-      <section class="view active" id="home">
-        <div class="hero">
-          <div>
-            <span class="eyebrow">AI WORKSPACE FOR LOCAL GOVERNMENT</span>
-            <h2>ทำงานราชการให้เร็วขึ้น<br>โดยยังคงความเป็นทางการ</h2>
-            <p>ค้นหา Prompt, สร้างแบบร่างหนังสือราชการ และจัดโครงประเด็นกฎหมายได้จากหน้าจอเดียว</p>
-            <div class="hero-actions">
-              <button class="primary" data-go="documents">เริ่มร่างเอกสาร</button>
-              <button class="secondary" data-go="prompts">เปิดคลัง Prompt</button>
-            </div>
-          </div>
-          <div class="hero-card">
-            <span>งานด่วนวันนี้</span>
-            <strong>สร้างบันทึกข้อความ</strong>
-            <p>กรอกหัวข้อ หน่วยงาน และข้อเท็จจริง ระบบจะจัดโครงร่างให้ทันที</p>
-            <button class="text-btn" data-go="documents">เริ่มทำ →</button>
-          </div>
-        </div>
-
-        <div class="stats">
-          <article><strong id="promptCount">0</strong><span>Prompt พร้อมใช้</span></article>
-          <article><strong>5</strong><span>ประเภทเอกสาร</span></article>
-          <article><strong id="favoriteCount">0</strong><span>รายการโปรด</span></article>
-        </div>
-
-        <h3>เครื่องมือหลัก</h3>
-        <div class="tool-grid">
-          <article class="tool-card" data-go="prompts"><div class="tool-icon">✨</div><h4>คลัง Prompt</h4><p>ค้นหาและปรับ Prompt ตามงาน กลุ่มเป้าหมาย และรูปแบบผลลัพธ์</p></article>
-          <article class="tool-card" data-go="documents"><div class="tool-icon">📄</div><h4>ร่างหนังสือราชการ</h4><p>สร้างโครงบันทึกข้อความ หนังสือภายนอก ประกาศ คำสั่ง และรายงาน</p></article>
-          <article class="tool-card" data-go="legal"><div class="tool-icon">⚖️</div><h4>ผู้ช่วยงานกฎหมาย</h4><p>จัดประเด็นข้อเท็จจริง ประเด็นกฎหมาย ความเสี่ยง และรายการตรวจสอบ</p></article>
-        </div>
-      </section>
-
-      <section class="view" id="prompts">
-        <div class="panel">
-          <div class="filters">
-            <input id="searchInput" type="search" placeholder="ค้นหา Prompt เช่น งบประมาณ, ประชาคม, หนังสือราชการ">
-            <select id="categoryFilter"><option value="">ทุกหมวด</option></select>
-          </div>
-          <details class="custom-prompt">
-            <summary>＋ เพิ่ม Prompt ของหน่วยงาน</summary>
-            <form id="customPromptForm" class="custom-prompt-form">
-              <input id="customTitle" required placeholder="ชื่อ Prompt">
-              <input id="customCategory" required placeholder="หมวดหมู่">
-              <textarea id="customText" required rows="5" placeholder="ข้อความ Prompt"></textarea>
-              <button class="primary" type="submit">บันทึก Prompt</button>
-            </form>
-          </details>
-          <div id="promptGrid" class="prompt-grid"></div>
-        </div>
-      </section>
-
-      <section class="view" id="documents">
-        <div class="split">
-          <form id="documentForm" class="panel form-panel">
-            <h3>ข้อมูลสำหรับร่างเอกสาร</h3>
-            <label>ประเภทเอกสาร
-              <select id="docType">
-                <option>บันทึกข้อความ</option>
-                <option>หนังสือภายนอก</option>
-                <option>ประกาศ</option>
-                <option>คำสั่ง</option>
-                <option>รายงานสรุปเสนอผู้บริหาร</option>
-              </select>
-            </label>
-            <label>ส่วนราชการ / หน่วยงาน<input id="agency" required placeholder="เช่น สำนักปลัด องค์การบริหารส่วนตำบล..."></label>
-            <label>เลขที่หนังสือ<input id="docNumber" placeholder="เช่น กค 0001/123"></label>
-            <label>วันที่<input id="docDate" type="date"></label>
-            <label>เรื่อง<input id="subject" required placeholder="ระบุชื่อเรื่อง"></label>
-            <label>เรียน<input id="recipient" placeholder="เช่น นายกองค์การบริหารส่วนตำบล..."></label>
-            <label>ข้อเท็จจริง / รายละเอียด<textarea id="facts" rows="6" required placeholder="พิมพ์ข้อมูลสำคัญ เหตุการณ์ วันที่ บุคคล หรือจำนวนเงิน"></textarea></label>
-            <label>สิ่งที่ส่งมาด้วย<input id="attachments" placeholder="เช่น สำเนาโครงการ จำนวน 1 ชุด"></label>
-            <label>ข้อเสนอ / สิ่งที่ต้องการให้พิจารณา<textarea id="request" rows="4" placeholder="เช่น โปรดพิจารณาอนุมัติ / เห็นชอบ / สั่งการ"></textarea></label>
-            <div class="form-actions"><button class="primary" type="submit">สร้างแบบร่าง</button><button class="secondary" id="saveDraft" type="button">บันทึกร่าง</button><button class="secondary" id="newDraft" type="button">ร่างใหม่</button></div>
-          </form>
-          <div class="panel output-panel">
-            <div class="output-head"><h3>แบบร่าง</h3><div><button id="copyDocument" class="secondary">คัดลอก</button><button id="downloadWord" class="secondary">Word</button><button id="printDocument" class="secondary">พิมพ์/PDF</button><button id="downloadDocument" class="secondary">TXT</button></div></div>
-            <pre id="documentOutput">กรอกข้อมูลด้านซ้าย แล้วกด “สร้างแบบร่าง”</pre>
-          </div>
-        </div>
-        <div class="panel draft-panel"><div class="output-head"><h3>ร่างที่บันทึกไว้</h3><button id="clearDrafts" class="danger">ล้างร่างทั้งหมด</button></div><div id="draftList" class="draft-list"></div></div>
-      </section>
-
-      <section class="view" id="legal">
-        <div class="split">
-          <form id="legalForm" class="panel form-panel">
-            <h3>จัดโครงวิเคราะห์เรื่องกฎหมาย</h3>
-            <label>หัวข้อเรื่อง<input id="legalTopic" required placeholder="เช่น การจัดซื้อจัดจ้าง / วินัย / ภาษีท้องถิ่น"></label>
-            <label>ข้อเท็จจริง<textarea id="legalFacts" rows="7" required placeholder="บรรยายข้อเท็จจริงที่ทราบ โดยแยกวัน เวลา บุคคล และเอกสารที่เกี่ยวข้อง"></textarea></label>
-            <label>คำถามที่ต้องการวิเคราะห์<textarea id="legalQuestion" rows="4" required placeholder="เช่น หน่วยงานมีอำนาจดำเนินการหรือไม่ และมีความเสี่ยงใด"></textarea></label>
-            <button class="primary" type="submit">สร้างกรอบวิเคราะห์</button>
-          </form>
-          <div class="panel output-panel">
-            <div class="notice">เครื่องมือนี้ช่วยจัดโครงคิด ไม่ใช่คำปรึกษากฎหมาย และควรตรวจสอบกฎหมาย/ระเบียบฉบับปัจจุบันก่อนใช้งานจริง</div>
-            <div class="output-head"><h3>กรอบวิเคราะห์</h3><button id="copyLegal" class="secondary">คัดลอก</button></div>
-            <pre id="legalOutput">กรอกข้อเท็จจริงและคำถามด้านซ้าย</pre>
-          </div>
-        </div>
-      </section>
-
-      <section class="view" id="settings">
-        <div class="split">
-          <form id="settingsForm" class="panel form-panel">
-            <h3>ข้อมูลหน่วยงาน</h3>
-            <label>ชื่อหน่วยงาน<input id="settingAgency" placeholder="เช่น องค์การบริหารส่วนตำบล..."></label>
-            <label>ที่อยู่<textarea id="settingAddress" rows="3" placeholder="ที่อยู่สำหรับหัวหนังสือ"></textarea></label>
-            <label>ชื่อผู้ลงนาม<input id="settingSigner" placeholder="ชื่อ–นามสกุล"></label>
-            <label>ตำแหน่งผู้ลงนาม<input id="settingPosition" placeholder="เช่น นายกองค์การบริหารส่วนตำบล..."></label>
-            <label>โทรศัพท์ / อีเมล<input id="settingContact" placeholder="ข้อมูลติดต่อท้ายหนังสือ"></label>
-            <button class="primary" type="submit">บันทึกการตั้งค่า</button>
-          </form>
-          <div class="panel">
-            <h3>สำรองและย้ายข้อมูล</h3>
-            <p class="muted">ข้อมูลถูกเก็บไว้ในเบราว์เซอร์ของอุปกรณ์นี้ สามารถส่งออกเพื่อสำรองหรือย้ายเครื่องได้</p>
-            <div class="stack-actions">
-              <button id="exportData" class="secondary">ส่งออกข้อมูลสำรอง</button>
-              <label class="file-button">นำเข้าข้อมูลสำรอง<input id="importData" type="file" accept="application/json" hidden></label>
-              <button id="clearData" class="danger">ล้างข้อมูลบนอุปกรณ์</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="view" id="favorites">
-        <div class="panel">
-          <h3>Prompt ที่บันทึกไว้</h3>
-          <div id="favoriteGrid" class="prompt-grid"></div>
-        </div>
-      </section>
-    </main>
+<header class="topbar">
+  <div class="container nav">
+    <a class="brand" href="#home"><div class="logo">GP</div><div><strong>GovPrompt Thailand</strong><small>Government AI Workspace</small></div></a>
+    <nav class="navlinks"><a href="#features">ความสามารถ</a><a href="#trial">ทดลองใช้</a><a href="#packages">แพ็กเกจ</a><a href="#register">ลงทะเบียน</a></nav>
+    <a class="btn btn-light" href="#register">รับ 20 Prompt ฟรี</a>
   </div>
+</header>
 
-  <div id="toast" class="toast"></div>
-  <script src="./assets/app.js"></script>
-  <script>
-    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js")
-          .catch(error => console.error("ลงทะเบียน Service Worker ไม่สำเร็จ", error));
-      });
-    }
-  </script>
+<main id="home">
+<section class="hero">
+  <div class="container">
+    <div class="hero-box">
+      <div class="hero-content">
+        <span class="badge">🇹🇭 AI WORKSPACE FOR THAI GOVERNMENT</span>
+        <h1>งานราชการเร็วขึ้น<br>ชัดขึ้น เป็นระบบขึ้น</h1>
+        <p class="lead">GovPrompt Thailand ช่วยร่างหนังสือราชการ จัดประเด็นกฎหมาย สรุปข้อมูลผู้บริหาร เตรียม TOR และสื่อประชาสัมพันธ์ โดยยึดข้อเท็จจริงเป็นหลัก ไม่แต่งชื่อ วันที่ วงเงิน หรือข้อกฎหมายแทนผู้ใช้</p>
+        <div class="actions"><a class="btn btn-primary" href="#trial">🚀 ทดลองใช้ทันที</a><a class="btn btn-light" href="#register">🎁 รับชุดทดลองใช้ฟรี</a></div>
+      </div>
+      <div class="proof">
+        <article><strong>222</strong><span>Government Prompts</span></article>
+        <article><strong>Fact First</strong><span>ลดการสมมติข้อมูล</span></article>
+        <article><strong>6+</strong><span>กลุ่มงานราชการหลัก</span></article>
+        <article><strong>พร้อมใช้</strong><span>มือถือและคอมพิวเตอร์</span></article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="container">
+    <div class="section-head"><h2>ผู้ช่วยงานราชการในจุดเดียว</h2><p>เลือกงาน กรอกข้อเท็จจริง แล้วใช้ AI ช่วยจัดโครงสร้างให้ครบถ้วนก่อนตรวจทานและนำเสนอผู้บังคับบัญชา</p></div>
+    <div class="grid">
+      <article class="card"><div class="icon">📄</div><h3>หนังสือราชการ</h3><p>หนังสือภายนอก บันทึกข้อความ หนังสือเชิญประชุม ประกาศ คำสั่ง และรายงานเสนอผู้บริหาร</p></article>
+      <article class="card"><div class="icon">⚖️</div><h3>กฎหมายและหารือ</h3><p>แยกข้อเท็จจริง ข้อกฎหมาย ประเด็นสงสัย ความเสี่ยง และสิ่งที่ต้องตรวจสอบเพิ่มเติม</p></article>
+      <article class="card"><div class="icon">📑</div><h3>TOR และจัดซื้อจัดจ้าง</h3><p>วางขอบเขตงาน ผลส่งมอบ ตัวชี้วัด ความคุ้มค่า และรายการตรวจรับอย่างเป็นระบบ</p></article>
+      <article class="card"><div class="icon">👨‍💼</div><h3>ผู้ช่วยผู้บริหาร</h3><p>สรุปเรื่องยาวภายใน 3 นาที พร้อมประเด็นตัดสินใจ ทางเลือก ผลดีผลเสีย และความเสี่ยง</p></article>
+      <article class="card"><div class="icon">📢</div><h3>ข่าวและประชาสัมพันธ์</h3><p>ข่าวกิจกรรม โพสต์ Facebook คำกล่าว โปสเตอร์ และการสื่อสารภาครัฐที่ไม่โฆษณาบุคคลเกินควร</p></article>
+      <article class="card"><div class="icon">🤖</div><h3>Government AI Copilot</h3><p>คลัง Prompt ที่ออกแบบตามขั้นตอนงานจริง ใช้ง่าย และต่อยอดผลลัพธ์เป็น Word หรือ PDF ได้</p></article>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="section-head"><h2>งานยอดนิยมที่เริ่มได้ทันที</h2><p>นี่คือตัวอย่างงานที่ผู้ปฏิบัติงานและผู้บริหารภาครัฐใช้บ่อย</p></div>
+    <div class="examples">
+      <article class="example"><strong>หนังสือเชิญประชุม</strong><span>จัดเหตุผล วัตถุประสงค์ วันเวลา สถานที่ และสิ่งที่ส่งมาด้วย</span></article>
+      <article class="example"><strong>สรุปผู้บริหาร 3 นาที</strong><span>เรื่องเดิม ข้อเท็จจริง ประเด็นตัดสินใจ ทางเลือก และความเสี่ยง</span></article>
+      <article class="example"><strong>หนังสือหารือ</strong><span>เรียงเหตุการณ์ ระบุข้อสงสัย และตั้งคำถามที่ตอบได้ชัด</span></article>
+      <article class="example"><strong>TOR เบื้องต้น</strong><span>เชื่อมปัญหา วัตถุประสงค์ ขอบเขตงาน ผลส่งมอบ และเกณฑ์ตรวจรับ</span></article>
+    </div>
+  </div>
+</section>
+
+<section class="trial" id="trial">
+  <div class="container">
+    <div class="section-head"><h2>ทดลองสร้าง Prompt สำหรับงานราชการ</h2><p>เลือกเครื่องมือและกรอกข้อเท็จจริง ระบบจะสร้าง Prompt พร้อมนำไปใช้กับ AI โดยไม่แต่งข้อมูลแทนคุณ</p></div>
+    <div class="trial-layout">
+      <div class="prompt-list" id="promptList"></div>
+      <div class="workspace">
+        <label>หัวข้องาน<select id="toolSelect"></select></label>
+        <label>ข้อเท็จจริง / รายละเอียด<textarea id="facts" placeholder="ตัวอย่าง: หน่วยงานกำหนดประชุมจัดทำแผนพัฒนาท้องถิ่น วันเวลาและสถานที่อยู่ระหว่างยืนยัน..."></textarea></label>
+        <button class="btn btn-primary" id="generateBtn" type="button">สร้าง Prompt พร้อมใช้</button>
+        <div class="output" id="output">เลือกเครื่องมือ กรอกข้อเท็จจริง แล้วกด “สร้าง Prompt พร้อมใช้”</div>
+        <div class="actions"><button class="btn btn-light" id="copyBtn" type="button">คัดลอก</button><button class="btn btn-light" id="saveBtn" type="button">บันทึกในเครื่อง</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="packages">
+  <div class="container">
+    <div class="section-head"><h2>แพ็กเกจเปิดตัว</h2><p>เริ่มทดลองฟรี แล้วขยายตามปริมาณงานและรูปแบบการใช้งาน</p></div>
+    <div class="price-grid">
+      <article class="card price"><h3>Starter</h3><div class="amount">ฟรี</div><ul><li>ชุดทดลอง 20 Prompt</li><li>ตัวอย่างการใช้งาน</li><li>ข่าวและคู่มือเริ่มต้น</li></ul><a class="btn btn-light" href="#register">ลงทะเบียนทดลอง</a></article>
+      <article class="card price featured"><span class="tag">แนะนำ</span><h3>Professional</h3><div class="amount">GP001–GP222</div><ul><li>Prompt งานราชการครบชุด</li><li>คู่มือและตัวอย่างใช้งาน</li><li>สิทธิ์รับอัปเดตตามเงื่อนไข</li></ul><a class="btn btn-primary" href="#register">ขอรายละเอียด</a></article>
+      <article class="card price"><h3>Enterprise</h3><div class="amount">สำหรับหน่วยงาน</div><ul><li>สิทธิ์ใช้งานระดับองค์กร</li><li>ปรับให้เข้ากับกระบวนงาน</li><li>แนวทางกำกับดูแลและอบรม</li></ul><a class="btn btn-light" href="#register">ติดต่อโครงการ</a></article>
+    </div>
+  </div>
+</section>
+
+<section class="register" id="register">
+  <div class="container">
+    <div class="register-box">
+      <div class="register-copy"><span class="badge" style="color:var(--blue);border-color:#d4e0f1;background:#eef4ff">EARLY ACCESS</span><h2>รับชุดทดลองใช้ฟรี 20 Prompt</h2><p>ลงทะเบียนเพื่อรับชุดทดลอง คู่มือเริ่มต้น และข่าวเปิดตัว GovPrompt Thailand</p><p class="notice">ผลลัพธ์จาก AI เป็นแบบร่าง ผู้ใช้ต้องตรวจสอบข้อเท็จจริง กฎหมาย ระเบียบ และอำนาจอนุมัติก่อนนำไปใช้จริง</p></div>
+      <form class="form" id="earlyAccessForm" name="govprompt-early-access">
+        
+        <label>ชื่อ–นามสกุล<input name="name" required placeholder="ชื่อผู้สนใจ"></label>
+        <label>อีเมล<input name="email" type="email" required placeholder="name@example.com"></label>
+        <label>หน่วยงาน<input name="agency" placeholder="ชื่อหน่วยงาน"></label>
+        <label>LINE ID / โทรศัพท์<input name="contact" placeholder="ช่องทางติดต่อ"></label>
+        <label class="full">กลุ่มงานที่สนใจ<select name="interest"><option>หนังสือราชการ</option><option>กฎหมายและหนังสือหารือ</option><option>ผู้บริหารและการตัดสินใจ</option><option>TOR / จัดซื้อจัดจ้าง</option><option>ข่าวและประชาสัมพันธ์</option><option>ใช้งานระดับองค์กร</option></select></label>
+        <button class="btn btn-primary" type="submit">ลงทะเบียนรับชุดทดลอง</button>
+      </form>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer><div class="container footer"><div class="brand"><div class="logo">GP</div><div><strong>GovPrompt Thailand</strong><small style="color:rgba(255,255,255,.65)">AI ผู้ช่วยงานราชการไทย</small></div></div><p>© 2026 GovPrompt Thailand — เครื่องมือช่วยจัดทำร่าง ไม่ใช่คำวินิจฉัยทางกฎหมาย</p></div></footer>
+<div class="toast" id="toast"></div>
+
+<script>
+const tools=[
+["GP001","ร่างหนังสือราชการ"],["GP002","หนังสือภายนอก"],["GP003","บันทึกข้อความ"],["GP004","หนังสือเชิญประชุม"],
+["GP005","วิเคราะห์ข้อกฎหมาย"],["GP006","ร่างหนังสือหารือ"],["GP007","ตรวจร่างคำสั่ง"],["GP008","สรุปคำพิพากษา"],
+["GP009","สรุปผู้บริหาร 3 นาที"],["GP010","วิเคราะห์ความเสี่ยง"],["GP011","ทางเลือกเพื่อการตัดสินใจ"],["GP012","สรุปรายงานประชุม"],
+["GP013","เขียนข่าวกิจกรรม"],["GP014","ข้อความ Facebook"],["GP015","ข่าวประชาสัมพันธ์"],["GP016","ข้อความโปสเตอร์"],
+["GP017","ร่าง TOR เบื้องต้น"],["GP018","จัดทำขอบเขตงาน"],["GP019","Checklist ตรวจรับ"],["GP020","วิเคราะห์ความคุ้มค่า"]
+];
+const instruction={
+"ร่างหนังสือราชการ":"ร่างเอกสารราชการให้ถูกต้อง กระชับ ชัดเจน พร้อมเสนอผู้บังคับบัญชา",
+"หนังสือภายนอก":"ร่างหนังสือภายนอกตามรูปแบบงานสารบรรณ",
+"บันทึกข้อความ":"ร่างบันทึกข้อความโดยแบ่งเรื่องเดิม ข้อเท็จจริง ข้อกฎหมาย และข้อเสนอ",
+"หนังสือเชิญประชุม":"ร่างหนังสือเชิญประชุม พร้อมวัตถุประสงค์ กำหนดการ และสิ่งที่ส่งมาด้วย",
+"วิเคราะห์ข้อกฎหมาย":"วิเคราะห์โดยแยกข้อเท็จจริง ข้อกฎหมาย การตีความ ความเสี่ยง และข้อเสนอ",
+"ร่างหนังสือหารือ":"เรียงข้อเท็จจริงตามเวลา ระบุเหตุแห่งข้อสงสัย และตั้งคำถามที่ไม่ชี้นำ",
+"ตรวจร่างคำสั่ง":"ตรวจอำนาจ รูปแบบ เหตุผล ขั้นตอน และผลกระทบของร่างคำสั่ง",
+"สรุปคำพิพากษา":"สรุปข้อเท็จจริง ประเด็นพิพาท คำวินิจฉัย เหตุผล และแนวทางนำไปใช้",
+"สรุปผู้บริหาร 3 นาที":"สรุปเรื่องเดิม ข้อเท็จจริง ประเด็นตัดสินใจ ทางเลือก ผลดีผลเสีย ความเสี่ยง และข้อเสนอ",
+"วิเคราะห์ความเสี่ยง":"ระบุเหตุการณ์เสี่ยง สาเหตุ ผลกระทบ โอกาสเกิด ระดับความเสี่ยง และมาตรการควบคุม",
+"ทางเลือกเพื่อการตัดสินใจ":"เสนอทางเลือกอย่างน้อย 3 ทาง พร้อมผลดี ผลเสีย ความเสี่ยง และข้อเสนอแนะ",
+"สรุปรายงานประชุม":"สรุปผู้เข้าร่วม ระเบียบวาระ สาระสำคัญ มติ ผู้รับผิดชอบ และกำหนดเวลา",
+"เขียนข่าวกิจกรรม":"จัดหัวข้อ โปรย เนื้อข่าว และประโยชน์ต่อประชาชน โดยไม่เติมผลสำเร็จ",
+"ข้อความ Facebook":"เขียนโพสต์กระชับ อ่านง่าย เป็นกลาง และไม่ประชาสัมพันธ์บุคคลเกินควร",
+"ข่าวประชาสัมพันธ์":"จัดทำข่าวประชาสัมพันธ์จากข้อเท็จจริง พร้อมสิ่งที่ต้องตรวจสอบก่อนเผยแพร่",
+"ข้อความโปสเตอร์":"จัดลำดับหัวเรื่อง สารสำคัญ วันเวลา สถานที่ และช่องทางติดต่อ",
+"ร่าง TOR เบื้องต้น":"เชื่อมหลักการ วัตถุประสงค์ ขอบเขตงาน ผลส่งมอบ ระยะเวลา และเกณฑ์ตรวจรับ",
+"จัดทำขอบเขตงาน":"ระบุงานที่ต้องดำเนินการ หน้าที่คู่สัญญา มาตรฐาน ผลส่งมอบ และข้อจำกัด",
+"Checklist ตรวจรับ":"จัดรายการตรวจเอกสาร คุณภาพ ปริมาณ เวลา และหลักฐานการส่งมอบ",
+"วิเคราะห์ความคุ้มค่า":"วิเคราะห์ความจำเป็น ทางเลือก ต้นทุน ประโยชน์ ความเสี่ยง และความคุ้มค่า"
+};
+const list=document.getElementById("promptList"), select=document.getElementById("toolSelect");
+tools.forEach(([id,name])=>{list.insertAdjacentHTML("beforeend",`<div class="prompt-item"><b>${id}</b><span>${name}</span></div>`);select.insertAdjacentHTML("beforeend",`<option>${name}</option>`)});
+const toast=(t)=>{const e=document.getElementById("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),1800)};
+document.getElementById("generateBtn").onclick=()=>{
+ const name=select.value, facts=document.getElementById("facts").value.trim();
+ if(!facts){toast("กรุณากรอกข้อเท็จจริง");return}
+ const result=`บทบาท\nคุณเป็น Government AI Copilot ผู้เชี่ยวชาญงานราชการไทย\n\nภารกิจ\n${instruction[name]}\n\nข้อเท็จจริงจากผู้ใช้\n${facts}\n\nข้อกำหนดสำคัญ\n- ยึดข้อเท็จจริงที่ให้เป็นหลัก\n- ห้ามสมมติชื่อบุคคล วันที่ เลขหนังสือ วงเงิน หรือข้อกฎหมาย\n- แยกข้อเท็จจริง ข้อกฎหมาย การวิเคราะห์ ความเสี่ยง และข้อเสนอแนะ\n- ระบุข้อมูลที่ต้องตรวจสอบเพิ่มเติมก่อนนำไปใช้จริง\n- ใช้ภาษาราชการที่กระชับ ชัดเจน และพร้อมตรวจทาน`;
+ document.getElementById("output").textContent=result;
+};
+document.getElementById("copyBtn").onclick=async()=>{const t=document.getElementById("output").textContent;await navigator.clipboard.writeText(t);toast("คัดลอกแล้ว")};
+document.getElementById("saveBtn").onclick=()=>{localStorage.setItem("govprompt_trial_draft",document.getElementById("output").textContent);toast("บันทึกบนอุปกรณ์แล้ว")};
+const saved=localStorage.getItem("govprompt_trial_draft");if(saved)document.getElementById("output").textContent=saved;
+document.getElementById("earlyAccessForm").addEventListener("submit",(e)=>{
+  e.preventDefault();
+  const data=Object.fromEntries(new FormData(e.target).entries());
+  localStorage.setItem("govprompt_early_access",JSON.stringify({...data,createdAt:new Date().toISOString()}));
+  toast("ลงทะเบียนในอุปกรณ์แล้ว");
+  e.target.reset();
+});
+</script>
 </body>
 </html>

@@ -1,23 +1,33 @@
-# AI ผู้ช่วยงานท้องถิ่น — Ready V1.2
+# GovPrompt Thailand — GitHub Ready Launch Edition
 
-พร้อมใช้งานบน Netlify โดยไม่ต้องตั้งค่าเซิร์ฟเวอร์
+เว็บไซต์หน้าเปิดตัว GovPrompt Thailand พร้อมใช้งานบน GitHub Pages
 
-ฟังก์ชัน:
-- คลัง Prompt 12 รายการ และเพิ่ม Prompt ของหน่วยงานเอง
-- รายการโปรด
-- ร่างเอกสารราชการ 5 ประเภท
-- ส่งออก Word-compatible (.doc), TXT และพิมพ์/บันทึก PDF
-- ผู้ช่วยจัดกรอบวิเคราะห์กฎหมาย
-- ตั้งค่าชื่อหน่วยงานและผู้ลงนาม
-- สำรอง/นำเข้าข้อมูล JSON
-- Dark mode, PWA และใช้งานออฟไลน์หลังเปิดครั้งแรก
+## ฟังก์ชัน
+- Landing Page สำหรับเปิดตัว
+- ชุดทดลอง 20 Prompt
+- เครื่องมือสร้าง Prompt จากข้อเท็จจริง
+- คัดลอกและบันทึกร่างบนอุปกรณ์
+- รองรับมือถือและคอมพิวเตอร์
+- GitHub Pages workflow สำหรับเผยแพร่อัตโนมัติ
 
-การปรับปรุงด้านความปลอดภัยและเสถียรภาพใน RC1:
-- ป้องกัน Stored XSS ใน Prompt และรายการ Draft
-- ตรวจโครงสร้างและขนาดไฟล์ก่อนนำเข้าข้อมูล
-- อ่าน LocalStorage แบบปลอดภัยเมื่อข้อมูลเสียหาย
-- ป้องกัน Draft และ Autosave จับคู่กับ Output คนละชุด
-- ปรับ Service Worker และ Cache เป็นเวอร์ชัน 1.2
+## วิธีนำขึ้น GitHub
+1. เปิด Repository ของคุณ
+2. กด **Add file**
+3. เลือก **Upload files**
+4. แตกไฟล์ ZIP นี้ในคอมพิวเตอร์
+5. ลากไฟล์และโฟลเดอร์ทั้งหมดขึ้น GitHub รวมทั้งโฟลเดอร์ `.github`
+6. ใส่ข้อความ Commit เช่น `Launch GovPrompt Thailand`
+7. กด **Commit changes**
 
-การติดตั้ง:
-อัปโหลด ZIP นี้ใน Netlify Deploys แล้วเปิดลิงก์เว็บไซต์ใหม่
+## เปิด GitHub Pages
+1. เข้า Repository > **Settings**
+2. เลือก **Pages**
+3. ในหัวข้อ Build and deployment เลือก **GitHub Actions**
+4. ไปที่แท็บ **Actions**
+5. รอ workflow `Deploy GovPrompt Thailand to GitHub Pages` สำเร็จ
+6. URL เว็บไซต์จะปรากฏใน Settings > Pages
+
+## หมายเหตุ
+แบบ GitHub Pages เป็นเว็บไซต์ Static จึงยังไม่บันทึกฟอร์มลงฐานข้อมูลออนไลน์
+ข้อมูลลงทะเบียนทดลองจะถูกบันทึกไว้เฉพาะบนอุปกรณ์ผู้กรอก จนกว่าจะเชื่อม Google Forms,
+Formspree หรือระบบ backend ภายหลัง
