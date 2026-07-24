@@ -1,0 +1,111 @@
+
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b3d91">
+<meta name="description" content="GovPrompt Thailand — AI ผู้ช่วยงานราชการไทย">
+<title>GovPrompt Thailand | AI ผู้ช่วยงานราชการไทย</title>
+<style>
+:root{--navy:#082b68;--blue:#0b3d91;--sky:#1769aa;--gold:#d7a928;--ink:#172033;--muted:#617085;--line:#dce5f1;--soft:#f4f7fb;--panel:#fff;--shadow:0 18px 50px rgba(8,43,104,.14)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:"Noto Sans Thai",Tahoma,system-ui,sans-serif;color:var(--ink);background:#f7f9fc}
+button,input,select,textarea{font:inherit}a{text-decoration:none;color:inherit}.container{width:min(1160px,calc(100% - 32px));margin:auto}
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav{min-height:72px;display:flex;align-items:center;gap:24px}.brand{display:flex;align-items:center;gap:11px;margin-right:auto}
+.logo{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--navy),var(--sky));color:#fff;font-weight:900;box-shadow:0 8px 22px rgba(11,61,145,.25)}
+.brand strong{display:block}.brand small{color:var(--muted)}.navlinks{display:flex;gap:18px;font-size:.92rem;color:#40506a}
+.btn{border:0;border-radius:12px;min-height:46px;padding:0 18px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:var(--blue);color:#fff;box-shadow:0 9px 24px rgba(11,61,145,.22)}.btn-light{background:#fff;color:var(--blue);border:1px solid var(--line)}
+.hero{padding:72px 0 45px}.hero-box{border-radius:30px;padding:clamp(28px,6vw,66px);background:linear-gradient(135deg,var(--navy),var(--blue) 57%,var(--sky));color:#fff;display:grid;grid-template-columns:1.3fr .7fr;gap:42px;box-shadow:var(--shadow)}
+.badge{display:inline-flex;padding:8px 12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);border-radius:999px;font-size:.78rem;font-weight:800}
+h1{font-size:clamp(2.3rem,5vw,4.7rem);line-height:1.05;letter-spacing:-.04em;margin:18px 0}.lead{font-size:clamp(1rem,2vw,1.22rem);line-height:1.85;color:rgba(255,255,255,.9)}
+.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:25px}.hero .btn-primary{background:#fff;color:var(--blue)}.hero .btn-light{background:transparent;color:#fff;border-color:rgba(255,255,255,.38)}
+.proof{align-self:center;display:grid;grid-template-columns:1fr 1fr;gap:12px}.proof article{padding:20px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.11);border-radius:18px}.proof strong{display:block;font-size:1.65rem}.proof span{font-size:.82rem;color:rgba(255,255,255,.78)}
+section{padding:42px 0}.section-head{text-align:center;max-width:760px;margin:0 auto 24px}.section-head h2{font-size:clamp(1.65rem,3vw,2.5rem);margin:0 0 9px}.section-head p{color:var(--muted);line-height:1.75;margin:0}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 7px 25px rgba(15,23,42,.05)}.card p{color:var(--muted);line-height:1.7}
+.trial{background:#fff;border-block:1px solid var(--line)}.trial-layout{display:grid;grid-template-columns:.8fr 1.2fr;gap:24px}.prompt-list{display:grid;gap:9px}.prompt-item{display:flex;gap:10px;padding:12px 14px;border:1px solid var(--line);border-radius:13px;background:#fff}.prompt-item b{color:var(--blue);min-width:48px}
+.workspace{background:var(--soft);border:1px solid var(--line);border-radius:22px;padding:20px}.workspace label{font-weight:700;display:block;margin-bottom:12px}.workspace textarea,.workspace select{width:100%;border:1px solid #cbd6e5;border-radius:11px;padding:12px;background:#fff;margin-top:6px}.workspace textarea{min-height:170px}.output{margin-top:14px;background:#fff;border:1px dashed #b9c9df;border-radius:13px;padding:15px;min-height:110px;white-space:pre-wrap;line-height:1.7}
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.amount{font-size:1.8rem;color:var(--blue);font-weight:900}.register{background:linear-gradient(135deg,#eef4ff,#fff)}.register-box{display:grid;grid-template-columns:.9fr 1.1fr;gap:30px;background:#fff;border:1px solid var(--line);border-radius:25px;padding:clamp(24px,4vw,40px);box-shadow:var(--shadow)}.register-box p{color:var(--muted);line-height:1.8}
+.steps{display:grid;gap:12px}.step{padding:15px;border:1px solid var(--line);border-radius:14px;background:#f8fbff}.step b{color:var(--blue)}footer{background:#091e43;color:#fff;padding:34px 0}.footer{display:flex;justify-content:space-between;align-items:center;gap:20px}.footer p{color:rgba(255,255,255,.68)}
+.toast{position:fixed;right:20px;bottom:20px;background:#102a54;color:#fff;padding:13px 17px;border-radius:12px;opacity:0;transition:.25s}.toast.show{opacity:1}
+@media(max-width:900px){.navlinks{display:none}.hero-box,.trial-layout,.register-box{grid-template-columns:1fr}.grid,.price-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.container{width:min(100% - 20px,1160px)}.hero{padding-top:24px}.grid,.price-grid{grid-template-columns:1fr}.proof{grid-template-columns:1fr 1fr}.footer{display:block}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="container nav">
+<a class="brand" href="#home"><div class="logo">GP</div><div><strong>GovPrompt Thailand</strong><small>Government AI Workspace</small></div></a>
+<nav class="navlinks"><a href="#features">ความสามารถ</a><a href="#trial">ทดลองใช้</a><a href="#packages">แพ็กเกจ</a><a href="https://docs.google.com/forms/d/e/1FAIpQLScshjhmm5LtRwOGjiAyTjT_3Rj66--30NRDyq3BX2heFWKQ_w/viewform?usp=header" target="_blank" rel="noopener">สมัครสมาชิก</a></nav>
+<a class="btn btn-light" href="https://docs.google.com/forms/d/e/1FAIpQLScshjhmm5LtRwOGjiAyTjT_3Rj66--30NRDyq3BX2heFWKQ_w/viewform?usp=header" target="_blank" rel="noopener">รับ 20 Prompt ฟรี</a>
+</div></header>
+
+<main id="home">
+<section class="hero"><div class="container"><div class="hero-box">
+<div><span class="badge">🇹🇭 AI WORKSPACE FOR THAI GOVERNMENT</span><h1>งานราชการเร็วขึ้น<br>ชัดขึ้น เป็นระบบขึ้น</h1>
+<p class="lead">GovPrompt Thailand ช่วยร่างหนังสือราชการ วิเคราะห์ข้อกฎหมาย สรุปข้อมูลผู้บริหาร เตรียม TOR และสื่อประชาสัมพันธ์ โดยยึดข้อเท็จจริงเป็นหลัก</p>
+<div class="actions"><a class="btn btn-primary" href="#trial">🚀 ทดลองใช้ทันที</a><a class="btn btn-light" href="https://docs.google.com/forms/d/e/1FAIpQLScshjhmm5LtRwOGjiAyTjT_3Rj66--30NRDyq3BX2heFWKQ_w/viewform?usp=header" target="_blank" rel="noopener">🎁 สมัครรับ 20 Prompt ฟรี</a></div></div>
+<div class="proof"><article><strong>222</strong><span>Government Prompts</span></article><article><strong>Fact First</strong><span>ลดการสมมติข้อมูล</span></article><article><strong>20</strong><span>Prompt ทดลองฟรี</span></article><article><strong>พร้อมใช้</strong><span>มือถือและคอมพิวเตอร์</span></article></div>
+</div></div></section>
+
+<section id="features"><div class="container"><div class="section-head"><h2>ผู้ช่วยงานราชการในจุดเดียว</h2><p>เลือกงาน กรอกข้อเท็จจริง และสร้าง Prompt พร้อมใช้</p></div>
+<div class="grid">
+<article class="card"><h3>📄 หนังสือราชการ</h3><p>หนังสือภายนอก บันทึกข้อความ หนังสือเชิญ ประกาศ และคำสั่ง</p></article>
+<article class="card"><h3>⚖️ กฎหมายและหารือ</h3><p>แยกข้อเท็จจริง ข้อกฎหมาย ประเด็นสงสัย ความเสี่ยง และข้อเสนอ</p></article>
+<article class="card"><h3>📑 TOR และจัดซื้อจัดจ้าง</h3><p>วางขอบเขตงาน ผลส่งมอบ ตัวชี้วัด และรายการตรวจรับ</p></article>
+<article class="card"><h3>👨‍💼 ผู้ช่วยผู้บริหาร</h3><p>สรุปเรื่องยาว พร้อมประเด็นตัดสินใจและทางเลือก</p></article>
+<article class="card"><h3>📢 ข่าวประชาสัมพันธ์</h3><p>ข่าวกิจกรรม โพสต์ Facebook คำกล่าว และข้อความโปสเตอร์</p></article>
+<article class="card"><h3>🤖 Government AI Copilot</h3><p>คลัง Prompt ออกแบบตามขั้นตอนงานราชการไทย</p></article>
+</div></div></section>
+
+<section class="trial" id="trial"><div class="container"><div class="section-head"><h2>ทดลองสร้าง Prompt</h2><p>ระบบทดลอง 20 เครื่องมือ โดยบันทึกร่างบนอุปกรณ์ของผู้ใช้เท่านั้น</p></div>
+<div class="trial-layout"><div class="prompt-list" id="promptList"></div><div class="workspace">
+<label>หัวข้องาน<select id="toolSelect"></select></label>
+<label>ข้อเท็จจริง / รายละเอียด<textarea id="facts" placeholder="กรอกข้อเท็จจริงที่ต้องการให้ AI ช่วยดำเนินการ"></textarea></label>
+<button class="btn btn-primary" id="generateBtn" type="button">สร้าง Prompt พร้อมใช้</button>
+<div class="output" id="output">เลือกเครื่องมือ กรอกข้อเท็จจริง แล้วกดสร้าง Prompt</div>
+<div class="actions"><button class="btn btn-light" id="copyBtn" type="button">คัดลอก</button><button class="btn btn-light" id="saveBtn" type="button">บันทึกร่างในเครื่อง</button></div>
+</div></div></div></section>
+
+<section id="packages"><div class="container"><div class="section-head"><h2>แพ็กเกจเปิดตัว</h2><p>เริ่มทดลองฟรีและขยายตามรูปแบบการใช้งาน</p></div>
+<div class="price-grid">
+<article class="card"><h3>Starter</h3><div class="amount">ฟรี</div><p>ชุดทดลอง 20 Prompt พร้อมคู่มือเริ่มต้น</p><a class="btn btn-light" href="https://docs.google.com/forms/d/e/1FAIpQLScshjhmm5LtRwOGjiAyTjT_3Rj66--30NRDyq3BX2heFWKQ_w/viewform?usp=header" target="_blank" rel="noopener">ลงทะเบียนทดลอง</a></article>
+<article class="card"><h3>Professional</h3><div class="amount">GP001–GP222</div><p>Prompt งานราชการครบชุด พร้อมคู่มือและตัวอย่าง</p><a class="btn btn-primary" href="https://docs.google.com/forms/d/e/1FAIpQLScshjhmm5LtRwOGjiAyTjT_3Rj66--30NRDyq3BX2heFWKQ_w/viewform?usp=header" target="_blank" rel="noopener">ขอรายละเอียด</a></article>
+<article class="card"><h3>Enterprise</h3><div class="amount">สำหรับหน่วยงาน</div><p>สิทธิ์ระดับองค์กร การปรับกระบวนงาน และการอบรม</p><a class="btn btn-light" href="https://docs.google.com/forms/d/e/1FAIpQLScshjhmm5LtRwOGjiAyTjT_3Rj66--30NRDyq3BX2heFWKQ_w/viewform?usp=header" target="_blank" rel="noopener">ติดต่อโครงการ</a></article>
+</div></div></section>
+
+<section class="register" id="register"><div class="container"><div class="register-box">
+<div><span class="badge" style="color:#0b3d91;background:#eef4ff;border-color:#d4e0f1">EARLY ACCESS</span><h2>สมัครสมาชิก GovPrompt Thailand</h2><p>ระบบสมัครสมาชิกเชื่อมกับ Google Form และบันทึกรายชื่อเข้า Google Sheets โดยตรง ไม่เก็บข้อมูลสมาชิกไว้เฉพาะในเบราว์เซอร์อีกต่อไป</p>
+<a class="btn btn-primary" href="https://docs.google.com/forms/d/e/1FAIpQLScshjhmm5LtRwOGjiAyTjT_3Rj66--30NRDyq3BX2heFWKQ_w/viewform?usp=header" target="_blank" rel="noopener">🎁 เปิดแบบฟอร์มสมัครสมาชิก</a></div>
+<div class="steps"><div class="step"><b>1. สมัครสมาชิก</b><br>กรอกชื่อ อีเมล หน่วยงาน และข้อมูลติดต่อ</div><div class="step"><b>2. เก็บรายชื่อ</b><br>คำตอบเข้าสู่ Google Sheets ที่เชื่อมกับแบบฟอร์ม</div><div class="step"><b>3. ดาวน์โหลด</b><br>ดาวน์โหลดรายชื่อเป็น Excel เก็บในเครื่องได้ทุกเวลา</div></div>
+</div></div></section>
+</main>
+
+<footer><div class="container footer"><div class="brand"><div class="logo">GP</div><div><strong>GovPrompt Thailand</strong><small style="color:rgba(255,255,255,.65)">AI ผู้ช่วยงานราชการไทย</small></div></div><p>© 2026 GovPrompt Thailand — เครื่องมือช่วยจัดทำร่าง ไม่ใช่คำวินิจฉัยทางกฎหมาย</p></div></footer>
+<div class="toast" id="toast"></div>
+<script>
+const tools=[["GP001","ร่างหนังสือราชการ"],["GP002","หนังสือภายนอก"],["GP003","บันทึกข้อความ"],["GP004","หนังสือเชิญประชุม"],["GP005","วิเคราะห์ข้อกฎหมาย"],["GP006","ร่างหนังสือหารือ"],["GP007","ตรวจร่างคำสั่ง"],["GP008","สรุปคำพิพากษา"],["GP009","สรุปผู้บริหาร 3 นาที"],["GP010","วิเคราะห์ความเสี่ยง"],["GP011","ทางเลือกเพื่อการตัดสินใจ"],["GP012","สรุปรายงานประชุม"],["GP013","เขียนข่าวกิจกรรม"],["GP014","ข้อความ Facebook"],["GP015","ข่าวประชาสัมพันธ์"],["GP016","ข้อความโปสเตอร์"],["GP017","ร่าง TOR เบื้องต้น"],["GP018","จัดทำขอบเขตงาน"],["GP019","Checklist ตรวจรับ"],["GP020","วิเคราะห์ความคุ้มค่า"]];
+const list=document.getElementById("promptList"),select=document.getElementById("toolSelect");
+tools.forEach(([id,name])=>{list.insertAdjacentHTML("beforeend",`<div class="prompt-item"><b>${id}</b><span>${name}</span></div>`);select.insertAdjacentHTML("beforeend",`<option>${name}</option>`)})
+const toast=t=>{const e=document.getElementById("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),1800)};
+document.getElementById("generateBtn").onclick=()=>{const name=select.value,facts=document.getElementById("facts").value.trim();if(!facts){toast("กรุณากรอกข้อเท็จจริง");return}document.getElementById("output").textContent=`บทบาท
+คุณเป็น Government AI Copilot ผู้เชี่ยวชาญงานราชการไทย
+
+ภารกิจ
+ดำเนินงาน: ${name}
+
+ข้อเท็จจริงจากผู้ใช้
+${facts}
+
+ข้อกำหนดสำคัญ
+- ยึดข้อเท็จจริงที่ให้เป็นหลัก
+- ห้ามสมมติชื่อบุคคล วันที่ เลขหนังสือ วงเงิน หรือข้อกฎหมาย
+- แยกข้อเท็จจริง ข้อกฎหมาย การวิเคราะห์ ความเสี่ยง และข้อเสนอแนะ
+- ระบุข้อมูลที่ต้องตรวจสอบเพิ่มเติมก่อนนำไปใช้จริง
+- ใช้ภาษาราชการที่กระชับ ชัดเจน และพร้อมตรวจทาน`;}
+document.getElementById("copyBtn").onclick=async()=>{await navigator.clipboard.writeText(document.getElementById("output").textContent);toast("คัดลอกแล้ว")};
+document.getElementById("saveBtn").onclick=()=>{localStorage.setItem("govprompt_trial_draft",document.getElementById("output").textContent);toast("บันทึกร่างแล้ว")};
+const saved=localStorage.getItem("govprompt_trial_draft");if(saved)document.getElementById("output").textContent=saved;
+</script>
+</body>
+</html>
