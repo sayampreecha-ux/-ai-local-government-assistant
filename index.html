@@ -17,6 +17,7 @@
       <span><strong>GovPrompt Thailand</strong><small>ระบบผู้ช่วย AI สำหรับงานราชการไทย</small></span>
     </a>
     <nav>
+      <a href="#dashboard">เริ่มงาน</a>
       <a href="#free20">ใช้ฟรี 20 Prompt</a>
       <a href="#catalog222">ครบ 222 Prompt</a>
       <a href="#how-free">วิธีใช้งาน</a>
@@ -60,6 +61,39 @@
     </section>
 
 
+
+
+    <section class="section dashboard-section" id="dashboard">
+      <div class="section-head product-head">
+        <div>
+          <span class="kicker">Government AI Workspace</span>
+          <h2>เริ่มงานราชการได้ในไม่กี่คลิก</h2>
+        </div>
+        <p>เลือกงานด่วน หรือพิมพ์สิ่งที่ต้องการให้ระบบช่วยค้นหา Prompt ที่เหมาะสม</p>
+      </div>
+
+      <div class="router-box">
+        <label class="field-label" for="taskRouterInput">วันนี้ต้องการทำงานอะไร</label>
+        <div class="router-row">
+          <input id="taskRouterInput" class="input" type="search" placeholder="เช่น ร่างหนังสือเชิญประชุม, ทำข่าวประชาสัมพันธ์, ตรวจร่างคำสั่ง">
+          <button id="taskRouterBtn" class="btn primary" type="button">ค้นหา Prompt</button>
+        </div>
+        <div id="taskRouterResults" class="router-results" aria-live="polite"></div>
+      </div>
+
+      <div class="quick-action-grid" id="quickActionGrid"></div>
+
+      <div class="workspace-summary-grid">
+        <article class="workspace-summary-card">
+          <div class="summary-card-head"><div><span class="kicker">ใช้ล่าสุด</span><h3>Recent</h3></div><button id="clearRecentBtn" class="text-button" type="button">ล้างรายการ</button></div>
+          <div id="recentPromptList" class="mini-prompt-list"></div>
+        </article>
+        <article class="workspace-summary-card">
+          <div class="summary-card-head"><div><span class="kicker">รายการโปรด</span><h3>Favorites</h3></div><span id="favoriteCount" class="pill">0</span></div>
+          <div id="favoritePromptList" class="mini-prompt-list"></div>
+        </article>
+      </div>
+    </section>
 
     <section class="section free20-section" id="free20">
       <div class="section-head product-head">
