@@ -1,0 +1,26 @@
+# วิธีนำ Source ขึ้น GitHub เมื่อใช้ iPad
+
+วิธีง่ายที่สุดคือใช้คอมพิวเตอร์ 1 ครั้ง เพราะ GitHub บน iPad ไม่สะดวกกับการอัปโหลดโฟลเดอร์หลายชั้น
+
+## ทางเลือก A: คอมพิวเตอร์ + GitHub Web
+1. ดาวน์โหลด ZIP และแตกไฟล์
+2. สร้าง Private Repository ที่ว่าง
+3. ใน Repository กด Add file → Upload files
+4. ลากไฟล์และโฟลเดอร์ทั้งหมดจากโฟลเดอร์ที่แตกแล้ว
+5. ตรวจว่ามีโฟลเดอร์ `api`, `lib`, `supabase`, `.github`
+6. Commit changes
+
+## ทางเลือก B: คอมพิวเตอร์ + Git Command
+```bash
+git init
+git add .
+git commit -m "GovPrompt Enterprise 4.0"
+git branch -M main
+git remote add origin https://github.com/USERNAME/REPOSITORY.git
+git push -u origin main
+```
+
+## ข้อควรระวัง
+- อย่าอัปโหลด ZIP เข้า Repository แล้วคิดว่า Vercel จะเปิดไฟล์ภายในให้
+- อย่าอัปโหลด `.env` หรือไฟล์รหัสลับ
+- Repository ต้องเห็น `index.html` ที่หน้า Root
