@@ -44,9 +44,3 @@ select.mini{width:auto;padding:7px 10px}
 .setup-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.setup-card{background:#fff;border:1px solid var(--line,#dfe5ec);border-radius:18px;padding:20px}.setup-card h3{margin-top:0}.setup-card code{word-break:break-word}.status-list{display:grid;gap:12px}.status-row{display:flex;justify-content:space-between;gap:16px;padding:14px 16px;border:1px solid var(--line,#dfe5ec);border-radius:14px;background:#fff}.status-row strong.ok{color:#147a42}.status-row strong.warn{color:#9a6700}@media(max-width:800px){.setup-grid{grid-template-columns:1fr}.system-banner{top:64px}}
 
 .tool-group-title{grid-column:1/-1;display:flex;align-items:center;gap:12px;margin-top:24px;padding:16px 18px;border-radius:16px;background:linear-gradient(135deg,#eef5ff,#f8fbff);border:1px solid #d9e6f7}.tool-group-title span{font-weight:800;color:#1f5ea8}.tool-group-title h3{margin:0;flex:1;font-size:1.05rem}.tool-group-title small{color:#526274;font-weight:600}@media(max-width:640px){.tool-group-title{align-items:flex-start;flex-wrap:wrap}.tool-group-title small{width:100%}}
-
-/* Homepage launch hero — Merge & Upgrade 2026-07-25 */
-.hero-main-message{max-width:760px;font-size:clamp(1.35rem,2.5vw,2rem);font-weight:700;line-height:1.5;color:var(--navy)}
-.hero-audience{max-width:820px;margin:10px 0 0;font-size:clamp(1.05rem,2vw,1.45rem);line-height:1.5;color:#334f72;font-weight:700}
-.hero-primary-cta{min-height:58px;padding:16px 28px;font-size:1.12rem;box-shadow:0 14px 30px rgba(21,95,193,.24)}
-@media(max-width:620px){.hero-main-message{font-size:1.3rem}.hero-audience{font-size:1.05rem}.hero-primary-cta{width:100%;font-size:1.05rem}.hero-actions .secondary{width:100%}}
