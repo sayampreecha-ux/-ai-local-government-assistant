@@ -1,39 +1,50 @@
-<!doctype html>
-<html lang="th">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="robots" content="noindex,nofollow" />
-  <title>ตรวจความพร้อมระบบ | GovPrompt Thailand</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css" />
-</head>
-<body>
-  <header class="topbar">
-    <a class="brand" href="/"><span class="brand-mark">G</span><span><strong>GovPrompt Thailand</strong><small>หน้าตรวจความพร้อมสำหรับเจ้าของระบบ</small></span></a>
-    <nav><a href="/">หน้าแรก</a><a href="/admin.html">ผู้ดูแลระบบ</a></nav>
-  </header>
-  <main class="section" style="max-width:980px;margin:auto;padding-top:110px">
-    <div class="section-head compact">
-      <div><span class="kicker">Owner Check</span><h1>ตรวจความพร้อมก่อนเปิดขาย</h1></div>
-      <button id="runCheck" class="btn primary">ตรวจอีกครั้ง</button>
-    </div>
-    <div class="notice">หน้านี้ไม่แสดง API Key หรือรหัสลับ จะแสดงเฉพาะสถานะว่าได้ตั้งค่าแล้วหรือยัง</div>
-    <div id="overall" class="form-message">กำลังตรวจสอบ...</div>
-    <div class="package-grid" id="checks"></div>
-    <section class="section soft" style="margin-top:24px">
-      <h2>ลำดับก่อนเปิดรับเงิน</h2>
-      <ol style="line-height:1.9">
-        <li>ฐานข้อมูลต้องขึ้น “พร้อมใช้งาน”</li>
-        <li>แพ็กเกจต้องโหลดได้ 3 รายการ</li>
-        <li>ข้อมูลชำระเงินต้องตั้งค่าแล้ว</li>
-        <li>AI ควรเป็นโหมด Live ก่อนเปิดขายจริง</li>
-        <li>ทดสอบเข้าสู่หน้า <a href="/admin.html">ผู้ดูแลระบบ</a> และออกรหัสทดลอง 1 ชุด</li>
-      </ol>
-    </section>
-  </main>
-  <script src="/owner-check.js" defer></script>
-</body>
-</html>
+# GOVPROMPT THAILAND ENTERPRISE 5.0
+
+แพลตฟอร์มสร้าง Prompt พร้อมคัดลอกสำหรับงานราชการไทย จำนวน 222 รายการ แบ่งเป็น 11 กลุ่มงาน
+
+## หลักการทำงาน
+
+1. สมาชิกเลือกเครื่องมือ GP001–GP222
+2. กรอกข้อเท็จจริงในแบบฟอร์มเฉพาะเครื่องมือ
+3. เซิร์ฟเวอร์ประกอบ Prompt Master กับข้อมูลที่กรอก
+4. ผู้ใช้คัดลอก Prompt ไปใช้กับ AI ที่ตนเลือก
+5. ระบบไม่เรียก OpenAI หรือ AI API ใด ๆ จึงไม่มีค่าใช้จ่าย API จากการสร้าง Prompt
+
+## การป้องกันทรัพย์สิน
+
+- หน้าบ้านมีเฉพาะชื่อ คำอธิบาย ตัวอย่าง และแบบฟอร์ม
+- Prompt Master อยู่ใน `lib/prompt-master.mjs` ฝั่งเซิร์ฟเวอร์
+- ต้องเข้าสู่ระบบสมาชิกก่อนประกอบ Prompt
+- ระบบบันทึกการใช้งานและลายน้ำชื่อผู้ซื้อ
+
+## กลุ่มงาน
+
+- G01 งานสารบรรณและเอกสารราชการ
+- G02 งานประชุม เลขานุการ และสนับสนุนผู้บริหาร
+- G03 งานกฎหมาย นิติการ และคำสั่งทางปกครอง
+- G04 งานบุคคล วินัย จริยธรรม และเรื่องร้องเรียน
+- G05 งานพัสดุ จัดซื้อจัดจ้าง และบริหารสัญญา
+- G06 งานก่อสร้าง ควบคุมงาน และตรวจรับ
+- G07 งานแผน ยุทธศาสตร์ โครงการ งบประมาณ และความเสี่ยง
+- G08 งานประชาสัมพันธ์ พิธีการ และสื่อราชการ
+- G09 งานบริการประชาชน ประชาคม และคู่มือบริการ
+- G10 งานข้อมูล รัฐบาลดิจิทัล ปัญญาประดิษฐ์ และคุ้มครองข้อมูล
+- G11 งานตรวจสอบ ธรรมาภิบาล และการเตรียมรับการตรวจ
+
+## ตรวจระบบก่อนอัปโหลด
+
+```bash
+npm install
+npm run validate
+```
+
+## ตัวแปรระบบสำคัญ
+
+ดูรายการใน `.env.example` โดยเก็บค่าจริงเป็น Environment Variables ของ Vercel ห้ามใส่ Secret ลงในซอร์สหรือไฟล์ ZIP
+
+## สถานะ
+
+- Prompt Master: 222/222 ผ่านการตรวจและอนุมัติ
+- แบบฟอร์ม: 222/222
+- การเรียก AI API: ไม่มี
+- รุ่น: 5.0.0-222
