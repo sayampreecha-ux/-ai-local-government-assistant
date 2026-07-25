@@ -153,6 +153,30 @@
             <div class="review-head"><div><span class="kicker">Review Engine</span><h3>ตรวจความพร้อมก่อนใช้งาน</h3></div><span id="freeReviewScore" class="review-score">0%</span></div>
             <div id="freeReviewItems" class="review-items"></div>
           </section>
+          <section id="freeFeedbackPanel" class="feedback-panel hidden" aria-live="polite">
+            <div class="feedback-head">
+              <div><span class="kicker">เสียงจากผู้ทดลองใช้</span><h3>ผลลัพธ์นี้เป็นประโยชน์หรือไม่?</h3></div>
+              <span class="pill">ใช้เวลาไม่ถึง 1 นาที</span>
+            </div>
+            <form id="freeFeedbackForm">
+              <input id="feedbackPromptCode" type="hidden" name="promptCode">
+              <div class="feedback-rating" role="radiogroup" aria-label="ให้คะแนนผลลัพธ์">
+                <label><input type="radio" name="rating" value="5" required><span>5 ⭐</span></label>
+                <label><input type="radio" name="rating" value="4"><span>4 ⭐</span></label>
+                <label><input type="radio" name="rating" value="3"><span>3 ⭐</span></label>
+                <label><input type="radio" name="rating" value="2"><span>2 ⭐</span></label>
+                <label><input type="radio" name="rating" value="1"><span>1 ⭐</span></label>
+              </div>
+              <label class="field-label" for="feedbackComment">ข้อเสนอแนะเพิ่มเติม <small>(ไม่บังคับ)</small></label>
+              <textarea id="feedbackComment" class="input feedback-comment" name="comment" rows="3" maxlength="1000" placeholder="เช่น ใช้งานง่าย อยากให้เพิ่มตัวอย่าง หรือควรปรับคำถามส่วนใด"></textarea>
+              <label class="check feedback-consent">
+                <input id="feedbackConsent" type="checkbox" required>
+                ยินยอมส่งคะแนนและความคิดเห็นเพื่อใช้ปรับปรุงระบบ โดยไม่กรอกข้อมูลลับหรือข้อมูลส่วนบุคคล
+              </label>
+              <button id="feedbackSubmitBtn" class="btn primary full" type="submit">📨 ส่งความคิดเห็น</button>
+              <div id="feedbackMessage" class="form-message" aria-live="polite"></div>
+            </form>
+          </section>
           <p class="small">ระบบนี้ประกอบ Prompt จากข้อมูลที่คุณกรอกในอุปกรณ์ของคุณ ไม่ส่งข้อมูลไปยังเซิร์ฟเวอร์ของ GovPrompt Thailand</p>
         </article>
       </div>

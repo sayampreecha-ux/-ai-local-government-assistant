@@ -1,0 +1,19 @@
+GovPrompt Thailand Baseline v1.6 — Feedback Collection
+
+Merge & Upgrade from v1.5 Core Engine Lite
+
+เพิ่ม:
+- แบบประเมินผลใต้ผลลัพธ์ของ 20 Prompt ฟรี
+- คะแนน 1–5 ดาว
+- ช่องข้อเสนอแนะ
+- Consent ไม่ให้ส่งข้อมูลลับหรือข้อมูลส่วนบุคคล
+- บันทึกรหัส GP, อุปกรณ์, เวอร์ชัน และหน้าที่ส่ง
+- รองรับ Google Sheets ผ่าน Google Apps Script
+- Local fallback เมื่อยังไม่ตั้งค่า Endpoint หรืออินเทอร์เน็ตขัดข้อง
+
+คงเดิม:
+- GP001–GP222
+- Prompt Master ไม่ถูกเปิดเผย
+- Favorites / Recent / Search / Router / Review Engine
+- ใช้งานบน GitHub Pages
+- Merge & Upgrade เท่านั้น

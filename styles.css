@@ -132,3 +132,16 @@ select.mini{width:auto;padding:7px 10px}
 
 /* Baseline v1.5 — Core Engine Lite + Review Engine */
 .review-panel{margin-top:16px;padding:18px;border:1px solid var(--line);border-radius:16px;background:#fbfdfc}.review-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}.review-head h3{margin:3px 0 0;font-size:18px}.review-score{display:grid;place-items:center;min-width:58px;height:58px;border-radius:50%;background:#eaf4ff;color:#0d5aa7;font-weight:800}.review-items{display:grid;gap:8px}.review-item{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid var(--line)}.review-item.ok{border-color:#b9decf;background:#f3fbf7}.review-item.warn{border-color:#eed08d;background:#fffaf0}.review-item span:first-child{font-size:18px;line-height:1.2}.review-item strong{display:block;font-size:14px}.review-item small{display:block;color:var(--muted);margin-top:2px;line-height:1.5}.hidden{display:none!important}
+
+/* v1.6 Feedback */
+.feedback-panel{margin-top:18px;padding:18px;border:1px solid var(--border,#dbe3ee);border-radius:18px;background:#fff}
+.feedback-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.feedback-head h3{margin:3px 0 0;font-size:1.08rem}
+.feedback-rating{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0 16px}
+.feedback-rating input{position:absolute;opacity:0;pointer-events:none}
+.feedback-rating span{display:flex;align-items:center;justify-content:center;min-height:42px;padding:8px;border:1px solid var(--border,#dbe3ee);border-radius:12px;cursor:pointer;font-weight:700;background:#f8fafc;transition:.15s ease}
+.feedback-rating input:checked+span,.feedback-rating span:hover{border-color:#175cd3;background:#eff6ff;box-shadow:0 0 0 2px rgba(23,92,211,.08)}
+.feedback-comment{resize:vertical;min-height:86px}
+.feedback-consent{margin:12px 0}
+.feedback-panel.is-sent{background:#f0fdf4;border-color:#86efac}
+@media(max-width:640px){.feedback-head{display:block}.feedback-head .pill{display:inline-flex;margin-top:8px}.feedback-rating{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}.feedback-rating span{font-size:.78rem;padding:6px 2px}}

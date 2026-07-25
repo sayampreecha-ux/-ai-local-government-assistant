@@ -323,6 +323,13 @@ document.querySelector('#lookupForm').addEventListener('submit', async event => 
   const reviewPanel = document.querySelector('#freeReviewPanel');
   const reviewScore = document.querySelector('#freeReviewScore');
   const reviewItems = document.querySelector('#freeReviewItems');
+  const feedbackPanel = document.querySelector('#freeFeedbackPanel');
+  const feedbackForm = document.querySelector('#freeFeedbackForm');
+  const feedbackPromptCode = document.querySelector('#feedbackPromptCode');
+  const feedbackComment = document.querySelector('#feedbackComment');
+  const feedbackSubmitBtn = document.querySelector('#feedbackSubmitBtn');
+  const feedbackMessage = document.querySelector('#feedbackMessage');
+  const FEEDBACK_LOCAL_KEY = 'govprompt_feedback_pending_v1';
 
   function safe(value){
     return String(value ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
@@ -493,6 +500,74 @@ ${collectFacts(tool)}
     reviewPanel.classList.remove('hidden');
   }
 
+  function resetFeedback(){
+    if (!feedbackPanel || !feedbackForm) return;
+    feedbackPanel.classList.add('hidden');
+    feedbackPanel.classList.remove('is-sent');
+    feedbackForm.reset();
+    if (feedbackMessage) { feedbackMessage.className = 'form-message'; feedbackMessage.textContent = ''; }
+    if (feedbackSubmitBtn) { feedbackSubmitBtn.disabled = false; feedbackSubmitBtn.textContent = '📨 ส่งความคิดเห็น'; }
+  }
+
+  function savePendingFeedback(payload){
+    try {
+      const current = JSON.parse(localStorage.getItem(FEEDBACK_LOCAL_KEY) || '[]');
+      const list = Array.isArray(current) ? current : [];
+      list.push(payload);
+      localStorage.setItem(FEEDBACK_LOCAL_KEY, JSON.stringify(list.slice(-100)));
+    } catch (_) {}
+  }
+
+  async function submitFeedback(event){
+    event.preventDefault();
+    if (!feedbackForm || !feedbackMessage || !feedbackSubmitBtn) return;
+    const data = new FormData(feedbackForm);
+    const rating = data.get('rating');
+    if (!rating) {
+      feedbackMessage.className = 'form-message error';
+      feedbackMessage.textContent = 'กรุณาเลือกคะแนนก่อนส่งความคิดเห็น';
+      return;
+    }
+    const payload = {
+      timestamp: new Date().toISOString(),
+      promptCode: feedbackPromptCode?.value || selectedCode?.textContent || '',
+      rating: Number(rating),
+      comment: String(feedbackComment?.value || '').trim().slice(0, 1000),
+      device: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile/tablet' : 'desktop',
+      version: window.GOVPROMPT_RELEASE_VERSION || 'v1.6-feedback',
+      page: location.href.split('#')[0]
+    };
+    feedbackSubmitBtn.disabled = true;
+    feedbackSubmitBtn.textContent = 'กำลังส่ง...';
+    const endpoint = String(window.GOVPROMPT_FEEDBACK_ENDPOINT || '').trim();
+    if (!endpoint) {
+      savePendingFeedback(payload);
+      feedbackMessage.className = 'form-message success';
+      feedbackMessage.textContent = 'บันทึกความคิดเห็นไว้ในอุปกรณ์แล้ว — เจ้าของระบบต้องตั้งค่า Google Sheets เพื่อรับข้อมูลส่วนกลาง';
+      feedbackPanel.classList.add('is-sent');
+      feedbackSubmitBtn.textContent = 'บันทึกแล้ว ✓';
+      return;
+    }
+    try {
+      await fetch(endpoint, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify(payload)
+      });
+      feedbackMessage.className = 'form-message success';
+      feedbackMessage.textContent = 'ขอบคุณครับ ความคิดเห็นของคุณถูกส่งเพื่อใช้ปรับปรุง GovPrompt Thailand แล้ว';
+      feedbackPanel.classList.add('is-sent');
+      feedbackSubmitBtn.textContent = 'ส่งแล้ว ✓';
+    } catch (_) {
+      savePendingFeedback(payload);
+      feedbackMessage.className = 'form-message error';
+      feedbackMessage.textContent = 'ส่งออนไลน์ไม่สำเร็จ ระบบบันทึกไว้ในอุปกรณ์ชั่วคราว กรุณาลองใหม่เมื่อมีอินเทอร์เน็ต';
+      feedbackSubmitBtn.disabled = false;
+      feedbackSubmitBtn.textContent = '📨 ลองส่งอีกครั้ง';
+    }
+  }
+
   function renderQuickActions(){
     if (!quickActionGrid) return;
     const keywords = ['หนังสือ','คำสั่ง','ข่าว','กฎหมาย','TOR','บุคคล'];
@@ -541,7 +616,7 @@ ${collectFacts(tool)}
   }
 
   searchInput.addEventListener('input', renderCards);
-  select.addEventListener('change', () => { renderFreeFields(); addRecent(findTool(select.value)); });
+  select.addEventListener('change', () => { renderFreeFields(); resetFeedback(); addRecent(findTool(select.value)); });
   form.addEventListener('submit', event => {
     event.preventDefault();
     const tool = freeTools.find(item => item.id === select.value) || freeTools[0];
@@ -553,6 +628,8 @@ ${collectFacts(tool)}
     message.className = 'form-message success';
     message.textContent = `สร้าง ${tool.code} สำเร็จ — ตรวจข้อมูลก่อนคัดลอกไปใช้กับ AI`;
     renderReview(tool);
+    if (feedbackPromptCode) feedbackPromptCode.value = tool.code;
+    if (feedbackPanel) feedbackPanel.classList.remove('hidden');
     output.scrollIntoView({behavior:'smooth', block:'nearest'});
   });
 
@@ -565,6 +642,7 @@ ${collectFacts(tool)}
     setTimeout(() => copyBtn.textContent = 'คัดลอก Prompt', 1400);
   });
 
+  feedbackForm?.addEventListener('submit', submitFeedback);
   routerBtn?.addEventListener('click', runRouter);
   routerInput?.addEventListener('keydown', event => { if (event.key === 'Enter') runRouter(); });
   document.querySelector('#clearRecentBtn')?.addEventListener('click', () => { recent = []; writeStorage(STORAGE_RECENT, recent); renderWorkspaceLists(); });
