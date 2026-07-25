@@ -17,10 +17,10 @@
       <span><strong>GovPrompt Thailand</strong><small>ระบบผู้ช่วย AI สำหรับงานราชการไทย</small></span>
     </a>
     <nav>
-      <a href="#tools">เครื่องมือ</a>
-      <a href="#packages">แพ็กเกจ</a>
-      <a href="#order">สั่งซื้อ</a>
-      <button class="nav-login" data-open-login>เข้าสู่ระบบ</button>
+      <a href="#free20">ใช้ฟรี 20 Prompt</a>
+      <a href="#tools">คลังเครื่องมือ</a>
+      <a href="#how-free">วิธีใช้งาน</a>
+      <a class="nav-cta" href="#free20">เริ่มใช้ฟรี</a>
     </nav>
   </header>
 
@@ -35,12 +35,12 @@
         <h2 class="hero-audience">สำหรับส่วนราชการและองค์กรปกครองส่วนท้องถิ่น</h2>
         <div class="hero-actions">
           <a class="btn primary hero-primary-cta" href="#free20">🚀 เริ่มใช้ฟรีทันที</a>
-          <button class="btn secondary" data-open-login>กรอกรหัสใช้งาน</button>
+          <a class="btn secondary" href="#how-free">ดูวิธีใช้งาน</a>
         </div>
         <div class="trust-row">
           <span>✓ ใช้ได้ทั้งมือถือและคอมพิวเตอร์</span>
           <span>✓ ไม่ต้องเขียน Prompt เอง</span>
-          <span>✓ มีลายน้ำชื่อผู้ซื้อ</span>
+          <span>✓ ไม่ต้องสมัครสมาชิก</span>
         </div>
       </div>
       <aside class="hero-panel">
@@ -102,6 +102,26 @@
     </section>
 
 
+
+    <section class="section how-free-section" id="how-free">
+      <div class="section-head compact">
+        <div>
+          <span class="kicker">ใช้งานง่าย 3 ขั้นตอน</span>
+          <h2>เริ่มทำงานราชการด้วย AI ได้ทันที</h2>
+        </div>
+        <p>ไม่ต้องติดตั้งโปรแกรม ไม่ต้องสมัครสมาชิก และไม่ต้องเปิดเผยข้อมูลลับของราชการ</p>
+      </div>
+      <div class="steps free-steps">
+        <div><b>1</b><h3>เลือก Prompt</h3><p>เลือกจาก 20 งานราชการที่เปิดให้ใช้ฟรี</p></div>
+        <div><b>2</b><h3>กรอกข้อเท็จจริง</h3><p>กรอกเฉพาะข้อมูลที่จำเป็น โดยหลีกเลี่ยงข้อมูลลับและข้อมูลอ่อนไหว</p></div>
+        <div><b>3</b><h3>คัดลอกไปใช้</h3><p>นำ Prompt ที่ระบบสร้างไปวางใน AI ที่คุณใช้อยู่ แล้วตรวจทานก่อนใช้จริง</p></div>
+      </div>
+      <div class="launch-notice">
+        <strong>ข้อควรระวัง:</strong> AI เป็นผู้ช่วยร่าง ไม่ใช่ผู้อนุมัติหรือผู้ลงนาม ผู้ใช้งานต้องตรวจข้อเท็จจริง ข้อกฎหมาย อำนาจหน้าที่ และรูปแบบหนังสือก่อนนำไปใช้
+      </div>
+    </section>
+
+
     <section class="section soft" id="preview">
       <div class="preview-grid">
         <div>
@@ -119,7 +139,7 @@
       </div>
     </section>
 
-    <section class="section" id="packages">
+    <section class="section backend-only hidden" id="packages">
       <div class="section-head compact">
         <div><span class="kicker">เลือกตามปริมาณงาน</span><h2>แพ็กเกจสิทธิ์ใช้งาน</h2></div>
         <p>ราคาและจำนวนครั้งดึงจากฐานข้อมูล ผู้ดูแลสามารถปรับใน Supabase ได้โดยไม่เปิดเผย Prompt</p>
@@ -127,7 +147,7 @@
       <div class="package-grid" id="packageGrid"><div class="loading-box">กำลังโหลดแพ็กเกจ...</div></div>
     </section>
 
-    <section class="section" id="how">
+    <section class="section backend-only hidden" id="how">
       <div class="section-head compact"><div><span class="kicker">ขั้นตอนใช้งาน</span><h2>สั่งซื้อและเริ่มใช้ใน 4 ขั้นตอน</h2></div></div>
       <div class="steps">
         <div><b>1</b><h3>เลือกแพ็กเกจ</h3><p>เลือกจำนวนครั้งและเครื่องมือที่เหมาะกับงาน</p></div>
@@ -137,7 +157,7 @@
       </div>
     </section>
 
-    <section class="section order-section" id="order">
+    <section class="section order-section backend-only hidden" id="order">
       <div class="order-copy">
         <span class="kicker">เริ่มสั่งซื้อ</span>
         <h2>ลงทะเบียนรับสิทธิ์ใช้งาน</h2>
@@ -164,7 +184,7 @@
       </form>
     </section>
 
-    <section class="section hidden" id="paymentPanel">
+    <section class="section backend-only hidden" id="paymentPanel">
       <div class="payment-card">
         <div>
           <span class="kicker">เลขอ้างอิงของคุณ</span>
@@ -199,13 +219,20 @@
     </section>
   </main>
 
-  <footer>
+  <section class="public-launch-cta">
+  <div>
+    <strong>GovPrompt Thailand เปิดให้ทดลองใช้ฟรี 20 Prompt</strong>
+    <span>เริ่มใช้งานได้ทันที โดยไม่ต้องสมัครสมาชิก</span>
+  </div>
+  <a class="btn primary" href="#free20">🚀 เริ่มใช้ฟรีทันที</a>
+</section>
+<footer>
     <strong>GovPrompt Thailand</strong>
     <p>ระบบช่วยร่างและวิเคราะห์ ผู้ใช้ต้องตรวจสอบข้อเท็จจริง อำนาจหน้าที่ ระเบียบ และความถูกต้องก่อนนำไปใช้จริง</p>
     <p class="footer-links"><a href="./terms.html">เงื่อนไข</a> · <a href="./privacy.html">ความเป็นส่วนตัว</a></p>
   </footer>
 
-  <dialog id="loginDialog" class="modal">
+  <dialog id="loginDialog" class="backend-only" class="modal">
     <form method="dialog" class="modal-card" id="loginForm">
       <button class="close" value="cancel" aria-label="ปิด">×</button>
       <span class="kicker">สมาชิก</span>

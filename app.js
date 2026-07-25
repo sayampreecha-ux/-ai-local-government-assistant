@@ -65,7 +65,8 @@ async function loadPublicConfig() {
   const buyButtons = document.querySelectorAll('[data-buy]');
   if (!state.config.salesEnabled) {
     banner.classList.remove('hidden');
-    banner.textContent = '🔧 ระบบอยู่ระหว่างตั้งค่า ยังไม่เปิดรับคำสั่งซื้อ — สามารถดูตัวอย่างและตรวจหน้าระบบได้ก่อน';
+    banner.classList.add('success');
+    banner.textContent = '✅ เปิดให้ใช้ฟรี 20 Prompt โดยไม่ต้องสมัครสมาชิก • ระบบสมาชิกและแพ็กเกจเต็มจะเปิดในระยะถัดไป';
     orderButton.disabled = true;
     orderButton.textContent = 'ยังไม่เปิดรับคำสั่งซื้อ';
     buyButtons.forEach(button => { button.disabled = true; });

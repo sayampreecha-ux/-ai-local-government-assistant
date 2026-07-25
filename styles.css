@@ -65,3 +65,21 @@ select.mini{width:auto;padding:7px 10px}
   .free20-result{position:static}
   .free-output{min-height:260px}
 }
+
+
+/* Baseline v1.2 — Public Launch */
+.nav-cta{background:#0d3b66;color:#fff!important;padding:10px 15px;border-radius:12px}
+.how-free-section{background:#fff}
+.free-steps{grid-template-columns:repeat(3,1fr)}
+.launch-notice{margin-top:24px;padding:18px 20px;border-radius:16px;background:#fff8e8;border:1px solid #f1d49a;line-height:1.7}
+.public-launch-cta{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:26px max(20px,calc((100% - 1160px)/2));background:#eaf4ff;border-top:1px solid #cfe3f8}
+.public-launch-cta div{display:grid;gap:5px}
+.public-launch-cta strong{font-size:20px;color:#0b315a}
+.public-launch-cta span{color:#52667d}
+.backend-only{display:none!important}
+@media(max-width:760px){
+  .topbar nav a:not(.nav-cta){display:none}
+  .free-steps{grid-template-columns:1fr}
+  .public-launch-cta{align-items:stretch;flex-direction:column}
+  .public-launch-cta .btn{width:100%}
+}

@@ -1,0 +1,8 @@
+GovPrompt Thailand Baseline v1.2 — Public Launch
+- ใช้ Baseline v1.1 เป็นฐาน
+- คงระบบ 20 Prompt ฟรี
+- เมนูเน้นใช้ฟรีและวิธีใช้งาน
+- ซ่อนส่วนสมาชิก แพ็กเกจ และสั่งซื้อที่ยังไม่มี Backend บน GitHub Pages
+- เพิ่มคำเตือนตรวจข้อเท็จจริงและกฎหมาย
+- ไม่ลบ GP001–GP222
+- ไม่รวม Prompt Master หรือข้อมูลลับ
