@@ -149,6 +149,10 @@
           <div class="sample-top"><span>Prompt พร้อมคัดลอก</span><span class="pill">ใช้ฟรี</span></div>
           <pre id="freePromptOutput" class="free-output empty">เลือก Prompt และกรอกข้อมูลเพื่อเริ่มใช้งาน</pre>
           <button id="freeCopyBtn" class="btn secondary full" type="button" disabled>คัดลอก Prompt</button>
+          <section id="freeReviewPanel" class="review-panel hidden" aria-live="polite">
+            <div class="review-head"><div><span class="kicker">Review Engine</span><h3>ตรวจความพร้อมก่อนใช้งาน</h3></div><span id="freeReviewScore" class="review-score">0%</span></div>
+            <div id="freeReviewItems" class="review-items"></div>
+          </section>
           <p class="small">ระบบนี้ประกอบ Prompt จากข้อมูลที่คุณกรอกในอุปกรณ์ของคุณ ไม่ส่งข้อมูลไปยังเซิร์ฟเวอร์ของ GovPrompt Thailand</p>
         </article>
       </div>
@@ -348,6 +352,7 @@
 
   <script>window.GOVPROMPT_STATIC_GITHUB = true;</script>
   <script src="./catalog-public.js" defer></script>
+  <script src="./prompt-registry.js" defer></script>
   <script src="./app.js" defer></script>
 </body>
 </html>

@@ -290,6 +290,8 @@ document.querySelector('#lookupForm').addEventListener('submit', async event => 
 // Baseline v1.4 — Smart Workspace + Favorites + Recent + Task Router
 (function initSmartWorkspace(){
   const catalog = Array.isArray(window.GOVPROMPT_CATALOG) ? window.GOVPROMPT_CATALOG : [];
+  const registry = Array.isArray(window.GOVPROMPT_REGISTRY) ? window.GOVPROMPT_REGISTRY : [];
+  const normalizeSearch = window.GOVPROMPT_NORMALIZE || (value => String(value || '').toLowerCase());
   const select = document.querySelector('#freeToolSelect');
   const form = document.querySelector('#freePromptForm');
   if (!select || !form || !catalog.length) return;
@@ -318,6 +320,9 @@ document.querySelector('#lookupForm').addEventListener('submit', async event => 
   const routerInput = document.querySelector('#taskRouterInput');
   const routerBtn = document.querySelector('#taskRouterBtn');
   const routerResults = document.querySelector('#taskRouterResults');
+  const reviewPanel = document.querySelector('#freeReviewPanel');
+  const reviewScore = document.querySelector('#freeReviewScore');
+  const reviewItems = document.querySelector('#freeReviewItems');
 
   function safe(value){
     return String(value ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
@@ -435,6 +440,7 @@ document.querySelector('#lookupForm').addEventListener('submit', async event => 
     output.classList.add('empty');
     copyBtn.disabled = true;
     message.textContent = '';
+    reviewPanel?.classList.add('hidden');
   }
 
   function collectFacts(tool){
@@ -469,6 +475,24 @@ ${collectFacts(tool)}
 จัดทำผลลัพธ์สำหรับ “${tool.code} — ${tool.name}” ให้พร้อมตรวจทานและนำไปปรับใช้ โดยไม่สร้างข้อเท็จจริงใหม่`;
   }
 
+
+  function renderReview(tool){
+    if (!reviewPanel || !reviewScore || !reviewItems) return;
+    const fields = tool.formFields || [];
+    const missingRequired = fields.filter(field => field.required && !document.querySelector(`#free_${CSS.escape(field.id)}`)?.value.trim());
+    const missingOptional = fields.filter(field => !field.required && !document.querySelector(`#free_${CSS.escape(field.id)}`)?.value.trim());
+    const checks = [
+      {ok: missingRequired.length === 0, title: 'ข้อมูลจำเป็น', detail: missingRequired.length ? `ยังขาด: ${missingRequired.map(f => f.label).join(', ')}` : 'กรอกข้อมูลจำเป็นครบแล้ว'},
+      {ok: missingOptional.length === 0, title: 'ข้อมูลประกอบ', detail: missingOptional.length ? `ยังไม่ได้ระบุ ${missingOptional.length} รายการ ซึ่งอาจทำให้ผลลัพธ์ไม่สมบูรณ์` : 'กรอกข้อมูลประกอบครบแล้ว'},
+      {ok: document.querySelector('#freeConfirmFacts')?.checked, title: 'การยืนยันตรวจทาน', detail: 'ผู้ใช้ต้องตรวจข้อเท็จจริง กฎหมาย อำนาจหน้าที่ และข้อมูลส่วนบุคคลก่อนใช้จริง'},
+      {ok: true, title: 'การคุ้มครอง Prompt Master', detail: 'ระบบใช้เฉพาะ Metadata และข้อมูลที่ผู้ใช้กรอก ไม่เปิดเผย Prompt Master'}
+    ];
+    const score = Math.round((checks.filter(item => item.ok).length / checks.length) * 100);
+    reviewScore.textContent = `${score}%`;
+    reviewItems.innerHTML = checks.map(item => `<div class="review-item ${item.ok?'ok':'warn'}"><span>${item.ok?'✓':'!'}</span><div><strong>${safe(item.title)}</strong><small>${safe(item.detail)}</small></div></div>`).join('');
+    reviewPanel.classList.remove('hidden');
+  }
+
   function renderQuickActions(){
     if (!quickActionGrid) return;
     const keywords = ['หนังสือ','คำสั่ง','ข่าว','กฎหมาย','TOR','บุคคล'];
@@ -495,10 +519,14 @@ ${collectFacts(tool)}
   }
 
   function routerMatches(query){
-    const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+    const normalizedQuery = normalizeSearch(query);
+    const words = normalizedQuery.split(/\s+/).filter(Boolean);
     return catalog.map(tool => {
-      const hay = `${tool.code} ${tool.name} ${tool.desc || ''} ${tool.groupName || ''}`.toLowerCase();
-      const score = words.reduce((sum, word) => sum + (hay.includes(word) ? 3 : 0), 0) + (hay.includes(query.toLowerCase()) ? 5 : 0);
+      const reg = registry.find(item => item.id === tool.id);
+      const hay = reg?.searchText || normalizeSearch(`${tool.code} ${tool.name} ${tool.desc || ''} ${tool.groupName || ''}`);
+      let score = words.reduce((sum, word) => sum + (hay.includes(word) ? 3 : 0), 0);
+      if (hay.includes(normalizedQuery)) score += 6;
+      if (normalizeSearch(tool.code) === normalizedQuery) score += 12;
       return {tool, score};
     }).filter(item => item.score > 0).sort((a,b) => b.score-a.score).slice(0, 5).map(item => item.tool);
   }
@@ -524,6 +552,7 @@ ${collectFacts(tool)}
     addRecent(tool);
     message.className = 'form-message success';
     message.textContent = `สร้าง ${tool.code} สำเร็จ — ตรวจข้อมูลก่อนคัดลอกไปใช้กับ AI`;
+    renderReview(tool);
     output.scrollIntoView({behavior:'smooth', block:'nearest'});
   });
 
@@ -553,8 +582,11 @@ ${collectFacts(tool)}
   let catalogLimit = 36;
 
   function renderCatalog(){
-    const q = catalogSearch.value.trim().toLowerCase();
-    const filtered = catalog.filter(tool => `${tool.code} ${tool.name} ${tool.desc || ''} ${tool.groupName || ''}`.toLowerCase().includes(q));
+    const q = normalizeSearch(catalogSearch.value.trim());
+    const filtered = catalog.filter(tool => {
+      const reg = registry.find(item => item.id === tool.id);
+      return !q || (reg?.searchText || normalizeSearch(`${tool.code} ${tool.name} ${tool.desc || ''} ${tool.groupName || ''}`)).includes(q);
+    });
     const visible = filtered.slice(0, catalogLimit);
     catalogCount.textContent = `พบ ${filtered.length} รายการ`;
     catalogGrid.innerHTML = visible.length ? visible.map(tool => `
