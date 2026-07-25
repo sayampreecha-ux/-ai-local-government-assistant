@@ -283,3 +283,98 @@ document.querySelector('#lookupForm').addEventListener('submit', async event => 
   if(state.payment?.proofToken) showPayment(state.payment);
   if(state.member && state.token) openWorkspace(state.member,state.token);
 })();
+
+
+// Baseline v1.1 — 20 Prompt ฟรีแบบ client-side
+(function initFree20(){
+  const select = document.querySelector('#freeToolSelect');
+  const form = document.querySelector('#freePromptForm');
+  if (!select || !form || !Array.isArray(window.GOVPROMPT_CATALOG)) return;
+
+  const freeTools = window.GOVPROMPT_CATALOG.slice(0, 20);
+  const description = document.querySelector('#freeToolDescription');
+  const fieldsBox = document.querySelector('#freeDynamicFields');
+  const output = document.querySelector('#freePromptOutput');
+  const copyBtn = document.querySelector('#freeCopyBtn');
+  const message = document.querySelector('#freePromptMessage');
+
+  freeTools.forEach(tool => select.add(new Option(`${tool.code} — ${tool.name}`, tool.id)));
+
+  function safe(value){
+    return String(value ?? '').replace(/[<>]/g, '');
+  }
+
+  function renderFreeFields(){
+    const tool = freeTools.find(item => item.id === select.value) || freeTools[0];
+    if (!tool) return;
+    description.textContent = `${tool.icon || '📌'} ${tool.desc || tool.name}`;
+    fieldsBox.innerHTML = (tool.formFields || []).map(field => {
+      const required = field.required ? 'required' : '';
+      const mark = field.required ? ' *' : '';
+      const common = `id="free_${safe(field.id)}" ${required} placeholder="${safe(field.placeholder || '')}"`;
+      const control = field.type === 'textarea'
+        ? `<textarea ${common}></textarea>`
+        : `<input ${common}>`;
+      return `<label>${safe(field.label)}${mark}${control}</label>`;
+    }).join('');
+    output.textContent = 'กรอกข้อมูลให้ครบ แล้วกด “สร้าง Prompt ฟรี”';
+    output.classList.add('empty');
+    copyBtn.disabled = true;
+    message.textContent = '';
+  }
+
+  function collectFacts(tool){
+    return (tool.formFields || []).map(field => {
+      const el = document.querySelector(`#free_${CSS.escape(field.id)}`);
+      const value = el?.value?.trim() || '[ยังไม่ได้ระบุ]';
+      return `- ${field.label}: ${value}`;
+    }).join('\n');
+  }
+
+  function buildPublicPrompt(tool){
+    const tone = document.querySelector('#freeTone').value;
+    const facts = collectFacts(tool);
+    return `บทบาท
+คุณเป็น Government AI Copilot ผู้เชี่ยวชาญงานราชการไทย
+
+ภารกิจ
+${tool.name}
+
+ข้อมูลจากผู้ใช้
+${facts}
+
+ข้อกำหนดสำคัญ
+- ยึดข้อเท็จจริงที่ผู้ใช้ให้เป็นหลัก
+- ห้ามสมมติชื่อบุคคล วันที่ เลขหนังสือ วงเงิน หรือข้อกฎหมาย
+- หากข้อมูลสำคัญไม่ครบ ให้ระบุช่องว่างหรือถามเฉพาะข้อมูลที่จำเป็น
+- แยกข้อเท็จจริง การวิเคราะห์ ความเสี่ยง และข้อเสนอแนะให้ชัดเจนเมื่อเหมาะสม
+- ระบุข้อมูลหรือเอกสารที่ต้องตรวจสอบเพิ่มเติมก่อนนำไปใช้จริง
+- ตรวจความสอดคล้องกับอำนาจหน้าที่ รูปแบบงานราชการ และผลกระทบที่เกี่ยวข้อง
+- ใช้${tone}
+
+ผลลัพธ์ที่ต้องการ
+จัดทำผลลัพธ์สำหรับ “${tool.code} — ${tool.name}” ให้พร้อมตรวจทานและนำไปปรับใช้ โดยไม่สร้างข้อเท็จจริงใหม่`;
+  }
+
+  select.addEventListener('change', renderFreeFields);
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const tool = freeTools.find(item => item.id === select.value) || freeTools[0];
+    if (!tool || !document.querySelector('#freeConfirmFacts').checked) return;
+    const prompt = buildPublicPrompt(tool);
+    output.textContent = prompt;
+    output.classList.remove('empty');
+    copyBtn.disabled = false;
+    message.className = 'form-message success';
+    message.textContent = `สร้าง ${tool.code} สำเร็จ — ตรวจข้อมูลก่อนคัดลอกไปใช้กับ AI`;
+    output.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    await navigator.clipboard.writeText(output.textContent);
+    copyBtn.textContent = 'คัดลอกแล้ว ✓';
+    setTimeout(() => copyBtn.textContent = 'คัดลอก Prompt', 1400);
+  });
+
+  renderFreeFields();
+})();

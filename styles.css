@@ -44,3 +44,24 @@ select.mini{width:auto;padding:7px 10px}
 .setup-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.setup-card{background:#fff;border:1px solid var(--line,#dfe5ec);border-radius:18px;padding:20px}.setup-card h3{margin-top:0}.setup-card code{word-break:break-word}.status-list{display:grid;gap:12px}.status-row{display:flex;justify-content:space-between;gap:16px;padding:14px 16px;border:1px solid var(--line,#dfe5ec);border-radius:14px;background:#fff}.status-row strong.ok{color:#147a42}.status-row strong.warn{color:#9a6700}@media(max-width:800px){.setup-grid{grid-template-columns:1fr}.system-banner{top:64px}}
 
 .tool-group-title{grid-column:1/-1;display:flex;align-items:center;gap:12px;margin-top:24px;padding:16px 18px;border-radius:16px;background:linear-gradient(135deg,#eef5ff,#f8fbff);border:1px solid #d9e6f7}.tool-group-title span{font-weight:800;color:#1f5ea8}.tool-group-title h3{margin:0;flex:1;font-size:1.05rem}.tool-group-title small{color:#526274;font-weight:600}@media(max-width:640px){.tool-group-title{align-items:flex-start;flex-wrap:wrap}.tool-group-title small{width:100%}}
+
+
+/* Baseline v1.1 — 20 Prompt ฟรี */
+.free20-section{background:linear-gradient(180deg,#f7fbff 0%,#ffffff 100%)}
+.free20-layout{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:24px;align-items:start}
+.free20-panel,.free20-result{background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 14px 34px rgba(20,50,90,.08)}
+.free-tool-description{margin:12px 0 20px;padding:14px 16px;border-radius:14px;background:#eef6ff;color:#244365;line-height:1.65}
+.dynamic-fields{display:grid;gap:14px;margin-bottom:16px}
+.dynamic-fields label{display:grid;gap:7px;font-weight:700}
+.dynamic-fields input,.dynamic-fields textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;background:#fff}
+.dynamic-fields textarea{min-height:110px;resize:vertical}
+.free-confirm{margin:18px 0}
+.free20-result{position:sticky;top:92px}
+.free-output{white-space:pre-wrap;min-height:360px;max-height:560px;overflow:auto;background:#f7f9fc;border:1px solid var(--line);border-radius:14px;padding:18px;line-height:1.72;font-family:inherit}
+.free-output.empty{color:var(--muted)}
+.free20-result .small{display:block;margin-top:14px;line-height:1.6}
+@media(max-width:860px){
+  .free20-layout{grid-template-columns:1fr}
+  .free20-result{position:static}
+  .free-output{min-height:260px}
+}

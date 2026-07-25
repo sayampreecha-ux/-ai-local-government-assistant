@@ -34,7 +34,7 @@
         <p class="lead hero-main-message">ทดลองใช้ฟรี 20 Prompt สำหรับงานราชการ ใช้งานได้ทันที</p>
         <h2 class="hero-audience">สำหรับส่วนราชการและองค์กรปกครองส่วนท้องถิ่น</h2>
         <div class="hero-actions">
-          <a class="btn primary hero-primary-cta" href="#preview">🚀 เริ่มใช้ฟรีทันที</a>
+          <a class="btn primary hero-primary-cta" href="#free20">🚀 เริ่มใช้ฟรีทันที</a>
           <button class="btn secondary" data-open-login>กรอกรหัสใช้งาน</button>
         </div>
         <div class="trust-row">
@@ -58,6 +58,49 @@
       </div>
       <div class="tool-grid" id="toolGrid"></div>
     </section>
+
+
+    <section class="section free20-section" id="free20">
+      <div class="section-head">
+        <div>
+          <span class="kicker">ใช้ฟรีทันที ไม่ต้องสมัครสมาชิก</span>
+          <h2>20 Prompt ฟรีสำหรับงานราชการ</h2>
+        </div>
+        <p>เลือกงาน กรอกข้อเท็จจริง แล้วระบบจะประกอบ Prompt มาตรฐานให้คัดลอกไปใช้กับ AI โดยไม่เปิดเผย Prompt Master</p>
+      </div>
+
+      <div class="free20-layout">
+        <div class="free20-panel">
+          <label class="field-label" for="freeToolSelect">เลือก Prompt ฟรี</label>
+          <select id="freeToolSelect" class="input"></select>
+          <div id="freeToolDescription" class="free-tool-description"></div>
+
+          <form id="freePromptForm">
+            <div id="freeDynamicFields" class="dynamic-fields"></div>
+            <label class="field-label" for="freeTone">รูปแบบภาษา</label>
+            <select id="freeTone" class="input">
+              <option value="ภาษาราชการที่กระชับ ชัดเจน และพร้อมตรวจทาน">ภาษาราชการ กระชับ</option>
+              <option value="ภาษาราชการแบบละเอียด พร้อมหัวข้อและรายการตรวจสอบ">ภาษาราชการ แบบละเอียด</option>
+              <option value="ภาษาที่ประชาชนเข้าใจง่าย แต่ยังคงความสุภาพและเป็นทางการ">ภาษาที่ประชาชนเข้าใจง่าย</option>
+            </select>
+            <label class="check free-confirm">
+              <input type="checkbox" id="freeConfirmFacts" required>
+              ข้าพเจ้ายืนยันว่าจะตรวจข้อเท็จจริง กฎหมาย อำนาจหน้าที่ และข้อมูลส่วนบุคคลก่อนนำผลลัพธ์ไปใช้จริง
+            </label>
+            <button class="btn primary full" type="submit">✨ สร้าง Prompt ฟรี</button>
+            <div id="freePromptMessage" class="form-message" aria-live="polite"></div>
+          </form>
+        </div>
+
+        <article class="free20-result">
+          <div class="sample-top"><span>Prompt พร้อมคัดลอก</span><span class="pill">ใช้ฟรี</span></div>
+          <pre id="freePromptOutput" class="free-output empty">เลือก Prompt และกรอกข้อมูลเพื่อเริ่มใช้งาน</pre>
+          <button id="freeCopyBtn" class="btn secondary full" type="button" disabled>คัดลอก Prompt</button>
+          <p class="small">ระบบนี้ประกอบ Prompt จากข้อมูลที่คุณกรอกในอุปกรณ์ของคุณ ไม่ส่งข้อมูลไปยังเซิร์ฟเวอร์ของ GovPrompt Thailand</p>
+        </article>
+      </div>
+    </section>
+
 
     <section class="section soft" id="preview">
       <div class="preview-grid">
