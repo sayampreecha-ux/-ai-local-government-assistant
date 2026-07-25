@@ -1,33 +1,88 @@
-import { cleanText, enforceRateLimit, errorResponse, getSupabase, json, readJson, secureEqual, signSession } from "../lib/server.mjs";
+import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
-export default {
-  async fetch(request) {
-    if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
-    try {
-      await enforceRateLimit(request, "order-lookup", 8, 60 * 60);
-      const body = await readJson(request, 20_000);
-      const requestRef = cleanText(body?.requestRef, 80).toUpperCase();
-      const email = cleanText(body?.email, 200).toLowerCase();
-      const phoneLast4 = cleanText(body?.phoneLast4, 4);
-      if (!requestRef || !email || !/^\d{4}$/.test(phoneLast4)) return json({ error: "กรุณากรอกเลขอ้างอิง อีเมล และเลขท้ายโทรศัพท์ 4 หลัก" }, 400);
-      const { data: order, error } = await getSupabase().from("orders")
-        .select("id,request_ref,email,phone,package_name,price_thb,status")
-        .eq("request_ref", requestRef).maybeSingle();
-      if (error) throw error;
-      if (!order || !secureEqual(order.email.toLowerCase(), email) || !String(order.phone).replace(/\D/g, "").endsWith(phoneLast4)) return json({ error: "ไม่พบคำสั่งซื้อหรือข้อมูลยืนยันไม่ตรงกัน" }, 404);
-      if (["completed","cancelled"].includes(order.status)) return json({ error: "คำสั่งซื้อนี้ไม่สามารถส่งหลักฐานเพิ่มได้" }, 400);
-      const proofToken = signSession({ orderId: order.id, requestRef: order.request_ref, exp: Date.now() + 30 * 60 * 1000 }, "proof");
-      return json({
-        proofToken, requestRef: order.request_ref, packageName: order.package_name, priceThb: order.price_thb,
-        payment: {
-          accountName: cleanText(process.env.PAYMENT_ACCOUNT_NAME, 160),
-          promptPayId: cleanText(process.env.PAYMENT_PROMPTPAY_ID, 50),
-          bankName: cleanText(process.env.PAYMENT_BANK_NAME, 100),
-          accountNumber: cleanText(process.env.PAYMENT_ACCOUNT_NUMBER, 80)
-        }
-      });
-    } catch (error) {
-      return errorResponse(error, "ไม่สามารถค้นหาคำสั่งซื้อได้");
-    }
+export function envValue(name, required = true) {
+  const value = String(process.env[name] || "").trim();
+  if (required && !value) throw new Error(`${name} is not configured`);
+  return value;
+}
+
+
+export function envFlag(name, defaultValue = false) {
+  const value = envValue(name, false).toLowerCase();
+  if (!value) return defaultValue;
+  return ["1", "true", "yes", "on"].includes(value);
+}
+
+export function normalizeCode(input) {
+  return String(input ?? "").trim().toUpperCase().replace(/\s+/g, "");
+}
+
+export function hashCode(code) {
+  return createHash("sha256").update(String(code ?? "")).digest("hex");
+}
+
+export function maskCode(code) {
+  const normalized = normalizeCode(code);
+  return `${normalized.slice(0, 6)}••••${normalized.slice(-3)}`;
+}
+
+export function cleanText(value, max = 500) {
+  return String(value ?? "").replace(/[\u0000-\u001F\u007F]/g, " ").slice(0, max).trim();
+}
+
+function b64url(value) {
+  return Buffer.from(value).toString("base64url");
+}
+
+function signingSecret(kind = "member") {
+  if (kind === "admin") return envValue("ADMIN_SESSION_SECRET", false) || envValue("SESSION_SECRET");
+  return envValue("SESSION_SECRET");
+}
+
+export function signSession(payload, kind = "member") {
+  const secret = signingSecret(kind);
+  const body = b64url(JSON.stringify({ ...payload, kind }));
+  const signature = createHmac("sha256", secret).update(body).digest("base64url");
+  return `${body}.${signature}`;
+}
+
+export function verifySession(token, expectedKind = "member") {
+  try {
+    const secret = signingSecret(expectedKind);
+    const [body, signature] = String(token || "").split(".");
+    if (!body || !signature) return null;
+    const expected = createHmac("sha256", secret).update(body).digest("base64url");
+    if (!secureEqual(signature, expected)) return null;
+    const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
+    if (payload.kind !== expectedKind || !payload.exp || Date.now() >= payload.exp) return null;
+    return payload;
+  } catch {
+    return null;
   }
-};
+}
+
+export function secureEqual(a, b) {
+  const left = Buffer.from(String(a ?? ""));
+  const right = Buffer.from(String(b ?? ""));
+  return left.length === right.length && timingSafeEqual(left, right);
+}
+
+export function verifyAdminSecret(input) {
+  const configured = envValue("ADMIN_SECRET", false);
+  const supplied = String(input ?? "");
+  return Boolean(configured && supplied && secureEqual(configured, supplied));
+}
+
+export function generateAccessCode(prefix = "GP222") {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = randomBytes(8);
+  let suffix = "";
+  for (const byte of bytes) suffix += alphabet[byte % alphabet.length];
+  const safePrefix = cleanText(prefix, 8).toUpperCase().replace(/[^A-Z0-9]/g, "") || "GP";
+  return `${safePrefix}-${suffix}`;
+}
+
+export function generateRequestRef() {
+  const date = new Date().toISOString().slice(2, 10).replaceAll("-", "");
+  return `REQ-${date}-${randomBytes(3).toString("hex").toUpperCase()}`;
+}
