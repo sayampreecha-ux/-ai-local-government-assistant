@@ -286,28 +286,88 @@ document.querySelector('#lookupForm').addEventListener('submit', async event => 
 })();
 
 
-// Baseline v1.1 — 20 Prompt ฟรีแบบ client-side
-(function initFree20(){
+
+// Baseline v1.3 — 20 Prompt ฟรี + ค้นหา + หมวดหมู่ + คลัง 222
+(function initProductExperience(){
+  const catalog = Array.isArray(window.GOVPROMPT_CATALOG) ? window.GOVPROMPT_CATALOG : [];
   const select = document.querySelector('#freeToolSelect');
   const form = document.querySelector('#freePromptForm');
-  if (!select || !form || !Array.isArray(window.GOVPROMPT_CATALOG)) return;
+  if (!select || !form || !catalog.length) return;
 
-  const freeTools = window.GOVPROMPT_CATALOG.slice(0, 20);
+  const freeTools = catalog.slice(0, 20);
   const description = document.querySelector('#freeToolDescription');
   const fieldsBox = document.querySelector('#freeDynamicFields');
   const output = document.querySelector('#freePromptOutput');
   const copyBtn = document.querySelector('#freeCopyBtn');
   const message = document.querySelector('#freePromptMessage');
-
-  freeTools.forEach(tool => select.add(new Option(`${tool.code} — ${tool.name}`, tool.id)));
+  const cardsBox = document.querySelector('#freePromptCards');
+  const searchInput = document.querySelector('#freeSearch');
+  const tabsBox = document.querySelector('#freeCategoryTabs');
+  const selectedTitle = document.querySelector('#freeSelectedTitle');
+  const selectedCode = document.querySelector('#freeSelectedCode');
 
   function safe(value){
-    return String(value ?? '').replace(/[<>]/g, '');
+    return String(value ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+  }
+
+  function categoryOf(tool){
+    const text = `${tool.groupName || ''} ${tool.name || ''} ${tool.desc || ''}`.toLowerCase();
+    if (/ข่าว|ประชาสัมพันธ์|สื่อ|คำกล่าว/.test(text)) return 'ประชาสัมพันธ์';
+    if (/กฎหมาย|หารือ|อุทธรณ์|วินัย|คดี|คำสั่ง/.test(text)) return 'กฎหมายและคำสั่ง';
+    if (/tor|จัดซื้อ|จัดจ้าง|พัสดุ|สัญญา|ตรวจรับ/.test(text)) return 'พัสดุและโครงการ';
+    return 'หนังสือและงานทั่วไป';
+  }
+
+  const categories = ['ทั้งหมด', ...new Set(freeTools.map(categoryOf))];
+  let activeCategory = 'ทั้งหมด';
+
+  select.innerHTML = '';
+  freeTools.forEach(tool => select.add(new Option(`${tool.code} — ${tool.name}`, tool.id)));
+
+  function renderTabs(){
+    tabsBox.innerHTML = categories.map(cat => `<button type="button" class="category-tab ${cat===activeCategory?'active':''}" data-category="${safe(cat)}">${safe(cat)}</button>`).join('');
+    tabsBox.querySelectorAll('[data-category]').forEach(btn => btn.addEventListener('click', () => {
+      activeCategory = btn.dataset.category;
+      renderTabs();
+      renderCards();
+    }));
+  }
+
+  function filteredFreeTools(){
+    const q = searchInput.value.trim().toLowerCase();
+    return freeTools.filter(tool => {
+      const categoryMatch = activeCategory === 'ทั้งหมด' || categoryOf(tool) === activeCategory;
+      const hay = `${tool.code} ${tool.name} ${tool.desc} ${tool.groupName}`.toLowerCase();
+      return categoryMatch && (!q || hay.includes(q));
+    });
+  }
+
+  function renderCards(){
+    const items = filteredFreeTools();
+    cardsBox.innerHTML = items.length ? items.map(tool => `
+      <article class="free-product-card">
+        <div class="free-card-top">
+          <span class="free-card-icon">${tool.icon || '📌'}</span>
+          <span class="free-card-category">${safe(categoryOf(tool))}</span>
+        </div>
+        <span class="pill">${safe(tool.code)}</span>
+        <h3>${safe(tool.name)}</h3>
+        <p>${safe(tool.desc || '')}</p>
+        <button class="btn secondary full" type="button" data-use-free="${safe(tool.id)}">ใช้ Prompt นี้</button>
+      </article>`).join('') : '<div class="empty-state">ไม่พบ Prompt ที่ตรงกับคำค้น</div>';
+
+    cardsBox.querySelectorAll('[data-use-free]').forEach(btn => btn.addEventListener('click', () => {
+      select.value = btn.dataset.useFree;
+      renderFreeFields();
+      document.querySelector('.product-builder').scrollIntoView({behavior:'smooth', block:'start'});
+    }));
   }
 
   function renderFreeFields(){
     const tool = freeTools.find(item => item.id === select.value) || freeTools[0];
     if (!tool) return;
+    selectedTitle.textContent = tool.name;
+    selectedCode.textContent = tool.code;
     description.textContent = `${tool.icon || '📌'} ${tool.desc || tool.name}`;
     fieldsBox.innerHTML = (tool.formFields || []).map(field => {
       const required = field.required ? 'required' : '';
@@ -329,7 +389,8 @@ document.querySelector('#lookupForm').addEventListener('submit', async event => 
       const el = document.querySelector(`#free_${CSS.escape(field.id)}`);
       const value = el?.value?.trim() || '[ยังไม่ได้ระบุ]';
       return `- ${field.label}: ${value}`;
-    }).join('\n');
+    }).join('
+');
   }
 
   function buildPublicPrompt(tool){
@@ -357,13 +418,13 @@ ${facts}
 จัดทำผลลัพธ์สำหรับ “${tool.code} — ${tool.name}” ให้พร้อมตรวจทานและนำไปปรับใช้ โดยไม่สร้างข้อเท็จจริงใหม่`;
   }
 
+  searchInput.addEventListener('input', renderCards);
   select.addEventListener('change', renderFreeFields);
   form.addEventListener('submit', event => {
     event.preventDefault();
     const tool = freeTools.find(item => item.id === select.value) || freeTools[0];
     if (!tool || !document.querySelector('#freeConfirmFacts').checked) return;
-    const prompt = buildPublicPrompt(tool);
-    output.textContent = prompt;
+    output.textContent = buildPublicPrompt(tool);
     output.classList.remove('empty');
     copyBtn.disabled = false;
     message.className = 'form-message success';
@@ -377,5 +438,33 @@ ${facts}
     setTimeout(() => copyBtn.textContent = 'คัดลอก Prompt', 1400);
   });
 
+  renderTabs();
+  renderCards();
   renderFreeFields();
+
+  // Public catalog GP001–GP222
+  const catalogGrid = document.querySelector('#catalog222Grid');
+  const catalogSearch = document.querySelector('#catalogSearch');
+  const catalogCount = document.querySelector('#catalogCount');
+  const moreBtn = document.querySelector('#catalogMoreBtn');
+  let catalogLimit = 36;
+
+  function renderCatalog(){
+    const q = catalogSearch.value.trim().toLowerCase();
+    const filtered = catalog.filter(tool => `${tool.code} ${tool.name} ${tool.desc} ${tool.groupName}`.toLowerCase().includes(q));
+    const visible = filtered.slice(0, catalogLimit);
+    catalogCount.textContent = `พบ ${filtered.length} รายการ`;
+    catalogGrid.innerHTML = visible.length ? visible.map(tool => `
+      <article class="catalog222-card">
+        <strong>${safe(tool.code)}</strong>
+        <span>${safe(tool.name)}</span>
+        <small>${safe(tool.groupName || tool.desc || '')}</small>
+      </article>`).join('') : '<div class="empty-state">ไม่พบรายการที่ค้นหา</div>';
+    moreBtn.hidden = visible.length >= filtered.length;
+  }
+
+  catalogSearch.addEventListener('input', () => { catalogLimit = 36; renderCatalog(); });
+  moreBtn.addEventListener('click', () => { catalogLimit += 36; renderCatalog(); });
+  renderCatalog();
 })();
+

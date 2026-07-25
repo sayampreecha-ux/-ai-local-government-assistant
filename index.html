@@ -18,7 +18,7 @@
     </a>
     <nav>
       <a href="#free20">ใช้ฟรี 20 Prompt</a>
-      <a href="#tools">คลังเครื่องมือ</a>
+      <a href="#catalog222">ครบ 222 Prompt</a>
       <a href="#how-free">วิธีใช้งาน</a>
       <a class="nav-cta" href="#free20">เริ่มใช้ฟรี</a>
     </nav>
@@ -60,18 +60,37 @@
     </section>
 
 
+
     <section class="section free20-section" id="free20">
-      <div class="section-head">
+      <div class="section-head product-head">
         <div>
           <span class="kicker">ใช้ฟรีทันที ไม่ต้องสมัครสมาชิก</span>
-          <h2>20 Prompt ฟรีสำหรับงานราชการ</h2>
+          <h2>เลือกใช้งานจาก 20 Prompt ฟรี</h2>
         </div>
-        <p>เลือกงาน กรอกข้อเท็จจริง แล้วระบบจะประกอบ Prompt มาตรฐานให้คัดลอกไปใช้กับ AI โดยไม่เปิดเผย Prompt Master</p>
+        <p>ค้นหา เลือกหมวด และเปิดแบบฟอร์มเพื่อสร้าง Prompt พร้อมคัดลอกไปใช้กับ AI ได้ทันที</p>
       </div>
 
-      <div class="free20-layout">
+      <div class="free-toolbar">
+        <label class="search-box">
+          <span>🔎</span>
+          <input id="freeSearch" type="search" placeholder="ค้นหา เช่น หนังสือ ข่าว คำสั่ง กฎหมาย TOR" autocomplete="off">
+        </label>
+        <div id="freeCategoryTabs" class="category-tabs" role="tablist" aria-label="หมวด Prompt ฟรี"></div>
+      </div>
+
+      <div id="freePromptCards" class="free-card-grid"></div>
+
+      <div class="free20-layout product-builder">
         <div class="free20-panel">
-          <label class="field-label" for="freeToolSelect">เลือก Prompt ฟรี</label>
+          <div class="builder-heading">
+            <div>
+              <span class="kicker">แบบฟอร์มสร้าง Prompt</span>
+              <h3 id="freeSelectedTitle">เลือก Prompt ฟรีจากการ์ดด้านบน</h3>
+            </div>
+            <span id="freeSelectedCode" class="pill">FREE</span>
+          </div>
+
+          <label class="field-label" for="freeToolSelect">เลือก Prompt</label>
           <select id="freeToolSelect" class="input"></select>
           <div id="freeToolDescription" class="free-tool-description"></div>
 
@@ -101,7 +120,24 @@
       </div>
     </section>
 
-
+    <section class="section catalog222-section" id="catalog222">
+      <div class="section-head compact">
+        <div>
+          <span class="kicker">คลังเครื่องมือทั้งหมด</span>
+          <h2>รายชื่อ GP001–GP222</h2>
+        </div>
+        <p>เปิดดูชื่อและคำอธิบายเพื่อสำรวจขอบเขตการใช้งาน โดยไม่เปิดเผย Prompt Master</p>
+      </div>
+      <div class="catalog-toolbar">
+        <input id="catalogSearch" class="input" type="search" placeholder="ค้นหา GP001, หนังสือ, กฎหมาย, TOR...">
+        <span id="catalogCount" class="catalog-count"></span>
+      </div>
+      <div id="catalog222Grid" class="catalog222-grid"></div>
+      <div class="catalog-actions">
+        <button id="catalogMoreBtn" class="btn secondary" type="button">แสดงเพิ่ม</button>
+        <a class="btn primary" href="#free20">🚀 ทดลองใช้ฟรี 20 Prompt</a>
+      </div>
+    </section>
 
     <section class="section how-free-section" id="how-free">
       <div class="section-head compact">

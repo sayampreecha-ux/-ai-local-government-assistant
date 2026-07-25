@@ -1,0 +1,7 @@
+GovPrompt Thailand Baseline v1.3 — Product Experience
+- เพิ่มระบบค้นหา 20 Prompt ฟรี
+- เพิ่มหมวดหมู่และการ์ด Prompt
+- เพิ่มปุ่มเลือก Prompt จากการ์ด
+- เพิ่มหน้ารวมชื่อ GP001–GP222 พร้อมค้นหา
+- ไม่เปิดเผย Prompt Master
+- ใช้ Baseline v1.2 เป็นฐาน
