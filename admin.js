@@ -1,29 +1,48 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-process.env.SESSION_SECRET='member-session-secret-'.padEnd(64,'x');
-process.env.ADMIN_SESSION_SECRET='admin-session-secret-'.padEnd(64,'y');
-process.env.ADMIN_SECRET='admin-password-for-tests';
-process.env.IP_HASH_SECRET='ip-hash-secret-'.padEnd(64,'z');
-const security=await import('../lib/security.mjs');
+import { readFile } from 'node:fs/promises';
+import { PROMPT_MASTER, PROMPT_COUNT } from '../lib/prompt-master.mjs';
+import { assemblePrompt } from '../lib/prompt-assembler.mjs';
 
-test('normalizeCode removes spaces and uppercases',()=>assert.equal(security.normalizeCode(' gp222-ab 12 '),'GP222-AB12'));
-test('default access code follows Starter format',()=>{const code=security.generateAccessCode();assert.match(code,/^GP222-[A-HJ-NP-Z2-9]{8}$/);assert.equal(security.maskCode(code).startsWith('GP222-'),true);});
-test('package access code supports custom prefix',()=>assert.match(security.generateAccessCode('GP599'),/^GP599-[A-HJ-NP-Z2-9]{8}$/));
-test('hashCode is stable and does not expose source',()=>{const code='GP222-ABCDEFGH';const hash=security.hashCode(code);assert.equal(hash,security.hashCode(code));assert.notEqual(hash,code);assert.match(hash,/^[a-f0-9]{64}$/);});
-test('member session verifies only as member',()=>{const token=security.signSession({codeId:'123',exp:Date.now()+60000});assert.equal(security.verifySession(token)?.codeId,'123');assert.equal(security.verifySession(token,'admin'),null);});
-test('admin session verifies only as admin',()=>{const token=security.signSession({role:'admin',exp:Date.now()+60000},'admin');assert.equal(security.verifySession(token,'admin')?.role,'admin');assert.equal(security.verifySession(token),null);});
-test('proof session has separate kind',()=>{const token=security.signSession({requestRef:'REQ-1',exp:Date.now()+60000},'proof');assert.equal(security.verifySession(token,'proof')?.requestRef,'REQ-1');assert.equal(security.verifySession(token),null);});
-test('expired and tampered sessions are rejected',()=>{const expired=security.signSession({exp:Date.now()-1});assert.equal(security.verifySession(expired),null);const valid=security.signSession({exp:Date.now()+60000});assert.equal(security.verifySession(`${valid}x`),null);});
-test('admin secret comparison works',()=>{assert.equal(security.verifyAdminSecret('admin-password-for-tests'),true);assert.equal(security.verifyAdminSecret('wrong'),false);});
-test('cleanText strips controls and enforces length',()=>assert.equal(security.cleanText('A\u0000B\nC',4),'A B'));
-test('request reference has date and random suffix',()=>assert.match(security.generateRequestRef(),/^REQ-\d{6}-[A-F0-9]{6}$/));
+const entries = Object.values(PROMPT_MASTER);
 
+test('catalog contains approved GP001-GP222 in order', () => {
+  assert.equal(PROMPT_COUNT, 222);
+  assert.equal(entries.length, 222);
+  entries.forEach((tool, index) => {
+    assert.equal(tool.code, `GP${String(index + 1).padStart(3, '0')}`);
+    assert.equal(tool.approvalStatus, 'APPROVED');
+    assert.ok(tool.name.length >= 4);
+    assert.ok(tool.description.length >= 18);
+    assert.ok(tool.formFields.length >= 4);
+  });
+});
 
-test("envFlag understands safe boolean values", () => {
-  const before = process.env.SALES_ENABLED;
-  process.env.SALES_ENABLED = "true";
-  assert.equal(security.envFlag("SALES_ENABLED"), true);
-  process.env.SALES_ENABLED = "false";
-  assert.equal(security.envFlag("SALES_ENABLED"), false);
-  if (before === undefined) delete process.env.SALES_ENABLED; else process.env.SALES_ENABLED = before;
+test('all 222 prompts assemble deterministically from their forms', () => {
+  for (const tool of entries) {
+    const fields = Object.fromEntries(tool.formFields.map(field => [field.id, `ทดสอบ ${field.label}`]));
+    const output = assemblePrompt(tool, fields, 'ภาษาราชการทดสอบ');
+    assert.match(output, /GOVPROMPT THAILAND/);
+    assert.match(output, new RegExp(tool.code));
+    assert.match(output, /ห้ามสมมติ|ห้ามเดา/);
+    assert.match(output, /ต้องตรวจสอบ/);
+    assert.match(output, /ก่อนนำไปใช้จริง/);
+    for (const value of Object.values(fields)) assert.ok(output.includes(value));
+  }
+});
+
+test('generate endpoint has no OpenAI dependency or invocation', async () => {
+  const source = await readFile(new URL('../api/generate.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /from ["']openai["']/i);
+  assert.doesNotMatch(source, /new OpenAI/i);
+  assert.match(source, /usageCharged:\s*false/);
+  assert.match(source, /generationMode:\s*"prompt"/);
+});
+
+test('GP001 retains fact-first official correspondence standard', () => {
+  const tool = PROMPT_MASTER.gp001;
+  assert.equal(tool.code, 'GP001');
+  assert.equal(tool.name, 'AI ผู้ช่วยร่างหนังสือราชการ');
+  assert.match(tool.masterPrompt, /ยึดข้อเท็จจริงเป็นหลัก/);
+  assert.match(tool.masterPrompt, /Checklist ก่อนเสนอผู้บังคับบัญชาหรือลงนาม/);
 });

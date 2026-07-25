@@ -1,14 +1,20 @@
-# GovPrompt Thailand Enterprise 4.2
-
-## เพิ่มใหม่
-
-- ชุด ZIP สำหรับอัปโหลดผ่าน Vercel Drop โดยไม่ต้องใช้ GitHub
-- หน้า `/owner-check.html` สำหรับตรวจฐานข้อมูล แพ็กเกจ AI การชำระเงิน อีเมล และ LINE
-- สคริปต์ตรวจว่าไฟล์ Vercel Drop ไม่มีไฟล์รหัสลับปะปน
-- คู่มือ iPad สำหรับ Vercel Drop และ Supabase แบบย่อ
-- เพิ่มสถานะ `paymentConfigured` ใน Health API
-
-## สถานะ
-
-- Source code พร้อม Deploy
-- ยังต้องสร้าง Supabase และเพิ่ม Environment Variables ในบัญชีเจ้าของระบบ
+{
+  "name": "govprompt-thailand-enterprise",
+  "version": "5.0.0-222.1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "npx vercel dev",
+    "check": "node --check api/auth.mjs && node --check api/generate.mjs && node --check api/packages.mjs && node --check api/order.mjs && node --check api/order-lookup.mjs && node --check api/payment-proof.mjs && node --check api/admin-auth.mjs && node --check api/admin-codes.mjs && node --check api/admin-orders.mjs && node --check api/admin-stats.mjs && node --check api/health.mjs && node --check api/public-config.mjs && node --check lib/server.mjs && node --check lib/security.mjs && node --check lib/notifications.mjs && node --check lib/prompt-master.mjs && node --check lib/prompt-assembler.mjs && node --check catalog-public.js && node --check app.js && node --check setup.js && node --check admin.js",
+    "test": "node --test",
+    "preflight": "node scripts/preflight.mjs && node scripts/verify-drop-package.mjs",
+    "validate": "npm run check && npm test && npm run preflight",
+    "secrets": "node scripts/generate-secrets.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.110.7"
+  }
+}

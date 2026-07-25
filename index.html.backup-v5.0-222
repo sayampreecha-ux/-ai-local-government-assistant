@@ -1,30 +1,27 @@
-# Checklist เปิดระบบด้วย Vercel Drop
+# GovPrompt Thailand — Merge & Upgrade Report
 
-## A. Supabase
-- [ ] สร้าง Project แล้ว
-- [ ] รัน `supabase/setup.sql` สำเร็จ
-- [ ] ตาราง `packages`, `orders`, `access_codes`, `usage_logs` มีอยู่
-- [ ] Bucket `payment-proofs` เป็น Private
+Date: 2026-07-25
+Base: govprompt-thailand-v5.0-222-deploy.zip
 
-## B. Vercel
-- [ ] อัปโหลด ZIP ผ่าน Vercel Drop
-- [ ] ตั้ง Environment Variables ครบ
-- [ ] Redeploy หลังตั้งค่าตัวแปร
-- [ ] `/owner-check.html` แสดงฐานข้อมูลพร้อม
-- [ ] `/api/packages` โหลด 3 แพ็กเกจ
+## Files changed
+- index.html
+  - Updated page title and description.
+  - Updated Hero title to “GovPrompt Thailand”.
+  - Added “ทดลองใช้ฟรี 20 Prompt สำหรับงานราชการ ใช้งานได้ทันที”.
+  - Added “สำหรับส่วนราชการและองค์กรปกครองส่วนท้องถิ่น”.
+  - Added large CTA “🚀 เริ่มใช้ฟรีทันที”, linked to the existing public preview section (`#preview`).
+  - Preserved the existing member login action.
+- styles.css
+  - Added responsive Hero and CTA styles for desktop, tablet, and mobile.
 
-## C. ทดสอบขาย
-- [ ] ส่งคำขอสั่งซื้อทดลอง
-- [ ] อัปโหลดหลักฐานทดลอง
-- [ ] เข้าหน้า `/admin.html`
-- [ ] สร้างรหัสทดสอบ 1 ชุด
-- [ ] เข้าระบบสมาชิกด้วยรหัสทดสอบ
-- [ ] สร้างผลลัพธ์และดาวน์โหลด Word/PDF
-- [ ] ตรวจว่าจำนวนสิทธิ์ถูกหัก
-- [ ] ระงับรหัสทดสอบได้
+## Backup
+- index.html.backup-v5.0-222
 
-## D. ก่อนโพสต์ขาย
-- [ ] เปลี่ยนข้อมูลชำระเงินเป็นข้อมูลจริง
-- [ ] OpenAI อยู่โหมด Live
-- [ ] ทดลองบนมือถือและคอมพิวเตอร์
-- [ ] เก็บ `ADMIN_SECRET` และ `MASTER_ACCESS_CODE` แยกจาก Source
+## Preserved
+- GP001–GP222 and prompt codes.
+- PROMPT_CATALOG_222.json and catalog-public.js.
+- API, Supabase migrations, authentication, package, order, payment, admin, history, favorites, drafts, and database-related files.
+- Existing navigation and page sections.
+
+## Important verification note
+The supplied base contains an existing public `#preview` section described as a 20% preview. No separate full “20 Prompt free” route was found. Therefore the new CTA safely links to that existing public section rather than inventing or exposing Prompt Master content.

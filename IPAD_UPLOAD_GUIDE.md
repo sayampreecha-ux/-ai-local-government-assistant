@@ -1,15 +1,16 @@
-# GitHub Pages Deployment Report
+# ลูกค้าจริงรายแรก — GP222-0001
 
-Repository: sayampreecha-ux/-ai-local-government-assistant
-Target branch: main
-Publishing source: main / root
-
-Changes prepared:
-- Restored index.html as valid HTML.
-- Updated Hero and CTA.
-- Converted root-relative URLs to project-relative URLs for GitHub Pages.
-- Added .nojekyll.
-- Preserved all existing application files and GP001-GP222 data.
-
-Expected URL:
-https://sayampreecha-ux.github.io/-ai-local-government-assistant/
+- [ ] ลูกค้าเลือก Starter 222
+- [ ] ระบบออกเลข REQ
+- [ ] ตรวจชื่อ อีเมล โทรศัพท์ และแพ็กเกจ
+- [ ] ลูกค้าอัปโหลดสลิป
+- [ ] เปิดสลิปจากหน้า Admin และตรวจยอด 222 บาท
+- [ ] เปลี่ยนสถานะเป็น “ชำระแล้ว”
+- [ ] กด “นำไปสร้างรหัส”
+- [ ] ตรวจจำนวนครั้ง 60 และอายุสิทธิ์ 180 วัน
+- [ ] สร้างรหัสและคัดลอกทันที
+- [ ] ตรวจอีเมลส่งรหัส หรือส่งทาง Messenger/LINE ด้วยตนเอง
+- [ ] ลูกค้าล็อกอินได้
+- [ ] ลูกค้าทดลองหนังสือราชการ 1 งาน
+- [ ] Word/PDF มีชื่อและเลขคำสั่งซื้อ
+- [ ] ขอความคิดเห็นหลังใช้ 3 วัน

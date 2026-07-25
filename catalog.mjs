@@ -1,33 +1,24 @@
-import { PROMPT_MASTER } from "./prompt-master.mjs";
+import { envFlag, isSupabaseConfigured, json } from "../lib/server.mjs";
 
-const toolIds = Object.keys(PROMPT_MASTER);
+const VERSION = "5.0.0-222";
 
-export const FALLBACK_PACKAGES = [
-  {
-    id: "starter-222",
-    name: "Starter 222",
-    priceThb: 222,
-    description: "เครื่องมือพื้นฐานสำหรับงานประจำ 40 รายการ",
-    maxUses: 60,
-    expiryDays: 180,
-    allowedTools: toolIds.slice(0, 40)
-  },
-  {
-    id: "professional-599",
-    name: "Professional 599",
-    priceThb: 599,
-    description: "เครื่องมือครอบคลุมงานบริหารและงานวิชาชีพ 140 รายการ",
-    maxUses: 250,
-    expiryDays: 365,
-    allowedTools: toolIds.slice(0, 140)
-  },
-  {
-    id: "agency-999",
-    name: "Agency 999",
-    priceThb: 999,
-    description: "คลังเครื่องมือครบ 222 รายการสำหรับหน่วยงาน",
-    maxUses: 800,
-    expiryDays: 365,
-    allowedTools: toolIds
+export default {
+  async fetch(request) {
+    if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
+    const salesEnabled = envFlag("SALES_ENABLED", false);
+    const databaseConfigured = isSupabaseConfigured();
+    const paymentConfigured = Boolean(
+      process.env.PAYMENT_ACCOUNT_NAME &&
+      (process.env.PAYMENT_PROMPTPAY_ID || process.env.PAYMENT_ACCOUNT_NUMBER)
+    );
+    return json({
+      version: VERSION,
+      salesEnabled,
+      databaseConfigured,
+      paymentConfigured,
+      readyForSales: Boolean(salesEnabled && databaseConfigured && paymentConfigured),
+      aiMode: "prompt-only",
+      promptCount: 222
+    });
   }
-];
+};
