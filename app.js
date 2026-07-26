@@ -20,8 +20,7 @@
   }
 
   function sendRecord({ promptCode = '', rating = '', comment = '', event = '' } = {}) {
-    if const FEEDBACK_ENDPOINT =
-'https://script.google.com/macros/s/AKfycbzv87tiY6KAJx0ldx7qfKqzj7llwuzsubQ8xSpnL-D0Pf6F46OGb1bi0WR1Sh-WOI6bDw/exec'; return;
+ if (!FEEDBACK_ENDPOINT) return;  
     const body = new URLSearchParams({
       promptCode,
       rating: String(rating || ''),
