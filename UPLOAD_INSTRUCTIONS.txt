@@ -1,26 +1,28 @@
-วิธีกู้เว็บไซต์ GitHub Pages
+วิธีติดตั้งแบบปลอดภัย
 
-1. เปิด Repository:
+1) เข้า GitHub repository:
    sayampreecha-ux/-ai-local-government-assistant
 
-2. กด Add file > Upload files
+2) กด Add file > Upload files
 
-3. แตกไฟล์ ZIP นี้ก่อน แล้วลาก “ไฟล์ภายใน” ทั้งหมดขึ้น Repository ระดับบนสุด
-   ห้ามลากโฟลเดอร์ govprompt-github-pages-recovery ขึ้นไปทั้งโฟลเดอร์
+3) อัปโหลดเฉพาะไฟล์ app.js ในชุดนี้
+   ห้ามอัปโหลดไฟล์ ZIP ทั้งก้อน
 
-4. เมื่อ GitHub แจ้งว่าไฟล์มีอยู่แล้ว ให้ยืนยัน Replace/Commit
+4) เลือก Replace existing file
 
-5. Commit message:
-   Restore GovPrompt Thailand website
+5) Commit message:
+   Enable 20 free prompts safely
 
-6. เปิด Settings > Pages และตรวจว่า:
-   Branch = main
-   Folder = /(root)
+6) กด Commit changes
 
-7. เปิดเว็บไซต์แล้วกด Ctrl + F5:
-   https://sayampreecha-ux.github.io/-ai-local-government-assistant/
+7) รอ GitHub Pages อัปเดต แล้วเปิดเว็บไซต์
+   กด Ctrl + F5
 
-หมายเหตุ:
-- index.html ได้แก้ path เป็นแบบสัมพัทธ์สำหรับ GitHub Pages แล้ว
-- ปุ่ม “เริ่มใช้ฟรีทันที” เชื่อมไปยังส่วนเครื่องมือ
-- ห้ามอัปโหลด Owner Master, .env หรือข้อมูลลับ
+ผลที่ได้:
+- 20 Prompt แรกเปิดใช้ฟรี
+- ไม่ต้องล็อกอิน
+- สร้าง Prompt ได้ในเบราว์เซอร์
+- คัดลอก ดาวน์โหลด Word และพิมพ์เป็น PDF ได้
+- ซ่อนแพ็กเกจและระบบขายที่ยังไม่พร้อม
+- ไม่แก้ catalog-public.js
+- ไม่ลบ GP001-GP222
