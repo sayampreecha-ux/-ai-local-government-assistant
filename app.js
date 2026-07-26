@@ -9,6 +9,81 @@
   const freeTools = tools.slice(0, 20);
   const state = { selectedId: freeTools[0]?.id || '', result: '' };
 
+  const FEEDBACK_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwcQDVl0B0unH-KK71xRqgqn21aWwHO-BYF6rR7U0fhRbmGS53ZCXbzhSih_CDp1s9O/exec';
+  const RELEASE_VERSION = 'v1.7-free20-feedback';
+
+  function deviceType() {
+    return window.matchMedia('(max-width: 768px)').matches ? 'mobile' : 'desktop';
+  }
+
+  function sendFeedbackRecord({ promptCode = '', rating = '', comment = '' } = {}) {
+    if (!FEEDBACK_ENDPOINT) return;
+    const body = new URLSearchParams({
+      promptCode,
+      rating: String(rating || ''),
+      comment: String(comment || ''),
+      device: deviceType(),
+      version: RELEASE_VERSION,
+      page: location.href
+    });
+
+    fetch(FEEDBACK_ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body
+    }).catch(error => console.warn('feedback unavailable', error));
+  }
+
+  function ensureFeedbackPanel() {
+    if (document.querySelector('#freeFeedbackPanel')) return;
+    const workspace = document.querySelector('#workspace');
+    if (!workspace) return;
+
+    const panel = document.createElement('section');
+    panel.id = 'freeFeedbackPanel';
+    panel.className = 'section soft';
+    panel.innerHTML = `
+      <div class="section-head compact">
+        <div>
+          <span class="kicker">ช่วยพัฒนา GovPrompt Thailand</span>
+          <h2>ประสบการณ์ใช้งานเป็นอย่างไร?</h2>
+        </div>
+        <p>ให้คะแนนและข้อเสนอแนะสั้น ๆ ข้อมูลจะบันทึกใน Google Sheet ของโครงการ</p>
+      </div>
+      <form id="freeFeedbackForm" class="generator-form" style="max-width:760px;margin:auto">
+        <label>คะแนนความพึงพอใจ
+          <select id="freeFeedbackRating" class="input" required>
+            <option value="">เลือกคะแนน</option>
+            <option value="5">5 — ดีมาก</option>
+            <option value="4">4 — ดี</option>
+            <option value="3">3 — พอใช้</option>
+            <option value="2">2 — ควรปรับปรุง</option>
+            <option value="1">1 — ใช้งานยาก</option>
+          </select>
+        </label>
+        <label>ความคิดเห็นหรือข้อเสนอแนะ
+          <textarea id="freeFeedbackComment" placeholder="เช่น ใช้ง่าย แต่ควรเพิ่มตัวอย่างข้อมูล"></textarea>
+        </label>
+        <button class="btn primary full" type="submit">ส่งความคิดเห็น</button>
+        <div id="freeFeedbackMessage" class="form-message" aria-live="polite"></div>
+      </form>
+    `;
+    workspace.insertAdjacentElement('afterend', panel);
+
+    document.querySelector('#freeFeedbackForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const tool = selectedTool();
+      const rating = document.querySelector('#freeFeedbackRating').value;
+      const comment = document.querySelector('#freeFeedbackComment').value.trim();
+      sendFeedbackRecord({ promptCode: tool?.code || '', rating, comment });
+      const message = document.querySelector('#freeFeedbackMessage');
+      message.className = 'form-message success';
+      message.textContent = 'ขอบคุณครับ ความคิดเห็นถูกส่งไปยัง Google Sheet แล้ว';
+      event.target.reset();
+    });
+  }
+
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
 
@@ -193,6 +268,7 @@ ${facts}
       if ($('#generateMessage')) {
         $('#generateMessage').className = 'form-message success';
         $('#generateMessage').textContent = 'สร้าง Prompt สำเร็จ — ตรวจทานแล้วคัดลอกไปใช้กับ AI ที่คุณเลือกได้ทันที';
+        sendFeedbackRecord({ promptCode: tool.code, comment: '[usage] generated' });
       }
     });
 
@@ -254,6 +330,7 @@ ${facts}
     renderCards();
     renderPreview();
     setupWorkspace();
+    ensureFeedbackPanel();
 
     if (freeTools.length) {
       state.selectedId = freeTools[0].id;
