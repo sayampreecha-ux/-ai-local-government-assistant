@@ -1,10 +1,26 @@
-วิธีอัปโหลดครั้งเดียว
-1. แตก ZIP นี้
-2. เปิดโฟลเดอร์ GovPrompt-GitHub-One-Time-Fix
-3. เลือกไฟล์ทั้งหมดภายในโฟลเดอร์พร้อมกัน
-4. GitHub: Add file > Upload files
-5. Commit directly to main > Commit changes
-6. รอ 1–3 นาที แล้วกด Ctrl+F5
+วิธีกู้เว็บไซต์ GitHub Pages
 
-แพ็กเกจนี้เป็น Public-only:
-ไม่มี Prompt Master, API, Supabase, .env, Secret หรือรายงานภายใน
+1. เปิด Repository:
+   sayampreecha-ux/-ai-local-government-assistant
+
+2. กด Add file > Upload files
+
+3. แตกไฟล์ ZIP นี้ก่อน แล้วลาก “ไฟล์ภายใน” ทั้งหมดขึ้น Repository ระดับบนสุด
+   ห้ามลากโฟลเดอร์ govprompt-github-pages-recovery ขึ้นไปทั้งโฟลเดอร์
+
+4. เมื่อ GitHub แจ้งว่าไฟล์มีอยู่แล้ว ให้ยืนยัน Replace/Commit
+
+5. Commit message:
+   Restore GovPrompt Thailand website
+
+6. เปิด Settings > Pages และตรวจว่า:
+   Branch = main
+   Folder = /(root)
+
+7. เปิดเว็บไซต์แล้วกด Ctrl + F5:
+   https://sayampreecha-ux.github.io/-ai-local-government-assistant/
+
+หมายเหตุ:
+- index.html ได้แก้ path เป็นแบบสัมพัทธ์สำหรับ GitHub Pages แล้ว
+- ปุ่ม “เริ่มใช้ฟรีทันที” เชื่อมไปยังส่วนเครื่องมือ
+- ห้ามอัปโหลด Owner Master, .env หรือข้อมูลลับ

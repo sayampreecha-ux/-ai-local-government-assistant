@@ -1,0 +1,18 @@
+{
+  "package": "govprompt-github-pages-recovery",
+  "files": [
+    "index.html",
+    "styles.css",
+    "app.js",
+    "catalog-public.js",
+    "terms.html",
+    "privacy.html",
+    "setup.html",
+    "admin.html",
+    "admin.js",
+    "404.html",
+    "robots.txt"
+  ],
+  "index_asset_paths": "relative",
+  "owner_master_included": false
+}
