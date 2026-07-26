@@ -1,304 +1,269 @@
-const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+(() => {
+  'use strict';
 
-const tools = Array.isArray(window.GOVPROMPT_CATALOG) ? window.GOVPROMPT_CATALOG : [];
+  const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, ch => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'
+  }[ch]));
 
-const toolIds = tools.map(t => t.id);
-const fallbackPackages = [
-  {id:'starter-222',name:'Starter 222',priceThb:222,description:'เครื่องมือพื้นฐานสำหรับงานประจำ',maxUses:60,expiryDays:180,allowedTools:toolIds.slice(0,40)},
-  {id:'professional-599',name:'Professional 599',priceThb:599,description:'เครื่องมือครอบคลุมงานบริหารและงานวิชาชีพ',maxUses:250,expiryDays:365,allowedTools:toolIds.slice(0,140)},
-  {id:'agency-999',name:'Agency 999',priceThb:999,description:'คลังเครื่องมือครบ 222 รายการสำหรับหน่วยงาน',maxUses:800,expiryDays:365,allowedTools:toolIds}
-];
+  const tools = Array.isArray(window.GOVPROMPT_CATALOG) ? window.GOVPROMPT_CATALOG : [];
+  const freeTools = tools.slice(0, 20);
+  const state = { selectedId: freeTools[0]?.id || '', result: '' };
 
-function selectedTool() {
-  return tools.find(t => t.id === document.querySelector('#toolSelect')?.value) || tools[0];
-}
+  const $ = selector => document.querySelector(selector);
+  const $$ = selector => [...document.querySelectorAll(selector)];
 
-function fieldsFor(toolId) {
-  return tools.find(t => t.id === toolId)?.formFields || [];
-}
-
-
-const state = {
-  packages: fallbackPackages,
-  token: sessionStorage.getItem('gpToken') || '',
-  member: JSON.parse(sessionStorage.getItem('gpMember') || 'null'),
-  result: '',
-  payment: JSON.parse(sessionStorage.getItem('gpPayment') || 'null'),
-  config: { salesEnabled: false, readyForSales: false, aiMode: 'demo' }
-};
-
-const toolGrid = document.querySelector('#toolGrid');
-const groupedTools = tools.reduce((map, tool) => {
-  if (!map.has(tool.groupCode)) map.set(tool.groupCode, {name:tool.groupName, items:[]});
-  map.get(tool.groupCode).items.push(tool);
-  return map;
-}, new Map());
-for (const [groupCode, group] of groupedTools) {
-  toolGrid.insertAdjacentHTML('beforeend', `<div class="tool-group-title"><span>${escapeHtml(groupCode)}</span><h3>${escapeHtml(group.name)}</h3><small>${group.items.length} เครื่องมือ</small></div>`);
-  group.items.forEach(t => toolGrid.insertAdjacentHTML('beforeend', `<article class="tool-card" role="button" tabindex="0" data-tool-id="${escapeHtml(t.id)}" aria-label="เปิด ${escapeHtml(t.code)} ${escapeHtml(t.name)}"><div class="tool-icon">${t.icon}</div><span class="pill">${escapeHtml(t.code)} • ผ่านการตรวจ</span><h3>${escapeHtml(`${t.code} — ${t.name}`)}</h3><p>${escapeHtml(t.desc)}</p><button class="btn secondary full tool-open-btn" type="button">เปิดเครื่องมือ</button></article>`));
-}
-
-function openPublicTool(toolId) {
-  const tool = tools.find(t => t.id === toolId);
-  if (!tool) return;
-  const previewTool = document.querySelector('#previewTool');
-  if (previewTool) {
-    previewTool.value = tool.id;
-    previewTool.dispatchEvent(new Event('change', { bubbles: true }));
+  function selectedTool() {
+    return freeTools.find(t => t.id === state.selectedId) || freeTools[0];
   }
-  const preview = document.querySelector('#preview');
-  if (preview) preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
 
-toolGrid?.addEventListener('click', event => {
-  const card = event.target.closest('.tool-card[data-tool-id]');
-  if (card) openPublicTool(card.dataset.toolId);
-});
-toolGrid?.addEventListener('keydown', event => {
-  if (event.key !== 'Enter' && event.key !== ' ') return;
-  const card = event.target.closest('.tool-card[data-tool-id]');
-  if (!card) return;
-  event.preventDefault();
-  openPublicTool(card.dataset.toolId);
-});
-
-const previewTool = document.querySelector('#previewTool');
-tools.forEach(t => previewTool.add(new Option(`${t.code} — ${t.name}`, t.id)));
-function updatePreview(){ const t=tools.find(x=>x.id===previewTool.value); document.querySelector('#previewOutput').textContent=t.preview; }
-previewTool.addEventListener('change', updatePreview); updatePreview();
-
-async function api(url, options = {}) {
-  const response = await fetch(url, options);
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || 'ระบบขัดข้อง');
-  return data;
-}
-
-
-async function loadPublicConfig() {
-  try {
-    state.config = await api('/api/public-config');
-  } catch (error) {
-    console.warn('public config unavailable', error);
-  }
-  const banner = document.querySelector('#systemBanner');
-  const orderButton = document.querySelector('#orderBtn');
-  const buyButtons = document.querySelectorAll('[data-buy]');
-  if (!state.config.salesEnabled) {
-    banner.classList.remove('hidden');
-    banner.textContent = '🔧 ระบบอยู่ระหว่างตั้งค่า ยังไม่เปิดรับคำสั่งซื้อ — สามารถดูตัวอย่างและตรวจหน้าระบบได้ก่อน';
-    orderButton.disabled = true;
-    orderButton.textContent = 'ยังไม่เปิดรับคำสั่งซื้อ';
-    buyButtons.forEach(button => { button.disabled = true; });
-  } else if (!state.config.readyForSales) {
-    banner.classList.remove('hidden');
-    banner.textContent = '⚠️ เปิดรับคำสั่งซื้อแล้ว แต่การตั้งค่าฐานข้อมูลหรือข้อมูลชำระเงินยังไม่ครบ';
-  } else {
-    banner.classList.remove('hidden');
-    banner.classList.add('success');
-    banner.textContent = '✅ ระบบเปิดรับคำสั่งซื้อแล้ว • คลัง Prompt 222 รายการสร้าง Prompt พร้อมคัดลอกโดยไม่เรียก AI API';
-  }
-}
-
-async function loadPackages() {
-  try {
-    const data = await api('/api/packages');
-    if (data.packages?.length) state.packages = data.packages;
-  } catch (error) {
-    console.warn('using package fallback', error);
-  }
-  renderPackages();
-}
-
-function packageFeatures(pkg) {
-  const names = (pkg.allowedTools || []).map(id => tools.find(t => t.id === id)?.name).filter(Boolean);
-  return names.slice(0, 4).map(name => `<li>${escapeHtml(name)}</li>`).join('') + (names.length > 4 ? `<li>และอีก ${names.length - 4} เครื่องมือ</li>` : '');
-}
-
-function renderPackages() {
-  const grid = document.querySelector('#packageGrid');
-  grid.innerHTML = state.packages.map((pkg, index) => `
-    <article class="package-card ${index===1?'featured':''}">
-      ${index===1?'<div class="popular">แนะนำ</div>':''}
-      <span class="package-name">${escapeHtml(pkg.name)}</span>
-      <div class="package-price"><strong>${Number(pkg.priceThb).toLocaleString('th-TH')}</strong><span>บาท</span></div>
-      <p>${escapeHtml(pkg.description)}</p>
-      <ul><li>ใช้ได้ ${Number(pkg.maxUses).toLocaleString('th-TH')} ครั้ง</li><li>อายุสิทธิ์ ${Number(pkg.expiryDays).toLocaleString('th-TH')} วัน</li>${packageFeatures(pkg)}</ul>
-      <button class="btn ${index===1?'primary':'secondary'} full" data-buy="${escapeHtml(pkg.id)}">เลือกแพ็กเกจนี้</button>
-    </article>`).join('');
-  const select = document.querySelector('#packageId');
-  select.innerHTML = state.packages.map(pkg => `<option value="${escapeHtml(pkg.id)}">${escapeHtml(pkg.name)} — ${Number(pkg.priceThb).toLocaleString('th-TH')} บาท</option>`).join('');
-  document.querySelectorAll('[data-buy]').forEach(btn => btn.onclick = () => {
-    select.value = btn.dataset.buy;
-    document.querySelector('#order').scrollIntoView({behavior:'smooth'});
-  });
-}
-
-const dialog = document.querySelector('#loginDialog');
-document.querySelectorAll('[data-open-login]').forEach(button => button.addEventListener('click', () => dialog.showModal()));
-
-async function login(code) {
-  return api('/api/auth', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({code})});
-}
-
-function memberLabel(member, remaining = member.remainingUses) {
-  const remain = Number.isInteger(remaining) ? ` • คงเหลือ ${remaining} ครั้ง` : '';
-  const expiry = member.expiresAt ? ` • หมดอายุ ${new Date(member.expiresAt).toLocaleDateString('th-TH')}` : '';
-  return `ผู้ใช้: ${member.ownerName} • ${member.packageName || 'แพ็กเกจสมาชิก'} • เลขคำสั่งซื้อ ${member.orderId}${remain}${expiry}`;
-}
-
-function populateMemberTools() {
-  const select = document.querySelector('#toolSelect');
-  const rawAllowed = Array.isArray(state.member?.allowedTools) ? state.member.allowedTools : [];
-  let allowed = state.member?.master ? toolIds : rawAllowed.filter(id => toolIds.includes(id));
-  if (!allowed.length) {
-    const packageName = String(state.member?.packageName || '').toLowerCase();
-    allowed = packageName.includes('starter') ? toolIds.slice(0,40) : packageName.includes('professional') ? toolIds.slice(0,140) : toolIds;
-  }
-  select.innerHTML = tools.filter(t => allowed.includes(t.id)).map(t => `<option value="${t.id}">${escapeHtml(`${t.code} — ${t.name}`)}</option>`).join('');
-  document.querySelector('#toolAccessNote').textContent = `แพ็กเกจนี้ใช้ได้ ${allowed.length} เครื่องมือ • ทุกเครื่องมือสร้าง Prompt โดยไม่เรียก AI API`;
-}
-
-function openWorkspace(member, token) {
-  state.member = member; state.token = token;
-  sessionStorage.setItem('gpToken', token); sessionStorage.setItem('gpMember', JSON.stringify(member));
-  document.querySelector('#memberInfo').textContent = memberLabel(member);
-  if (dialog.open) dialog.close();
-  populateMemberTools(); renderFields();
-  document.querySelector('#workspace').classList.remove('hidden');
-  document.querySelector('#workspace').scrollIntoView({behavior:'smooth'});
-}
-
-document.querySelector('#loginForm').addEventListener('submit', async event => {
-  event.preventDefault();
-  const message = document.querySelector('#loginMessage');
-  message.className='form-message'; message.textContent='กำลังตรวจสอบ...';
-  try {
-    const data = await login(document.querySelector('#accessCode').value.trim().toUpperCase());
-    message.className='form-message success'; message.textContent='ตรวจสอบสำเร็จ';
-    openWorkspace(data.member, data.token);
-  } catch (error) { message.className='form-message error'; message.textContent=error.message; }
-});
-
-document.querySelector('#logoutBtn').addEventListener('click', () => {
-  sessionStorage.removeItem('gpToken'); sessionStorage.removeItem('gpMember'); location.reload();
-});
-
-function fieldHtml(field) {
-  const required = field.required ? 'required' : '';
-  const requiredMark = field.required ? ' <span aria-hidden="true">*</span>' : '';
-  return `<label>${escapeHtml(field.label)}${requiredMark}${field.type==='textarea' ? `<textarea id="${escapeHtml(field.id)}" ${required} placeholder="${escapeHtml(field.placeholder || '')}"></textarea>` : `<input id="${escapeHtml(field.id)}" ${required} placeholder="${escapeHtml(field.placeholder || '')}">`}</label>`;
-}
-function renderFields(){
-  const tool = selectedTool();
-  if (!tool) return;
-  document.querySelector('#dynamicFields').innerHTML = (tool.formFields || []).map(fieldHtml).join('');
-  document.querySelector('#generateBtn').textContent = 'สร้าง Prompt พร้อมคัดลอก';
-  document.querySelector('#resultLabel').textContent = `${tool.code} — Prompt พร้อมคัดลอก`;
-  document.querySelector('#toolAccessNote').textContent = `${tool.code} ผ่านการตรวจและอนุมัติแล้ว • ไม่เรียก OpenAI API • Prompt Master เก็บไว้ฝั่งเซิร์ฟเวอร์`;
-}
-document.querySelector('#toolSelect').addEventListener('change', renderFields);
-function payloadFields(){
-  const tool = selectedTool();
-  return Object.fromEntries((tool?.formFields || []).map(field => [field.id, document.querySelector(`#${CSS.escape(field.id)}`)?.value.trim() || '']));
-}
-
-document.querySelector('#generatorForm').addEventListener('submit', async event => {
-  event.preventDefault();
-  const message=document.querySelector('#generateMessage'); const button=document.querySelector('#generateBtn');
-  if(!document.querySelector('#confirmFacts').checked) return;
-  const tool=selectedTool();
-  button.disabled=true; button.textContent='กำลังประกอบ Prompt...'; message.className='form-message'; message.textContent=`ระบบกำลังประกอบ ${tool?.code || 'Prompt'} จากข้อมูลที่กรอก โดยไม่เรียก AI API`;
-  document.querySelector('#resultOutput').classList.add('loading');
-  try {
-    const data = await api('/api/generate', {method:'POST',headers:{'content-type':'application/json','authorization':`Bearer ${state.token}`},body:JSON.stringify({toolId:document.querySelector('#toolSelect').value,tone:document.querySelector('#tone').value,fields:payloadFields()})});
-    state.result=data.output;
-    const output=document.querySelector('#resultOutput'); output.textContent=data.output; output.classList.remove('empty');
-    document.querySelector('#watermark').textContent=`จัดทำสำหรับ ${data.watermark.ownerName} • ${data.watermark.packageName || ''} • ${data.watermark.orderId} • ${new Date().toLocaleString('th-TH')}`;
-    ['copyBtn','wordBtn','pdfBtn'].forEach(id=>document.querySelector('#'+id).disabled=false);
-    if(Number.isInteger(data.remainingUses)){
-      state.member.remainingUses=data.remainingUses; sessionStorage.setItem('gpMember',JSON.stringify(state.member));
-      document.querySelector('#memberInfo').textContent=memberLabel(state.member,data.remainingUses);
+  function fieldHtml(field) {
+    const required = field.required ? 'required' : '';
+    const mark = field.required ? ' <span aria-hidden="true">*</span>' : '';
+    if (field.type === 'textarea') {
+      return `<label>${escapeHtml(field.label)}${mark}<textarea id="${escapeHtml(field.id)}" ${required} placeholder="${escapeHtml(field.placeholder || '')}"></textarea></label>`;
     }
-    message.className='form-message success';
-    message.textContent=`สร้าง ${data.promptCode || tool?.code || 'Prompt'} สำเร็จ — พร้อมคัดลอกไปใช้กับ AI ของคุณ • ไม่เรียก AI API และไม่หักจำนวนครั้ง`;
-  } catch(error) { message.className='form-message error'; message.textContent=error.message; }
-  finally { button.disabled=false; button.textContent='สร้าง Prompt พร้อมคัดลอก'; document.querySelector('#resultOutput').classList.remove('loading'); }
-});
+    return `<label>${escapeHtml(field.label)}${mark}<input id="${escapeHtml(field.id)}" ${required} placeholder="${escapeHtml(field.placeholder || '')}" /></label>`;
+  }
 
-document.querySelector('#copyBtn').addEventListener('click', async () => {
-  await navigator.clipboard.writeText(state.result); const button=document.querySelector('#copyBtn'); button.textContent='คัดลอกแล้ว'; setTimeout(()=>button.textContent='คัดลอก',1200);
-});
-document.querySelector('#pdfBtn').addEventListener('click',()=>window.print());
-document.querySelector('#wordBtn').addEventListener('click',()=>{
-  const title=tools.find(t=>t.id===document.querySelector('#toolSelect').value)?.name || 'GovPrompt';
-  const lines=state.result.split('\n').map(line=>`<p>${escapeHtml(line)||'&nbsp;'}</p>`).join('');
-  const watermark=escapeHtml(document.querySelector('#watermark').textContent);
-  const html=`<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:"TH Sarabun New",sans-serif;font-size:16pt;line-height:1.35}h1{text-align:center;font-size:20pt}.wm{color:#777;font-size:10pt;border-bottom:1px solid #bbb;padding-bottom:8px}</style></head><body><div class="wm">${watermark}</div><h1>${escapeHtml(title)}</h1>${lines}</body></html>`;
-  const blob=new Blob(['\ufeff',html],{type:'application/msword'}); const link=document.createElement('a'); link.href=URL.createObjectURL(blob); link.download=`${title}-${new Date().toISOString().slice(0,10)}.doc`; link.click(); URL.revokeObjectURL(link.href);
-});
+  function buildPrompt(tool, tone, fields) {
+    const toneMap = {
+      official: 'ใช้ภาษาราชการที่กระชับ ชัดเจน และพร้อมตรวจทาน',
+      executive: 'สรุปสาระสำคัญสำหรับผู้บริหาร โดยเน้นประเด็นตัดสินใจ ความเสี่ยง และข้อเสนอ',
+      plain: 'ใช้ภาษาที่อ่านง่ายสำหรับประชาชน แต่ยังคงความถูกต้องและสุภาพ'
+    };
 
-function paymentHtml(payment) {
-  const rows=[];
-  if(payment.promptPayId) rows.push(`<div><span>พร้อมเพย์</span><strong>${escapeHtml(payment.promptPayId)}</strong></div>`);
-  if(payment.bankName || payment.accountNumber) rows.push(`<div><span>${escapeHtml(payment.bankName || 'บัญชีธนาคาร')}</span><strong>${escapeHtml(payment.accountNumber || '-')}</strong></div>`);
-  if(payment.accountName) rows.push(`<div><span>ชื่อบัญชี</span><strong>${escapeHtml(payment.accountName)}</strong></div>`);
-  return rows.length ? rows.join('') : '<div><span>การชำระเงิน</span><strong>กรุณาติดต่อผู้ขายเพื่อรับรายละเอียด</strong></div>';
-}
+    const facts = (tool.formFields || []).map(field => {
+      const value = fields[field.id]?.trim();
+      return value ? `- ${field.label}: ${value}` : `- ${field.label}: [ยังไม่ได้ระบุ]`;
+    }).join('\n');
 
-function showPayment(data) {
-  state.payment = {requestRef:data.requestRef, proofToken:data.proofToken, packageName:data.package?.name || data.packageName, priceThb:data.package?.priceThb ?? data.priceThb, payment:data.payment || {}};
-  sessionStorage.setItem('gpPayment', JSON.stringify(state.payment));
-  document.querySelector('#paymentRef').textContent=state.payment.requestRef;
-  document.querySelector('#paymentPackage').textContent=`${state.payment.packageName} • ${Number(state.payment.priceThb).toLocaleString('th-TH')} บาท`;
-  document.querySelector('#paymentDetails').innerHTML=paymentHtml(state.payment.payment);
-  const panel=document.querySelector('#paymentPanel'); panel.classList.remove('hidden'); panel.scrollIntoView({behavior:'smooth'});
-}
+    return `บทบาท
+คุณเป็น Government AI Copilot ผู้เชี่ยวชาญงานราชการไทย
 
-document.querySelector('#orderForm').addEventListener('submit', async event => {
-  event.preventDefault();
-  const message=document.querySelector('#orderMessage'); const button=document.querySelector('#orderBtn');
-  button.disabled=true; button.textContent='กำลังบันทึก...'; message.className='form-message'; message.textContent='กำลังสร้างเลขอ้างอิง';
-  try {
-    const data=await api('/api/order',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
-      packageId:document.querySelector('#packageId').value, fullName:document.querySelector('#fullName').value.trim(), organization:document.querySelector('#organization').value.trim(),
-      phone:document.querySelector('#phone').value.trim(), email:document.querySelector('#email').value.trim(), contact:document.querySelector('#contact').value.trim(),
-      customerNote:document.querySelector('#customerNote').value.trim(), acceptTerms:document.querySelector('#acceptTerms').checked, acceptPrivacy:document.querySelector('#acceptPrivacy').checked,
-      botField:document.querySelector('[name="botField"]').value
-    })});
-    message.className='form-message success'; message.textContent=`รับคำขอแล้ว เลขอ้างอิง ${data.requestRef}`; showPayment(data);
-  } catch(error) { message.className='form-message error'; message.textContent=error.message; }
-  finally { button.disabled=false; button.textContent='ส่งคำขอสั่งซื้อ'; }
-});
+ภารกิจ
+${tool.name}
 
-document.querySelector('#proofForm').addEventListener('submit', async event => {
-  event.preventDefault();
-  const message=document.querySelector('#proofMessage'); const button=document.querySelector('#proofBtn');
-  if(!state.payment?.proofToken) { message.className='form-message error'; message.textContent='กรุณาสร้างหรือค้นหาคำสั่งซื้อก่อน'; return; }
-  const file=document.querySelector('#proofFile').files[0];
-  if(!file) return;
-  if(file.size>2_500_000){message.className='form-message error';message.textContent='ไฟล์มีขนาดเกิน 2.5 MB';return;}
-  button.disabled=true; button.textContent='กำลังอัปโหลด...'; message.className='form-message'; message.textContent='กำลังส่งหลักฐานแบบส่วนตัว';
-  try {
-    const form=new FormData(); form.set('proofToken',state.payment.proofToken); form.set('requestRef',state.payment.requestRef); form.set('file',file); form.set('paymentNote',document.querySelector('#paymentNote').value.trim());
-    const data=await api('/api/payment-proof',{method:'POST',body:form});
-    message.className='form-message success'; message.textContent=`ส่งหลักฐานสำเร็จ เลขอ้างอิง ${data.requestRef} กรุณารอผู้ดูแลตรวจสอบ`;
-    sessionStorage.removeItem('gpPayment');
-  } catch(error){message.className='form-message error';message.textContent=error.message;}
-  finally{button.disabled=false;button.textContent='ส่งหลักฐาน';}
-});
+ข้อมูลจากผู้ใช้
+${facts}
 
-document.querySelector('#lookupForm').addEventListener('submit', async event => {
-  event.preventDefault(); const message=document.querySelector('#lookupMessage'); message.className='form-message'; message.textContent='กำลังค้นหา...';
-  try {
-    const data=await api('/api/order-lookup',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({requestRef:document.querySelector('#lookupRef').value.trim(),email:document.querySelector('#lookupEmail').value.trim(),phoneLast4:document.querySelector('#lookupPhone').value.trim()})});
-    message.className='form-message success'; message.textContent='พบคำสั่งซื้อแล้ว กรุณาส่งหลักฐานในส่วนที่เปิดขึ้น'; showPayment(data);
-  } catch(error){message.className='form-message error';message.textContent=error.message;}
-});
+ข้อกำหนดสำคัญ
+- ยึดข้อเท็จจริงที่ผู้ใช้ให้เป็นหลัก
+- ห้ามสมมติชื่อบุคคล วันที่ เลขหนังสือ วงเงิน หรือข้อกฎหมาย
+- หากข้อมูลสำคัญไม่ครบ ให้ระบุช่องว่างหรือถามเฉพาะข้อมูลที่จำเป็น
+- แยกข้อเท็จจริง ข้อกฎหมาย การวิเคราะห์ ความเสี่ยง และข้อเสนอแนะตามความเหมาะสม
+- ${toneMap[tone] || toneMap.official}
+- ระบุข้อมูลที่ต้องตรวจสอบเพิ่มเติมก่อนนำไปใช้จริง
 
-(async function initialize(){
-  await loadPackages();
-  await loadPublicConfig();
-  if(state.payment?.proofToken) showPayment(state.payment);
-  if(state.member && state.token) openWorkspace(state.member,state.token);
+โปรดจัดทำผลลัพธ์ฉบับพร้อมตรวจทาน โดยไม่อ้างว่าข้อมูลที่ไม่ได้ให้มาเป็นข้อเท็จจริง`;
+  }
+
+  function renderCards() {
+    const grid = $('#toolGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    if (!freeTools.length) {
+      grid.innerHTML = '<div class="notice">ไม่พบข้อมูลเครื่องมือ กรุณาตรวจไฟล์ catalog-public.js</div>';
+      return;
+    }
+
+    const grouped = freeTools.reduce((map, tool) => {
+      const key = tool.groupCode || 'FREE';
+      if (!map.has(key)) map.set(key, { name: tool.groupName || 'เครื่องมือฟรี', items: [] });
+      map.get(key).items.push(tool);
+      return map;
+    }, new Map());
+
+    for (const [groupCode, group] of grouped) {
+      grid.insertAdjacentHTML('beforeend',
+        `<div class="tool-group-title"><span>${escapeHtml(groupCode)}</span><h3>${escapeHtml(group.name)}</h3><small>${group.items.length} เครื่องมือฟรี</small></div>`
+      );
+
+      group.items.forEach(tool => {
+        grid.insertAdjacentHTML('beforeend', `
+          <article class="tool-card" tabindex="0" role="button" data-tool-id="${escapeHtml(tool.id)}" aria-label="เปิด ${escapeHtml(tool.name)}">
+            <div class="tool-icon">${tool.icon || '📌'}</div>
+            <span class="pill">${escapeHtml(tool.code)} • ทดลองใช้ฟรี</span>
+            <h3>${escapeHtml(`${tool.code} — ${tool.name}`)}</h3>
+            <p>${escapeHtml(tool.desc || '')}</p>
+            <button class="btn secondary full" type="button" data-open-tool="${escapeHtml(tool.id)}">เปิดเครื่องมือ</button>
+          </article>
+        `);
+      });
+    }
+
+    $$('[data-open-tool], .tool-card[data-tool-id]').forEach(element => {
+      const open = event => {
+        if (event.type === 'keydown' && !['Enter', ' '].includes(event.key)) return;
+        event.preventDefault();
+        const id = element.dataset.openTool || element.dataset.toolId;
+        openFreeWorkspace(id);
+      };
+      element.addEventListener('click', open);
+      element.addEventListener('keydown', open);
+    });
+  }
+
+  function renderPreview() {
+    const select = $('#previewTool');
+    if (!select) return;
+    select.innerHTML = freeTools.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(`${t.code} — ${t.name}`)}</option>`).join('');
+    const update = () => {
+      const tool = freeTools.find(t => t.id === select.value) || freeTools[0];
+      if ($('#previewOutput')) $('#previewOutput').textContent = tool?.preview || '';
+    };
+    select.addEventListener('change', update);
+    update();
+  }
+
+  function renderFields() {
+    const tool = selectedTool();
+    if (!tool) return;
+    const select = $('#toolSelect');
+    if (select) {
+      select.innerHTML = freeTools.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(`${t.code} — ${t.name}`)}</option>`).join('');
+      select.value = tool.id;
+    }
+    if ($('#dynamicFields')) $('#dynamicFields').innerHTML = (tool.formFields || []).map(fieldHtml).join('');
+    if ($('#toolAccessNote')) $('#toolAccessNote').textContent = `${tool.code} ใช้งานฟรี • สร้าง Prompt ในอุปกรณ์ของคุณ • ไม่ส่งข้อมูลไปยังเซิร์ฟเวอร์`;
+    if ($('#resultLabel')) $('#resultLabel').textContent = `${tool.code} — Prompt พร้อมคัดลอก`;
+  }
+
+  function openFreeWorkspace(id) {
+    if (!freeTools.some(t => t.id === id)) return;
+    state.selectedId = id;
+    renderFields();
+    const workspace = $('#workspace');
+    if (workspace) {
+      workspace.classList.remove('hidden');
+      workspace.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function setupWorkspace() {
+    const workspace = $('#workspace');
+    if (!workspace) return;
+
+    const heading = workspace.querySelector('h2');
+    if (heading) heading.textContent = 'สร้าง Prompt งานราชการฟรี';
+    const memberInfo = $('#memberInfo');
+    if (memberInfo) memberInfo.textContent = 'ทดลองใช้ฟรี 20 Prompt โดยไม่ต้องสมัครสมาชิกหรือกรอกรหัส';
+
+    const logout = $('#logoutBtn');
+    if (logout) {
+      logout.textContent = 'ปิดพื้นที่ทำงาน';
+      logout.onclick = () => workspace.classList.add('hidden');
+    }
+
+    $('#toolSelect')?.addEventListener('change', event => {
+      state.selectedId = event.target.value;
+      renderFields();
+    });
+
+    $('#generatorForm')?.addEventListener('submit', event => {
+      event.preventDefault();
+      const tool = selectedTool();
+      if (!tool) return;
+
+      const confirm = $('#confirmFacts');
+      if (confirm && !confirm.checked) {
+        if ($('#generateMessage')) {
+          $('#generateMessage').className = 'form-message error';
+          $('#generateMessage').textContent = 'กรุณายืนยันว่าข้อมูลเป็นข้อเท็จจริงและจะตรวจทานก่อนใช้จริง';
+        }
+        return;
+      }
+
+      const fields = Object.fromEntries((tool.formFields || []).map(field => [
+        field.id,
+        document.getElementById(field.id)?.value || ''
+      ]));
+
+      state.result = buildPrompt(tool, $('#tone')?.value || 'official', fields);
+      const output = $('#resultOutput');
+      if (output) {
+        output.textContent = state.result;
+        output.classList.remove('empty');
+      }
+      if ($('#watermark')) $('#watermark').textContent = `GovPrompt Thailand • ${tool.code} • สร้างเมื่อ ${new Date().toLocaleString('th-TH')}`;
+      ['copyBtn', 'wordBtn', 'pdfBtn'].forEach(id => {
+        const button = document.getElementById(id);
+        if (button) button.disabled = false;
+      });
+      if ($('#generateMessage')) {
+        $('#generateMessage').className = 'form-message success';
+        $('#generateMessage').textContent = 'สร้าง Prompt สำเร็จ — ตรวจทานแล้วคัดลอกไปใช้กับ AI ที่คุณเลือกได้ทันที';
+      }
+    });
+
+    $('#copyBtn')?.addEventListener('click', async () => {
+      if (!state.result) return;
+      try {
+        await navigator.clipboard.writeText(state.result);
+      } catch {
+        const area = document.createElement('textarea');
+        area.value = state.result;
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        area.remove();
+      }
+      const button = $('#copyBtn');
+      if (button) {
+        button.textContent = 'คัดลอกแล้ว';
+        setTimeout(() => button.textContent = 'คัดลอก', 1500);
+      }
+    });
+
+    $('#wordBtn')?.addEventListener('click', () => {
+      if (!state.result) return;
+      const blob = new Blob([`\ufeff${state.result}`], { type: 'application/msword;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${selectedTool()?.code || 'GovPrompt'}-prompt.doc`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    $('#pdfBtn')?.addEventListener('click', () => window.print());
+  }
+
+  function simplifyLandingPage() {
+    $('#systemBanner')?.classList.add('hidden');
+
+    ['#packages', '#how', '#order', '#paymentPanel'].forEach(selector => {
+      const element = $(selector);
+      if (element) element.classList.add('hidden');
+    });
+
+    $$('nav a[href="#packages"], nav a[href="#order"], [data-open-login]').forEach(element => {
+      element.style.display = 'none';
+    });
+
+    const previewTitle = $('#preview h2');
+    if (previewTitle) previewTitle.textContent = 'ทดลองดูรูปแบบของ 20 Prompt ฟรี';
+    const previewText = $('#preview p');
+    if (previewText) previewText.textContent = 'เลือกเครื่องมือเพื่อดูแนวทาง แล้วกดเปิดเครื่องมือเพื่อกรอกข้อมูลและสร้าง Prompt ได้ทันที';
+    const lock = $('.fade-lock');
+    if (lock) lock.textContent = '✅ เปิดใช้ฟรีได้ทันที ไม่ต้องเข้าสู่ระบบ';
+  }
+
+  function init() {
+    simplifyLandingPage();
+    renderCards();
+    renderPreview();
+    setupWorkspace();
+
+    if (freeTools.length) {
+      state.selectedId = freeTools[0].id;
+      renderFields();
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
