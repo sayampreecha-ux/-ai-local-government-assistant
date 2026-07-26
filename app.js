@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const FEEDBACK_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwcQDVl0B0unH-KK71xRqgqn21aWwHO-BYF6rR7U0fhRbmGS53ZCXbzhSih_CDp1s9O/exec';
+  const FEEDBACK_ENDPOINT  = 'https://script.google.com/macros/s/AKfycbzdKkn5Y8g4k_HxrVRxB1CnR5KOMKrPSiYxWkLIw-8xQ5eWyfDYogwBC2gvbdGR_VDV_g/exec';
   const RELEASE_VERSION = 'free20-20260727-1';
   const $ = selector => document.querySelector(selector);
   const $$ = selector => [...document.querySelectorAll(selector)];
