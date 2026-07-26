@@ -1,17 +1,8 @@
-ติดตั้งแบบครบ
+วิธีแก้ปุ่มเปิดเครื่องมือ
+1. เข้า Repository sayampreecha-ux/-ai-local-government-assistant
+2. กด Add file > Upload files
+3. อัปโหลด app.js จากชุดนี้ทับไฟล์เดิมที่ระดับบนสุด
+4. Commit message: Fix tool cards open action
+5. เปิดเว็บไซต์แล้วกด Ctrl + F5
 
-1) เข้า https://github.com/sayampreecha-ux/-ai-local-government-assistant
-2) เปิดไฟล์ index.html
-3) กดไอคอนดินสอ Edit this file
-4) ลบเนื้อหาเดิมทั้งหมด
-5) เปิดไฟล์ index.html ในชุดนี้ แล้วคัดลอกทั้งหมดไปวาง
-6) กด Commit changes
-7) รอ GitHub Pages อัปเดต แล้วเปิด:
-https://sayampreecha-ux.github.io/-ai-local-government-assistant/
-
-การเก็บรายชื่อ:
-- เปิด Google Form
-- ไปแท็บ “คำตอบ”
-- กดไอคอน Google Sheets สีเขียว
-- สร้างชีตชื่อ “รายชื่อสมาชิก GovPrompt Thailand”
-- เปิดรับแจ้งเตือนอีเมลเมื่อมีคำตอบใหม่
+ผลลัพธ์: การ์ดเครื่องมือและปุ่ม “เปิดเครื่องมือ” จะเปิดตัวอย่างเครื่องมือที่เลือกและเลื่อนไปยังส่วนทดลอง

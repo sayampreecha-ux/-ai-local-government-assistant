@@ -35,8 +35,33 @@ const groupedTools = tools.reduce((map, tool) => {
 }, new Map());
 for (const [groupCode, group] of groupedTools) {
   toolGrid.insertAdjacentHTML('beforeend', `<div class="tool-group-title"><span>${escapeHtml(groupCode)}</span><h3>${escapeHtml(group.name)}</h3><small>${group.items.length} เครื่องมือ</small></div>`);
-  group.items.forEach(t => toolGrid.insertAdjacentHTML('beforeend', `<article class="tool-card"><div class="tool-icon">${t.icon}</div><span class="pill">${escapeHtml(t.code)} • ผ่านการตรวจ</span><h3>${escapeHtml(`${t.code} — ${t.name}`)}</h3><p>${escapeHtml(t.desc)}</p></article>`));
+  group.items.forEach(t => toolGrid.insertAdjacentHTML('beforeend', `<article class="tool-card" role="button" tabindex="0" data-tool-id="${escapeHtml(t.id)}" aria-label="เปิด ${escapeHtml(t.code)} ${escapeHtml(t.name)}"><div class="tool-icon">${t.icon}</div><span class="pill">${escapeHtml(t.code)} • ผ่านการตรวจ</span><h3>${escapeHtml(`${t.code} — ${t.name}`)}</h3><p>${escapeHtml(t.desc)}</p><button class="btn secondary full tool-open-btn" type="button">เปิดเครื่องมือ</button></article>`));
 }
+
+function openPublicTool(toolId) {
+  const tool = tools.find(t => t.id === toolId);
+  if (!tool) return;
+  const previewTool = document.querySelector('#previewTool');
+  if (previewTool) {
+    previewTool.value = tool.id;
+    previewTool.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  const preview = document.querySelector('#preview');
+  if (preview) preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+toolGrid?.addEventListener('click', event => {
+  const card = event.target.closest('.tool-card[data-tool-id]');
+  if (card) openPublicTool(card.dataset.toolId);
+});
+toolGrid?.addEventListener('keydown', event => {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  const card = event.target.closest('.tool-card[data-tool-id]');
+  if (!card) return;
+  event.preventDefault();
+  openPublicTool(card.dataset.toolId);
+});
+
 const previewTool = document.querySelector('#previewTool');
 tools.forEach(t => previewTool.add(new Option(`${t.code} — ${t.name}`, t.id)));
 function updatePreview(){ const t=tools.find(x=>x.id===previewTool.value); document.querySelector('#previewOutput').textContent=t.preview; }
