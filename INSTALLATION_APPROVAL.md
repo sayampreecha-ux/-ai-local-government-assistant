@@ -1,30 +1,57 @@
-# Checklist เปิดระบบด้วย Vercel Drop
+# Checklist เปิดใช้ GovPrompt Enterprise 4.0
 
-## A. Supabase
-- [ ] สร้าง Project แล้ว
-- [ ] รัน `supabase/setup.sql` สำเร็จ
-- [ ] ตาราง `packages`, `orders`, `access_codes`, `usage_logs` มีอยู่
-- [ ] Bucket `payment-proofs` เป็น Private
+## Source
+- [ ] `npm run validate` ผ่าน
+- [ ] Repository เป็น Private
+- [ ] ไม่มี `.env` หรือ Secret ใน GitHub
+- [ ] GitHub Actions ผ่าน
 
-## B. Vercel
-- [ ] อัปโหลด ZIP ผ่าน Vercel Drop
-- [ ] ตั้ง Environment Variables ครบ
-- [ ] Redeploy หลังตั้งค่าตัวแปร
-- [ ] `/owner-check.html` แสดงฐานข้อมูลพร้อม
-- [ ] `/api/packages` โหลด 3 แพ็กเกจ
+## Supabase
+- [ ] Run `supabase/setup.sql`
+- [ ] มีตาราง 7 ตารางตาม README
+- [ ] มี Storage bucket `payment-proofs` และเป็น Private
+- [ ] RLS เปิดทุกตาราง
+- [ ] Browser role ไม่มีสิทธิ์อ่านตารางโดยตรง
+- [ ] คัดลอก URL และ Secret key ถูกต้อง
 
-## C. ทดสอบขาย
-- [ ] ส่งคำขอสั่งซื้อทดลอง
-- [ ] อัปโหลดหลักฐานทดลอง
-- [ ] เข้าหน้า `/admin.html`
-- [ ] สร้างรหัสทดสอบ 1 ชุด
-- [ ] เข้าระบบสมาชิกด้วยรหัสทดสอบ
-- [ ] สร้างผลลัพธ์และดาวน์โหลด Word/PDF
-- [ ] ตรวจว่าจำนวนสิทธิ์ถูกหัก
-- [ ] ระงับรหัสทดสอบได้
+## Vercel
+- [ ] Import Repository
+- [ ] Framework = Other
+- [ ] Environment Variables จำเป็นครบ
+- [ ] ใส่ข้อมูล PromptPay/บัญชี
+- [ ] Deploy สำเร็จ
+- [ ] `/api/health` แสดง `version: 4.0.0`, `database: true`
+- [ ] `mode: demo` ก่อนตั้ง OpenAI และ `mode: live` หลังตั้ง OpenAI
 
-## D. ก่อนโพสต์ขาย
-- [ ] เปลี่ยนข้อมูลชำระเงินเป็นข้อมูลจริง
-- [ ] OpenAI อยู่โหมด Live
-- [ ] ทดลองบนมือถือและคอมพิวเตอร์
-- [ ] เก็บ `ADMIN_SECRET` และ `MASTER_ACCESS_CODE` แยกจาก Source
+## สั่งซื้อ/ชำระเงิน
+- [ ] โหลดแพ็กเกจ 222/599/999 ได้
+- [ ] ส่งคำสั่งซื้อและได้รับ `REQ-...`
+- [ ] ข้อมูลชำระเงินแสดงถูกต้อง
+- [ ] อัปโหลด JPG/PNG/PDF ไม่เกิน 2.5 MB ได้
+- [ ] ไฟล์เกินขนาดหรือชนิดผิดถูกปฏิเสธ
+- [ ] Admin เปิดหลักฐานจาก Signed URL ได้
+- [ ] Signed URL หมดอายุภายใน 5 นาที
+
+## สิทธิ์
+- [ ] ออกรหัสแต่ละแพ็กเกจได้
+- [ ] รหัสเต็มแสดงครั้งเดียว
+- [ ] คำสั่งซื้อเดิมไม่สามารถออกรหัสซ้ำ
+- [ ] Starter เห็นเฉพาะเครื่องมือในแพ็กเกจ
+- [ ] Backend ปฏิเสธเครื่องมือที่ไม่มีสิทธิ์
+- [ ] ระงับรหัสแล้วเข้าสู่ระบบไม่ได้
+- [ ] จำนวนครั้งลดเฉพาะ Live mode
+- [ ] AI ล้มเหลวแล้วคืนจำนวนครั้ง
+
+## การแจ้งเตือน (ถ้าเปิดใช้)
+- [ ] Resend domain ยืนยันแล้ว
+- [ ] ลูกค้าได้รับอีเมลเลขอ้างอิง
+- [ ] ลูกค้าได้รับอีเมลรหัสหลังเปิดสิทธิ์
+- [ ] LINE Official Account ส่งแจ้งเตือนผู้ดูแลได้
+
+## ความปลอดภัย
+- [ ] Session secret แต่ละตัวเป็นคนละค่า
+- [ ] Admin secret ไม่ใช่ค่าทดสอบ
+- [ ] ตั้ง OpenAI budget/usage alert
+- [ ] ตรวจ CSP, HSTS, noindex Admin/API
+- [ ] ทดสอบ Rate Limit
+- [ ] ไม่กรอกข้อมูลลับหรือข้อมูลอ่อนไหวในการทดสอบ

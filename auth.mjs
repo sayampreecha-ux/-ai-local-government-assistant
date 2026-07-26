@@ -1,37 +1,23 @@
-import { enforceRateLimit, errorResponse, getSupabase, json, verifyAdminRequest } from "../lib/server.mjs";
+import { errorResponse, getSupabase, isSupabaseConfigured, json } from "../lib/server.mjs";
+import { FALLBACK_PACKAGES } from "../lib/catalog.mjs";
 
 export default {
   async fetch(request) {
     if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
+    if (!isSupabaseConfigured()) {
+      return json({ packages: FALLBACK_PACKAGES, source: "fallback" });
+    }
     try {
-      if (!verifyAdminRequest(request)) return json({ error: "กรุณาเข้าสู่ระบบผู้ดูแลใหม่" }, 401);
-      await enforceRateLimit(request, "admin-stats", 120, 60 * 60);
-      const supabase = getSupabase();
-      const today = new Date(); today.setHours(0,0,0,0);
-      const month = new Date(today.getFullYear(), today.getMonth(), 1);
-
-      const [pending, proof, paid, activeCodes, usageToday, paidOrders, toolRows] = await Promise.all([
-        supabase.from("orders").select("id", { count: "exact", head: true }).in("status", ["pending","contacted","awaiting_payment"]),
-        supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "proof_submitted"),
-        supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "paid"),
-        supabase.from("access_codes").select("id", { count: "exact", head: true }).eq("active", true).gt("expires_at", new Date().toISOString()),
-        supabase.from("usage_logs").select("id", { count: "exact", head: true }).gte("created_at", today.toISOString()),
-        supabase.from("orders").select("price_thb,package_id").in("status", ["paid","completed"]).gte("paid_at", month.toISOString()),
-        supabase.from("usage_logs").select("tool_id").gte("created_at", month.toISOString()).limit(5000)
-      ]);
-      const error = pending.error || proof.error || paid.error || activeCodes.error || usageToday.error || paidOrders.error || toolRows.error;
+      const { data, error } = await getSupabase().from("packages")
+        .select("id,name,price_thb,description,max_uses,expiry_days,allowed_tools,sort_order")
+        .eq("active", true).order("sort_order", { ascending: true });
       if (error) throw error;
-      const revenueThisMonth = (paidOrders.data || []).reduce((sum,row)=>sum+Number(row.price_thb||0),0);
-      const packageSales = Object.entries((paidOrders.data || []).reduce((acc,row)=>{acc[row.package_id]=(acc[row.package_id]||0)+1;return acc;},{})).map(([packageId,count])=>({packageId,count}));
-      const toolUsage = Object.entries((toolRows.data || []).reduce((acc,row)=>{acc[row.tool_id]=(acc[row.tool_id]||0)+1;return acc;},{})).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([toolId,count])=>({toolId,count}));
-
-      return json({
-        pendingOrders: pending.count || 0, proofOrders: proof.count || 0, paidOrders: paid.count || 0,
-        activeCodes: activeCodes.count || 0, usageToday: usageToday.count || 0,
-        revenueThisMonth, packageSales, toolUsage
-      });
+      return json({ packages: (data || []).map(row => ({
+        id: row.id, name: row.name, priceThb: row.price_thb, description: row.description,
+        maxUses: row.max_uses, expiryDays: row.expiry_days, allowedTools: row.allowed_tools || []
+      })), source: "database" });
     } catch (error) {
-      return errorResponse(error, "ไม่สามารถโหลดภาพรวมระบบได้");
+      return errorResponse(error, "ไม่สามารถโหลดแพ็กเกจได้");
     }
   }
 };

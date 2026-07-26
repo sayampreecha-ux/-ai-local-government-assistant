@@ -4,13 +4,20 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="GovPrompt Thailand คลัง Prompt งานราชการไทย 222 รายการ ใช้งานผ่านแบบฟอร์มและสร้าง Prompt พร้อมคัดลอกโดยไม่เรียก AI API" />
-  <title>GovPrompt Thailand Enterprise</title>
+  <title>GovPrompt Thailand</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+<section style="padding:40px;text-align:center;background:#eef6ff;border-bottom:1px solid #ddd">
+<h1>GovPrompt Thailand</h1>
+<p><strong>ทดลองใช้ฟรี 20 Prompt สำหรับงานราชการ ใช้งานได้ทันที</strong></p>
+<p>สำหรับส่วนราชการและองค์กรปกครองส่วนท้องถิ่น</p>
+<p><a href="#free20" style="background:#0b67d1;color:#fff;padding:14px 24px;border-radius:10px;text-decoration:none;font-weight:bold">🚀 เริ่มใช้ฟรีทันที</a></p>
+</section>
+
   <header class="topbar">
     <a class="brand" href="#top" aria-label="GovPrompt Thailand">
       <span class="brand-mark">G</span>
@@ -29,7 +36,7 @@
   <main id="top">
     <section class="hero">
       <div class="hero-copy">
-        <div class="eyebrow">GovPrompt Thailand Enterprise 5.0</div>
+        <div class="eyebrow">GovPrompt Thailand 5.0</div>
         <h1>ไม่ต้องเก่ง Prompt<br><span>ก็ทำงานราชการด้วย AI ได้</span></h1>
         <p class="lead">เลือกประเภทงาน กรอกข้อเท็จจริง แล้วรับ Prompt พร้อมคัดลอกไปใช้กับ AI ที่คุณเลือก โดยระบบไม่เรียก AI API และเก็บ Prompt Master ไว้ฝั่งเซิร์ฟเวอร์</p>
         <div class="hero-actions">

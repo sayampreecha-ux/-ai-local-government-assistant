@@ -1,118 +1,117 @@
-import { cleanText, env, getSupabase, isSupabaseConfigured } from "./server.mjs";
+import { createHmac } from "node:crypto";
+import { createClient } from "@supabase/supabase-js";
+import {
+  cleanText, envFlag, envValue, generateAccessCode, generateRequestRef, hashCode, maskCode,
+  normalizeCode, secureEqual, signSession, verifyAdminSecret, verifySession
+} from "./security.mjs";
 
-function htmlEscape(value) {
-  return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+let supabaseClient;
+
+export function json(data, status = 200) {
+  return Response.json(data, {
+    status,
+    headers: {
+      "cache-control": "no-store",
+      "content-type": "application/json; charset=utf-8",
+      "x-content-type-options": "nosniff"
+    }
+  });
 }
 
-async function logNotification(channel, event, recipient, status, detail = "") {
+export function env(name, required = true) {
+  return envValue(name, required);
+}
+
+export function isSupabaseConfigured() {
+  return Boolean(env("SUPABASE_URL", false) && (env("SUPABASE_SECRET_KEY", false) || env("SUPABASE_SERVICE_ROLE_KEY", false)));
+}
+
+export function getSupabase() {
+  if (supabaseClient) return supabaseClient;
+  const url = env("SUPABASE_URL");
+  const secret = env("SUPABASE_SECRET_KEY", false) || env("SUPABASE_SERVICE_ROLE_KEY", false);
+  if (!secret) throw new Error("SUPABASE_SECRET_KEY is not configured");
+  supabaseClient = createClient(url, secret, {
+    auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false }
+  });
+  return supabaseClient;
+}
+
+export async function readJson(request, maxBytes = 160_000) {
+  const length = Number(request.headers.get("content-length") || 0);
+  if (Number.isFinite(length) && length > maxBytes) {
+    const error = new Error("PAYLOAD_TOO_LARGE");
+    error.status = 413;
+    throw error;
+  }
+  try {
+    return await request.json();
+  } catch {
+    const error = new Error("INVALID_JSON");
+    error.status = 400;
+    throw error;
+  }
+}
+
+export {
+  cleanText, envFlag, generateAccessCode, generateRequestRef, hashCode, maskCode,
+  normalizeCode, secureEqual, signSession, verifyAdminSecret, verifySession
+};
+
+export function verifyAdminRequest(request) {
+  return verifySession(bearerToken(request), "admin");
+}
+
+export function hashClientIp(request) {
+  const raw = String(request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown")
+    .split(",")[0].trim().slice(0, 120);
+  const secret = env("IP_HASH_SECRET", false) || env("SESSION_SECRET");
+  return createHmac("sha256", secret).update(raw).digest("hex");
+}
+
+export async function enforceRateLimit(request, scope, limit, windowSeconds, discriminator = "") {
+  if (!isSupabaseConfigured()) return;
+  const source = `${scope}:${hashClientIp(request)}:${String(discriminator || "").slice(0, 120)}`;
+  const rateKey = createHmac("sha256", env("IP_HASH_SECRET", false) || env("SESSION_SECRET")).update(source).digest("hex");
+  const { data, error } = await getSupabase().rpc("consume_rate_limit", {
+    p_rate_key: rateKey,
+    p_limit: Math.max(1, Number(limit) || 1),
+    p_window_seconds: Math.max(1, Number(windowSeconds) || 60)
+  });
+  if (error) throw error;
+  if (data !== true) {
+    const rateError = new Error("RATE_LIMITED");
+    rateError.status = 429;
+    throw rateError;
+  }
+}
+
+export function bearerToken(request) {
+  const auth = request.headers.get("authorization") || "";
+  return auth.startsWith("Bearer ") ? auth.slice(7) : "";
+}
+
+export async function writeAuditLog({ actorType = "system", actorRef = "", action, entityType = "", entityId = "", details = {} }) {
   try {
     if (!isSupabaseConfigured()) return;
-    await getSupabase().from("notification_logs").insert({
-      channel: cleanText(channel, 30), event: cleanText(event, 80), recipient: cleanText(recipient, 220),
-      status: cleanText(status, 30), detail: cleanText(detail, 1000)
+    await getSupabase().from("audit_logs").insert({
+      actor_type: cleanText(actorType, 30),
+      actor_ref: cleanText(actorRef, 160),
+      action: cleanText(action, 100),
+      entity_type: cleanText(entityType, 60),
+      entity_id: cleanText(entityId, 160),
+      details
     });
   } catch (error) {
-    console.error("notification log failed", error);
+    console.error("audit log failed", error);
   }
 }
 
-export async function sendEmail({ to, subject, html, text, event = "general", idempotencyKey = "" }) {
-  const apiKey = env("RESEND_API_KEY", false);
-  const from = env("EMAIL_FROM", false);
-  const recipient = cleanText(to, 300);
-  if (!apiKey || !from || !recipient) return { skipped: true, reason: "email_not_configured" };
-  try {
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${apiKey}`,
-        "content-type": "application/json",
-        ...(idempotencyKey ? { "idempotency-key": cleanText(idempotencyKey, 250) } : {})
-      },
-      body: JSON.stringify({ from, to: [recipient], subject: cleanText(subject, 200), html, text }),
-      signal: AbortSignal.timeout(10_000)
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data?.message || `Resend ${response.status}`);
-    await logNotification("email", event, recipient, "sent", data?.id || "");
-    return { sent: true, id: data?.id || null };
-  } catch (error) {
-    await logNotification("email", event, recipient, "failed", error.message);
-    console.error("email notification failed", error);
-    return { sent: false, error: error.message };
-  }
-}
-
-export async function sendLineAdmin(text, event = "general") {
-  const token = env("LINE_CHANNEL_ACCESS_TOKEN", false);
-  const to = env("LINE_ADMIN_USER_ID", false);
-  if (!token || !to) return { skipped: true, reason: "line_not_configured" };
-  try {
-    const response = await fetch("https://api.line.me/v2/bot/message/push", {
-      method: "POST",
-      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-      body: JSON.stringify({ to, messages: [{ type: "text", text: cleanText(text, 4900) }] }),
-      signal: AbortSignal.timeout(10_000)
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data?.message || `LINE ${response.status}`);
-    await logNotification("line", event, to, "sent", "");
-    return { sent: true };
-  } catch (error) {
-    await logNotification("line", event, to, "failed", error.message);
-    console.error("LINE notification failed", error);
-    return { sent: false, error: error.message };
-  }
-}
-
-export async function notifyNewOrder(order) {
-  const adminEmail = env("ADMIN_EMAIL", false);
-  const packageLabel = `${order.packageName} (${Number(order.priceThb || 0).toLocaleString("th-TH")} บาท)`;
-  const customerHtml = `<h2>รับคำขอสั่งซื้อ GovPrompt Thailand แล้ว</h2><p>เรียน ${htmlEscape(order.fullName)}</p><p>เลขอ้างอิง: <strong>${htmlEscape(order.requestRef)}</strong></p><p>แพ็กเกจ: ${htmlEscape(packageLabel)}</p><p>กรุณาเก็บเลขอ้างอิงไว้ใช้ส่งหลักฐานการชำระเงินและติดต่อผู้ดูแลระบบ</p>`;
-  const tasks = [
-    sendEmail({
-      to: order.email, subject: `รับคำขอสั่งซื้อ ${order.requestRef}`,
-      html: customerHtml, text: `รับคำขอสั่งซื้อแล้ว เลขอ้างอิง ${order.requestRef} แพ็กเกจ ${packageLabel}`,
-      event: "new_order_customer", idempotencyKey: `order-customer-${order.requestRef}`
-    }),
-    sendLineAdmin(`🛒 GovPrompt มีคำสั่งซื้อใหม่\n${order.requestRef}\n${order.fullName}\n${packageLabel}\n${order.phone}` , "new_order_admin")
-  ];
-  if (adminEmail) tasks.push(sendEmail({
-    to: adminEmail, subject: `คำสั่งซื้อใหม่ ${order.requestRef}`,
-    html: `<h2>คำสั่งซื้อใหม่</h2><p>${htmlEscape(order.fullName)} • ${htmlEscape(order.organization)}</p><p>${htmlEscape(packageLabel)}</p><p>${htmlEscape(order.phone)} • ${htmlEscape(order.email)}</p>`,
-    text: `คำสั่งซื้อใหม่ ${order.requestRef} ${order.fullName} ${packageLabel}`,
-    event: "new_order_admin", idempotencyKey: `order-admin-${order.requestRef}`
-  }));
-  return Promise.allSettled(tasks);
-}
-
-export async function notifyActivation({ fullName, email, requestRef, packageName, code, expiresAt, maxUses }) {
-  if (!email) return [{ status: "fulfilled", value: { skipped: true } }];
-  const expiry = new Date(expiresAt).toLocaleDateString("th-TH");
-  return Promise.allSettled([
-    sendEmail({
-      to: email,
-      subject: `เปิดสิทธิ์ GovPrompt Thailand แล้ว — ${requestRef}`,
-      html: `<h2>เปิดสิทธิ์ใช้งานเรียบร้อยแล้ว</h2><p>เรียน ${htmlEscape(fullName)}</p><p>แพ็กเกจ: ${htmlEscape(packageName)}</p><p>รหัสใช้งาน: <strong style="font-size:20px">${htmlEscape(code)}</strong></p><p>ใช้ได้สูงสุด ${Number(maxUses).toLocaleString("th-TH")} ครั้ง ถึงวันที่ ${htmlEscape(expiry)}</p><p>รหัสเป็นสิทธิ์เฉพาะผู้ซื้อ โปรดเก็บเป็นความลับและห้ามส่งต่อ</p>`,
-      text: `เปิดสิทธิ์แล้ว รหัส ${code} ใช้ได้ ${maxUses} ครั้ง ถึง ${expiry}`,
-      event: "activation_customer",
-      idempotencyKey: `activation-${requestRef}`
-    }),
-    sendLineAdmin(`✅ เปิดสิทธิ์ GovPrompt แล้ว\n${requestRef}\n${fullName}\n${packageName}`, "activation_admin")
-  ]);
-}
-
-export async function notifyPaymentProof(order) {
-  const adminEmail = env("ADMIN_EMAIL", false);
-  const text = `💳 มีหลักฐานการชำระเงินใหม่\n${order.requestRef}\n${order.fullName}\n${order.packageName} ${Number(order.priceThb || 0).toLocaleString("th-TH")} บาท`;
-  const tasks = [sendLineAdmin(text, "payment_proof_admin")];
-  if (adminEmail) tasks.push(sendEmail({
-    to: adminEmail,
-    subject: `หลักฐานการชำระเงิน ${order.requestRef}`,
-    html: `<h2>มีหลักฐานการชำระเงินใหม่</h2><p>${htmlEscape(order.requestRef)}</p><p>${htmlEscape(order.fullName)} • ${htmlEscape(order.packageName)}</p><p>ตรวจสอบได้จากหน้า Admin</p>`,
-    text,
-    event: "payment_proof_admin",
-    idempotencyKey: `payment-proof-${order.requestRef}`
-  }));
-  return Promise.allSettled(tasks);
+export function errorResponse(error, fallback) {
+  const status = Number(error?.status) || 500;
+  if (error?.message === "PAYLOAD_TOO_LARGE") return json({ error: "ข้อมูลมีขนาดใหญ่เกินกำหนด" }, 413);
+  if (error?.message === "INVALID_JSON") return json({ error: "รูปแบบข้อมูลไม่ถูกต้อง" }, 400);
+  if (error?.message === "RATE_LIMITED") return json({ error: "มีการใช้งานถี่เกินไป กรุณารอสักครู่แล้วลองใหม่" }, 429);
+  console.error(error);
+  return json({ error: fallback }, status >= 400 && status < 600 ? status : 500);
 }

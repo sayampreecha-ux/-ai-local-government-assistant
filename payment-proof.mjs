@@ -1,23 +1,17 @@
-import { errorResponse, getSupabase, isSupabaseConfigured, json } from "../lib/server.mjs";
-import { FALLBACK_PACKAGES } from "../lib/catalog.mjs";
+import { enforceRateLimit, errorResponse, json, readJson, signSession, verifyAdminSecret } from "../lib/server.mjs";
 
 export default {
   async fetch(request) {
-    if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
-    if (!isSupabaseConfigured()) {
-      return json({ packages: FALLBACK_PACKAGES, source: "fallback" });
-    }
+    if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
     try {
-      const { data, error } = await getSupabase().from("packages")
-        .select("id,name,price_thb,description,max_uses,expiry_days,allowed_tools,sort_order")
-        .eq("active", true).order("sort_order", { ascending: true });
-      if (error) throw error;
-      return json({ packages: (data || []).map(row => ({
-        id: row.id, name: row.name, priceThb: row.price_thb, description: row.description,
-        maxUses: row.max_uses, expiryDays: row.expiry_days, allowedTools: row.allowed_tools || []
-      })), source: "database" });
+      await enforceRateLimit(request, "admin-auth", 5, 15 * 60);
+      const body = await readJson(request, 10_000);
+      if (!verifyAdminSecret(body?.adminSecret)) return json({ error: "รหัสผู้ดูแลไม่ถูกต้อง" }, 401);
+      const expiresAt = Date.now() + 2 * 60 * 60 * 1000;
+      const token = signSession({ role: "admin", exp: expiresAt }, "admin");
+      return json({ token, expiresAt });
     } catch (error) {
-      return errorResponse(error, "ไม่สามารถโหลดแพ็กเกจได้");
+      return errorResponse(error, "ไม่สามารถเข้าสู่ระบบผู้ดูแลได้");
     }
   }
 };
