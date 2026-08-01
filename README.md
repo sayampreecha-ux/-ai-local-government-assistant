@@ -1,1 +1,30 @@
-<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ความเป็นส่วนตัว | GovPrompt Thailand</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="style.css"></head><body><main class="section"><a href="index.html">← กลับหน้าแรก</a><h1>ความเป็นส่วนตัว</h1><p>เว็บไซต์รุ่นนี้ประมวลผลข้อมูลที่กรอกภายในเบราว์เซอร์ของผู้ใช้เพื่อสร้างข้อความ Prompt และไม่ได้ส่งข้อมูลไปยังเซิร์ฟเวอร์ของ GovPrompt Thailand โดยอัตโนมัติ</p><p>เมื่อผู้ใช้นำ Prompt ไปใช้กับผู้ให้บริการ AI ภายนอก การประมวลผลข้อมูลจะเป็นไปตามนโยบายของผู้ให้บริการนั้น ผู้ใช้ควรลบหรือปกปิดข้อมูลส่วนบุคคลและข้อมูลอ่อนไหวก่อนใช้งาน</p></main></body></html>
+# GovPrompt Thailand v6.0 Stable
+
+เว็บไซต์เดียวสำหรับ Starter + Professional โดย Build นี้เปิดใช้งาน Starter จำนวน 20 เครื่องมือ และวางโครงสำหรับ Professional
+
+## ไฟล์หลัก
+- `index.html`
+- `style.css`
+- `script.js`
+- `assets/tools.js`
+- `terms.html`
+- `privacy.html`
+
+## วิธีอัปโหลดด้วย GitHub Desktop (ง่ายที่สุด)
+1. แตกไฟล์ ZIP
+2. เปิด GitHub Desktop
+3. เลือก Repository `-ai-local-government-assistant`
+4. เปิดโฟลเดอร์ Repository บนเครื่อง
+5. สำรองไฟล์เดิมไว้ก่อน
+6. คัดลอกไฟล์ทั้งหมดจากโฟลเดอร์นี้ไปทับใน Repository
+7. กลับ GitHub Desktop
+8. ใส่ Summary: `Release GovPrompt Thailand v6.0 Stable`
+9. กด **Commit to main**
+10. กด **Push origin**
+11. รอ GitHub Pages อัปเดตประมาณ 1–5 นาที แล้วกด Ctrl+F5
+
+## หมายเหตุ
+- ไม่ใช้คำว่า “ฟรี” ในหน้า Hero
+- Starter ใช้ข้อความ “ทดลองใช้ 20 เครื่องมือ”
+- Professional แสดงสถานะ “กำลังพัฒนา”
+- ข้อมูลแบบฟอร์มถูกประมวลผลในเบราว์เซอร์
