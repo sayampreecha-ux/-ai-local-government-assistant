@@ -2,131 +2,76 @@
 <html lang="th">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="AI ผู้ช่วยตรวจร่าง TOR สำหรับหน่วยงานภาครัฐและองค์กรปกครองส่วนท้องถิ่น">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="ผู้ช่วยพัสดุและตรวจ TOR สำหรับงานราชการไทย">
   <meta name="theme-color" content="#123a70">
-  <title>AI ผู้ช่วยตรวจ TOR | GovPrompt Thailand</title>
+  <title>ผู้ช่วยพัสดุและตรวจ TOR | GovPrompt Thailand</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=1.0.3">
   <style>
-    .module-hero{max-width:1180px;margin:auto;padding:70px 24px 48px;display:grid;grid-template-columns:1.2fr .8fr;gap:40px;align-items:center;background:radial-gradient(circle at 10% 12%,#eef8ff 0,transparent 40%)}
-    .module-hero h1{font-size:clamp(42px,6vw,68px);line-height:1.12;margin:16px 0}.module-hero h1 span{color:#1768d3}.module-lead{font-size:19px;color:#455873;max-width:760px}
-    .status{display:inline-flex;gap:8px;align-items:center;padding:7px 12px;border-radius:999px;background:#e8f7ef;color:#126343;font-weight:800;font-size:13px}.status i{width:9px;height:9px;border-radius:50%;background:#15815b}
-    .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.feature{padding:22px;border:1px solid #dbe5f0;border-radius:20px;background:#fff}.feature strong{display:block;font-size:18px;margin:8px 0}.feature p{margin:0;color:#64748b}
-    .risk-table{width:100%;border-collapse:collapse;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 10px 34px rgba(13,47,95,.07)}.risk-table th,.risk-table td{padding:14px;border-bottom:1px solid #dbe5f0;text-align:left;vertical-align:top}.risk-table th{background:#0d2f5f;color:#fff}.risk-table tr:last-child td{border-bottom:0}
-    .checkpoint{background:linear-gradient(145deg,#0d2f5f,#164d90);color:#fff;border-radius:26px;padding:28px}.checkpoint p{color:#d4e4f5}.notice{padding:18px;border-radius:18px;background:#fff8e6;border:1px solid #f3d58b;color:#694d00}
-    .faq{display:grid;gap:12px}.faq details{background:#fff;border:1px solid #dbe5f0;border-radius:16px;padding:16px 18px}.faq summary{font-weight:800;cursor:pointer}.faq p{color:#64748b}
-    @media(max-width:900px){.module-hero{grid-template-columns:1fr}.feature-grid{grid-template-columns:1fr}.risk-table{font-size:14px}}
+    :root{--navy:#123a70;--blue:#245ea8;--bg:#f5f7fb;--line:#dbe4ef;--text:#172033;--muted:#66758a;--green:#16805b}
+    *{box-sizing:border-box}body{margin:0;font-family:'Noto Sans Thai',sans-serif;background:var(--bg);color:var(--text)}a{text-decoration:none;color:inherit}button,input,textarea,select{font:inherit}
+    .top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line)}.bar{max-width:980px;margin:auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}.brand{display:flex;gap:10px;align-items:center}.mark{width:38px;height:38px;border-radius:12px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800}.brand b{display:block}.brand small{color:var(--muted)}
+    main{max-width:980px;margin:auto;padding:18px 16px 90px}.head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}.head h1{font-size:clamp(25px,5vw,38px);margin:0}.head p{margin:4px 0 0;color:var(--muted)}.status{white-space:nowrap;background:#e8f7ef;color:#126343;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:800}
+    .search{background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px 12px;display:flex;gap:8px;align-items:center;margin:12px 0}.search input{border:0;outline:0;width:100%;font-size:16px;background:transparent}
+    .tabs{display:flex;gap:8px;overflow:auto;padding-bottom:6px}.tabs button{border:1px solid var(--line);background:#fff;padding:9px 12px;border-radius:999px;white-space:nowrap;color:#44536a}.tabs button.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}.tool{border:1px solid var(--line);background:#fff;border-radius:16px;padding:14px;text-align:left;min-height:92px;cursor:pointer}.tool:hover,.tool.active{border-color:var(--blue);box-shadow:0 6px 18px #123a7015}.tool span{font-size:24px;display:block}.tool b{display:block;margin-top:7px}.tool small{display:block;color:var(--muted);margin-top:3px}
+    .form{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:14px}.form h2{margin:0 0 12px;font-size:20px}.field{margin-bottom:12px}.field label{display:block;font-weight:700;margin-bottom:6px}.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:#fff}.field textarea{min-height:120px;resize:vertical}.hint{font-size:12px;color:var(--muted);margin-top:4px}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:0;border-radius:12px;padding:11px 16px;font-weight:800;cursor:pointer}.primary{background:var(--navy);color:#fff}.secondary{background:#eef3f8;color:var(--navy)}
+    .output{display:none;background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:14px}.output pre{white-space:pre-wrap;margin:0;background:#f7f9fc;border-radius:12px;padding:14px;line-height:1.65}.warn{margin-top:12px;padding:12px;border-radius:12px;background:#fff8e6;color:#6c5000;font-size:13px}
+    .bottom{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);display:none;z-index:20}.bottom nav{max-width:560px;margin:auto;display:grid;grid-template-columns:repeat(4,1fr)}.bottom a{padding:10px 4px;text-align:center;font-size:12px}.bottom span{display:block;font-size:20px}
+    @media(max-width:760px){.grid{grid-template-columns:repeat(2,1fr)}.head{display:block}.status{display:inline-block;margin-top:8px}.bottom{display:block}.tool{min-height:86px;padding:12px}.bar{padding:10px 12px}main{padding:14px 12px 90px}}
   </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="nav-wrap">
-      <a class="brand" href="index.html" aria-label="กลับหน้าแรก GovPrompt Thailand">
-        <span class="brand-mark">G</span>
-        <span class="brand-copy"><strong>GovPrompt Thailand</strong><small>Government AI Copilot</small></span>
-      </a>
-      <button class="menu-button" id="menuButton" aria-label="เปิดเมนู">☰</button>
-      <nav id="mainNav">
-        <a href="index.html">หน้าแรก</a>
-        <a href="#features">ความสามารถ</a>
-        <a href="#risk">จุดเสี่ยง</a>
-        <a href="#checkpoint">Safety Check</a>
-        <a href="#faq">คำถามพบบ่อย</a>
-        <a href="#feedback">แจ้งปัญหา</a>
-      </nav>
-    </div>
-  </header>
-
-  <main>
-    <section class="module-hero">
-      <div>
-        <span class="status"><i></i> เปิดใช้งานแล้ว · รุ่นทดลองใช้งานจริง</span>
-        <h1>AI ผู้ช่วยตรวจร่าง TOR<br><span>แบบครบวงจร</span></h1>
-        <p class="module-lead">ช่วยตรวจการชี้เฉพาะ คุณสมบัติผู้เสนอราคา ผลงานอ้างอิง บุคลากร การรับประกัน การตรวจรับ ค่าปรับ และเงื่อนไขที่อาจกระทบการแข่งขัน พร้อมเสนอข้อความแก้ไขอย่างเป็นระบบ</p>
-        <div class="hero-actions">
-          <a class="btn primary" href="index.html#tools">เริ่มตรวจ TOR</a>
-          <a class="btn secondary" href="#features">ดูขอบเขตการตรวจ</a>
-        </div>
-        <div class="trust-list"><span>✓ รักษาความต้องการใช้งาน</span><span>✓ ไม่สมมติข้อเท็จจริง</span><span>✓ แยกความเสี่ยงและข้อเสนอแก้</span></div>
-      </div>
-      <aside class="hero-card">
-        <div class="hero-card-head"><span>ผลลัพธ์มาตรฐาน</span><strong>ตารางตรวจ TOR</strong></div>
-        <ol>
-          <li><span>1</span><div><strong>ข้อ TOR ที่ตรวจพบ</strong><small>ระบุข้อความหรือเงื่อนไขที่เกี่ยวข้อง</small></div></li>
-          <li><span>2</span><div><strong>ความเสี่ยงและเหตุผล</strong><small>อธิบายผลต่อการแข่งขันและการตรวจรับ</small></div></li>
-          <li><span>3</span><div><strong>ข้อความเสนอแก้</strong><small>เสนอถ้อยคำที่นำไปปรับใช้ได้</small></div></li>
-        </ol>
-        <div class="safety-note">AI ช่วยตรวจและเสนอทางเลือก คณะกรรมการและผู้มีอำนาจยังต้องตรวจสอบและตัดสินใจ</div>
-      </aside>
-    </section>
-
-    <section class="section" id="features">
-      <div class="section-head centered"><div><span class="eyebrow">ความสามารถ</span><h2>ตรวจจุดสำคัญตลอดวงจร TOR</h2></div><p>เน้นรักษาวัตถุประสงค์การใช้งาน แต่ลดเงื่อนไขที่เกินจำเป็นหรืออาจจำกัดการแข่งขัน</p></div>
-      <div class="feature-grid">
-        <article class="feature"><span>🎯</span><strong>การชี้เฉพาะ</strong><p>ตรวจยี่ห้อ รุ่น ผู้ผลิต แหล่งกำเนิด เทคโนโลยี และถ้อยคำที่อาจล็อกสเปก</p></article>
-        <article class="feature"><span>👥</span><strong>คุณสมบัติผู้เสนอราคา</strong><p>ตรวจทุนจดทะเบียน ประสบการณ์ ใบอนุญาต ผลงาน และเงื่อนไขที่เกินความจำเป็น</p></article>
-        <article class="feature"><span>🧑‍💼</span><strong>บุคลากร</strong><p>ตรวจจำนวน วุฒิ ประสบการณ์ ใบประกอบวิชาชีพ และความสัมพันธ์กับขอบเขตงาน</p></article>
-        <article class="feature"><span>🧪</span><strong>การตรวจรับ</strong><p>ตรวจวิธีทดสอบ เกณฑ์ผ่าน หลักฐาน ผู้รับผิดชอบ และความชัดเจนในการส่งมอบ</p></article>
-        <article class="feature"><span>🛡️</span><strong>รับประกันและบริการ</strong><p>ตรวจระยะเวลา เงื่อนไขซ่อม อะไหล่ SLA การอบรม และบริการหลังการขาย</p></article>
-        <article class="feature"><span>⚠️</span><strong>ค่าปรับและสัญญา</strong><p>ตรวจความชัดเจนของกำหนดส่ง งวดงาน ค่าปรับ การแก้ไขงาน และเหตุขยายเวลา</p></article>
-      </div>
-    </section>
-
-    <section class="section soft" id="risk">
-      <div class="section-head centered"><div><span class="eyebrow">รูปแบบผลลัพธ์</span><h2>ตารางตรวจ TOR ที่นำไปใช้งานต่อได้</h2></div></div>
-      <table class="risk-table">
-        <thead><tr><th>ข้อ TOR</th><th>ความเสี่ยง</th><th>เหตุผล</th><th>ข้อความเสนอแก้</th><th>หลักฐานที่ต้องตรวจ</th></tr></thead>
-        <tbody>
-          <tr><td>คุณลักษณะเฉพาะ</td><td>อาจชี้เฉพาะหรือจำกัดการแข่งขัน</td><td>เงื่อนไขแคบกว่าความต้องการใช้งานจริง</td><td>ปรับเป็นค่าประสิทธิภาพขั้นต่ำหรือเทียบเท่า</td><td>ข้อมูลตลาด เอกสารสำรวจราคา เหตุผลความจำเป็น</td></tr>
-          <tr><td>ผลงานอ้างอิง</td><td>วงเงินหรือประเภทผลงานสูงเกินจำเป็น</td><td>อาจตัดผู้มีศักยภาพโดยไม่มีเหตุผลรองรับ</td><td>กำหนดให้สัมพันธ์กับความซับซ้อนและวงเงินงาน</td><td>เหตุผลทางเทคนิคและผลสำรวจผู้ประกอบการ</td></tr>
-          <tr><td>การตรวจรับ</td><td>เกณฑ์ไม่ชัด ทำให้เกิดข้อโต้แย้ง</td><td>ไม่ระบุวิธีวัด ค่าคลาดเคลื่อน หรือเอกสารพิสูจน์</td><td>ระบุวิธีทดสอบ เกณฑ์ผ่าน และหลักฐานให้ครบ</td><td>มาตรฐานอ้างอิง คู่มือ แบบทดสอบ</td></tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section class="section" id="checkpoint">
-      <div class="checkpoint">
-        <span class="eyebrow" style="color:#98ddff">📦 PROCUREMENT SAFETY CHECKPOINT</span>
-        <h2>ตรวจโดยยึดข้อเท็จจริงและเอกสารที่ได้รับ</h2>
-        <p>ระบบไม่ควรสมมติวงเงิน ชื่อโครงการ ผู้ขาย ยี่ห้อ รุ่น วันที่ เลขที่หนังสือ หรือข้อกฎหมาย หากข้อมูลสำคัญไม่ครบ ต้องระบุสิ่งที่ต้องตรวจสอบเพิ่มเติมก่อนนำไปใช้จริง</p>
-        <ul>
-          <li>แยกข้อเท็จจริง การวิเคราะห์ ความเสี่ยง และข้อเสนอแนะ</li>
-          <li>ไม่สรุปว่า “ผิด” หรือ “ถูก” โดยไม่มีฐานข้อมูลหรือเอกสารรองรับ</li>
-          <li>รักษาความต้องการใช้งานและผลลัพธ์ที่หน่วยงานจำเป็นต้องได้</li>
-          <li>คำนึงถึงการแข่งขันอย่างเป็นธรรม ความคุ้มค่า และความตรวจสอบได้</li>
-        </ul>
-        <div class="notice"><strong>ข้อควรระวัง:</strong> ผลลัพธ์เป็นการตรวจเบื้องต้น คณะกรรมการจัดทำ TOR เจ้าหน้าที่พัสดุ นิติกร และผู้มีอำนาจควรตรวจสอบกฎหมาย หนังสือสั่งการ ราคาตลาด และข้อเท็จจริงล่าสุดก่อนประกาศ</div>
-      </div>
-    </section>
-
-    <section class="section soft" id="faq">
-      <div class="section-head centered"><div><span class="eyebrow">FAQ</span><h2>คำถามที่พบบ่อย</h2></div></div>
-      <div class="faq">
-        <details><summary>ใช้ตรวจ TOR ประเภทใดได้บ้าง?</summary><p>ใช้เป็นกรอบตรวจเบื้องต้นได้ทั้งจัดซื้อ จัดจ้าง งานก่อสร้าง งานจ้างที่ปรึกษา และงานบริการ โดยต้องปรับประเด็นตรวจให้ตรงกับลักษณะพัสดุและวิธีจัดหา</p></details>
-        <details><summary>แนบไฟล์ TOR ได้หรือไม่?</summary><p>ได้ ควรแนบไฟล์ฉบับเต็ม รวมทั้งเอกสารสำรวจราคา แบบ รายการคำนวณ และข้อมูลความต้องการใช้งาน เพื่อให้วิเคราะห์ได้ครบถ้วน</p></details>
-        <details><summary>ระบบรับรองว่า TOR ไม่ล็อกสเปกหรือไม่?</summary><p>ไม่รับรองเด็ดขาด ระบบช่วยค้นหาจุดเสี่ยงและเสนอแนวทางแก้ แต่ต้องตรวจสอบตลาด เหตุผลทางเทคนิค และกฎหมายที่ใช้บังคับอีกครั้ง</p></details>
-        <details><summary>มีข้อมูลส่วนบุคคลต้องทำอย่างไร?</summary><p>ควรปกปิดชื่อ เลขประจำตัว ข้อมูลติดต่อ และข้อมูลส่วนบุคคลที่ไม่จำเป็นก่อนอัปโหลด พร้อมปฏิบัติตามมาตรการของหน่วยงาน</p></details>
-      </div>
-    </section>
-
-    <section class="section community" id="feedback">
-      <div><span class="eyebrow">FEEDBACK</span><h2>พบปัญหาหรือมีข้อเสนอแนะ?</h2><p>แจ้งผ่านเพจ GovPrompt Thailand - ชุมชน AI งานราชการ เพื่อใช้ปรับปรุงรายการตรวจ TOR และข้อความเสนอแก้ในรุ่นถัดไป</p></div>
-      <a class="btn social" href="https://www.facebook.com/GovPromptThailandAI" target="_blank" rel="noopener">แจ้งปัญหาผ่าน Facebook ↗</a>
-    </section>
-  </main>
-
-  <footer>
-    <div class="footer-brand"><span class="brand-mark small">G</span><div><strong>GovPrompt Thailand</strong><small>AI ผู้ช่วยตรวจ TOR v1.0</small></div></div>
-    <p>ระบบเป็นเครื่องมือช่วยตรวจและวิเคราะห์ ผู้ใช้ต้องตรวจสอบข้อเท็จจริง กฎหมาย ระเบียบ ความต้องการใช้งาน และความเหมาะสมก่อนนำผลไปใช้จริง</p>
-    <div><a href="index.html">หน้าแรก</a> · <a href="terms.html">เงื่อนไข</a> · <a href="privacy.html">ความเป็นส่วนตัว</a></div>
-  </footer>
-  <script>
-    const menuButton=document.getElementById('menuButton');const mainNav=document.getElementById('mainNav');
-    menuButton?.addEventListener('click',()=>mainNav.classList.toggle('open'));
-    mainNav?.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>mainNav.classList.remove('open')));
-  </script>
+<header class="top"><div class="bar"><a class="brand" href="index.html"><span class="mark">G</span><span><b>GovPrompt Thailand</b><small>Government AI Copilot</small></span></a><a href="index.html">หน้าแรก</a></div></header>
+<main>
+  <section class="head"><div><h1>📦 ผู้ช่วยพัสดุและตรวจ TOR</h1><p>เลือกงาน กรอกข้อเท็จจริง แล้วสร้าง Prompt พร้อมใช้</p></div><span class="status">เปิดใช้งานแล้ว</span></section>
+  <div class="search"><span>🔎</span><input id="search" type="search" placeholder="ค้นหา เช่น TOR ราคากลาง สัญญา ตรวจรับ"></div>
+  <div class="tabs" id="tabs"><button class="active" data-tab="all">ทั้งหมด</button><button data-tab="tor">TOR</button><button data-tab="procure">จัดซื้อจัดจ้าง</button><button data-tab="contract">สัญญาและตรวจรับ</button><button data-tab="risk">ความเสี่ยง</button></div>
+  <section class="grid" id="grid"></section>
+  <section class="form">
+    <h2 id="selectedTitle">เลือกงานที่ต้องการ</h2>
+    <div class="field"><label for="subject">พัสดุ/โครงการ</label><input id="subject" placeholder="เช่น โดรนสำรวจไฟป่า งานจ้างที่ปรึกษา ถนนคอนกรีต"></div>
+    <div class="field"><label for="purpose">ความต้องการใช้งาน</label><textarea id="purpose" placeholder="อธิบายวัตถุประสงค์ ขอบเขต และผลลัพธ์ที่ต้องการ"></textarea></div>
+    <div class="field"><label for="details">ข้อความ TOR / ข้อเท็จจริง / จุดที่กังวล</label><textarea id="details" placeholder="วางข้อความ TOR หรือสรุปข้อเท็จจริงที่ต้องการให้ตรวจ"></textarea></div>
+    <div class="field"><label for="budget">วงเงิน (ถ้ามี)</label><input id="budget" placeholder="เช่น 1,500,000 บาท"></div>
+    <div class="field"><label for="files">เอกสารแนบ</label><input id="files" type="file" multiple><div class="hint">ระบบนี้ยังไม่อัปโหลดไฟล์เข้าสู่ AI โดยตรง โปรดคัดลอก Prompt แล้วแนบไฟล์ใน ChatGPT/Gemini</div></div>
+    <div class="actions"><button class="btn primary" id="generate">สร้าง Prompt</button><button class="btn secondary" id="clear">ล้างข้อมูล</button></div>
+  </section>
+  <section class="output" id="output"><h2>Prompt พร้อมใช้</h2><pre id="prompt"></pre><div class="actions" style="margin-top:12px"><button class="btn primary" id="copy">คัดลอก Prompt</button><a class="btn secondary" href="https://chatgpt.com" target="_blank" rel="noopener">เปิด ChatGPT</a></div><div class="warn">ตรวจ TOR โดยยึดเอกสารจริง ห้ามสมมติข้อกฎหมาย เลขหนังสือ วันที่ ราคา หรือข้อมูลคู่สัญญา และควรให้ผู้รับผิดชอบตรวจทานก่อนใช้จริง</div></section>
+</main>
+<nav class="bottom"><nav><a href="index.html"><span>🏠</span>หน้าแรก</a><a href="#search"><span>🔎</span>ค้นหา</a><a href="gp001.html"><span>📄</span>สารบรรณ</a><a href="gp002.html"><span>⚖️</span>กฎหมาย</a></nav></nav>
+<script>
+const tools=[
+{id:'tor-check',tab:'tor',icon:'🔍',name:'ตรวจ TOR',desc:'ตรวจครบวงจร'},
+{id:'tor-draft',tab:'tor',icon:'✍️',name:'ร่าง TOR',desc:'จัดทำโครงสร้าง TOR'},
+{id:'tor-goods',tab:'tor',icon:'🖥️',name:'TOR ครุภัณฑ์',desc:'สเปกและการรับประกัน'},
+{id:'tor-build',tab:'tor',icon:'🏗️',name:'TOR งานก่อสร้าง',desc:'แบบ BOQ และตรวจรับ'},
+{id:'tor-consult',tab:'tor',icon:'👥',name:'TOR จ้างที่ปรึกษา',desc:'บุคลากรและผลงาน'},
+{id:'tor-service',tab:'tor',icon:'🧰',name:'TOR จ้างบริการ',desc:'ขอบเขตและส่งมอบ'},
+{id:'price',tab:'procure',icon:'💰',name:'ตรวจราคากลาง',desc:'ที่มาและความเหมาะสม'},
+{id:'qualification',tab:'procure',icon:'📋',name:'ตรวจคุณสมบัติ',desc:'ไม่กีดกันการแข่งขัน'},
+{id:'boq',tab:'procure',icon:'📐',name:'ตรวจ BOQ',desc:'รายการ ปริมาณ ราคา'},
+{id:'ebid',tab:'procure',icon:'🧾',name:'ตรวจ e-Bidding',desc:'เกณฑ์และเงื่อนไข'},
+{id:'contract',tab:'contract',icon:'📑',name:'ตรวจสัญญา',desc:'เงื่อนไขและความรับผิด'},
+{id:'accept',tab:'contract',icon:'✅',name:'ตรวจรับพัสดุ',desc:'TOR สัญญา ผลงานจริง'},
+{id:'penalty',tab:'contract',icon:'⏱️',name:'ตรวจค่าปรับ',desc:'ส่งมอบล่าช้า'},
+{id:'warranty',tab:'contract',icon:'🛡️',name:'ตรวจรับประกัน',desc:'ระยะเวลาและเงื่อนไข'},
+{id:'lockspec',tab:'risk',icon:'🚫',name:'ตรวจล็อกสเปก',desc:'ยี่ห้อ รุ่น แหล่งกำเนิด'},
+{id:'competition',tab:'risk',icon:'⚠️',name:'ความเสี่ยงแข่งขัน',desc:'เงื่อนไขจำกัดผู้ค้า'},
+{id:'experience',tab:'risk',icon:'🏅',name:'ตรวจผลงานอ้างอิง',desc:'วงเงินและประเภทงาน'},
+{id:'personnel',tab:'risk',icon:'👷',name:'ตรวจบุคลากร',desc:'คุณวุฒิและประสบการณ์'},
+{id:'pdpa',tab:'risk',icon:'🔒',name:'ตรวจ PDPA',desc:'ข้อมูลส่วนบุคคลใน TOR'}];
+let selected=tools[0];
+const grid=document.getElementById('grid'), search=document.getElementById('search'), title=document.getElementById('selectedTitle');
+function render(tab='all',q=''){grid.innerHTML='';tools.filter(t=>(tab==='all'||t.tab===tab)&&(`${t.name} ${t.desc}`.toLowerCase().includes(q.toLowerCase()))).forEach(t=>{const b=document.createElement('button');b.className='tool'+(selected.id===t.id?' active':'');b.innerHTML=`<span>${t.icon}</span><b>${t.name}</b><small>${t.desc}</small>`;b.onclick=()=>{selected=t;title.textContent=t.name;render(document.querySelector('.tabs .active').dataset.tab,search.value);window.scrollTo({top:document.querySelector('.form').offsetTop-70,behavior:'smooth'});};grid.appendChild(b);});}
+render();title.textContent=selected.name;
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');render(b.dataset.tab,search.value);});
+search.oninput=()=>render(document.querySelector('.tabs .active').dataset.tab,search.value);
+document.getElementById('generate').onclick=()=>{const s=document.getElementById('subject').value.trim(),p=document.getElementById('purpose').value.trim(),d=document.getElementById('details').value.trim(),b=document.getElementById('budget').value.trim();if(!s||!p){alert('กรุณากรอกพัสดุ/โครงการ และความต้องการใช้งาน');return;}const text=`บทบาท\nคุณเป็น Government AI Copilot ผู้เชี่ยวชาญงานพัสดุและการจัดซื้อจัดจ้างภาครัฐไทย\n\nภารกิจ\n${selected.name}\n\nข้อมูลจากผู้ใช้\n- พัสดุ/โครงการ: ${s}\n- ความต้องการใช้งาน: ${p}\n- ข้อความ TOR/ข้อเท็จจริง/จุดที่กังวล: ${d||'[ยังไม่ได้ระบุ]'}\n- วงเงิน: ${b||'[ยังไม่ได้ระบุ]'}\n- เอกสารแนบ: ผู้ใช้จะแนบในระบบ AI\n\nรูปแบบผลลัพธ์\n- จัดหัวข้อให้เหมาะกับภารกิจ\n- แยกข้อเท็จจริง ข้อวิเคราะห์ ความเสี่ยง และข้อเสนอแนะ\n- ทำตาราง: ข้อ TOR / ความเสี่ยง / เหตุผล / ข้อความเสนอแก้ / หลักฐาน\n- ตรวจการชี้เฉพาะยี่ห้อ รุ่น ผู้ขาย แหล่งกำเนิด คุณสมบัติ ผลงาน บุคลากร การส่งมอบ ตรวจรับ รับประกัน และค่าปรับ\n- ระบุข้อมูลสำคัญที่ยังขาดก่อนนำไปใช้จริง\n\nข้อกำหนดสำคัญ\n1. ใช้ข้อเท็จจริงและเอกสารที่ผู้ใช้ให้เป็นหลัก\n2. ห้ามสมมติชื่อบุคคล วันที่ เลขหนังสือ ราคา หรือข้อกฎหมาย\n3. หากข้อมูลไม่ครบให้ใช้ [ต้องตรวจสอบ/เพิ่มเติม]\n4. คำนึงถึงการแข่งขันที่เป็นธรรม ความคุ้มค่า และ PDPA\n5. ผู้ใช้ต้องตรวจทานก่อนใช้จริง`;document.getElementById('prompt').textContent=text;document.getElementById('output').style.display='block';document.getElementById('output').scrollIntoView({behavior:'smooth'});};
+document.getElementById('copy').onclick=async()=>{await navigator.clipboard.writeText(document.getElementById('prompt').textContent);document.getElementById('copy').textContent='คัดลอกแล้ว ✓';};
+document.getElementById('clear').onclick=()=>{['subject','purpose','details','budget'].forEach(id=>document.getElementById(id).value='');document.getElementById('output').style.display='none';};
+</script>
 </body>
 </html>
