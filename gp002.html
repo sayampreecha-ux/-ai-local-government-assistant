@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="AI ผู้ช่วยวิเคราะห์ข้อกฎหมายสำหรับหน่วยงานภาครัฐและองค์กรปกครองส่วนท้องถิ่น">
+  <meta name="theme-color" content="#123a70">
+  <title>AI ผู้ช่วยวิเคราะห์ข้อกฎหมาย | GovPrompt Thailand</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=1.0.3">
+  <style>
+    .module-hero{max-width:1180px;margin:auto;padding:70px 24px 48px;display:grid;grid-template-columns:1.25fr .75fr;gap:46px;align-items:center;background:radial-gradient(circle at 10% 12%,#eef3ff 0,transparent 38%)}
+    .module-hero h1{font-size:clamp(42px,6vw,70px);line-height:1.1;margin:16px 0 18px}.module-hero h1 span{color:#4a55c7}.module-lead{font-size:19px;color:#455873;max-width:760px}
+    .status{display:inline-flex;gap:8px;align-items:center;padding:7px 12px;border-radius:999px;background:#e8f7ef;color:#126343;font-weight:800;font-size:13px}.status i{width:9px;height:9px;border-radius:50%;background:#15815b}
+    .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.feature{padding:22px;border:1px solid #dbe5f0;border-radius:20px;background:#fff}.feature strong{display:block;font-size:18px;margin:8px 0}.feature p{margin:0;color:#64748b}
+    .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.flow article{padding:18px;border-radius:18px;background:#fff;border:1px solid #dbe5f0}.flow span{font-weight:800;color:#4a55c7}
+    .legal-box{background:linear-gradient(145deg,#17234f,#3f4e9d);color:#fff;border-radius:26px;padding:28px}.legal-box p{color:#dbe4ff}.legal-box ul{padding-left:22px}
+    .notice{padding:18px;border-radius:18px;background:#fff8e6;border:1px solid #f3d58b;color:#694d00}
+    .faq{display:grid;gap:12px}.faq details{background:#fff;border:1px solid #dbe5f0;border-radius:16px;padding:16px 18px}.faq summary{font-weight:800;cursor:pointer}.faq p{color:#64748b}
+    .release{display:grid;gap:12px}.release article{padding:18px;border-left:4px solid #4a55c7;background:#fff;border-radius:0 16px 16px 0}.release h3{margin:0 0 6px}.release p{margin:0;color:#64748b}
+    @media(max-width:900px){.module-hero{grid-template-columns:1fr}.feature-grid,.flow{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-wrap">
+      <a class="brand" href="index.html" aria-label="กลับหน้าแรก GovPrompt Thailand">
+        <span class="brand-mark">G</span>
+        <span class="brand-copy"><strong>GovPrompt Thailand</strong><small>Government AI Copilot</small></span>
+      </a>
+      <button class="menu-button" id="menuButton" aria-label="เปิดเมนู">☰</button>
+      <nav id="mainNav">
+        <a href="index.html">หน้าแรก</a>
+        <a href="#features">ความสามารถ</a>
+        <a href="#workflow">วิธีวิเคราะห์</a>
+        <a href="#safety">ข้อควรระวัง</a>
+        <a href="#faq">คำถามพบบ่อย</a>
+        <a href="#feedback">แจ้งปัญหา</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="module-hero">
+      <div>
+        <span class="status"><i></i> เปิดใช้งานแล้ว · รุ่นทดลองใช้งานจริง</span>
+        <h1>AI ผู้ช่วยวิเคราะห์<br><span>ข้อกฎหมายและแนวทางปฏิบัติ</span></h1>
+        <p class="module-lead">ช่วยจัดระบบข้อเท็จจริง แยกประเด็นกฎหมาย ตรวจฐานอำนาจ วิเคราะห์ทางเลือก ความเสี่ยง และจัดทำข้อเสนอที่ปลอดภัยสำหรับงานราชการและท้องถิ่น</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="index.html#tools">เริ่มวิเคราะห์ข้อกฎหมาย</a>
+          <a class="btn secondary" href="#workflow">ดูวิธีใช้งาน</a>
+        </div>
+        <div class="trust-list"><span>✓ ไม่สมมติข้อกฎหมาย</span><span>✓ แยกข้อเท็จจริงกับความเห็น</span><span>✓ เตือนข้อมูลที่ต้องตรวจสอบ</span></div>
+      </div>
+      <aside class="hero-card">
+        <div class="hero-card-head"><span>ผลลัพธ์มาตรฐาน</span><strong>10 ส่วนสำคัญ</strong></div>
+        <ol>
+          <li><span>1</span><div><strong>ข้อเท็จจริงและข้อมูลที่ขาด</strong><small>จัดระบบข้อมูลก่อนวิเคราะห์</small></div></li>
+          <li><span>2</span><div><strong>ประเด็นกฎหมายและฐานอำนาจ</strong><small>แยกอำนาจ เงื่อนไข และขั้นตอน</small></div></li>
+          <li><span>3</span><div><strong>ทางเลือก ความเสี่ยง และข้อเสนอ</strong><small>ชี้แนวทางที่ปลอดภัยก่อนตัดสินใจ</small></div></li>
+        </ol>
+        <div class="safety-note">AI ช่วยวิเคราะห์ ผู้รับผิดชอบต้องตรวจสอบกฎหมายและเอกสารฉบับจริงก่อนใช้</div>
+      </aside>
+    </section>
+
+    <section class="section" id="features">
+      <div class="section-head centered"><div><span class="eyebrow">ความสามารถ</span><h2>วิเคราะห์เป็นระบบ ไม่ตอบแบบเดาสุ่ม</h2></div><p>ออกแบบให้เหมาะกับ อบจ. เทศบาล อบต. ส่วนราชการ และหน่วยงานภาครัฐ</p></div>
+      <div class="feature-grid">
+        <article class="feature"><span>🧾</span><strong>จัดระบบข้อเท็จจริง</strong><p>แยกข้อเท็จจริงที่ยืนยันได้ ข้อมูลที่ยังขาด และสมมติฐานที่ห้ามนำไปใช้โดยไม่ตรวจสอบ</p></article>
+        <article class="feature"><span>⚖️</span><strong>ตั้งประเด็นกฎหมาย</strong><p>ช่วยระบุคำถามทางกฎหมาย อำนาจหน้าที่ เงื่อนไข ขั้นตอน และผู้มีอำนาจพิจารณา</p></article>
+        <article class="feature"><span>📚</span><strong>ตรวจฐานอำนาจ</strong><p>ระบุเฉพาะกฎหมาย ระเบียบ หนังสือสั่งการ หรือคำวินิจฉัยที่ผู้ใช้ให้หรือที่ตรวจสอบได้</p></article>
+        <article class="feature"><span>🧠</span><strong>วิเคราะห์และตีความ</strong><p>เชื่อมข้อเท็จจริงกับกฎหมาย แยกข้อสนับสนุน ข้อโต้แย้ง และผลที่อาจเกิดขึ้น</p></article>
+        <article class="feature"><span>🚦</span><strong>ประเมินความเสี่ยง</strong><p>แยกความเสี่ยงด้านอำนาจ ขั้นตอน หลักฐาน งบประมาณ วินัย และความรับผิด</p></article>
+        <article class="feature"><span>✅</span><strong>ข้อเสนอที่ปลอดภัย</strong><p>เสนอทางเลือก เงื่อนไขก่อนดำเนินการ และรายการตรวจสอบก่อนเสนอผู้บริหาร</p></article>
+      </div>
+    </section>
+
+    <section class="section soft" id="workflow">
+      <div class="section-head centered"><div><span class="eyebrow">LEGAL WORKFLOW</span><h2>โครงสร้างการวิเคราะห์มาตรฐาน</h2></div></div>
+      <div class="flow">
+        <article><span>01</span><h3>ข้อเท็จจริง</h3><p>สรุปเฉพาะข้อมูลที่ยืนยันได้</p></article>
+        <article><span>02</span><h3>ข้อมูลที่ขาด</h3><p>ระบุสิ่งที่ต้องขอเพิ่มก่อนตัดสินใจ</p></article>
+        <article><span>03</span><h3>ประเด็นกฎหมาย</h3><p>ตั้งคำถามทางกฎหมายให้ชัด</p></article>
+        <article><span>04</span><h3>วิเคราะห์และความเสี่ยง</h3><p>ชั่งน้ำหนักทุกแนวทางอย่างเป็นกลาง</p></article>
+        <article><span>05</span><h3>ข้อเสนอ</h3><p>กำหนดทางเลือกและเงื่อนไขก่อนดำเนินการ</p></article>
+      </div>
+    </section>
+
+    <section class="section" id="safety">
+      <div class="legal-box">
+        <span class="eyebrow" style="color:#b9c8ff">⚖️ LEGAL SAFETY CHECKPOINT</span>
+        <h2>ไม่อ้างกฎหมายเกินกว่าที่ตรวจสอบได้</h2>
+        <p>ระบบต้องไม่สร้างเลขมาตรา เลขหนังสือ วันที่ คำพิพากษา หรือชื่อหน่วยงานขึ้นเอง หากข้อมูลไม่ครบให้ระบุ [ต้องตรวจสอบ/เพิ่มเติม] และชี้แหล่งข้อมูลที่ควรค้นหา</p>
+        <ul>
+          <li>แยกข้อเท็จจริง ข้อกฎหมาย การวิเคราะห์ และข้อเสนอแนะอย่างชัดเจน</li>
+          <li>ไม่รับรองผลทางกฎหมายหรือแทนที่ความเห็นของนิติกร ผู้มีอำนาจ หรือหน่วยงานเจ้าของระเบียบ</li>
+          <li>เตือนให้ตรวจฉบับกฎหมายล่าสุดและหนังสือสั่งการที่ยังมีผลใช้บังคับ</li>
+          <li>คำนึงถึง PDPA และห้ามนำข้อมูลลับทางราชการเข้าสู่ระบบที่หน่วยงานยังไม่อนุญาต</li>
+        </ul>
+        <div class="notice"><strong>ข้อสำคัญ:</strong> กรณีมีผลกระทบต่อสิทธิ บุคคล งบประมาณ วินัย หรือความรับผิด ควรให้ฝ่ายกฎหมายตรวจทานก่อนดำเนินการทุกครั้ง</div>
+      </div>
+    </section>
+
+    <section class="section soft" id="faq">
+      <div class="section-head centered"><div><span class="eyebrow">FAQ</span><h2>คำถามที่พบบ่อย</h2></div></div>
+      <div class="faq">
+        <details><summary>ใช้กับเรื่องใดได้บ้าง?</summary><p>ใช้วิเคราะห์อำนาจหน้าที่ ระเบียบการเงิน พัสดุ บุคคล บ้านพักราชการ การโอนย้าย วินัย หนังสือหารือ MOU และประเด็นกฎหมายท้องถิ่นอื่น ๆ</p></details>
+        <details><summary>ไม่มีเอกสารกฎหมายแนบมา วิเคราะห์ได้หรือไม่?</summary><p>วิเคราะห์โครงสร้างเบื้องต้นได้ แต่ต้องระบุฐานกฎหมายที่ยังขาดและห้ามยืนยันข้อกฎหมายที่ยังตรวจสอบไม่ได้</p></details>
+        <details><summary>ผลลัพธ์ใช้แทนความเห็นนิติกรได้หรือไม่?</summary><p>ไม่ได้ ระบบเป็นเครื่องมือช่วยจัดระบบและวิเคราะห์เบื้องต้น ผู้รับผิดชอบและผู้มีอำนาจต้องตรวจสอบก่อนใช้จริง</p></details>
+        <details><summary>ข้อมูลส่วนบุคคลควรกรอกอย่างไร?</summary><p>ใช้เท่าที่จำเป็น ปกปิดเลขประจำตัว ที่อยู่ ข้อมูลสุขภาพ คดี วินัย และข้อมูลอ่อนไหวเมื่อไม่จำเป็นต่อการวิเคราะห์</p></details>
+      </div>
+    </section>
+
+    <section class="section soft" id="release">
+      <div class="section-head centered"><div><span class="eyebrow">RELEASE NOTES</span><h2>การพัฒนาเวอร์ชัน</h2></div></div>
+      <div class="release">
+        <article><h3>v1.0 · เปิดใช้งาน</h3><p>เพิ่มโครงสร้างข้อเท็จจริง ประเด็นกฎหมาย ฐานอำนาจ การวิเคราะห์ ความเสี่ยง ทางเลือก ข้อเสนอ PDPA และ Checklist</p></article>
+        <article><h3>v1.1 · รอบถัดไป</h3><p>ปรับปรุงจากเคสจริง เพิ่มฐานความรู้กฎหมายท้องถิ่นและตัวอย่างแนวทางวิเคราะห์เฉพาะเรื่อง</p></article>
+      </div>
+    </section>
+
+    <section class="section community" id="feedback">
+      <div><span class="eyebrow">FEEDBACK</span><h2>พบข้อผิดพลาดหรือมีข้อเสนอแนะ?</h2><p>แจ้งผ่านเพจ GovPrompt Thailand - ชุมชน AI งานราชการ เพื่อพัฒนา GP002 เวอร์ชันถัดไป</p></div>
+      <a class="btn social" href="https://www.facebook.com/GovPromptThailandAI" target="_blank" rel="noopener">แจ้งปัญหาผ่าน Facebook ↗</a>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-brand"><span class="brand-mark small">G</span><div><strong>GovPrompt Thailand</strong><small>AI ผู้ช่วยวิเคราะห์ข้อกฎหมาย v1.0</small></div></div>
+    <p>ระบบเป็นเครื่องมือช่วยวิเคราะห์เบื้องต้น ผู้ใช้ต้องตรวจสอบกฎหมาย ข้อเท็จจริง อำนาจหน้าที่ และเอกสารฉบับจริงก่อนนำไปใช้</p>
+    <div><a href="index.html">หน้าแรก</a> · <a href="gp001.html">ผู้ช่วยร่างหนังสือ</a> · <a href="terms.html">เงื่อนไข</a> · <a href="privacy.html">ความเป็นส่วนตัว</a></div>
+  </footer>
+  <script>
+    const menuButton=document.getElementById('menuButton');const mainNav=document.getElementById('mainNav');
+    menuButton?.addEventListener('click',()=>mainNav.classList.toggle('open'));
+    mainNav?.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>mainNav.classList.remove('open')));
+  </script>
+</body>
+</html>
