@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=1.0.0">
+  <link rel="stylesheet" href="style.css?v=1.0.1">
 </head>
 <body>
   <header class="site-header">
@@ -22,6 +22,7 @@
       <nav id="mainNav">
         <a href="#copilot">เริ่มใช้งาน</a>
         <a href="#popular">งานยอดนิยม</a>
+        <a href="#local-core">หัวใจงานท้องถิ่น</a>
         <a href="#gp001">ผู้ช่วยร่างหนังสือ</a>
         <a href="#how">วิธีใช้</a>
         <a href="#community">ชุมชน</a>
@@ -40,21 +41,22 @@
           <label for="heroSearch">บอกงานที่ต้องการให้ชัดเจน</label>
           <div class="search-box">
             <span aria-hidden="true">🤖</span>
-            <input id="heroSearch" type="search" placeholder="เช่น ร่างหนังสือหารือเรื่องบ้านพักราชการ หรือ ตรวจ TOR โครงการจ้างที่ปรึกษา">
+            <input id="heroSearch" type="search" placeholder="เช่น ร่างหนังสือหารือ ตรวจ TOR จัดทำโครงการ หรือวิเคราะห์งบประมาณ">
             <button id="heroSearchButton" type="button">เริ่มต้น</button>
           </div>
           <div class="quick-tags">
             <button data-query="ร่างหนังสือราชการ">📄 ร่างหนังสือราชการ</button>
             <button data-query="วิเคราะห์ข้อกฎหมาย">⚖️ วิเคราะห์ข้อกฎหมาย</button>
             <button data-query="ตรวจ TOR">📦 ตรวจ TOR</button>
-            <button data-query="วิเคราะห์โครงการ">📊 วิเคราะห์โครงการ</button>
+            <button data-query="จัดทำโครงการ">📊 จัดทำโครงการ</button>
+            <button data-query="งบประมาณ">💰 งบประมาณ</button>
             <button data-query="ประชาสัมพันธ์">📣 ประชาสัมพันธ์</button>
           </div>
         </div>
 
         <div class="hero-actions">
           <a class="btn primary" href="#popular">เลือกจากงานยอดนิยม</a>
-          <a class="btn secondary" href="#gp001">ดูผู้ช่วยที่เปิดใช้งานแล้ว</a>
+          <a class="btn secondary" href="#local-core">ดูหัวใจงานท้องถิ่น</a>
         </div>
 
         <div class="trust-list">
@@ -82,10 +84,10 @@
       <button data-category="ทั้งหมด" class="active">งานทั้งหมด</button>
       <button data-category="สารบรรณ">📑 ร่างหนังสือ</button>
       <button data-category="กฎหมาย">⚖️ วิเคราะห์กฎหมาย</button>
-      <button data-category="พัสดุ">📦 ตรวจ TOR/พัสดุ</button>
-      <button data-category="โครงการ">📊 วิเคราะห์โครงการ</button>
-      <button data-category="ประชาสัมพันธ์">📣 ประชาสัมพันธ์</button>
+      <button data-category="โครงการ">🏛️ โครงการ แผน งบ</button>
+      <button data-category="พัสดุ">📦 TOR/พัสดุ</button>
       <button data-category="ผู้บริหาร">👔 งานผู้บริหาร</button>
+      <button data-category="ประชาสัมพันธ์">📣 ประชาสัมพันธ์</button>
     </section>
 
     <section class="section" id="tools">
@@ -94,18 +96,36 @@
           <span class="eyebrow">GOVERNMENT AI COPILOT</span>
           <h2>เลือกงาน หรือค้นหาด้วยภาษาธรรมดา</h2>
         </div>
-        <p>ระบบปัจจุบันจะค้นหาเครื่องมือที่ใกล้เคียงที่สุดให้ก่อน และจะพัฒนาเป็นระบบเลือกผู้ช่วยหลายโมดูลอัตโนมัติในรุ่นถัดไป</p>
+        <p>ระบบปัจจุบันจะค้นหาเครื่องมือที่ใกล้เคียงที่สุดให้ก่อน และจะทยอยเพิ่มผู้ช่วยเฉพาะทางโดยไม่ทำให้ผู้ใช้ต้องจำรหัสหรือขั้นตอนที่ซับซ้อน</p>
       </div>
       <div class="toolbar">
-        <div class="inline-search"><span>🔎</span><input id="toolSearch" type="search" placeholder="ค้นหางาน เช่น หนังสือหารือ กฎหมาย TOR โครงการ"></div>
+        <div class="inline-search"><span>🔎</span><input id="toolSearch" type="search" placeholder="ค้นหางาน เช่น หนังสือหารือ กฎหมาย TOR โครงการ งบประมาณ"></div>
         <div id="resultCount" class="result-count">20 เครื่องมือ</div>
       </div>
       <div id="toolGrid" class="tool-grid"></div>
       <div id="emptyState" class="empty-state hidden">
         <strong>ยังไม่พบงานที่ตรงกับคำค้น</strong>
-        <p>ลองใช้คำสั้น ๆ เช่น “หนังสือ” “กฎหมาย” “TOR” “โครงการ” หรือ “ข่าว”</p>
+        <p>ลองใช้คำสั้น ๆ เช่น “หนังสือ” “กฎหมาย” “TOR” “โครงการ” “งบประมาณ” หรือ “ข่าว”</p>
         <button class="btn secondary" id="clearSearch">ล้างคำค้น</button>
       </div>
+    </section>
+
+    <section class="section soft" id="local-core">
+      <div class="section-head centered">
+        <div>
+          <span class="eyebrow">หัวใจขององค์กรปกครองส่วนท้องถิ่น</span>
+          <h2>🏛️ โครงการ → แผน → งบประมาณ → ดำเนินงาน → ประเมินผล</h2>
+        </div>
+        <p>GovPrompt จัดงานสำคัญของท้องถิ่นให้เห็นเป็นวงจรเดียว ใช้ง่าย และเชื่อมโยงกันตั้งแต่เริ่มคิดโครงการจนถึงรายงานผล</p>
+      </div>
+      <div class="steps">
+        <article><span>01</span><h3>จัดทำโครงการ</h3><p>เชื่อมปัญหา ความจำเป็น วัตถุประสงค์ กิจกรรม กลุ่มเป้าหมาย และผลลัพธ์</p></article>
+        <article><span>02</span><h3>แผนพัฒนาท้องถิ่น</h3><p>ตรวจความสอดคล้องกับยุทธศาสตร์ อำนาจหน้าที่ และลำดับความสำคัญของพื้นที่</p></article>
+        <article><span>03</span><h3>งบประมาณ</h3><p>ตรวจกรอบวงเงิน ความจำเป็น ความคุ้มค่า หมวดรายจ่าย และความพร้อมก่อนเสนอ</p></article>
+        <article><span>04</span><h3>ดำเนินงานและพัสดุ</h3><p>เชื่อม TOR การจัดซื้อจัดจ้าง สัญญา การควบคุมงาน และการตรวจรับ</p></article>
+        <article><span>05</span><h3>ติดตามประเมินผล</h3><p>กำหนด KPI ผลผลิต ผลลัพธ์ รายงานผู้บริหาร และบทเรียนเพื่อปรับแผนรอบถัดไป</p></article>
+      </div>
+      <div class="safety-note"><strong>สถานะปัจจุบัน:</strong> เครื่องมือจัดทำและตรวจโครงการเปิดให้ทดลองใช้แล้ว ส่วนผู้ช่วยแผนพัฒนาและงบประมาณกำลังจัดทำเป็นโมดูลเฉพาะทางลำดับถัดไป</div>
     </section>
 
     <section class="section soft" id="gp001">
@@ -172,8 +192,8 @@
         </article>
         <article class="plan-card">
           <div class="plan-label">กำลังพัฒนา</div>
-          <h3>ผู้ช่วยวิเคราะห์กฎหมายและตรวจ TOR</h3>
-          <p>เมื่อเปิดใช้งาน ระบบจะเรียกใช้โดยอัตโนมัติตามงานที่ผู้ใช้พิมพ์ โดยไม่ต้องเลือกโมดูลเอง</p>
+          <h3>กฎหมาย · TOR · แผน · งบประมาณ</h3>
+          <p>ทยอยเพิ่มผู้ช่วยเฉพาะทางตามลำดับความสำคัญของงานท้องถิ่น และเปิดใช้ทันทีเมื่อผ่านการทดสอบ</p>
           <button class="btn dark full" type="button" id="professionalButton">กำลังพัฒนาอย่างต่อเนื่อง</button>
         </article>
       </div>
