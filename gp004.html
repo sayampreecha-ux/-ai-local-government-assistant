@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b3b75">
+<title>ผู้ช่วยแผน โครงการ และงบประมาณ | GovPrompt Thailand</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif;background:#f7f9fc;color:#10233f}.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #e4eaf2}.bar{max-width:980px;margin:auto;padding:11px 14px;display:flex;align-items:center;justify-content:space-between}.brand{font-weight:800;color:#0b3b75;text-decoration:none}.back{text-decoration:none;color:#51647d}.wrap{max-width:980px;margin:auto;padding:16px 14px 90px}h1{font-size:25px;margin:4px 0 14px}.search{width:100%;padding:12px 14px;border:1px solid #dbe4ef;border-radius:12px;font-size:16px;margin-bottom:14px}.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:12px}.tabs button{white-space:nowrap;border:1px solid #dbe4ef;background:#fff;border-radius:999px;padding:8px 12px}.tabs button.active{background:#0b3b75;color:#fff}.list{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.task{border:1px solid #e0e7f0;background:#fff;border-radius:12px;padding:13px;text-align:left;font:inherit;min-height:66px;display:flex;align-items:center;gap:10px;cursor:pointer}.task span:first-child{font-size:22px}.task strong{display:block}.task small{color:#6f7e92}.generator{margin-top:18px;background:#fff;border:1px solid #dde6f0;border-radius:14px;padding:15px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}label{display:block;font-weight:700;margin:10px 0 6px}input,textarea,select{width:100%;border:1px solid #d8e1ec;border-radius:10px;padding:11px;font:inherit;background:#fff}textarea{min-height:100px;resize:vertical}.wide{grid-column:1/-1}.checks{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.check{display:flex;align-items:center;gap:8px;border:1px solid #dfe7f0;border-radius:10px;padding:9px;background:#fafcff}.check input{width:auto}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}.primary{background:#0b3b75;color:#fff}.secondary{background:#edf2f7;color:#19334f}.output{margin-top:12px;background:#f3f7fb;border-radius:10px;padding:12px;white-space:pre-wrap;display:none}.note{margin-top:12px;color:#65758b;font-size:12px}.bottom{display:none}
+@media(max-width:650px){.list,.grid,.checks{grid-template-columns:1fr}.task small{display:none}.wrap{padding-bottom:80px}.bottom{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #dfe6ef;padding:7px 4px calc(7px + env(safe-area-inset-bottom));z-index:30}.bottom a{text-align:center;text-decoration:none;color:#52647a;font-size:11px}.bottom span{display:block;font-size:20px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="bar"><a class="brand" href="index.html">GovPrompt Thailand</a><a class="back" href="index.html">← ผู้ช่วยทั้งหมด</a></div></header>
+<main class="wrap">
+<h1>📊 ผู้ช่วยแผน โครงการ และงบประมาณ</h1>
+<input class="search" id="filter" placeholder="ค้นหา เช่น เขียนโครงการ แผนพัฒนา คำของบ KPI">
+<div class="tabs"><button class="active" data-group="all">ทั้งหมด</button><button data-group="project">โครงการ</button><button data-group="plan">แผน</button><button data-group="budget">งบประมาณ</button><button data-group="evaluate">ติดตามผล</button></div>
+<section class="list" id="tasks">
+<button class="task" data-group="project" data-task="เขียนโครงการ"><span>📝</span><span><strong>เขียนโครงการ</strong><small>หลักการ เหตุผล วัตถุประสงค์ กิจกรรม</small></span></button>
+<button class="task" data-group="project" data-task="วิเคราะห์โครงการ"><span>🔍</span><span><strong>วิเคราะห์โครงการ</strong><small>ความจำเป็น อำนาจ งบ ความคุ้มค่า</small></span></button>
+<button class="task" data-group="project" data-task="ตรวจความครบถ้วนโครงการ"><span>✅</span><span><strong>ตรวจความครบถ้วนโครงการ</strong><small>ตรวจข้อมูลขาดและจุดเสี่ยง</small></span></button>
+<button class="task" data-group="project" data-task="จัดทำ KPI และตัวชี้วัด"><span>🎯</span><span><strong>KPI และตัวชี้วัด</strong><small>Output Outcome Impact</small></span></button>
+<button class="task" data-group="plan" data-task="จัดทำแผนพัฒนาท้องถิ่น"><span>🗂️</span><span><strong>แผนพัฒนาท้องถิ่น</strong><small>ยุทธศาสตร์ เป้าหมาย โครงการ</small></span></button>
+<button class="task" data-group="plan" data-task="เชื่อมโยงยุทธศาสตร์และแผน"><span>🧭</span><span><strong>เชื่อมโยงยุทธศาสตร์</strong><small>ชาติ จังหวัด และท้องถิ่น</small></span></button>
+<button class="task" data-group="plan" data-task="จัดลำดับความสำคัญโครงการ"><span>📌</span><span><strong>จัดลำดับโครงการ</strong><small>ความเร่งด่วน ผลกระทบ ความพร้อม</small></span></button>
+<button class="task" data-group="budget" data-task="จัดทำคำของบประมาณ"><span>💰</span><span><strong>คำของบประมาณ</strong><small>วงเงิน รายการ และเหตุผลความจำเป็น</small></span></button>
+<button class="task" data-group="budget" data-task="วิเคราะห์งบประมาณ"><span>📊</span><span><strong>วิเคราะห์งบประมาณ</strong><small>หมวดรายจ่าย ความพร้อม ความคุ้มค่า</small></span></button>
+<button class="task" data-group="budget" data-task="จัดทำคำชี้แจงงบประมาณ"><span>📑</span><span><strong>คำชี้แจงงบประมาณ</strong><small>เหตุผล ตัวเลข และผลลัพธ์</small></span></button>
+<button class="task" data-group="budget" data-task="วิเคราะห์เงินอุดหนุนหรือเงินสะสม"><span>🏦</span><span><strong>เงินอุดหนุน / เงินสะสม</strong><small>เงื่อนไข ความพร้อม และความเสี่ยง</small></span></button>
+<button class="task" data-group="evaluate" data-task="ติดตามและประเมินผลโครงการ"><span>📈</span><span><strong>ติดตามและประเมินผล</strong><small>KPI ผลผลิต ผลลัพธ์ บทเรียน</small></span></button>
+<button class="task" data-group="evaluate" data-task="สรุปผลโครงการแบบ One Page"><span>📄</span><span><strong>One Page ผลโครงการ</strong><small>ตัวเลข ผลลัพธ์ และขั้นตอนถัดไป</small></span></button>
+</section>
+<section class="generator" id="generator">
+<strong id="selected">เลือกงานด้านบนเพื่อเริ่ม</strong>
+<div class="grid">
+<div><label for="agency">หน่วยงาน</label><input id="agency" placeholder="เช่น องค์การบริหารส่วนจังหวัด..."></div>
+<div><label for="fiscal">ปีงบประมาณ</label><input id="fiscal" placeholder="เช่น 2570"></div>
+<div class="wide"><label for="projectName">ชื่อโครงการ / เรื่อง</label><input id="projectName" placeholder="ระบุชื่อโครงการหรือเรื่องที่ต้องการจัดทำ"></div>
+<div class="wide"><label for="problem">ปัญหาและความจำเป็น</label><textarea id="problem" placeholder="อธิบายสถานการณ์ ปัญหา ข้อมูลสนับสนุน และเหตุผลที่ต้องดำเนินการ"></textarea></div>
+<div class="wide"><label for="objective">วัตถุประสงค์</label><textarea id="objective" placeholder="ระบุวัตถุประสงค์ที่ต้องการ"></textarea></div>
+<div><label for="target">กลุ่มเป้าหมาย</label><input id="target" placeholder="กลุ่มเป้าหมายและจำนวน"></div>
+<div><label for="area">พื้นที่ดำเนินงาน</label><input id="area" placeholder="พื้นที่หรือสถานที่"></div>
+<div><label for="period">ระยะเวลา</label><input id="period" placeholder="วัน/เดือน/ปี หรือช่วงเวลา"></div>
+<div><label for="budget">วงเงินงบประมาณ</label><input id="budget" placeholder="จำนวนเงินและแหล่งงบ"></div>
+<div class="wide"><label for="activities">กิจกรรมหลัก</label><textarea id="activities" placeholder="ระบุกิจกรรม วิธีดำเนินงาน และผู้รับผิดชอบ"></textarea></div>
+<div class="wide"><label for="kpi">ตัวชี้วัด / เป้าหมาย</label><textarea id="kpi" placeholder="ระบุ Output, Outcome และค่าเป้าหมาย"></textarea></div>
+<div class="wide"><label for="expected">ผลที่คาดว่าจะได้รับ</label><textarea id="expected" placeholder="ผลผลิต ผลลัพธ์ และผลกระทบที่คาดหวัง"></textarea></div>
+<div class="wide"><label for="references">เอกสารอ้างอิง / ข้อจำกัด / ความกังวล</label><textarea id="references" placeholder="แผนที่เกี่ยวข้อง อำนาจหน้าที่ ระเบียบ ข้อจำกัด หรือจุดที่ต้องการให้ตรวจ"></textarea></div>
+</div>
+<div class="checks">
+<label class="check"><input type="checkbox" id="checkAuthority" checked> ตรวจอำนาจหน้าที่</label>
+<label class="check"><input type="checkbox" id="checkBudget" checked> ตรวจความสอดคล้องงบประมาณ</label>
+<label class="check"><input type="checkbox" id="checkKpi" checked> ตรวจ KPI และผลลัพธ์</label>
+<label class="check"><input type="checkbox" id="checkRisk" checked> วิเคราะห์ความเสี่ยง</label>
+</div>
+<div class="actions"><button class="btn primary" id="make">สร้าง Prompt</button><button class="btn secondary" id="copy">คัดลอก</button><button class="btn secondary" id="clear">ล้างข้อมูล</button></div>
+<div class="output" id="output"></div>
+<div class="note">ระบบช่วยจัดทำและวิเคราะห์ ผู้ใช้ต้องตรวจสอบข้อเท็จจริง อำนาจหน้าที่ แผน และระเบียบงบประมาณก่อนใช้จริง</div>
+</section>
+</main>
+<nav class="bottom"><a href="index.html"><span>🏠</span>หน้าแรก</a><a href="#filter"><span>🔎</span>ค้นหา</a><a href="#generator"><span>📊</span>สร้าง</a></nav>
+<script>
+let task='';const $=id=>document.getElementById(id),tasks=[...document.querySelectorAll('.task')],tabs=[...document.querySelectorAll('.tabs button')];
+tasks.forEach(b=>b.onclick=()=>{task=b.dataset.task;$('selected').textContent='งานที่เลือก: '+task;$('generator').scrollIntoView({behavior:'smooth'})});
+tabs.forEach(b=>b.onclick=()=>{tabs.forEach(x=>x.classList.remove('active'));b.classList.add('active');const g=b.dataset.group;tasks.forEach(x=>x.style.display=g==='all'||x.dataset.group===g?'flex':'none')});
+$('filter').oninput=e=>{const q=e.target.value.toLowerCase();tasks.forEach(x=>x.style.display=x.innerText.toLowerCase().includes(q)?'flex':'none')};
+$('make').onclick=()=>{if(!task){alert('กรุณาเลือกงานก่อน');return}const v=id=>$(id).value.trim()||'[ยังไม่ได้ระบุ]';const checks=[['ตรวจอำนาจหน้าที่','checkAuthority'],['ตรวจความสอดคล้องงบประมาณ','checkBudget'],['ตรวจ KPI และผลลัพธ์','checkKpi'],['วิเคราะห์ความเสี่ยง','checkRisk']].filter(x=>$(x[1]).checked).map(x=>'- '+x[0]).join('\n')||'- ไม่มี';const text=`บทบาท\nคุณเป็น Government AI Copilot ผู้เชี่ยวชาญด้านแผน โครงการ และงบประมาณขององค์กรปกครองส่วนท้องถิ่นและหน่วยงานภาครัฐ\n\nภารกิจ\n${task}\n\nข้อมูลจากผู้ใช้\n- หน่วยงาน: ${v('agency')}\n- ปีงบประมาณ: ${v('fiscal')}\n- ชื่อโครงการ/เรื่อง: ${v('projectName')}\n- ปัญหาและความจำเป็น: ${v('problem')}\n- วัตถุประสงค์: ${v('objective')}\n- กลุ่มเป้าหมาย: ${v('target')}\n- พื้นที่ดำเนินงาน: ${v('area')}\n- ระยะเวลา: ${v('period')}\n- งบประมาณและแหล่งงบ: ${v('budget')}\n- กิจกรรมหลัก: ${v('activities')}\n- ตัวชี้วัด/เป้าหมาย: ${v('kpi')}\n- ผลที่คาดว่าจะได้รับ: ${v('expected')}\n- เอกสารอ้างอิง/ข้อจำกัด/ความกังวล: ${v('references')}\n\nรายการตรวจสอบเพิ่มเติม\n${checks}\n\nรูปแบบผลลัพธ์\n- จัดหัวข้อให้เหมาะกับภารกิจ\n- แยกข้อเท็จจริง การวิเคราะห์ ความเสี่ยง และข้อเสนอแนะ\n- เชื่อมโยงปัญหา วัตถุประสงค์ กิจกรรม ผลผลิต ผลลัพธ์ และตัวชี้วัดอย่างมีเหตุผล\n- ระบุข้อมูลสำคัญที่ยังขาดก่อนนำไปใช้จริง\n\nข้อกำหนดสำคัญ\n1. ใช้ข้อเท็จจริงและเอกสารที่ให้เป็นหลัก ห้ามสมมติชื่อบุคคล วันที่ เลขหนังสือ วงเงิน หรือข้อกฎหมาย\n2. หากไม่สามารถยืนยันอำนาจหน้าที่ แผน หรือระเบียบงบประมาณ ให้ระบุ [ต้องตรวจสอบ/เพิ่มเติม]\n3. ตัวชี้วัดต้องวัดได้ มีค่าเป้าหมาย และสอดคล้องกับวัตถุประสงค์\n4. วิเคราะห์ความจำเป็น ความคุ้มค่า ความพร้อม ผลกระทบ และความเสี่ยง\n5. ผู้ใช้ต้องตรวจทานก่อนเสนออนุมัติหรือใช้เป็นเอกสารราชการ`;const o=$('output');o.textContent=text;o.style.display='block'};
+$('copy').onclick=async()=>{const t=$('output').textContent;if(!t){alert('กรุณาสร้าง Prompt ก่อน');return}await navigator.clipboard.writeText(t);alert('คัดลอกแล้ว')};
+$('clear').onclick=()=>{document.querySelectorAll('input:not([type=checkbox]),textarea').forEach(x=>x.value='');$('output').textContent='';$('output').style.display='none'};
+</script>
+</body></html>
