@@ -2,93 +2,93 @@
 <html lang="th">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="GovPrompt Thailand v1.0 Government AI Copilot สำหรับงานราชการไทย">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="GovPrompt Thailand — AI ผู้ช่วยงานราชการ ใช้งานง่ายบนมือถือ">
   <meta name="theme-color" content="#123a70">
-  <title>GovPrompt Thailand v1.0 — Government AI Copilot</title>
+  <title>GovPrompt Thailand — AI ผู้ช่วยงานราชการ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=1.0.3">
+  <style>
+    :root{--blue:#123a70;--blue2:#0b57d0;--bg:#f5f7fb;--line:#dbe3ef;--text:#172033;--muted:#667085;--white:#fff}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:"Noto Sans Thai",sans-serif;background:var(--bg);color:var(--text)}
+    a{text-decoration:none;color:inherit}button,input{font:inherit}.shell{width:min(760px,100%);margin:auto;padding:0 14px 30px}
+    header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.96);border-bottom:1px solid var(--line);backdrop-filter:blur(10px)}
+    .topbar{width:min(760px,100%);margin:auto;padding:10px 14px;display:flex;align-items:center;gap:10px}.mark{width:38px;height:38px;border-radius:11px;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800}.brand{line-height:1.15}.brand strong{display:block;font-size:17px}.brand small{color:var(--muted);font-size:12px}.fb{margin-left:auto;font-size:13px;color:var(--blue2);font-weight:700}
+    .search{padding:16px 0 10px}.searchbox{display:flex;gap:8px;background:#fff;padding:7px;border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 16px rgba(18,58,112,.07)}.searchbox input{min-width:0;flex:1;border:0;outline:0;padding:10px 8px;font-size:16px}.searchbox button{border:0;border-radius:10px;background:var(--blue);color:#fff;padding:0 16px;font-weight:700;min-height:44px}
+    h2{font-size:17px;margin:18px 2px 9px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px 12px;min-height:70px;display:flex;align-items:center;gap:9px;font-weight:700;box-shadow:0 2px 9px rgba(18,58,112,.04)}.card:active{transform:scale(.985)}.icon{font-size:23px;flex:0 0 auto}.arrow{margin-left:auto;color:#98a2b3}.coming{opacity:.65}.coming small{display:block;color:var(--muted);font-size:10px;font-weight:500;margin-top:2px}
+    .popular .card{border-color:#c5d6ee;background:#fbfdff}.note{margin:18px 0 0;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:12px;color:var(--muted);line-height:1.6}.note strong{color:var(--text)}
+    footer{text-align:center;color:var(--muted);font-size:12px;padding:18px 8px 8px}.hidden{display:none!important}
+    @media(min-width:620px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.card{min-height:78px}.shell{padding-left:20px;padding-right:20px}}
+  </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="nav-wrap">
-      <a class="brand" href="#top" aria-label="GovPrompt Thailand"><span class="brand-mark">G</span><span class="brand-copy"><strong>GovPrompt Thailand</strong><small>Government AI Copilot</small></span></a>
-      <button class="menu-button" id="menuButton" aria-label="เปิดเมนู">☰</button>
-      <nav id="mainNav">
-        <a href="#copilot">เริ่มใช้งาน</a>
-        <a href="#modules">ผู้ช่วย AI</a>
-        <a href="gp001.html">ร่างหนังสือ</a>
-        <a href="gp002.html">วิเคราะห์กฎหมาย</a>
-        <a href="gp003.html">ตรวจ TOR</a>
-        <a href="#community">ชุมชน</a>
-      </nav>
+<header>
+  <div class="topbar">
+    <div class="mark">G</div>
+    <div class="brand"><strong>GovPrompt Thailand</strong><small>AI ผู้ช่วยงานราชการ</small></div>
+    <a class="fb" href="https://www.facebook.com/GovPromptThailandAI" target="_blank" rel="noopener">Facebook ↗</a>
+  </div>
+</header>
+<main class="shell">
+  <section class="search" aria-label="ค้นหางาน">
+    <form class="searchbox" id="searchForm">
+      <input id="searchInput" type="search" autocomplete="off" placeholder="ค้นหา เช่น หนังสือ TOR กฎหมาย โครงการ">
+      <button type="submit">ค้นหา</button>
+    </form>
+  </section>
+
+  <section class="popular">
+    <h2>⭐ งานที่ใช้บ่อย</h2>
+    <div class="grid">
+      <a class="card" href="gp001.html"><span class="icon">📄</span><span>ร่างหนังสือราชการ</span><span class="arrow">›</span></a>
+      <a class="card" href="gp002.html"><span class="icon">⚖️</span><span>วิเคราะห์ข้อกฎหมาย</span><span class="arrow">›</span></a>
+      <a class="card" href="gp003.html"><span class="icon">📦</span><span>ตรวจ TOR</span><span class="arrow">›</span></a>
+      <a class="card coming" href="#assistants"><span class="icon">📊</span><span>โครงการและงบประมาณ<small>อยู่ระหว่างพัฒนา</small></span><span class="arrow">›</span></a>
     </div>
-  </header>
+  </section>
 
-  <main id="top">
-    <section class="hero" id="copilot">
-      <div class="hero-content">
-        <div class="version-pill">GovPrompt Thailand v1.0 · เปิดใช้แล้ว 3 ผู้ช่วย</div>
-        <h1>วันนี้คุณต้องการให้ AI<br><span>ช่วยงานราชการอะไร?</span></h1>
-        <p class="hero-lead">พิมพ์งานที่ต้องการด้วยภาษาธรรมดา หรือเลือกผู้ช่วยเฉพาะด้านที่เปิดใช้งานแล้ว โดยไม่ต้องเขียน Prompt เอง</p>
-        <div class="hero-search">
-          <label for="heroSearch">บอกงานที่ต้องการให้ชัดเจน</label>
-          <div class="search-box"><span aria-hidden="true">🤖</span><input id="heroSearch" type="search" placeholder="เช่น ร่างหนังสือหารือ วิเคราะห์ข้อกฎหมาย หรือตรวจ TOR"><button id="heroSearchButton" type="button">เริ่มต้น</button></div>
-          <div class="quick-tags">
-            <button data-query="ร่างหนังสือราชการ">📄 ร่างหนังสือราชการ</button>
-            <button data-query="วิเคราะห์ข้อกฎหมาย">⚖️ วิเคราะห์ข้อกฎหมาย</button>
-            <button data-query="ตรวจ TOR">📦 ตรวจ TOR</button>
-            <button data-query="จัดทำโครงการ">📊 จัดทำโครงการ</button>
-            <button data-query="งบประมาณ">💰 งบประมาณ</button>
-          </div>
-        </div>
-        <div class="hero-actions"><a class="btn primary" href="gp001.html">ร่างหนังสือ</a><a class="btn secondary" href="gp002.html">วิเคราะห์กฎหมาย</a><a class="btn secondary" href="gp003.html">ตรวจ TOR</a></div>
-        <div class="trust-list"><span>✓ ไม่สมมติข้อมูล</span><span>✓ คำนึงถึง PDPA</span><span>✓ ผู้ใช้ตรวจทานก่อนใช้จริง</span></div>
-      </div>
-      <aside class="hero-card">
-        <div class="hero-card-head"><span>Copilot ทำงานอย่างไร</span><strong>3 ขั้นตอน</strong></div>
-        <ol><li><span>1</span><div><strong>เลือกงาน</strong><small>บอกงานหรือเลือกผู้ช่วย</small></div></li><li><span>2</span><div><strong>กรอกข้อเท็จจริง</strong><small>ระบบถามข้อมูลสำคัญ</small></div></li><li><span>3</span><div><strong>ตรวจทานและใช้</strong><small>ตรวจข้อเท็จจริง กฎหมาย และ PDPA</small></div></li></ol>
-        <div class="safety-note">AI เป็นผู้ช่วยร่างและวิเคราะห์ ไม่ใช่ผู้อนุมัติหรือผู้ตัดสินใจแทนเจ้าหน้าที่</div>
-      </aside>
-    </section>
+  <section id="assistants">
+    <h2>ผู้ช่วยแต่ละด้าน</h2>
+    <div class="grid" id="assistantGrid">
+      <a class="card" href="gp001.html" data-keywords="สารบรรณ หนังสือ ภายนอก ภายใน บันทึกข้อความ คำสั่ง ประกาศ ประชุม หารือ"><span class="icon">📄</span><span>สารบรรณ</span><span class="arrow">›</span></a>
+      <a class="card" href="gp002.html" data-keywords="กฎหมาย ระเบียบ อำนาจหน้าที่ หารือ วินิจฉัย pdpa"><span class="icon">⚖️</span><span>กฎหมาย</span><span class="arrow">›</span></a>
+      <a class="card" href="gp003.html" data-keywords="พัสดุ tor ราคากลาง สัญญา ตรวจรับ จัดซื้อจัดจ้าง"><span class="icon">📦</span><span>พัสดุและ TOR</span><span class="arrow">›</span></a>
+      <div class="card coming" data-keywords="แผน โครงการ งบประมาณ KPI"><span class="icon">📊</span><span>แผนและงบประมาณ<small>อยู่ระหว่างพัฒนา</small></span></div>
+      <div class="card coming" data-keywords="การเงิน คลัง บัญชี เบิกจ่าย ค่าเดินทาง ค่าเช่าบ้าน"><span class="icon">💰</span><span>การเงินและการคลัง<small>อยู่ระหว่างพัฒนา</small></span></div>
+      <div class="card coming" data-keywords="บุคคล บรรจุ แต่งตั้ง โอนย้าย วินัย"><span class="icon">👥</span><span>งานบุคคล<small>อยู่ระหว่างพัฒนา</small></span></div>
+      <div class="card coming" data-keywords="ผู้บริหาร สรุป one page dashboard"><span class="icon">👔</span><span>ผู้บริหาร<small>อยู่ระหว่างพัฒนา</small></span></div>
+      <div class="card coming" data-keywords="ช่าง วิศวกรรม ถนน อาคาร boq ก่อสร้าง"><span class="icon">🏗️</span><span>ช่างและวิศวกรรม<small>อยู่ระหว่างพัฒนา</small></span></div>
+      <div class="card coming" data-keywords="ตรวจสอบภายใน audit ความเสี่ยง ควบคุมภายใน"><span class="icon">🔍</span><span>ตรวจสอบภายใน<small>อยู่ระหว่างพัฒนา</small></span></div>
+      <div class="card coming" data-keywords="สาธารณสุข รพ.สต. สุขภาพ โรคติดต่อ pm2.5"><span class="icon">🩺</span><span>สาธารณสุข<small>อยู่ระหว่างพัฒนา</small></span></div>
+      <div class="card coming" data-keywords="การศึกษา โรงเรียน ศูนย์เด็กเล็ก ครู"><span class="icon">🎓</span><span>การศึกษา<small>อยู่ระหว่างพัฒนา</small></span></div>
+      <div class="card coming" data-keywords="ประชาสัมพันธ์ ข่าว facebook infographic วิดีโอ"><span class="icon">📢</span><span>ประชาสัมพันธ์<small>อยู่ระหว่างพัฒนา</small></span></div>
+      <div class="card coming" data-keywords="สิ่งแวดล้อม ขยะ น้ำเสีย ไฟป่า"><span class="icon">🌳</span><span>สิ่งแวดล้อม<small>อยู่ระหว่างพัฒนา</small></span></div>
+      <div class="card coming" data-keywords="ป้องกันภัย อุทกภัย ไฟไหม้ สาธารณภัย"><span class="icon">🚒</span><span>ป้องกันและบรรเทาสาธารณภัย<small>อยู่ระหว่างพัฒนา</small></span></div>
+    </div>
+  </section>
 
-    <section class="category-strip" id="popular" aria-label="งานยอดนิยม">
-      <button data-category="ทั้งหมด" class="active">งานทั้งหมด</button><button data-category="สารบรรณ">📑 ร่างหนังสือ</button><button data-category="กฎหมาย">⚖️ กฎหมาย</button><button data-category="พัสดุ">📦 TOR/พัสดุ</button><button data-category="โครงการ">🏛️ โครงการ แผน งบ</button><button data-category="ผู้บริหาร">👔 ผู้บริหาร</button><button data-category="ประชาสัมพันธ์">📣 ประชาสัมพันธ์</button>
-    </section>
-
-    <section class="section" id="tools">
-      <div class="section-head"><div><span class="eyebrow">เครื่องมือพร้อมใช้</span><h2>ค้นหางานด้วยภาษาธรรมดา</h2></div><p>เลือกจากเครื่องมือเดิม หรือเข้าใช้ผู้ช่วยเฉพาะด้าน GP001–GP003 ที่ผ่านการจัดโครงสร้างและเปิดใช้งานแล้ว</p></div>
-      <div class="toolbar"><div class="inline-search"><span>🔎</span><input id="toolSearch" type="search" placeholder="ค้นหา เช่น หนังสือ กฎหมาย TOR โครงการ งบประมาณ"></div><div id="resultCount" class="result-count">20 เครื่องมือ</div></div>
-      <div id="toolGrid" class="tool-grid"></div>
-      <div id="emptyState" class="empty-state hidden"><strong>ยังไม่พบงานที่ตรงกับคำค้น</strong><p>ลองใช้คำสั้น ๆ เช่น “หนังสือ” “กฎหมาย” “TOR” หรือ “โครงการ”</p><button class="btn secondary" id="clearSearch">ล้างคำค้น</button></div>
-    </section>
-
-    <section class="section soft" id="local-core">
-      <div class="section-head centered"><div><span class="eyebrow">หัวใจขององค์กรปกครองส่วนท้องถิ่น</span><h2>🏛️ โครงการ → แผน → งบประมาณ → พัสดุ → ประเมินผล</h2></div><p>พัฒนาให้เชื่อมโยงเป็นวงจรเดียว ตั้งแต่คิดโครงการจนถึงติดตามผล</p></div>
-      <div class="steps"><article><span>01</span><h3>โครงการ</h3><p>ปัญหา วัตถุประสงค์ กิจกรรม และผลลัพธ์</p></article><article><span>02</span><h3>แผน</h3><p>ยุทธศาสตร์ อำนาจหน้าที่ และลำดับความสำคัญ</p></article><article><span>03</span><h3>งบประมาณ</h3><p>วงเงิน หมวดรายจ่าย ความคุ้มค่า และความพร้อม</p></article><article><span>04</span><h3>พัสดุและ TOR</h3><p>สเปก การแข่งขัน สัญญา และการตรวจรับ</p></article><article><span>05</span><h3>ประเมินผล</h3><p>KPI ผลผลิต ผลลัพธ์ และบทเรียน</p></article></div>
-    </section>
-
-    <section class="section" id="modules">
-      <div class="section-head centered"><div><span class="eyebrow">เปิดใช้งานแล้ว</span><h2>Government AI Modules</h2></div><p>พัฒนาทีละตัว เปิดใช้ทันทีเมื่อพร้อม แล้วปรับปรุงจากงานจริง</p></div>
-      <div class="plan-grid">
-        <article class="plan-card featured"><div class="plan-label">เปิดใช้งานแล้ว</div><h3>📄 ผู้ช่วยร่างหนังสือ</h3><p>ตรวจข้อมูล วิเคราะห์ก่อนร่าง และสร้าง Checklist</p><a class="btn primary full" href="gp001.html">เปิด GP001</a></article>
-        <article class="plan-card featured"><div class="plan-label">เปิดใช้งานแล้ว</div><h3>⚖️ ผู้ช่วยวิเคราะห์กฎหมาย</h3><p>ข้อเท็จจริง ฐานอำนาจ ทางเลือก ความเสี่ยง และข้อเสนอ</p><a class="btn primary full" href="gp002.html">เปิด GP002</a></article>
-        <article class="plan-card featured"><div class="plan-label">เปิดใช้งานแล้ว</div><h3>📦 ผู้ช่วยตรวจ TOR</h3><p>ตรวจชี้เฉพาะ คุณสมบัติ ผลงาน ตรวจรับ รับประกัน และค่าปรับ</p><a class="btn primary full" href="gp003.html">เปิด GP003</a></article>
-      </div>
-      <div class="safety-note"><strong>ลำดับถัดไป:</strong> GP004 ผู้ช่วยจัดทำโครงการ → GP005 ผู้ช่วยแผนและงบประมาณ</div>
-    </section>
-
-    <section class="section soft" id="how"><div class="section-head centered"><div><span class="eyebrow">วิธีใช้</span><h2>ง่าย 3 ขั้นตอน</h2></div></div><div class="steps"><article><span>01</span><h3>เลือกผู้ช่วย</h3><p>เลือกร่างหนังสือ กฎหมาย หรือ TOR</p></article><article><span>02</span><h3>ให้ข้อมูลจริง</h3><p>กรอกข้อเท็จจริงและแนบเอกสารเท่าที่จำเป็น</p></article><article><span>03</span><h3>ตรวจทาน</h3><p>ตรวจข้อมูล กฎหมาย อำนาจหน้าที่ และ PDPA ก่อนใช้</p></article></div></section>
-
-    <section class="section community" id="community"><div><span class="eyebrow">COMMUNITY</span><h2>GovPrompt Thailand - ชุมชน AI งานราชการ</h2><p>แจ้งปัญหาและข้อเสนอแนะเพื่อพัฒนาเวอร์ชันถัดไป</p></div><a class="btn social" href="https://www.facebook.com/GovPromptThailandAI" target="_blank" rel="noopener">ไปที่ Facebook Community ↗</a></section>
-  </main>
-
-  <footer><div class="footer-brand"><span class="brand-mark small">G</span><div><strong>GovPrompt Thailand</strong><small>v1.0 Government AI Copilot</small></div></div><p>ระบบช่วยร่างและวิเคราะห์ ผู้ใช้ต้องตรวจสอบข้อเท็จจริง กฎหมาย อำนาจหน้าที่ ความถูกต้อง และการคุ้มครองข้อมูลส่วนบุคคลก่อนนำไปใช้จริง</p><div><a href="terms.html">เงื่อนไขการใช้งาน</a> · <a href="privacy.html">ความเป็นส่วนตัว</a></div></footer>
-
-  <div id="workspace" class="workspace hidden" role="dialog" aria-modal="true" aria-labelledby="workspaceTitle"><div class="workspace-shell"><header class="workspace-header"><div><span id="workspaceCode" class="tool-code"></span><h2 id="workspaceTitle">ผู้ช่วย AI งานราชการ</h2><p id="workspaceDesc"></p></div><button class="close-button" id="closeWorkspace" aria-label="ปิด">×</button></header><div class="workspace-body"><form id="generatorForm" class="generator-form"><div id="dynamicFields"></div><label>รูปแบบผลลัพธ์<select id="outputTone"><option value="ภาษาราชการ กระชับ ชัดเจน">ภาษาราชการ กระชับ ชัดเจน</option><option value="สรุปสำหรับผู้บริหาร">สรุปสำหรับผู้บริหาร</option><option value="ภาษาที่อ่านง่ายสำหรับประชาชน">ภาษาที่อ่านง่ายสำหรับประชาชน</option></select></label><label class="confirm"><input id="confirmFacts" type="checkbox" required> ยืนยันว่าข้อมูลเป็นข้อเท็จจริง ไม่มีข้อมูลส่วนบุคคลที่ไม่จำเป็น และจะตรวจทานก่อนใช้จริง</label><button class="btn primary full" type="submit">สร้างคำสั่งพร้อมใช้</button><div id="formMessage" class="form-message" aria-live="polite"></div></form><article class="result-panel"><div class="result-head"><div><strong>คำสั่งพร้อมใช้งาน</strong><small>คัดลอกไปวางใน AI ที่คุณเลือก</small></div><div class="result-buttons"><button id="copyButton" type="button" disabled>📋 คัดลอก</button><button id="downloadButton" type="button" disabled>⬇️ ดาวน์โหลด .txt</button></div></div><pre id="resultOutput" class="result-output empty">ผลที่สร้างจากข้อมูลของคุณจะแสดงที่นี่</pre><div id="successNote" class="success-note hidden">✅ สร้างสำเร็จ — โปรดตรวจข้อมูล กฎหมาย และ PDPA ก่อนใช้จริง</div></article></div></div></div>
-  <div id="toast" class="toast" aria-live="polite"></div>
-  <script src="assets/tools.js?v=1.0.0"></script><script src="script.js?v=1.0.0"></script>
+  <div class="note"><strong>หมายเหตุ:</strong> AI ช่วยร่างและวิเคราะห์ ผู้ใช้ต้องตรวจสอบข้อเท็จจริง กฎหมาย อำนาจหน้าที่ และข้อมูลส่วนบุคคลก่อนนำไปใช้จริง</div>
+</main>
+<footer>GovPrompt Thailand v1.0 · <a href="privacy.html">ความเป็นส่วนตัว</a> · <a href="terms.html">เงื่อนไขการใช้งาน</a></footer>
+<script>
+  const routes=[
+    {keys:['หนังสือ','สารบรรณ','บันทึก','คำสั่ง','ประกาศ','ประชุม','หารือ'],url:'gp001.html'},
+    {keys:['กฎหมาย','ระเบียบ','อำนาจ','วินิจฉัย','pdpa'],url:'gp002.html'},
+    {keys:['tor','พัสดุ','ราคากลาง','สัญญา','ตรวจรับ','จัดซื้อ'],url:'gp003.html'}
+  ];
+  document.getElementById('searchForm').addEventListener('submit',e=>{
+    e.preventDefault();
+    const q=document.getElementById('searchInput').value.trim().toLowerCase();
+    if(!q)return;
+    const match=routes.find(r=>r.keys.some(k=>q.includes(k)));
+    if(match){location.href=match.url;return;}
+    document.getElementById('assistants').scrollIntoView({behavior:'smooth'});
+    document.querySelectorAll('#assistantGrid .card').forEach(card=>{
+      const text=(card.textContent+' '+(card.dataset.keywords||'')).toLowerCase();
+      card.classList.toggle('hidden',!text.includes(q));
+    });
+  });
+</script>
 </body>
 </html>
