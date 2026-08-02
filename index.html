@@ -3,28 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="GovPrompt Thailand v1.0 Government AI Copilot สำหรับงานราชการไทย บอกงานที่ต้องการ แล้วระบบช่วยเลือกเครื่องมือที่เหมาะสม">
+  <meta name="description" content="GovPrompt Thailand v1.0 Government AI Copilot สำหรับงานราชการไทย">
   <meta name="theme-color" content="#123a70">
   <title>GovPrompt Thailand v1.0 — Government AI Copilot</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=1.0.2">
+  <link rel="stylesheet" href="style.css?v=1.0.3">
 </head>
 <body>
   <header class="site-header">
     <div class="nav-wrap">
-      <a class="brand" href="#top" aria-label="GovPrompt Thailand">
-        <span class="brand-mark">G</span>
-        <span class="brand-copy"><strong>GovPrompt Thailand</strong><small>Government AI Copilot</small></span>
-      </a>
+      <a class="brand" href="#top" aria-label="GovPrompt Thailand"><span class="brand-mark">G</span><span class="brand-copy"><strong>GovPrompt Thailand</strong><small>Government AI Copilot</small></span></a>
       <button class="menu-button" id="menuButton" aria-label="เปิดเมนู">☰</button>
       <nav id="mainNav">
         <a href="#copilot">เริ่มใช้งาน</a>
-        <a href="#popular">งานยอดนิยม</a>
-        <a href="#local-core">หัวใจงานท้องถิ่น</a>
-        <a href="gp001.html">ผู้ช่วยร่างหนังสือ</a>
-        <a href="gp002.html">ผู้ช่วยกฎหมาย</a>
+        <a href="#modules">ผู้ช่วย AI</a>
+        <a href="gp001.html">ร่างหนังสือ</a>
+        <a href="gp002.html">วิเคราะห์กฎหมาย</a>
+        <a href="gp003.html">ตรวจ TOR</a>
         <a href="#community">ชุมชน</a>
       </nav>
     </div>
@@ -33,192 +30,65 @@
   <main id="top">
     <section class="hero" id="copilot">
       <div class="hero-content">
-        <div class="version-pill">GovPrompt Thailand v1.0 · Government AI Copilot</div>
+        <div class="version-pill">GovPrompt Thailand v1.0 · เปิดใช้แล้ว 3 ผู้ช่วย</div>
         <h1>วันนี้คุณต้องการให้ AI<br><span>ช่วยงานราชการอะไร?</span></h1>
-        <p class="hero-lead">พิมพ์งานที่ต้องการด้วยภาษาธรรมดา ระบบจะช่วยค้นหาและเลือกผู้ช่วยที่เหมาะสมให้ โดยผู้ใช้ไม่ต้องรู้จักรหัส GP และไม่ต้องเขียน Prompt เอง</p>
-
+        <p class="hero-lead">พิมพ์งานที่ต้องการด้วยภาษาธรรมดา หรือเลือกผู้ช่วยเฉพาะด้านที่เปิดใช้งานแล้ว โดยไม่ต้องเขียน Prompt เอง</p>
         <div class="hero-search">
           <label for="heroSearch">บอกงานที่ต้องการให้ชัดเจน</label>
-          <div class="search-box">
-            <span aria-hidden="true">🤖</span>
-            <input id="heroSearch" type="search" placeholder="เช่น ร่างหนังสือหารือ ตรวจ TOR จัดทำโครงการ หรือวิเคราะห์งบประมาณ">
-            <button id="heroSearchButton" type="button">เริ่มต้น</button>
-          </div>
+          <div class="search-box"><span aria-hidden="true">🤖</span><input id="heroSearch" type="search" placeholder="เช่น ร่างหนังสือหารือ วิเคราะห์ข้อกฎหมาย หรือตรวจ TOR"><button id="heroSearchButton" type="button">เริ่มต้น</button></div>
           <div class="quick-tags">
             <button data-query="ร่างหนังสือราชการ">📄 ร่างหนังสือราชการ</button>
             <button data-query="วิเคราะห์ข้อกฎหมาย">⚖️ วิเคราะห์ข้อกฎหมาย</button>
             <button data-query="ตรวจ TOR">📦 ตรวจ TOR</button>
             <button data-query="จัดทำโครงการ">📊 จัดทำโครงการ</button>
             <button data-query="งบประมาณ">💰 งบประมาณ</button>
-            <button data-query="ประชาสัมพันธ์">📣 ประชาสัมพันธ์</button>
           </div>
         </div>
-
-        <div class="hero-actions">
-          <a class="btn primary" href="gp001.html">เริ่มร่างหนังสือ</a>
-          <a class="btn secondary" href="gp002.html">วิเคราะห์ข้อกฎหมาย</a>
-        </div>
-
-        <div class="trust-list">
-          <span>✓ ไม่ต้องเลือก GP เอง</span>
-          <span>✓ ไม่ต้องเขียน Prompt เอง</span>
-          <span>✓ คำนึงถึง PDPA และต้องตรวจทานก่อนใช้จริง</span>
-        </div>
+        <div class="hero-actions"><a class="btn primary" href="gp001.html">ร่างหนังสือ</a><a class="btn secondary" href="gp002.html">วิเคราะห์กฎหมาย</a><a class="btn secondary" href="gp003.html">ตรวจ TOR</a></div>
+        <div class="trust-list"><span>✓ ไม่สมมติข้อมูล</span><span>✓ คำนึงถึง PDPA</span><span>✓ ผู้ใช้ตรวจทานก่อนใช้จริง</span></div>
       </div>
-
       <aside class="hero-card">
-        <div class="hero-card-head">
-          <span>Copilot ทำงานอย่างไร</span>
-          <strong>3 ขั้นตอน</strong>
-        </div>
-        <ol>
-          <li><span>1</span><div><strong>บอกงานที่ต้องการ</strong><small>พิมพ์เป็นภาษาธรรมดาได้เลย</small></div></li>
-          <li><span>2</span><div><strong>ระบบเลือกผู้ช่วย</strong><small>ค้นหาเครื่องมือที่ตรงกับงานโดยอัตโนมัติ</small></div></li>
-          <li><span>3</span><div><strong>กรอกข้อมูลและนำไปใช้</strong><small>ตรวจทานผลลัพธ์ก่อนใช้งานจริง</small></div></li>
-        </ol>
-        <div class="safety-note">AI เป็นผู้ช่วยร่างและวิเคราะห์ ไม่ใช่ผู้อนุมัติ ผู้ใช้ต้องตรวจสอบข้อเท็จจริง กฎหมาย อำนาจหน้าที่ และความเหมาะสมทุกครั้ง</div>
+        <div class="hero-card-head"><span>Copilot ทำงานอย่างไร</span><strong>3 ขั้นตอน</strong></div>
+        <ol><li><span>1</span><div><strong>เลือกงาน</strong><small>บอกงานหรือเลือกผู้ช่วย</small></div></li><li><span>2</span><div><strong>กรอกข้อเท็จจริง</strong><small>ระบบถามข้อมูลสำคัญ</small></div></li><li><span>3</span><div><strong>ตรวจทานและใช้</strong><small>ตรวจข้อเท็จจริง กฎหมาย และ PDPA</small></div></li></ol>
+        <div class="safety-note">AI เป็นผู้ช่วยร่างและวิเคราะห์ ไม่ใช่ผู้อนุมัติหรือผู้ตัดสินใจแทนเจ้าหน้าที่</div>
       </aside>
     </section>
 
     <section class="category-strip" id="popular" aria-label="งานยอดนิยม">
-      <button data-category="ทั้งหมด" class="active">งานทั้งหมด</button>
-      <button data-category="สารบรรณ">📑 ร่างหนังสือ</button>
-      <button data-category="กฎหมาย">⚖️ วิเคราะห์กฎหมาย</button>
-      <button data-category="โครงการ">🏛️ โครงการ แผน งบ</button>
-      <button data-category="พัสดุ">📦 TOR/พัสดุ</button>
-      <button data-category="ผู้บริหาร">👔 งานผู้บริหาร</button>
-      <button data-category="ประชาสัมพันธ์">📣 ประชาสัมพันธ์</button>
+      <button data-category="ทั้งหมด" class="active">งานทั้งหมด</button><button data-category="สารบรรณ">📑 ร่างหนังสือ</button><button data-category="กฎหมาย">⚖️ กฎหมาย</button><button data-category="พัสดุ">📦 TOR/พัสดุ</button><button data-category="โครงการ">🏛️ โครงการ แผน งบ</button><button data-category="ผู้บริหาร">👔 ผู้บริหาร</button><button data-category="ประชาสัมพันธ์">📣 ประชาสัมพันธ์</button>
     </section>
 
     <section class="section" id="tools">
-      <div class="section-head">
-        <div>
-          <span class="eyebrow">GOVERNMENT AI COPILOT</span>
-          <h2>เลือกงาน หรือค้นหาด้วยภาษาธรรมดา</h2>
-        </div>
-        <p>ระบบปัจจุบันจะค้นหาเครื่องมือที่ใกล้เคียงที่สุดให้ก่อน และจะทยอยเพิ่มผู้ช่วยเฉพาะทางโดยไม่ทำให้ผู้ใช้ต้องจำรหัสหรือขั้นตอนที่ซับซ้อน</p>
-      </div>
-      <div class="toolbar">
-        <div class="inline-search"><span>🔎</span><input id="toolSearch" type="search" placeholder="ค้นหางาน เช่น หนังสือหารือ กฎหมาย TOR โครงการ งบประมาณ"></div>
-        <div id="resultCount" class="result-count">20 เครื่องมือ</div>
-      </div>
+      <div class="section-head"><div><span class="eyebrow">เครื่องมือพร้อมใช้</span><h2>ค้นหางานด้วยภาษาธรรมดา</h2></div><p>เลือกจากเครื่องมือเดิม หรือเข้าใช้ผู้ช่วยเฉพาะด้าน GP001–GP003 ที่ผ่านการจัดโครงสร้างและเปิดใช้งานแล้ว</p></div>
+      <div class="toolbar"><div class="inline-search"><span>🔎</span><input id="toolSearch" type="search" placeholder="ค้นหา เช่น หนังสือ กฎหมาย TOR โครงการ งบประมาณ"></div><div id="resultCount" class="result-count">20 เครื่องมือ</div></div>
       <div id="toolGrid" class="tool-grid"></div>
-      <div id="emptyState" class="empty-state hidden">
-        <strong>ยังไม่พบงานที่ตรงกับคำค้น</strong>
-        <p>ลองใช้คำสั้น ๆ เช่น “หนังสือ” “กฎหมาย” “TOR” “โครงการ” “งบประมาณ” หรือ “ข่าว”</p>
-        <button class="btn secondary" id="clearSearch">ล้างคำค้น</button>
-      </div>
+      <div id="emptyState" class="empty-state hidden"><strong>ยังไม่พบงานที่ตรงกับคำค้น</strong><p>ลองใช้คำสั้น ๆ เช่น “หนังสือ” “กฎหมาย” “TOR” หรือ “โครงการ”</p><button class="btn secondary" id="clearSearch">ล้างคำค้น</button></div>
     </section>
 
     <section class="section soft" id="local-core">
-      <div class="section-head centered">
-        <div>
-          <span class="eyebrow">หัวใจขององค์กรปกครองส่วนท้องถิ่น</span>
-          <h2>🏛️ โครงการ → แผน → งบประมาณ → ดำเนินงาน → ประเมินผล</h2>
-        </div>
-        <p>GovPrompt จัดงานสำคัญของท้องถิ่นให้เห็นเป็นวงจรเดียว ใช้ง่าย และเชื่อมโยงกันตั้งแต่เริ่มคิดโครงการจนถึงรายงานผล</p>
-      </div>
-      <div class="steps">
-        <article><span>01</span><h3>จัดทำโครงการ</h3><p>เชื่อมปัญหา ความจำเป็น วัตถุประสงค์ กิจกรรม กลุ่มเป้าหมาย และผลลัพธ์</p></article>
-        <article><span>02</span><h3>แผนพัฒนาท้องถิ่น</h3><p>ตรวจความสอดคล้องกับยุทธศาสตร์ อำนาจหน้าที่ และลำดับความสำคัญของพื้นที่</p></article>
-        <article><span>03</span><h3>งบประมาณ</h3><p>ตรวจกรอบวงเงิน ความจำเป็น ความคุ้มค่า หมวดรายจ่าย และความพร้อมก่อนเสนอ</p></article>
-        <article><span>04</span><h3>ดำเนินงานและพัสดุ</h3><p>เชื่อม TOR การจัดซื้อจัดจ้าง สัญญา การควบคุมงาน และการตรวจรับ</p></article>
-        <article><span>05</span><h3>ติดตามประเมินผล</h3><p>กำหนด KPI ผลผลิต ผลลัพธ์ รายงานผู้บริหาร และบทเรียนเพื่อปรับแผนรอบถัดไป</p></article>
-      </div>
+      <div class="section-head centered"><div><span class="eyebrow">หัวใจขององค์กรปกครองส่วนท้องถิ่น</span><h2>🏛️ โครงการ → แผน → งบประมาณ → พัสดุ → ประเมินผล</h2></div><p>พัฒนาให้เชื่อมโยงเป็นวงจรเดียว ตั้งแต่คิดโครงการจนถึงติดตามผล</p></div>
+      <div class="steps"><article><span>01</span><h3>โครงการ</h3><p>ปัญหา วัตถุประสงค์ กิจกรรม และผลลัพธ์</p></article><article><span>02</span><h3>แผน</h3><p>ยุทธศาสตร์ อำนาจหน้าที่ และลำดับความสำคัญ</p></article><article><span>03</span><h3>งบประมาณ</h3><p>วงเงิน หมวดรายจ่าย ความคุ้มค่า และความพร้อม</p></article><article><span>04</span><h3>พัสดุและ TOR</h3><p>สเปก การแข่งขัน สัญญา และการตรวจรับ</p></article><article><span>05</span><h3>ประเมินผล</h3><p>KPI ผลผลิต ผลลัพธ์ และบทเรียน</p></article></div>
     </section>
 
-    <section class="section soft" id="modules">
-      <div class="section-head centered">
-        <div><span class="eyebrow">ผู้ช่วยที่เปิดใช้งานแล้ว</span><h2>Government AI Modules</h2></div>
-        <p>เปิดใช้ทีละโมดูล ทดสอบกับงานจริง และพัฒนาต่อเนื่องจากข้อเสนอแนะของผู้ใช้</p>
-      </div>
+    <section class="section" id="modules">
+      <div class="section-head centered"><div><span class="eyebrow">เปิดใช้งานแล้ว</span><h2>Government AI Modules</h2></div><p>พัฒนาทีละตัว เปิดใช้ทันทีเมื่อพร้อม แล้วปรับปรุงจากงานจริง</p></div>
       <div class="plan-grid">
-        <article class="plan-card featured">
-          <div class="plan-label">เปิดใช้งานแล้ว</div>
-          <h3>📄 AI ผู้ช่วยงานสารบรรณ</h3>
-          <p>วิเคราะห์ข้อมูล ตรวจความครบถ้วน และจัดทำร่างหนังสือราชการอย่างเป็นระบบ</p>
-          <a class="btn primary full" href="gp001.html">เปิดผู้ช่วยร่างหนังสือ</a>
-        </article>
-        <article class="plan-card featured">
-          <div class="plan-label">เปิดใช้งานแล้ว</div>
-          <h3>⚖️ AI ผู้ช่วยวิเคราะห์ข้อกฎหมาย</h3>
-          <p>จัดระบบข้อเท็จจริง ตั้งประเด็นกฎหมาย ตรวจฐานอำนาจ วิเคราะห์ทางเลือก ความเสี่ยง และข้อเสนอที่ปลอดภัย</p>
-          <a class="btn primary full" href="gp002.html">เปิดผู้ช่วยวิเคราะห์กฎหมาย</a>
-        </article>
+        <article class="plan-card featured"><div class="plan-label">เปิดใช้งานแล้ว</div><h3>📄 ผู้ช่วยร่างหนังสือ</h3><p>ตรวจข้อมูล วิเคราะห์ก่อนร่าง และสร้าง Checklist</p><a class="btn primary full" href="gp001.html">เปิด GP001</a></article>
+        <article class="plan-card featured"><div class="plan-label">เปิดใช้งานแล้ว</div><h3>⚖️ ผู้ช่วยวิเคราะห์กฎหมาย</h3><p>ข้อเท็จจริง ฐานอำนาจ ทางเลือก ความเสี่ยง และข้อเสนอ</p><a class="btn primary full" href="gp002.html">เปิด GP002</a></article>
+        <article class="plan-card featured"><div class="plan-label">เปิดใช้งานแล้ว</div><h3>📦 ผู้ช่วยตรวจ TOR</h3><p>ตรวจชี้เฉพาะ คุณสมบัติ ผลงาน ตรวจรับ รับประกัน และค่าปรับ</p><a class="btn primary full" href="gp003.html">เปิด GP003</a></article>
       </div>
-      <div class="safety-note"><strong>ลำดับถัดไป:</strong> GP003 ผู้ช่วยตรวจ TOR → GP004 ผู้ช่วยจัดทำโครงการ → GP005 ผู้ช่วยแผนและงบประมาณ</div>
+      <div class="safety-note"><strong>ลำดับถัดไป:</strong> GP004 ผู้ช่วยจัดทำโครงการ → GP005 ผู้ช่วยแผนและงบประมาณ</div>
     </section>
 
-    <section class="section soft" id="how">
-      <div class="section-head centered">
-        <div><span class="eyebrow">วิธีใช้</span><h2>บอกงานครั้งเดียว แล้วเริ่มทำได้เลย</h2></div>
-        <p>ออกแบบให้คนทำงานราชการใช้งานได้ โดยไม่ต้องเรียนศัพท์ AI หรือจำชื่อโมดูล</p>
-      </div>
-      <div class="steps">
-        <article><span>01</span><h3>พิมพ์งาน</h3><p>บอกสิ่งที่ต้องการ เช่น “ช่วยร่างหนังสือหารือ” หรือ “วิเคราะห์ข้อกฎหมาย”</p></article>
-        <article><span>02</span><h3>เลือกผู้ช่วย</h3><p>ระบบค้นหาเครื่องมือที่ตรงกับงาน และถามเฉพาะข้อมูลสำคัญ</p></article>
-        <article><span>03</span><h3>ตรวจทานและใช้งาน</h3><p>ตรวจข้อเท็จจริง กฎหมาย อำนาจหน้าที่ และ PDPA ก่อนนำผลลัพธ์ไปใช้จริง</p></article>
-      </div>
-    </section>
+    <section class="section soft" id="how"><div class="section-head centered"><div><span class="eyebrow">วิธีใช้</span><h2>ง่าย 3 ขั้นตอน</h2></div></div><div class="steps"><article><span>01</span><h3>เลือกผู้ช่วย</h3><p>เลือกร่างหนังสือ กฎหมาย หรือ TOR</p></article><article><span>02</span><h3>ให้ข้อมูลจริง</h3><p>กรอกข้อเท็จจริงและแนบเอกสารเท่าที่จำเป็น</p></article><article><span>03</span><h3>ตรวจทาน</h3><p>ตรวจข้อมูล กฎหมาย อำนาจหน้าที่ และ PDPA ก่อนใช้</p></article></div></section>
 
-    <section class="section community" id="community">
-      <div>
-        <span class="eyebrow">COMMUNITY</span>
-        <h2>GovPrompt Thailand - ชุมชน AI งานราชการ</h2>
-        <p>ทดลองใช้แล้วส่งปัญหาและข้อเสนอแนะผ่านเพจ ทุกความคิดเห็นจะนำไปปรับปรุง Copilot ให้ใช้ง่ายและตรงกับงานจริงมากขึ้น</p>
-      </div>
-      <a class="btn social" href="https://www.facebook.com/GovPromptThailandAI" target="_blank" rel="noopener">ไปที่ Facebook Community ↗</a>
-    </section>
+    <section class="section community" id="community"><div><span class="eyebrow">COMMUNITY</span><h2>GovPrompt Thailand - ชุมชน AI งานราชการ</h2><p>แจ้งปัญหาและข้อเสนอแนะเพื่อพัฒนาเวอร์ชันถัดไป</p></div><a class="btn social" href="https://www.facebook.com/GovPromptThailandAI" target="_blank" rel="noopener">ไปที่ Facebook Community ↗</a></section>
   </main>
 
-  <footer>
-    <div class="footer-brand"><span class="brand-mark small">G</span><div><strong>GovPrompt Thailand</strong><small>v1.0 Government AI Copilot</small></div></div>
-    <p>ระบบช่วยร่างและวิเคราะห์ ผู้ใช้ต้องตรวจสอบข้อเท็จจริง กฎหมาย อำนาจหน้าที่ ความถูกต้อง และการคุ้มครองข้อมูลส่วนบุคคลก่อนนำไปใช้จริง</p>
-    <div><a href="terms.html">เงื่อนไขการใช้งาน</a> · <a href="privacy.html">ความเป็นส่วนตัว</a></div>
-  </footer>
+  <footer><div class="footer-brand"><span class="brand-mark small">G</span><div><strong>GovPrompt Thailand</strong><small>v1.0 Government AI Copilot</small></div></div><p>ระบบช่วยร่างและวิเคราะห์ ผู้ใช้ต้องตรวจสอบข้อเท็จจริง กฎหมาย อำนาจหน้าที่ ความถูกต้อง และการคุ้มครองข้อมูลส่วนบุคคลก่อนนำไปใช้จริง</p><div><a href="terms.html">เงื่อนไขการใช้งาน</a> · <a href="privacy.html">ความเป็นส่วนตัว</a></div></footer>
 
-  <div id="workspace" class="workspace hidden" role="dialog" aria-modal="true" aria-labelledby="workspaceTitle">
-    <div class="workspace-shell">
-      <header class="workspace-header">
-        <div>
-          <span id="workspaceCode" class="tool-code"></span>
-          <h2 id="workspaceTitle">ผู้ช่วย AI งานราชการ</h2>
-          <p id="workspaceDesc"></p>
-        </div>
-        <button class="close-button" id="closeWorkspace" aria-label="ปิด">×</button>
-      </header>
-      <div class="workspace-body">
-        <form id="generatorForm" class="generator-form">
-          <div id="dynamicFields"></div>
-          <label>รูปแบบผลลัพธ์
-            <select id="outputTone">
-              <option value="ภาษาราชการ กระชับ ชัดเจน">ภาษาราชการ กระชับ ชัดเจน</option>
-              <option value="สรุปสำหรับผู้บริหาร">สรุปสำหรับผู้บริหาร</option>
-              <option value="ภาษาที่อ่านง่ายสำหรับประชาชน">ภาษาที่อ่านง่ายสำหรับประชาชน</option>
-            </select>
-          </label>
-          <label class="confirm"><input id="confirmFacts" type="checkbox" required> ยืนยันว่าข้อมูลที่กรอกเป็นข้อเท็จจริงที่ตรวจสอบได้ ไม่มีข้อมูลส่วนบุคคลที่ไม่จำเป็น และจะตรวจทานผลลัพธ์ก่อนใช้จริง</label>
-          <button class="btn primary full" type="submit">สร้างคำสั่งพร้อมใช้</button>
-          <div id="formMessage" class="form-message" aria-live="polite"></div>
-        </form>
-
-        <article class="result-panel">
-          <div class="result-head">
-            <div><strong>คำสั่งพร้อมใช้งาน</strong><small>คัดลอกไปวางใน AI ที่คุณเลือก</small></div>
-            <div class="result-buttons">
-              <button id="copyButton" type="button" disabled>📋 คัดลอก</button>
-              <button id="downloadButton" type="button" disabled>⬇️ ดาวน์โหลด .txt</button>
-            </div>
-          </div>
-          <pre id="resultOutput" class="result-output empty">ผลที่สร้างจากข้อมูลของคุณจะแสดงที่นี่</pre>
-          <div id="successNote" class="success-note hidden">✅ สร้างสำเร็จ — โปรดตรวจข้อมูล กฎหมาย และ PDPA ก่อนนำไปใช้จริง</div>
-        </article>
-      </div>
-    </div>
-  </div>
-
+  <div id="workspace" class="workspace hidden" role="dialog" aria-modal="true" aria-labelledby="workspaceTitle"><div class="workspace-shell"><header class="workspace-header"><div><span id="workspaceCode" class="tool-code"></span><h2 id="workspaceTitle">ผู้ช่วย AI งานราชการ</h2><p id="workspaceDesc"></p></div><button class="close-button" id="closeWorkspace" aria-label="ปิด">×</button></header><div class="workspace-body"><form id="generatorForm" class="generator-form"><div id="dynamicFields"></div><label>รูปแบบผลลัพธ์<select id="outputTone"><option value="ภาษาราชการ กระชับ ชัดเจน">ภาษาราชการ กระชับ ชัดเจน</option><option value="สรุปสำหรับผู้บริหาร">สรุปสำหรับผู้บริหาร</option><option value="ภาษาที่อ่านง่ายสำหรับประชาชน">ภาษาที่อ่านง่ายสำหรับประชาชน</option></select></label><label class="confirm"><input id="confirmFacts" type="checkbox" required> ยืนยันว่าข้อมูลเป็นข้อเท็จจริง ไม่มีข้อมูลส่วนบุคคลที่ไม่จำเป็น และจะตรวจทานก่อนใช้จริง</label><button class="btn primary full" type="submit">สร้างคำสั่งพร้อมใช้</button><div id="formMessage" class="form-message" aria-live="polite"></div></form><article class="result-panel"><div class="result-head"><div><strong>คำสั่งพร้อมใช้งาน</strong><small>คัดลอกไปวางใน AI ที่คุณเลือก</small></div><div class="result-buttons"><button id="copyButton" type="button" disabled>📋 คัดลอก</button><button id="downloadButton" type="button" disabled>⬇️ ดาวน์โหลด .txt</button></div></div><pre id="resultOutput" class="result-output empty">ผลที่สร้างจากข้อมูลของคุณจะแสดงที่นี่</pre><div id="successNote" class="success-note hidden">✅ สร้างสำเร็จ — โปรดตรวจข้อมูล กฎหมาย และ PDPA ก่อนใช้จริง</div></article></div></div></div>
   <div id="toast" class="toast" aria-live="polite"></div>
-  <script src="assets/tools.js?v=1.0.0"></script>
-  <script src="script.js?v=1.0.0"></script>
+  <script src="assets/tools.js?v=1.0.0"></script><script src="script.js?v=1.0.0"></script>
 </body>
 </html>
