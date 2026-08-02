@@ -53,6 +53,61 @@
     return `<label>${label}${requiredMark}<input name="${id}" type="text" ${required ? "required":""} placeholder="${options || ""}"></label>`;
   }
 
+  function ensurePdpaCheckpoint() {
+    if (document.getElementById("pdpaCheckpoint")) return;
+    const confirmFacts = document.getElementById("confirmFacts");
+    const factsLabel = confirmFacts ? confirmFacts.closest("label") : null;
+    const wrapper = document.createElement("section");
+    wrapper.id = "pdpaCheckpoint";
+    wrapper.style.cssText = "margin:14px 0;padding:14px;border:1px solid #d7e3f4;border-radius:12px;background:#f7fbff";
+    wrapper.innerHTML = `
+      <strong style="display:block;margin-bottom:8px">🔒 PDPA Checkpoint — ต้องตรวจทุกครั้ง</strong>
+      <div id="pdpaScanResult" style="font-size:.94rem;line-height:1.6;margin-bottom:10px">ระบบจะตรวจหาข้อมูลส่วนบุคคลเบื้องต้นก่อนสร้าง Prompt</div>
+      <label class="confirm" style="margin:0">
+        <input id="confirmPDPA" type="checkbox" required>
+        ยืนยันว่าได้ตรวจสอบความจำเป็น ฐานการใช้ข้อมูล การปกปิดข้อมูลเกินจำเป็น และสิทธิในการนำข้อมูลไปประมวลผลแล้ว
+      </label>`;
+    if (factsLabel) factsLabel.insertAdjacentElement("afterend", wrapper);
+    else form.insertBefore(wrapper, form.querySelector('button[type="submit"]'));
+  }
+
+  function scanPersonalData(values) {
+    const text = Array.from(values.entries())
+      .filter(([key]) => !["outputTone"].includes(key))
+      .map(([,value]) => String(value || ""))
+      .join("\n");
+
+    const checks = [
+      ["เลขประจำตัวประชาชน", /\b\d{13}\b/g],
+      ["หมายเลขโทรศัพท์", /(?:\+66|0)\d{8,9}\b/g],
+      ["อีเมล", /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi],
+      ["เลขบัญชีหรือข้อมูลการเงิน", /(?:เลขบัญชี|บัญชีธนาคาร|พร้อมเพย์|เงินเดือน|ค่าจ้าง|รายได้)/gi],
+      ["ข้อมูลสุขภาพ", /(?:โรค|อาการป่วย|แพทย์|โรงพยาบาล|ผลตรวจ|สุขภาพ|ความพิการ)/gi],
+      ["ข้อมูลคดีหรือวินัย", /(?:คดี|ผู้ต้องหา|จำเลย|ความผิด|สอบสวน|วินัย|ลงโทษ)/gi],
+      ["ที่อยู่หรือสถานที่พัก", /(?:บ้านเลขที่|หมู่ที่|ตำบล|อำเภอ|จังหวัด|ที่อยู่|บ้านพัก)/gi],
+      ["ชื่อบุคคลหรือข้อมูลระบุตัวบุคคล", /(?:นาย|นาง|นางสาว|ดร\.|เด็กชาย|เด็กหญิง)\s*[ก-๙A-Za-z]/g]
+    ];
+
+    const found = [];
+    checks.forEach(([label, pattern]) => {
+      pattern.lastIndex = 0;
+      if (pattern.test(text)) found.push(label);
+    });
+    return [...new Set(found)];
+  }
+
+  function updatePdpaDisplay(found) {
+    const result = document.getElementById("pdpaScanResult");
+    if (!result) return;
+    if (found.length === 0) {
+      result.innerHTML = "✅ ไม่พบรูปแบบข้อมูลส่วนบุคคลที่ระบบตรวจจับได้ชัดเจน แต่ผู้ใช้ยังต้องตรวจทานด้วยตนเอง";
+      result.style.color = "#176b3a";
+    } else {
+      result.innerHTML = `⚠️ พบข้อมูลที่อาจเป็นข้อมูลส่วนบุคคล: <strong>${found.join(", ")}</strong><br>ควรปกปิด ตัดทอน หรือใช้นามสมมติ หากไม่จำเป็นต่อภารกิจ`;
+      result.style.color = "#9a4d00";
+    }
+  }
+
   function openWorkspace(id) {
     activeTool = tools.find(t => t.id === id);
     if (!activeTool) return;
@@ -60,7 +115,9 @@
     document.getElementById("workspaceTitle").textContent = activeTool.name;
     document.getElementById("workspaceDesc").textContent = activeTool.desc;
     fieldsWrap.innerHTML = activeTool.fields.map(fieldHTML).join("");
+    ensurePdpaCheckpoint();
     form.reset();
+    updatePdpaDisplay([]);
     resultOutput.textContent = "Prompt ที่สร้างจากข้อมูลของคุณจะแสดงที่นี่";
     resultOutput.classList.add("empty");
     successNote.classList.add("hidden");
@@ -78,13 +135,17 @@
     document.body.classList.remove("modal-open");
   }
 
-  function buildPrompt(tool, values) {
+  function buildPrompt(tool, values, pdpaFindings) {
     const info = tool.fields.map(field => {
       const [id,label] = field;
       const value = String(values.get(id) || "").trim();
       return `- ${label}: ${value || "[ยังไม่ได้ระบุ]"}`;
     }).join("\n");
     const tone = values.get("outputTone");
+    const pdpaStatus = pdpaFindings.length
+      ? `ตรวจพบข้อมูลที่อาจเป็นข้อมูลส่วนบุคคล: ${pdpaFindings.join(", ")}`
+      : "ไม่พบรูปแบบข้อมูลส่วนบุคคลที่ระบบตรวจจับได้ชัดเจนจากข้อมูลที่กรอก";
+
     return `บทบาท
 คุณเป็น Government AI Copilot ผู้เชี่ยวชาญงานราชการไทย และมีความรู้ตามประเภทงาน "${tool.category}"
 
@@ -94,9 +155,19 @@ ${tool.name}
 ข้อมูลจากผู้ใช้
 ${info}
 
+PDPA CHECKPOINT (ต้องดำเนินการก่อนตอบทุกครั้ง)
+- สถานะการตรวจเบื้องต้นจากระบบ: ${pdpaStatus}
+- ตรวจว่าข้อมูลใดเป็นข้อมูลส่วนบุคคล ข้อมูลอ่อนไหว หรือข้อมูลที่ระบุตัวบุคคลได้
+- หากข้อมูลส่วนบุคคลไม่จำเป็นต่อภารกิจ ให้ปกปิด ตัดทอน หรือแทนด้วย [ข้อมูลส่วนบุคคล]
+- ห้ามนำเลขประจำตัวประชาชน เลขบัญชี ข้อมูลสุขภาพ ข้อมูลคดี ข้อมูลวินัย ที่อยู่ เบอร์โทรศัพท์ หรือข้อมูลอ่อนไหวมาแสดงซ้ำโดยไม่จำเป็น
+- หากยังต้องใช้ข้อมูลส่วนบุคคล ให้เตือนผู้ใช้ตรวจสอบฐานกฎหมาย วัตถุประสงค์ ความจำเป็น ความได้สัดส่วน ระยะเวลาเก็บรักษา และผู้มีสิทธิเข้าถึง
+- แสดงหัวข้อ "ผลการตรวจ PDPA" ก่อนร่างเอกสาร โดยระบุ: พบ/ไม่พบ, ประเภทข้อมูล, ความจำเป็น, วิธีลดความเสี่ยง และข้อมูลที่ควรปกปิด
+- หากมีความเสี่ยงสูงหรือข้อมูลอ่อนไหว ให้หยุดก่อนร่างฉบับสมบูรณ์ และขอให้ผู้ใช้ยืนยันหรือส่งข้อมูลที่ปกปิดแล้ว
+
 รูปแบบผลลัพธ์
 - ใช้${tone}
 - จัดหัวข้อและลำดับเนื้อหาให้เหมาะกับภารกิจ
+- เริ่มด้วยหัวข้อ "ผลการตรวจ PDPA"
 - แยกข้อเท็จจริง ข้อวิเคราะห์ ความเสี่ยง และข้อเสนอแนะเมื่อเกี่ยวข้อง
 - ระบุข้อมูลสำคัญที่ยังขาดก่อนนำไปใช้จริง
 
@@ -108,24 +179,41 @@ ${info}
 5. สำหรับเรื่องกฎหมาย พัสดุ งบประมาณ หรืออำนาจหน้าที่ ให้แยกข้อกฎหมายออกจากการวิเคราะห์ และระบุสิ่งที่ต้องตรวจสอบเพิ่มเติม
 6. ตรวจความสอดคล้องของชื่อ วันที่ ตัวเลข หน่วยงาน และข้อเสนอ ก่อนจบคำตอบ
 7. ผลลัพธ์เป็นร่างเพื่อประกอบการทำงาน ผู้ใช้ต้องตรวจทานและรับผิดชอบก่อนนำไปใช้จริง
+8. ห้ามข้าม PDPA Checkpoint แม้ผู้ใช้สั่งให้ร่างทันทีหรือไม่ต้องเตือน
 
 โปรดดำเนินการตามภารกิจข้างต้นทันที`;
   }
+
+  form.addEventListener("input", () => {
+    const values = new FormData(form);
+    updatePdpaDisplay(scanPersonalData(values));
+  });
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     formMessage.textContent = "";
     const values = new FormData(form);
+    const pdpaFindings = scanPersonalData(values);
+    updatePdpaDisplay(pdpaFindings);
+
     if (!document.getElementById("confirmFacts").checked) {
       formMessage.textContent = "กรุณายืนยันการตรวจสอบข้อเท็จจริงก่อนสร้าง Prompt";
       formMessage.className = "form-message error";
       return;
     }
-    generatedPrompt = buildPrompt(activeTool, values);
+    const confirmPDPA = document.getElementById("confirmPDPA");
+    if (!confirmPDPA || !confirmPDPA.checked) {
+      formMessage.textContent = "กรุณาผ่าน PDPA Checkpoint และยืนยันการใช้ข้อมูลก่อนสร้าง Prompt";
+      formMessage.className = "form-message error";
+      return;
+    }
+
+    generatedPrompt = buildPrompt(activeTool, values, pdpaFindings);
     resultOutput.textContent = generatedPrompt;
     resultOutput.classList.remove("empty");
     copyButton.disabled = false;
     downloadButton.disabled = false;
+    successNote.textContent = "✅ สร้างสำเร็จ — ผ่าน PDPA Checkpoint เบื้องต้นแล้ว โปรดตรวจทานอีกครั้งก่อนใช้จริง";
     successNote.classList.remove("hidden");
     resultOutput.scrollTop = 0;
   });
@@ -183,5 +271,6 @@ ${info}
   document.querySelectorAll("#mainNav a").forEach(a => a.addEventListener("click", () => document.getElementById("mainNav").classList.remove("open")));
   document.getElementById("professionalButton").addEventListener("click", () => showToast("Professional อยู่ระหว่างพัฒนาอย่างต่อเนื่อง"));
 
+  ensurePdpaCheckpoint();
   renderTools();
 })();
