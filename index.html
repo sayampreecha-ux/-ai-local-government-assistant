@@ -1,94 +1,47 @@
 <!doctype html>
 <html lang="th">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="description" content="GovPrompt Thailand — AI ผู้ช่วยงานราชการ ใช้งานง่ายบนมือถือ">
-  <meta name="theme-color" content="#123a70">
-  <title>GovPrompt Thailand — AI ผู้ช่วยงานราชการ</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root{--blue:#123a70;--blue2:#0b57d0;--bg:#f5f7fb;--line:#dbe3ef;--text:#172033;--muted:#667085;--white:#fff}
-    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:"Noto Sans Thai",sans-serif;background:var(--bg);color:var(--text)}
-    a{text-decoration:none;color:inherit}button,input{font:inherit}.shell{width:min(760px,100%);margin:auto;padding:0 14px 30px}
-    header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.96);border-bottom:1px solid var(--line);backdrop-filter:blur(10px)}
-    .topbar{width:min(760px,100%);margin:auto;padding:10px 14px;display:flex;align-items:center;gap:10px}.mark{width:38px;height:38px;border-radius:11px;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800}.brand{line-height:1.15}.brand strong{display:block;font-size:17px}.brand small{color:var(--muted);font-size:12px}.fb{margin-left:auto;font-size:13px;color:var(--blue2);font-weight:700}
-    .search{padding:16px 0 10px}.searchbox{display:flex;gap:8px;background:#fff;padding:7px;border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 16px rgba(18,58,112,.07)}.searchbox input{min-width:0;flex:1;border:0;outline:0;padding:10px 8px;font-size:16px}.searchbox button{border:0;border-radius:10px;background:var(--blue);color:#fff;padding:0 16px;font-weight:700;min-height:44px}
-    h2{font-size:17px;margin:18px 2px 9px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.card{background:#fff;border:1px solid var(--line);border-radius:13px;padding:14px 12px;min-height:70px;display:flex;align-items:center;gap:9px;font-weight:700;box-shadow:0 2px 9px rgba(18,58,112,.04)}.card:active{transform:scale(.985)}.icon{font-size:23px;flex:0 0 auto}.arrow{margin-left:auto;color:#98a2b3}.coming{opacity:.65}.coming small{display:block;color:var(--muted);font-size:10px;font-weight:500;margin-top:2px}
-    .popular .card{border-color:#c5d6ee;background:#fbfdff}.note{margin:18px 0 0;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:12px;color:var(--muted);line-height:1.6}.note strong{color:var(--text)}
-    footer{text-align:center;color:var(--muted);font-size:12px;padding:18px 8px 8px}.hidden{display:none!important}
-    @media(min-width:620px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.card{min-height:78px}.shell{padding-left:20px;padding-right:20px}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b3b75">
+<title>GovPrompt Thailand — AI ผู้ช่วยงานราชการ</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif;background:#f7f9fc;color:#10233f}a{text-decoration:none;color:inherit}.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #e7edf5}.bar{max-width:1080px;margin:auto;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}.brand{display:flex;gap:10px;align-items:center}.mark{width:38px;height:38px;border-radius:10px;background:#0b3b75;color:#fff;display:grid;place-items:center;font-weight:800}.brand b{display:block}.brand small{color:#617089}.fb{font-weight:700;color:#1769d2}.wrap{max-width:1080px;margin:auto;padding:18px 16px 90px}.search{display:flex;gap:8px;background:#fff;border:1px solid #dfe7f1;border-radius:14px;padding:8px;box-shadow:0 4px 18px #123a7012}.search input{flex:1;border:0;outline:0;font-size:16px;padding:10px}.search button{border:0;border-radius:10px;background:#0b3b75;color:#fff;padding:0 20px;font-weight:700}.title{font-size:19px;margin:22px 0 10px}.popular,.assistants{display:grid;gap:10px}.popular{grid-template-columns:repeat(4,1fr)}.assistants{grid-template-columns:repeat(3,1fr)}.card{background:#fff;border:1px solid #e1e8f1;border-radius:14px;padding:14px;min-height:94px;display:flex;align-items:center;gap:12px;transition:.15s}.card:hover{transform:translateY(-2px);box-shadow:0 8px 22px #173d7016}.icon{font-size:26px}.card strong{display:block}.card small{display:block;color:#6d7b90;margin-top:3px}.arrow{margin-left:auto;font-size:20px}.soon{opacity:.7}.badge{display:inline-block;margin-top:5px;background:#edf2f7;color:#607086;border-radius:999px;padding:3px 8px;font-size:11px}.note{margin-top:18px;background:#eef6ff;border-radius:12px;padding:11px 14px;color:#315d91;font-size:13px}.bottom{display:none}.footer{background:#0b315f;color:#dfe9f6;padding:18px 16px;text-align:center;font-size:13px}.footer a{color:#fff;margin:0 6px}
+@media(max-width:760px){.wrap{padding:14px 12px 78px}.popular{grid-template-columns:repeat(2,1fr)}.assistants{grid-template-columns:repeat(2,1fr)}.card{min-height:82px;padding:11px}.card small{display:none}.title{margin-top:18px}.fb{font-size:13px}.bottom{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;bottom:0;left:0;right:0;z-index:30;background:#fff;border-top:1px solid #dde5ef;padding:7px 4px calc(7px + env(safe-area-inset-bottom))}.bottom a{text-align:center;font-size:11px;color:#52647a}.bottom span{display:block;font-size:21px}.footer{display:none}}
+</style>
 </head>
 <body>
-<header>
-  <div class="topbar">
-    <div class="mark">G</div>
-    <div class="brand"><strong>GovPrompt Thailand</strong><small>AI ผู้ช่วยงานราชการ</small></div>
-    <a class="fb" href="https://www.facebook.com/GovPromptThailandAI" target="_blank" rel="noopener">Facebook ↗</a>
-  </div>
-</header>
-<main class="shell">
-  <section class="search" aria-label="ค้นหางาน">
-    <form class="searchbox" id="searchForm">
-      <input id="searchInput" type="search" autocomplete="off" placeholder="ค้นหา เช่น หนังสือ TOR กฎหมาย โครงการ">
-      <button type="submit">ค้นหา</button>
-    </form>
-  </section>
-
-  <section class="popular">
-    <h2>⭐ งานที่ใช้บ่อย</h2>
-    <div class="grid">
-      <a class="card" href="gp001.html"><span class="icon">📄</span><span>ร่างหนังสือราชการ</span><span class="arrow">›</span></a>
-      <a class="card" href="gp002.html"><span class="icon">⚖️</span><span>วิเคราะห์ข้อกฎหมาย</span><span class="arrow">›</span></a>
-      <a class="card" href="gp003.html"><span class="icon">📦</span><span>ตรวจ TOR</span><span class="arrow">›</span></a>
-      <a class="card coming" href="#assistants"><span class="icon">📊</span><span>โครงการและงบประมาณ<small>อยู่ระหว่างพัฒนา</small></span><span class="arrow">›</span></a>
-    </div>
-  </section>
-
-  <section id="assistants">
-    <h2>ผู้ช่วยแต่ละด้าน</h2>
-    <div class="grid" id="assistantGrid">
-      <a class="card" href="gp001.html" data-keywords="สารบรรณ หนังสือ ภายนอก ภายใน บันทึกข้อความ คำสั่ง ประกาศ ประชุม หารือ"><span class="icon">📄</span><span>สารบรรณ</span><span class="arrow">›</span></a>
-      <a class="card" href="gp002.html" data-keywords="กฎหมาย ระเบียบ อำนาจหน้าที่ หารือ วินิจฉัย pdpa"><span class="icon">⚖️</span><span>กฎหมาย</span><span class="arrow">›</span></a>
-      <a class="card" href="gp003.html" data-keywords="พัสดุ tor ราคากลาง สัญญา ตรวจรับ จัดซื้อจัดจ้าง"><span class="icon">📦</span><span>พัสดุและ TOR</span><span class="arrow">›</span></a>
-      <div class="card coming" data-keywords="แผน โครงการ งบประมาณ KPI"><span class="icon">📊</span><span>แผนและงบประมาณ<small>อยู่ระหว่างพัฒนา</small></span></div>
-      <div class="card coming" data-keywords="การเงิน คลัง บัญชี เบิกจ่าย ค่าเดินทาง ค่าเช่าบ้าน"><span class="icon">💰</span><span>การเงินและการคลัง<small>อยู่ระหว่างพัฒนา</small></span></div>
-      <div class="card coming" data-keywords="บุคคล บรรจุ แต่งตั้ง โอนย้าย วินัย"><span class="icon">👥</span><span>งานบุคคล<small>อยู่ระหว่างพัฒนา</small></span></div>
-      <div class="card coming" data-keywords="ผู้บริหาร สรุป one page dashboard"><span class="icon">👔</span><span>ผู้บริหาร<small>อยู่ระหว่างพัฒนา</small></span></div>
-      <div class="card coming" data-keywords="ช่าง วิศวกรรม ถนน อาคาร boq ก่อสร้าง"><span class="icon">🏗️</span><span>ช่างและวิศวกรรม<small>อยู่ระหว่างพัฒนา</small></span></div>
-      <div class="card coming" data-keywords="ตรวจสอบภายใน audit ความเสี่ยง ควบคุมภายใน"><span class="icon">🔍</span><span>ตรวจสอบภายใน<small>อยู่ระหว่างพัฒนา</small></span></div>
-      <div class="card coming" data-keywords="สาธารณสุข รพ.สต. สุขภาพ โรคติดต่อ pm2.5"><span class="icon">🩺</span><span>สาธารณสุข<small>อยู่ระหว่างพัฒนา</small></span></div>
-      <div class="card coming" data-keywords="การศึกษา โรงเรียน ศูนย์เด็กเล็ก ครู"><span class="icon">🎓</span><span>การศึกษา<small>อยู่ระหว่างพัฒนา</small></span></div>
-      <div class="card coming" data-keywords="ประชาสัมพันธ์ ข่าว facebook infographic วิดีโอ"><span class="icon">📢</span><span>ประชาสัมพันธ์<small>อยู่ระหว่างพัฒนา</small></span></div>
-      <div class="card coming" data-keywords="สิ่งแวดล้อม ขยะ น้ำเสีย ไฟป่า"><span class="icon">🌳</span><span>สิ่งแวดล้อม<small>อยู่ระหว่างพัฒนา</small></span></div>
-      <div class="card coming" data-keywords="ป้องกันภัย อุทกภัย ไฟไหม้ สาธารณภัย"><span class="icon">🚒</span><span>ป้องกันและบรรเทาสาธารณภัย<small>อยู่ระหว่างพัฒนา</small></span></div>
-    </div>
-  </section>
-
-  <div class="note"><strong>หมายเหตุ:</strong> AI ช่วยร่างและวิเคราะห์ ผู้ใช้ต้องตรวจสอบข้อเท็จจริง กฎหมาย อำนาจหน้าที่ และข้อมูลส่วนบุคคลก่อนนำไปใช้จริง</div>
+<header class="top"><div class="bar"><a class="brand" href="index.html"><span class="mark">G</span><span><b>GovPrompt Thailand</b><small>AI ผู้ช่วยงานราชการ</small></span></a><a class="fb" href="https://www.facebook.com/GovPromptThailandAI" target="_blank" rel="noopener">Facebook ↗</a></div></header>
+<main class="wrap">
+<form class="search" id="searchForm"><input id="q" placeholder="ค้นหา เช่น หนังสือ TOR กฎหมาย โครงการ" aria-label="ค้นหางาน"><button>ค้นหา</button></form>
+<h2 class="title">🔥 งานที่ใช้บ่อย</h2>
+<section class="popular">
+<a class="card" href="gp001.html"><span class="icon">📄</span><span><strong>ร่างหนังสือราชการ</strong><small>ภายนอก ภายใน บันทึกข้อความ</small></span><span class="arrow">›</span></a>
+<a class="card" href="gp002.html"><span class="icon">⚖️</span><span><strong>วิเคราะห์ข้อกฎหมาย</strong><small>กฎหมาย ระเบียบ ข้อหารือ</small></span><span class="arrow">›</span></a>
+<a class="card" href="gp003.html"><span class="icon">📦</span><span><strong>ตรวจ TOR</strong><small>TOR คุณสมบัติ สัญญา</small></span><span class="arrow">›</span></a>
+<a class="card soon" href="#assistants"><span class="icon">📊</span><span><strong>โครงการและงบประมาณ</strong><small>อยู่ระหว่างพัฒนา</small></span><span class="arrow">›</span></a>
+</section>
+<h2 class="title" id="assistants">ผู้ช่วยแต่ละด้าน</h2>
+<section class="assistants">
+<a class="card" href="gp001.html"><span class="icon">📄</span><span><strong>สารบรรณ</strong><small>หนังสือราชการ เอกสารราชการ</small></span><span class="arrow">›</span></a>
+<a class="card" href="gp002.html"><span class="icon">⚖️</span><span><strong>กฎหมาย</strong><small>วิเคราะห์กฎหมาย ระเบียบ</small></span><span class="arrow">›</span></a>
+<a class="card" href="gp003.html"><span class="icon">📦</span><span><strong>พัสดุและ TOR</strong><small>จัดซื้อจัดจ้าง ตรวจรับ</small></span><span class="arrow">›</span></a>
+<div class="card soon"><span class="icon">📊</span><span><strong>แผนและงบประมาณ</strong><span class="badge">เร็ว ๆ นี้</span></span></div>
+<div class="card soon"><span class="icon">💰</span><span><strong>การเงินและการคลัง</strong><span class="badge">เร็ว ๆ นี้</span></span></div>
+<div class="card soon"><span class="icon">👥</span><span><strong>งานบุคคล</strong><span class="badge">เร็ว ๆ นี้</span></span></div>
+<div class="card soon"><span class="icon">🏗️</span><span><strong>ช่างและวิศวกรรม</strong><span class="badge">เร็ว ๆ นี้</span></span></div>
+<div class="card soon"><span class="icon">🩺</span><span><strong>สาธารณสุข</strong><span class="badge">เร็ว ๆ นี้</span></span></div>
+<div class="card soon"><span class="icon">🎓</span><span><strong>การศึกษา</strong><span class="badge">เร็ว ๆ นี้</span></span></div>
+<div class="card soon"><span class="icon">🔍</span><span><strong>ตรวจสอบภายใน</strong><span class="badge">เร็ว ๆ นี้</span></span></div>
+<div class="card soon"><span class="icon">👨‍💼</span><span><strong>ผู้บริหาร</strong><span class="badge">เร็ว ๆ นี้</span></span></div>
+<div class="card soon"><span class="icon">📢</span><span><strong>ประชาสัมพันธ์</strong><span class="badge">เร็ว ๆ นี้</span></span></div>
+</section>
+<div class="note">⭐ ระบบกำลังพัฒนาอย่างต่อเนื่อง เปิดใช้ผู้ช่วยที่ผ่านการทดสอบแล้วก่อน</div>
 </main>
-<footer>GovPrompt Thailand v1.0 · <a href="privacy.html">ความเป็นส่วนตัว</a> · <a href="terms.html">เงื่อนไขการใช้งาน</a></footer>
+<nav class="bottom"><a href="index.html"><span>🏠</span>หน้าแรก</a><a href="#q"><span>🔎</span>ค้นหา</a><a href="#assistants"><span>⭐</span>ผู้ช่วย</a><a href="https://www.facebook.com/GovPromptThailandAI"><span>💬</span>ชุมชน</a></nav>
+<footer class="footer">GovPrompt Thailand · AI ผู้ช่วยงานราชการ | <a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="https://www.facebook.com/GovPromptThailandAI">Feedback</a></footer>
 <script>
-  const routes=[
-    {keys:['หนังสือ','สารบรรณ','บันทึก','คำสั่ง','ประกาศ','ประชุม','หารือ'],url:'gp001.html'},
-    {keys:['กฎหมาย','ระเบียบ','อำนาจ','วินิจฉัย','pdpa'],url:'gp002.html'},
-    {keys:['tor','พัสดุ','ราคากลาง','สัญญา','ตรวจรับ','จัดซื้อ'],url:'gp003.html'}
-  ];
-  document.getElementById('searchForm').addEventListener('submit',e=>{
-    e.preventDefault();
-    const q=document.getElementById('searchInput').value.trim().toLowerCase();
-    if(!q)return;
-    const match=routes.find(r=>r.keys.some(k=>q.includes(k)));
-    if(match){location.href=match.url;return;}
-    document.getElementById('assistants').scrollIntoView({behavior:'smooth'});
-    document.querySelectorAll('#assistantGrid .card').forEach(card=>{
-      const text=(card.textContent+' '+(card.dataset.keywords||'')).toLowerCase();
-      card.classList.toggle('hidden',!text.includes(q));
-    });
-  });
+const routes=[{k:['หนังสือ','สารบรรณ','บันทึก','คำสั่ง','ประกาศ','หารือ'],u:'gp001.html'},{k:['กฎหมาย','ระเบียบ','อำนาจ','ข้อหารือ'],u:'gp002.html'},{k:['tor','พัสดุ','สัญญา','ตรวจรับ','ราคากลาง'],u:'gp003.html'}];
+document.getElementById('searchForm').addEventListener('submit',e=>{e.preventDefault();const q=document.getElementById('q').value.trim().toLowerCase();const r=routes.find(x=>x.k.some(k=>q.includes(k)));if(r)location.href=r.u;else document.getElementById('assistants').scrollIntoView({behavior:'smooth'});});
 </script>
-</body>
-</html>
+</body></html>
