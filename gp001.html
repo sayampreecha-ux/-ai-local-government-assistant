@@ -3,162 +3,79 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="AI ผู้ช่วยงานสารบรรณและร่างหนังสือราชการของ GovPrompt Thailand">
-  <meta name="theme-color" content="#123a70">
-  <title>AI ผู้ช่วยร่างหนังสือราชการ | GovPrompt Thailand</title>
+  <meta name="description" content="GP001 ผู้ช่วยงานสารบรรณ GovPrompt Thailand">
+  <title>GP001 ผู้ช่วยงานสารบรรณ | GovPrompt Thailand</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=1.0.2">
   <style>
-    .module-hero{max-width:1180px;margin:auto;padding:70px 24px 48px;display:grid;grid-template-columns:1.25fr .75fr;gap:46px;align-items:center;background:radial-gradient(circle at 10% 12%,#e9f4ff 0,transparent 38%)}
-    .module-hero h1{font-size:clamp(42px,6vw,70px);line-height:1.1;margin:16px 0 18px}.module-hero h1 span{color:#1768d3}.module-lead{font-size:19px;color:#455873;max-width:760px}
-    .status{display:inline-flex;gap:8px;align-items:center;padding:7px 12px;border-radius:999px;background:#e8f7ef;color:#126343;font-weight:800;font-size:13px}.status i{width:9px;height:9px;border-radius:50%;background:#15815b}
-    .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.feature{padding:22px;border:1px solid #dbe5f0;border-radius:20px;background:#fff}.feature strong{display:block;font-size:18px;margin:8px 0}.feature p{margin:0;color:#64748b}
-    .compare{width:100%;border-collapse:collapse;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 10px 34px rgba(13,47,95,.07)}.compare th,.compare td{padding:15px;border-bottom:1px solid #dbe5f0;text-align:left;vertical-align:top}.compare th{background:#0d2f5f;color:#fff}.compare tr:last-child td{border-bottom:0}
-    .input-box{padding:22px;border:1px solid #dbe5f0;border-radius:20px;background:#fff}.input-box pre{white-space:pre-wrap;background:#0c2342;color:#e8f1fc;padding:18px;border-radius:14px;font-family:"Noto Sans Thai",monospace;line-height:1.7}
-    .faq{display:grid;gap:12px}.faq details{background:#fff;border:1px solid #dbe5f0;border-radius:16px;padding:16px 18px}.faq summary{font-weight:800;cursor:pointer}.faq p{color:#64748b}
-    .release{display:grid;gap:12px}.release article{padding:18px;border-left:4px solid #1768d3;background:#fff;border-radius:0 16px 16px 0}.release h3{margin:0 0 6px}.release p{margin:0;color:#64748b}
-    .notice{padding:18px;border-radius:18px;background:#fff8e6;border:1px solid #f3d58b;color:#694d00}.pdpa{background:linear-gradient(145deg,#0d2f5f,#164d90);color:#fff;border-radius:26px;padding:28px}.pdpa ul{padding-left:22px}.pdpa p{color:#d4e4f5}
-    @media(max-width:900px){.module-hero{grid-template-columns:1fr}.feature-grid{grid-template-columns:1fr}.compare{font-size:14px}}
+    :root{--blue:#123a70;--blue2:#0f2d57;--soft:#eef5ff;--line:#d9e4f2;--text:#182433;--muted:#657386;--green:#167345}
+    *{box-sizing:border-box}body{margin:0;font-family:"Noto Sans Thai",sans-serif;color:var(--text);background:#f7f9fc}a{text-decoration:none;color:inherit}
+    header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}.nav{max-width:1100px;margin:auto;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}.brand{font-weight:800;color:var(--blue)}.nav a.btn{background:var(--blue);color:#fff;padding:10px 16px;border-radius:10px}
+    main{max-width:1100px;margin:auto;padding:36px 20px 64px}.hero{background:linear-gradient(135deg,var(--blue2),var(--blue));color:#fff;border-radius:24px;padding:38px;box-shadow:0 16px 40px rgba(18,58,112,.18)}.pill{display:inline-block;background:rgba(255,255,255,.16);padding:7px 12px;border-radius:999px;font-weight:700}.hero h1{font-size:clamp(2rem,5vw,3.6rem);margin:14px 0 10px}.hero p{font-size:1.08rem;line-height:1.8;max-width:760px}.status{display:inline-flex;gap:8px;align-items:center;background:#eaf8f0;color:var(--green);padding:8px 12px;border-radius:999px;font-weight:700;margin-top:8px}
+    .section{margin-top:28px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px}.section h2{margin-top:0;color:var(--blue)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:16px;padding:18px;background:#fff}.card h3{margin:4px 0 8px}.card p{margin:0;color:var(--muted);line-height:1.65}
+    form{display:grid;gap:14px}.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}label{font-weight:700;display:grid;gap:7px}input,select,textarea{font:inherit;padding:12px;border:1px solid #bccbe0;border-radius:10px;background:#fff}textarea{min-height:120px;resize:vertical}.check{font-weight:500;display:flex;gap:10px;align-items:flex-start;background:var(--soft);padding:14px;border-radius:12px}.check input{margin-top:4px}.submit{border:0;background:var(--blue);color:#fff;padding:14px 18px;border-radius:12px;font:inherit;font-weight:800;cursor:pointer}.result{white-space:pre-wrap;background:#0f1d2e;color:#eaf2ff;padding:20px;border-radius:14px;min-height:150px;line-height:1.7}.actions{display:flex;gap:10px;flex-wrap:wrap}.actions button{border:1px solid var(--line);background:#fff;padding:10px 14px;border-radius:10px;font:inherit;cursor:pointer}.note{color:var(--muted);line-height:1.7}.pdpa{border-left:5px solid #2f7b59;background:#f1fbf5}.footer{text-align:center;color:var(--muted);padding-top:30px}
+    @media(max-width:700px){.hero{padding:26px 20px}.row{grid-template-columns:1fr}.nav{align-items:flex-start;gap:12px}.nav a.btn{font-size:.9rem}}
   </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="nav-wrap">
-      <a class="brand" href="index.html" aria-label="กลับหน้าแรก GovPrompt Thailand">
-        <span class="brand-mark">G</span>
-        <span class="brand-copy"><strong>GovPrompt Thailand</strong><small>Government AI Copilot</small></span>
-      </a>
-      <button class="menu-button" id="menuButton" aria-label="เปิดเมนู">☰</button>
-      <nav id="mainNav">
-        <a href="index.html">หน้าแรก</a>
-        <a href="#features">ความสามารถ</a>
-        <a href="#pdpa">PDPA</a>
-        <a href="#how">วิธีใช้</a>
-        <a href="#faq">คำถามพบบ่อย</a>
-        <a href="#feedback">แจ้งปัญหา</a>
-      </nav>
+<header><div class="nav"><a class="brand" href="index.html">GovPrompt Thailand</a><a class="btn" href="index.html#tools">← กลับหน้าผู้ช่วยทั้งหมด</a></div></header>
+<main>
+  <section class="hero">
+    <span class="pill">GP001 · Government AI Assistant</span>
+    <h1>📄 ผู้ช่วยงานสารบรรณ</h1>
+    <p>ช่วยร่าง ตรวจ และปรับปรุงหนังสือราชการอย่างเป็นระบบ ตั้งแต่หนังสือภายนอก หนังสือภายใน บันทึกข้อความ คำสั่ง ประกาศ หนังสือหารือ หนังสือเชิญประชุม ไปจนถึงรายงานการประชุม</p>
+    <span class="status">● เปิดใช้งานแล้ว</span>
+  </section>
+
+  <section class="section">
+    <h2>เลือกงานที่ต้องการ</h2>
+    <div class="grid">
+      <article class="card"><h3>หนังสือภายนอก</h3><p>หนังสือติดต่อระหว่างหน่วยงานหรือถึงบุคคลภายนอก</p></article>
+      <article class="card"><h3>หนังสือภายใน</h3><p>หนังสือติดต่อภายในกระทรวง ทบวง กรม หรือจังหวัดเดียวกัน</p></article>
+      <article class="card"><h3>บันทึกข้อความ</h3><p>เสนอข้อเท็จจริง ข้อพิจารณา และข้อเสนอผู้บังคับบัญชา</p></article>
+      <article class="card"><h3>คำสั่งและประกาศ</h3><p>ช่วยจัดโครงสร้างและถ้อยคำโดยไม่สมมติอำนาจหรือข้อเท็จจริง</p></article>
+      <article class="card"><h3>หนังสือหารือ</h3><p>เรียบเรียงข้อเท็จจริง ประเด็นปัญหา และคำถามที่ต้องการหารือ</p></article>
+      <article class="card"><h3>งานประชุม</h3><p>หนังสือเชิญประชุม ระเบียบวาระ และรายงานการประชุม</p></article>
     </div>
-  </header>
+  </section>
 
-  <main>
-    <section class="module-hero">
-      <div>
-        <span class="status"><i></i> เปิดใช้งานแล้ว · รุ่นทดลองใช้งานจริง</span>
-        <h1>AI ผู้ช่วยงานสารบรรณ<br><span>และร่างหนังสือราชการ</span></h1>
-        <p class="module-lead">ช่วยวิเคราะห์ประเภทหนังสือ ตรวจข้อมูลที่ยังขาด ร่างด้วยภาษาราชการ และเตือนประเด็นที่ต้องตรวจสอบก่อนเสนอหรือลงนาม</p>
-        <div class="hero-actions">
-          <a class="btn primary" href="index.html#tools">เริ่มร่างหนังสือราชการ</a>
-          <a class="btn secondary" href="#how">ดูวิธีใช้งาน</a>
-        </div>
-        <div class="trust-list">
-          <span>✓ วิเคราะห์ก่อนร่าง</span><span>✓ ไม่สมมติข้อมูล</span><span>✓ มี PDPA Checkpoint</span>
-        </div>
+  <section class="section">
+    <h2>สร้าง Prompt งานสารบรรณ</h2>
+    <form id="gpForm">
+      <div class="row">
+        <label>หน่วยงานเจ้าของเรื่อง<input name="agency" required placeholder="เช่น องค์การบริหารส่วนจังหวัดพะเยา"></label>
+        <label>ประเภทเอกสาร<select name="type" required><option value="">เลือกประเภท</option><option>หนังสือภายนอก</option><option>หนังสือภายใน</option><option>บันทึกข้อความ</option><option>คำสั่ง</option><option>ประกาศ</option><option>หนังสือหารือ</option><option>หนังสือเชิญประชุม</option><option>หนังสือนำส่ง</option><option>รายงานการประชุม</option><option>ตรวจแก้หนังสือเดิม</option></select></label>
       </div>
-      <aside class="hero-card">
-        <div class="hero-card-head"><span>ผลลัพธ์ที่ได้รับ</span><strong>ครบวงจร</strong></div>
-        <ol>
-          <li><span>1</span><div><strong>ตรวจข้อมูล</strong><small>ระบุข้อมูลครบและข้อมูลที่ยังขาด</small></div></li>
-          <li><span>2</span><div><strong>วิเคราะห์ก่อนเขียน</strong><small>แยกข้อเท็จจริง วัตถุประสงค์ และความเสี่ยง</small></div></li>
-          <li><span>3</span><div><strong>ร่างพร้อม Checklist</strong><small>ตรวจทานก่อนเสนอหรือลงนาม</small></div></li>
-        </ol>
-        <div class="safety-note">AI ช่วยร่าง ข้าราชการช่วยตรวจทานและตัดสินใจ</div>
-      </aside>
-    </section>
-
-    <section class="section" id="features">
-      <div class="section-head centered"><div><span class="eyebrow">ความสามารถ</span><h2>มากกว่าการเขียนข้อความ</h2></div><p>ออกแบบตามลำดับงานราชการ ตั้งแต่รับข้อเท็จจริงจนถึงตรวจความเสี่ยงก่อนใช้งาน</p></div>
-      <div class="feature-grid">
-        <article class="feature"><span>🧭</span><strong>จำแนกประเภทหนังสือ</strong><p>ช่วยแยกหนังสือภายนอก หนังสือภายใน บันทึกข้อความ หนังสือหารือ ขออนุมัติ รายงาน และหนังสือเชิญ</p></article>
-        <article class="feature"><span>🔍</span><strong>ตรวจข้อมูลก่อนร่าง</strong><p>แจ้งข้อมูลสำคัญที่ยังขาด และใช้ [ต้องตรวจสอบ/เพิ่มเติม] แทนการเดา</p></article>
-        <article class="feature"><span>🧠</span><strong>วิเคราะห์ก่อนเขียน</strong><p>แยกข้อเท็จจริง วัตถุประสงค์ ประเด็นสำคัญ และแนวทางการร่างให้เหมาะกับผู้รับ</p></article>
-        <article class="feature"><span>📄</span><strong>ร่างภาษาราชการ</strong><p>จัดลำดับเนื้อหา เหตุผล ข้อเสนอ และคำลงท้ายให้เหมาะกับประเภทหนังสือ</p></article>
-        <article class="feature"><span>⚠️</span><strong>ตรวจความเสี่ยง</strong><p>เตือนเรื่องข้อมูลไม่ครบ ฐานอำนาจ เอกสารแนบ ข้อกฎหมาย และจุดที่ควรให้นิติกรตรวจเพิ่มเติม</p></article>
-        <article class="feature"><span>✅</span><strong>Checklist ก่อนใช้</strong><p>ตรวจชื่อหน่วยงาน บุคคล วันที่ เลขหนังสือ สิ่งที่ส่งมาด้วย กฎหมาย และผู้ลงนาม</p></article>
+      <div class="row">
+        <label>เรื่อง<input name="subject" required placeholder="ระบุชื่อเรื่อง"></label>
+        <label>เรียน / ผู้รับ<input name="recipient" placeholder="ระบุตำแหน่งหรือหน่วยงาน"></label>
       </div>
-    </section>
+      <label>ข้อเท็จจริงและเหตุผล<textarea name="facts" required placeholder="ระบุข้อเท็จจริงที่ตรวจสอบได้ เรียงตามลำดับ"></textarea></label>
+      <label>วัตถุประสงค์หรือข้อเสนอ<textarea name="objective" required placeholder="ต้องการให้ผู้รับพิจารณา อนุมัติ ทราบ หรือดำเนินการอย่างไร"></textarea></label>
+      <label>เอกสารอ้างอิง / สิ่งที่ส่งมาด้วย<textarea name="refs" placeholder="ระบุเฉพาะเอกสารที่มีจริง"></textarea></label>
+      <label class="check"><input type="checkbox" id="pdpa" required> <span>ยืนยันว่าได้ปกปิดหรือตัดทอนข้อมูลส่วนบุคคลที่ไม่จำเป็น และจะตรวจทานข้อเท็จจริง กฎหมาย ผู้ลงนาม เลขหนังสือ และวันที่ก่อนนำไปใช้จริง</span></label>
+      <button class="submit" type="submit">สร้าง Prompt พร้อมใช้</button>
+    </form>
+  </section>
 
-    <section class="section soft">
-      <div class="section-head centered"><div><span class="eyebrow">ความแตกต่าง</span><h2>AI ทั่วไป กับผู้ช่วยที่ออกแบบเพื่องานราชการ</h2></div></div>
-      <table class="compare">
-        <thead><tr><th>AI ทั่วไป</th><th>AI ผู้ช่วยงานสารบรรณ</th></tr></thead>
-        <tbody>
-          <tr><td>เริ่มเขียนจากข้อความที่ได้รับทันที</td><td>ตรวจข้อมูลและวิเคราะห์วัตถุประสงค์ก่อนร่าง</td></tr>
-          <tr><td>อาจเติมรายละเอียดเพื่อให้ข้อความสมบูรณ์</td><td>ห้ามสมมติชื่อ วันที่ เลขหนังสือ วงเงิน และข้อกฎหมาย</td></tr>
-          <tr><td>เน้นให้ได้ข้อความสำเร็จรูป</td><td>ให้ทั้งการวิเคราะห์ ร่างหนังสือ ความเสี่ยง และ Checklist</td></tr>
-          <tr><td>ผู้ใช้ต้องกำหนดรูปแบบเอง</td><td>มี Workflow และรูปแบบผลลัพธ์มาตรฐานสำหรับงานราชการ</td></tr>
-        </tbody>
-      </table>
-    </section>
+  <section class="section">
+    <h2>ผลลัพธ์</h2>
+    <div id="result" class="result">Prompt ที่สร้างจะแสดงที่นี่</div>
+    <div class="actions" style="margin-top:12px"><button id="copy" type="button">📋 คัดลอก</button><button id="clear" type="button">ล้างข้อมูล</button></div>
+  </section>
 
-    <section class="section" id="pdpa">
-      <div class="pdpa">
-        <span class="eyebrow" style="color:#98ddff">🔒 PDPA CHECKPOINT</span>
-        <h2>ออกแบบโดยคำนึงถึงการคุ้มครองข้อมูลส่วนบุคคล</h2>
-        <p>ระบบช่วยตรวจรูปแบบข้อมูลส่วนบุคคลเบื้องต้นและเตือนให้ลดข้อมูลที่ไม่จำเป็น แต่ผู้ใช้ยังต้องพิจารณาฐานกฎหมาย วัตถุประสงค์ ความจำเป็น และมาตรการของหน่วยงานด้วยตนเอง</p>
-        <ul>
-          <li>ไม่สมมติหรือสร้างข้อมูลส่วนบุคคลขึ้นใหม่</li>
-          <li>เตือนให้ปกปิดเลขประจำตัวประชาชน เลขบัญชี ข้อมูลสุขภาพ คดี วินัย ที่อยู่ และเบอร์โทรศัพท์เมื่อไม่จำเป็น</li>
-          <li>ใช้ข้อมูลและเอกสารที่ผู้ใช้ให้เป็นหลัก</li>
-          <li>ให้ผู้ใช้ยืนยันก่อนสร้างคำสั่งพร้อมใช้</li>
-        </ul>
-        <div class="notice"><strong>ข้อควรระวัง:</strong> ไม่ควรกรอกข้อมูลส่วนบุคคลหรือข้อมูลอ่อนไหวเกินความจำเป็น และไม่ควรนำข้อมูลลับของทางราชการเข้าสู่ระบบที่หน่วยงานยังไม่ได้อนุญาต</div>
-      </div>
-    </section>
-
-    <section class="section soft" id="how">
-      <div class="section-head centered"><div><span class="eyebrow">วิธีใช้</span><h2>เริ่มงานได้ใน 3 ขั้นตอน</h2></div></div>
-      <div class="steps">
-        <article><span>01</span><h3>เลือกงานหรือพิมพ์คำขอ</h3><p>เช่น “ร่างหนังสือหารือค่าเช่าบ้าน” หรือ “ร่างบันทึกขออนุมัติโครงการ”</p></article>
-        <article><span>02</span><h3>กรอกข้อเท็จจริง</h3><p>ระบุหน่วยงาน เรื่อง ผู้รับ ข้อเท็จจริง วัตถุประสงค์ และเอกสารอ้างอิงเท่าที่มี</p></article>
-        <article><span>03</span><h3>ตรวจทานก่อนใช้</h3><p>ตรวจชื่อ วันที่ เลขหนังสือ ผู้ลงนาม ฐานอำนาจ กฎหมาย และข้อมูลส่วนบุคคลก่อนเสนอ</p></article>
-      </div>
-      <div class="input-box" style="margin-top:22px">
-        <strong>ตัวอย่างข้อมูลที่กรอก</strong>
-        <pre>หน่วยงาน: อบจ.
-ประเภทหนังสือ: หนังสือภายนอก
-เรื่อง: หารือแนวทางปฏิบัติ
-เรียน: [ระบุผู้รับ]
-ข้อเท็จจริง: [สรุปเหตุการณ์ตามจริง]
-วัตถุประสงค์: ขอทราบแนวทางปฏิบัติ
-เอกสารอ้างอิง: [ถ้ามี]</pre>
-      </div>
-    </section>
-
-    <section class="section" id="faq">
-      <div class="section-head centered"><div><span class="eyebrow">FAQ</span><h2>คำถามที่พบบ่อย</h2></div></div>
-      <div class="faq">
-        <details><summary>ใช้ร่างหนังสือประเภทใดได้บ้าง?</summary><p>รองรับหนังสือภายนอก หนังสือภายใน บันทึกข้อความ หนังสือหารือ หนังสือขออนุมัติ รายงาน เชิญประชุม ขอความร่วมมือ และประเภทใกล้เคียง</p></details>
-        <details><summary>ข้อมูลไม่ครบยังร่างได้หรือไม่?</summary><p>ร่างเบื้องต้นได้ โดยระบบต้องแจ้งข้อมูลที่ขาดและใช้ [ต้องตรวจสอบ/เพิ่มเติม] แทนข้อมูลที่ยังไม่ทราบ</p></details>
-        <details><summary>ระบบรับรองว่าถูกกฎหมายหรือไม่?</summary><p>ไม่รับรองผลทางกฎหมาย ระบบเป็นผู้ช่วยวิเคราะห์และร่าง ผู้รับผิดชอบต้องตรวจสอบกฎหมาย อำนาจหน้าที่ และข้อเท็จจริงก่อนใช้จริง</p></details>
-        <details><summary>กรอกชื่อบุคคลได้หรือไม่?</summary><p>กรอกเฉพาะเท่าที่จำเป็นต่อภารกิจ ควรปกปิดข้อมูลส่วนบุคคลและข้อมูลอ่อนไหวที่ไม่จำเป็น และปฏิบัติตามมาตรการของหน่วยงาน</p></details>
-      </div>
-    </section>
-
-    <section class="section soft" id="release">
-      <div class="section-head centered"><div><span class="eyebrow">RELEASE NOTES</span><h2>การพัฒนาเวอร์ชัน</h2></div></div>
-      <div class="release">
-        <article><h3>v1.0 · เปิดใช้งาน</h3><p>เพิ่มการจำแนกประเภทหนังสือ ตรวจข้อมูล วิเคราะห์ก่อนร่าง ระบบความเสี่ยง Checklist และ PDPA Checkpoint</p></article>
-        <article><h3>v1.1 · รอบถัดไป</h3><p>ปรับปรุงจากข้อเสนอแนะและปัญหาที่พบในการใช้งานจริงก่อนเริ่มพัฒนาผู้ช่วยโมดูลถัดไป</p></article>
-      </div>
-    </section>
-
-    <section class="section community" id="feedback">
-      <div><span class="eyebrow">FEEDBACK</span><h2>พบปัญหาหรือมีข้อเสนอแนะ?</h2><p>แจ้งผ่านเพจ GovPrompt Thailand - ชุมชน AI งานราชการ ทุกความคิดเห็นจะนำไปจัดกลุ่มเป็น Bug, Improvement หรือ Feature Request เพื่อพัฒนาเวอร์ชันถัดไป</p></div>
-      <a class="btn social" href="https://www.facebook.com/GovPromptThailandAI" target="_blank" rel="noopener">แจ้งปัญหาผ่าน Facebook ↗</a>
-    </section>
-  </main>
-
-  <footer>
-    <div class="footer-brand"><span class="brand-mark small">G</span><div><strong>GovPrompt Thailand</strong><small>AI ผู้ช่วยงานสารบรรณ v1.0</small></div></div>
-    <p>ระบบเป็นเครื่องมือช่วยร่างและวิเคราะห์ ผู้ใช้ต้องตรวจสอบข้อเท็จจริง กฎหมาย อำนาจหน้าที่ ความถูกต้อง และการคุ้มครองข้อมูลส่วนบุคคลก่อนใช้จริง</p>
-    <div><a href="index.html">หน้าแรก</a> · <a href="terms.html">เงื่อนไข</a> · <a href="privacy.html">ความเป็นส่วนตัว</a></div>
-  </footer>
-  <script>
-    const menuButton=document.getElementById('menuButton');const mainNav=document.getElementById('mainNav');
-    menuButton?.addEventListener('click',()=>mainNav.classList.toggle('open'));
-    mainNav?.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>mainNav.classList.remove('open')));
-  </script>
+  <section class="section pdpa">
+    <h2>🔒 PDPA Checkpoint</h2>
+    <p class="note">ระบบช่วยเตือนและลดความเสี่ยง แต่ไม่สามารถรับรองการปฏิบัติตาม PDPA ได้ทั้งหมด ผู้ใช้ต้องพิจารณาความจำเป็น ฐานการใช้ข้อมูล การเปิดเผย และการจัดเก็บข้อมูลด้วยตนเอง โดยหลีกเลี่ยงการใส่เลขประจำตัวประชาชน เลขบัญชี ข้อมูลสุขภาพ ข้อมูลคดี ที่อยู่ เบอร์โทรศัพท์ หรือข้อมูลอ่อนไหวเกินความจำเป็น</p>
+  </section>
+  <div class="footer">AI ช่วยร่าง · ข้าราชการช่วยตรวจทานและตัดสินใจ</div>
+</main>
+<script>
+const form=document.getElementById('gpForm');const result=document.getElementById('result');
+form.addEventListener('submit',e=>{e.preventDefault();const d=new FormData(form);const v=k=>(d.get(k)||'').trim()||'[ต้องตรวจสอบ/เพิ่มเติม]';result.textContent=`บทบาท\nคุณเป็น Government AI Copilot ผู้เชี่ยวชาญงานสารบรรณราชการไทย\n\nภารกิจ\nจัดทำ${v('type')}\n\nข้อมูลจากผู้ใช้\n- หน่วยงานเจ้าของเรื่อง: ${v('agency')}\n- ประเภทเอกสาร: ${v('type')}\n- เรื่อง: ${v('subject')}\n- เรียน / ผู้รับ: ${v('recipient')}\n- ข้อเท็จจริงและเหตุผล: ${v('facts')}\n- วัตถุประสงค์หรือข้อเสนอ: ${v('objective')}\n- เอกสารอ้างอิง / สิ่งที่ส่งมาด้วย: ${v('refs')}\n\nPDPA CHECKPOINT\n1. ตรวจและปกปิดข้อมูลส่วนบุคคลหรือข้อมูลอ่อนไหวที่ไม่จำเป็นก่อนตอบ\n2. ห้ามแสดงซ้ำเลขประจำตัวประชาชน เลขบัญชี ข้อมูลสุขภาพ ข้อมูลคดี ที่อยู่ เบอร์โทรศัพท์ หรือข้อมูลอ่อนไหวโดยไม่จำเป็น\n3. หากข้อมูลสำคัญไม่ครบ ให้ใช้ [ต้องตรวจสอบ/เพิ่มเติม] และห้ามสมมติ\n\nข้อกำหนดการร่าง\n- ยึดข้อเท็จจริงและเอกสารที่ผู้ใช้ให้เป็นหลัก\n- ใช้ภาษาราชการ กระชับ ชัดเจน\n- จัดรูปแบบให้เหมาะกับประเภทเอกสาร\n- ห้ามสมมติชื่อบุคคล วันที่ เลขหนังสือ ผู้ลงนาม วงเงิน หรือข้อกฎหมาย\n- แยกข้อเท็จจริง เหตุผล และข้อเสนอให้ชัดเจน\n- ปิดท้ายด้วยรายการข้อมูลที่ต้องตรวจสอบก่อนลงนาม`;});
+document.getElementById('copy').addEventListener('click',async()=>{if(result.textContent.startsWith('Prompt ที่'))return;await navigator.clipboard.writeText(result.textContent);alert('คัดลอกแล้ว');});
+document.getElementById('clear').addEventListener('click',()=>{form.reset();result.textContent='Prompt ที่สร้างจะแสดงที่นี่';});
+</script>
 </body>
 </html>
