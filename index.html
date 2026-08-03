@@ -39,7 +39,7 @@
 <div class="note">⭐ เปิดใช้งานแล้ว 4 ผู้ช่วยหลัก: สารบรรณ กฎหมาย พัสดุ และแผน/โครงการ/งบประมาณ</div>
 </main>
 <nav class="bottom"><a href="index.html"><span>🏠</span>หน้าแรก</a><a href="#q"><span>🔎</span>ค้นหา</a><a href="#assistants"><span>⭐</span>ผู้ช่วย</a><a href="https://www.facebook.com/GovPromptThailandAI"><span>💬</span>ชุมชน</a></nav>
-<footer class="footer">GovPrompt Thailand · AI ผู้ช่วยงานราชการ | <a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="https://www.facebook.com/GovPromptThailandAI">Feedback</a></footer>
+<footer class="footer">GovPrompt Thailand · เปิดใช้ฟรี ไม่มีค่าใช้จ่าย | <a href="privacy.html">ความเป็นส่วนตัว</a><a href="terms.html">เงื่อนไขการใช้งานฟรี</a><a href="https://www.facebook.com/GovPromptThailandAI">ข้อเสนอแนะ</a></footer>
 <script>
 const routes=[{k:['หนังสือ','สารบรรณ','บันทึก','คำสั่ง','ประกาศ','หารือ'],u:'gp001.html'},{k:['กฎหมาย','ระเบียบ','อำนาจ','ข้อหารือ'],u:'gp002.html'},{k:['tor','พัสดุ','สัญญา','ตรวจรับ','ราคากลาง'],u:'gp003.html'},{k:['โครงการ','แผน','งบประมาณ','คำของบ','kpi','ตัวชี้วัด'],u:'gp004.html'}];
 document.getElementById('searchForm').addEventListener('submit',e=>{e.preventDefault();const q=document.getElementById('q').value.trim().toLowerCase();const r=routes.find(x=>x.k.some(k=>q.includes(k)));if(r)location.href=r.u;else document.getElementById('assistants').scrollIntoView({behavior:'smooth'});});
