@@ -1,0 +1,1 @@
+(()=>{'use strict';document.querySelectorAll('.mic').forEach(btn=>{btn.type='button';btn.setAttribute('aria-label','พูดเพื่อกรอกข้อมูล');btn.addEventListener('click',()=>{if(!(window.SpeechRecognition||window.webkitSpeechRecognition))window.GovPrompt?.toast('ไมโครโฟนรองรับบน Chrome หรือ Edge รุ่นปัจจุบัน')})})})();

@@ -8,7 +8,7 @@
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif;background:#f7f9fc;color:#10233f}.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #e4eaf2}.bar{max-width:980px;margin:auto;padding:11px 14px;display:flex;justify-content:space-between}.bar a{text-decoration:none;color:#0b3b75}.wrap{max-width:980px;margin:auto;padding:16px 14px 80px}h1{font-size:25px;margin:4px 0 14px}.search,input,textarea{width:100%;border:1px solid #d8e1ec;border-radius:10px;padding:11px;font:inherit;background:#fff}textarea{min-height:96px}.list,.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.task{border:1px solid #e0e7f0;background:#fff;border-radius:12px;padding:12px;text-align:left;font:inherit}.task.active{border-color:#0b3b75;box-shadow:0 0 0 2px #dbe8f7}.generator{margin-top:16px;background:#fff;border:1px solid #dde6f0;border-radius:14px;padding:15px}.full{grid-column:1/-1}.field{position:relative}.field label{display:block;font-weight:700;margin:9px 0 5px}.mic{position:absolute;right:7px;top:36px;border:0;background:#edf2f7;border-radius:8px;padding:7px;cursor:pointer}.field textarea+.mic{top:36px}.mic.live{background:#fee2e2;color:#b91c1c}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.btn{border:0;border-radius:10px;padding:11px 15px;font-weight:700}.primary{background:#0b3b75;color:#fff}.secondary{background:#edf2f7}.output{display:none;white-space:pre-wrap;background:#f3f7fb;border-radius:10px;padding:12px;margin-top:12px}.note{font-size:12px;color:#65758b;margin-top:10px}@media(max-width:650px){.list,.grid{grid-template-columns:1fr}.wrap{padding-bottom:30px}}
 </style>
-</head>
+<link rel="stylesheet" href="assets/css/govprompt.css"></head>
 <body>
 <header class="top"><div class="bar"><a href="index.html"><b>GovPrompt Thailand</b></a><a href="index.html">← ผู้ช่วยทั้งหมด</a></div></header>
 <main class="wrap">
@@ -61,4 +61,4 @@ $('make').onclick=()=>{if(!task)return alert('กรุณาเลือกง�
 $('copy').onclick=async()=>{if(!$('output').textContent)return alert('กรุณาสร้าง Prompt ก่อน');await navigator.clipboard.writeText($('output').textContent);alert('คัดลอกแล้ว')};
 $('clear').onclick=()=>location.reload();
 </script>
-</body></html>
+<script src="assets/js/govprompt.js"></script><script src="assets/js/prompt-engine.js"></script><script src="assets/js/search.js"></script><script src="assets/js/mic.js"></script></body></html>

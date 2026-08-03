@@ -1,0 +1,4 @@
+(()=>{'use strict';
+const input=document.getElementById('filter');if(input){const items=[...document.querySelectorAll('.task')];const run=()=>{const q=input.value.trim().toLocaleLowerCase('th');let shown=0;items.forEach(item=>{const hit=!q||item.textContent.toLocaleLowerCase('th').includes(q);item.hidden=!hit;if(hit)shown++});input.setAttribute('aria-label','ค้นหาประเภทงาน');input.setAttribute('aria-describedby','gp-search-count');let count=document.getElementById('gp-search-count');if(!count){count=document.createElement('div');count.id='gp-search-count';count.className='gp-draft';input.after(count)}count.textContent=`พบ ${shown} งาน`};input.addEventListener('input',run);run()}
+const q=new URLSearchParams(location.search).get('q');if(q&&input){input.value=q;input.dispatchEvent(new Event('input'))}
+})();

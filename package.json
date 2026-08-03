@@ -1,10 +1,10 @@
-# Installation Approval — GOVPROMPT THAILAND 5.0
-
-- Prompt catalog: GP001–GP222
-- Status: APPROVED 222/222
-- Form schemas: 222/222
-- Runtime mode: Prompt-only / No OpenAI API
-- Validation: Node tests 16/16 and Vercel preflight passed
-- Approval date: 23 July 2026
-
-This package is ready for deployment after environment variables and Supabase are configured.
+{
+  "name": "govprompt-thailand",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "validate": "node verify-release-2.mjs",
+    "test": "node verify-release-2.mjs && node --check assets/js/govprompt.js && node --check assets/js/prompt-engine.js && node --check assets/js/search.js && node --check assets/js/mic.js"
+  },
+  "engines": {"node": ">=18"}
+}
