@@ -12,3 +12,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .gp-draft{font-size:.75rem;color:#65758b;margin-top:8px}
 .gp-skip{position:fixed;left:10px;top:10px;z-index:10000;transform:translateY(-150%);padding:8px 12px;background:#fff;color:var(--gp-navy);border-radius:8px;box-shadow:0 4px 16px #0002}.gp-skip:focus{transform:none}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+.gp-attachment-notice{display:inline-block;width:auto;max-width:100%;margin:10px 0;color:#35506f;vertical-align:top}
+.gp-attachment-notice summary{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:9px 15px;border:1px solid #b9cce3;border-radius:10px;background:#edf4fb;color:var(--gp-navy);font-size:.9rem;font-weight:700;line-height:1.2;cursor:pointer;list-style:none;user-select:none}
+.gp-attachment-notice summary::-webkit-details-marker{display:none}
+.gp-attachment-notice summary::after{content:'▾';margin-left:8px;font-size:.75rem;transition:transform .18s}
+.gp-attachment-notice[open] summary::after{transform:rotate(180deg)}
+.gp-attachment-notice summary:hover{background:#e3eef9;border-color:#8fb1d4}
+.gp-attachment-help{width:min(440px,calc(100vw - 40px));margin-top:7px;padding:10px 12px;border:1px solid #cfe0f3;border-radius:10px;background:#f5faff;font-size:.82rem;line-height:1.55;box-shadow:0 6px 16px rgba(11,59,117,.08)}
+.gp-attachment-help small{display:block;margin-top:4px;color:#65758b}
+@media(max-width:650px){.gp-attachment-notice summary{min-height:40px;padding:8px 12px;font-size:.85rem}.gp-attachment-help{width:min(360px,calc(100vw - 32px))}}
