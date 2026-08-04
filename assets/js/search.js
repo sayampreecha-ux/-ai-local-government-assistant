@@ -29,10 +29,14 @@ if(q){
     const matched=[...document.querySelectorAll('.task')].find(x=>(x.dataset.task||'')===requestedTask);
     if(matched){document.querySelectorAll('.task').forEach(x=>x.classList.remove('active'));matched.classList.add('active')}
   }
-  const preferred=['facts','detail','details','problem','question','topic','subject','project','risk','need','item','tor','objective','reference'];
-  let target=null;
-  for(const id of preferred){const el=document.getElementById(id);if(el&&/^(INPUT|TEXTAREA)$/.test(el.tagName)&&!el.value){target=el;break}}
-  if(!target)target=generatorFields.find(el=>/^(INPUT|TEXTAREA)$/.test(el.tagName));
+  const routeTargets={
+    'gp001.html':'facts','gp002.html':'facts','gp003.html':'need','gp004.html':'problem',
+    'gp005.html':'facts','gp006.html':'facts','gp007.html':'facts','gp008.html':'facts',
+    'gp009.html':'facts','gp010.html':'facts','gp011.html':'facts','gp012.html':'facts'
+  };
+  const page=location.pathname.split('/').pop()||'';
+  let target=document.getElementById(routeTargets[page]||'facts');
+  if(!target||!/^(INPUT|TEXTAREA)$/.test(target.tagName))target=generatorFields.find(el=>/^(INPUT|TEXTAREA)$/.test(el.tagName));
   if(target){target.value=q;target.dispatchEvent(new Event('input',{bubbles:true}));target.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>target.focus(),350)}
   const note=document.querySelector('.generator .note');
   if(note){const msg=document.createElement('div');msg.className='gp-draft gp-query-note';msg.textContent='✨ เริ่มเรื่องใหม่แล้ว — AI นำคำถามมาใส่ในช่องหลักเพียงจุดเดียว กรุณาตรวจและเติมรายละเอียดก่อนสร้าง Prompt';note.before(msg)}
