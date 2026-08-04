@@ -1,67 +1,86 @@
 (() => {
   'use strict';
 
-  const ROUTE_RULES = [
-    { id: 'emergency-procurement', routes: ['procurement', 'payment', 'asset'], flags: ['urgent'], terms: ['รถเสีย', 'เสียระหว่างทาง', 'ฉุกเฉิน', 'เร่งด่วน', 'ดำเนินการไปก่อน'] },
-    { id: 'travel-entitlement', routes: ['entitlement', 'payment'], flags: [], terms: ['ค่าเดินทาง', 'เดินทางไปราชการ', 'ค่าพาหนะ', 'ค่าที่พัก'] },
-    { id: 'housing-entitlement', routes: ['entitlement', 'payment'], flags: [], terms: ['ค่าเช่าบ้าน', 'บ้านพักราชการ'] },
-    { id: 'advance-payment', routes: ['advance', 'payment', 'accounting'], flags: [], terms: ['เงินยืม', 'ส่งใช้เงินยืม', 'ลูกหนี้เงินยืม'] },
-    { id: 'grant', routes: ['grant', 'payment', 'monitoring'], flags: [], terms: ['เงินอุดหนุน', 'ขอรับการสนับสนุนงบประมาณ'] },
-    { id: 'consultant-procurement', routes: ['plan-budget', 'procurement-consultant', 'contract', 'acceptance', 'payment'], flags: [], terms: ['จ้างที่ปรึกษา', 'ที่ปรึกษา'] },
-    { id: 'construction', routes: ['plan-budget', 'procurement-construction', 'engineering', 'contract', 'acceptance', 'payment', 'asset'], flags: [], terms: ['ก่อสร้าง', 'ถนน', 'สะพาน', 'อาคาร', 'boq'] },
-    { id: 'general-procurement', routes: ['plan-budget', 'procurement', 'contract', 'acceptance', 'payment'], flags: [], terms: ['ซื้อ', 'จ้าง', 'tor', 'ราคากลาง', 'ตรวจรับ'] },
-    { id: 'revenue', routes: ['revenue', 'accounting'], flags: [], terms: ['ภาษี', 'ค่าธรรมเนียม', 'ค่าเช่า', 'รายได้', 'ลูกหนี้'] },
-    { id: 'administrative-order', routes: ['authority', 'administrative-order'], flags: [], terms: ['คำสั่งทางปกครอง', 'เพิกถอน', 'พักใช้', 'ใบอนุญาต', 'อุทธรณ์'] },
-    { id: 'hr', routes: ['authority', 'hr'], flags: [], terms: ['บรรจุ', 'แต่งตั้ง', 'โอน', 'ย้าย', 'วินัย', 'เลื่อนเงินเดือน'] },
-    { id: 'council', routes: ['authority', 'council'], flags: [], terms: ['สภา', 'ญัตติ', 'ข้อบัญญัติ', 'ประชุมสภา'] }
-  ];
+  const MODULES = Object.freeze(Array.from({ length: 12 }, (_, index) => {
+    const moduleId = `GP${String(index + 1).padStart(3, '0')}`;
+    return Object.freeze({ moduleId, path: `${moduleId.toLowerCase()}.html` });
+  }));
 
-  const FLAG_RULES = [
-    { flag: 'no-receipt', terms: ['ไม่มีใบเสร็จ', 'ใบเสร็จหาย'] },
-    { flag: 'retroactive', terms: ['ย้อนหลัง', 'เบิกย้อนหลัง', 'อนุมัติย้อนหลัง'] },
-    { flag: 'single-bidder', terms: ['รายเดียว', 'ผู้เสนอราคารายเดียว'] },
-    { flag: 'cross-fiscal-year', terms: ['ข้ามปี', 'กันเงิน', 'ผูกพันข้ามปี'] },
-    { flag: 'contract-change', terms: ['แก้สัญญา', 'ขยายเวลา', 'งดค่าปรับ', 'ลดค่าปรับ'] },
-    { flag: 'complaint', terms: ['ร้องเรียน', 'ทักท้วง', 'ตรวจสอบ'] }
-  ];
+  const TRANSACTION_RULES = Object.freeze([
+    { type: 'records', moduleId: 'GP001', terms: ['หนังสือ', 'สารบรรณ', 'บันทึกข้อความ', 'คำสั่ง', 'ประกาศ', 'ประชุม'] },
+    { type: 'legal', moduleId: 'GP002', terms: ['กฎหมาย', 'ระเบียบ', 'ข้อบัญญัติ', 'นิติกรรม', 'อุทธรณ์', 'ร้องเรียน'] },
+    { type: 'procurement', moduleId: 'GP003', terms: ['พัสดุ', 'จัดซื้อ', 'จัดจ้าง', 'tor', 'ราคากลาง', 'ตรวจรับ', 'สัญญา'] },
+    { type: 'planning-budget', moduleId: 'GP004', terms: ['แผน', 'โครงการ', 'งบประมาณ', 'ยุทธศาสตร์', 'ตัวชี้วัด'] },
+    { type: 'finance', moduleId: 'GP005', terms: ['การเงิน', 'การคลัง', 'เบิกจ่าย', 'เงินยืม', 'รายได้', 'ภาษี', 'ค่าธรรมเนียม', 'บัญชี'] },
+    { type: 'human-resources', moduleId: 'GP006', terms: ['บุคคล', 'บุคลากร', 'บรรจุ', 'แต่งตั้ง', 'โอน', 'ย้าย', 'วินัย', 'เงินเดือน'] },
+    { type: 'public-health', moduleId: 'GP007', terms: ['สาธารณสุข', 'สุขภาพ', 'โรค', 'ผู้ป่วย', 'ขยะ', 'สุขาภิบาล'] },
+    { type: 'engineering', moduleId: 'GP008', terms: ['ช่าง', 'วิศวกรรม', 'ก่อสร้าง', 'ถนน', 'สะพาน', 'อาคาร', 'boq'] },
+    { type: 'education', moduleId: 'GP009', terms: ['การศึกษา', 'โรงเรียน', 'ศูนย์เด็ก', 'นักเรียน', 'หลักสูตร'] },
+    { type: 'internal-audit', moduleId: 'GP010', terms: ['ตรวจสอบภายใน', 'ควบคุมภายใน', 'audit', 'ความเสี่ยง', 'หลักฐาน'] },
+    { type: 'executive', moduleId: 'GP011', terms: ['ผู้บริหาร', 'บริหาร', 'ตัดสินใจ', 'ข้อสั่งการ', 'dashboard', 'one page'] },
+    { type: 'public-relations', moduleId: 'GP012', terms: ['ประชาสัมพันธ์', 'ข่าว', 'facebook', 'เว็บไซต์', 'สื่อสาร', 'อินโฟกราฟิก'] }
+  ].map(rule => Object.freeze({ ...rule, terms: Object.freeze(rule.terms) })));
 
-  function includesAny(text, terms) {
-    return terms.some(term => text.includes(term.toLowerCase()));
+  function normalizeModuleId(value) {
+    const match = String(value ?? '').trim().toUpperCase().match(/(?:^|[^A-Z0-9])GP\s*0*(1[0-2]|[1-9])(?:[^A-Z0-9]|$)/);
+    return match ? `GP${match[1].padStart(3, '0')}` : '';
   }
 
-  function routeTransaction(context = {}, extraText = '') {
-    const source = [
-      context.domain,
-      context.currentStage,
-      context.transactionType,
-      context.facts,
-      context.documents,
-      Array.isArray(context.specialFlags) ? context.specialFlags.join(' ') : context.specialFlags,
-      extraText
-    ].join(' ').toLowerCase();
+  function detectModuleId(options = {}) {
+    const candidates = [
+      options.moduleId,
+      options.pathname,
+      typeof location === 'object' ? location.pathname : '',
+      typeof document === 'object' ? document.documentElement?.dataset?.moduleId : ''
+    ];
+    return candidates.map(normalizeModuleId).find(Boolean) || '';
+  }
 
-    const matches = ROUTE_RULES.filter(rule => includesAny(source, rule.terms));
-    const routes = [...new Set(matches.flatMap(match => match.routes))];
-    const flags = [...new Set([
-      ...matches.flatMap(match => match.flags),
-      ...FLAG_RULES.filter(rule => includesAny(source, rule.terms)).map(rule => rule.flag)
-    ])];
+  function normalizeContext(input) {
+    const create = window.GovPromptCore?.createSharedContext;
+    return typeof create === 'function' ? create(input) : (input && typeof input === 'object' ? input : {});
+  }
 
-    if (!routes.length) routes.push('authority', 'fact-check', 'risk-review');
+  function detectTransactionType(context) {
+    const explicit = String(context.transactionType ?? '').trim();
+    if (explicit) return explicit;
+    const source = [context.domain, context.currentStage, context.facts, context.documents, context.desiredOutput]
+      .concat(Array.isArray(context.specialFlags) ? context.specialFlags : [])
+      .join(' ')
+      .toLowerCase();
+    return TRANSACTION_RULES.find(rule => rule.terms.some(term => source.includes(term)))?.type || 'general';
+  }
 
-    return {
-      ruleIds: matches.map(match => match.id),
-      routes,
-      flags,
-      requiresClarification: !context.organizationType || !context.currentStage,
-      missingCoreFacts: [
-        !context.organizationType ? 'ประเภท อปท./หน่วยงาน' : '',
-        !context.currentStage ? 'ขั้นตอนปัจจุบัน' : ''
-      ].filter(Boolean)
-    };
+  function routeTransaction(sharedContext, options = {}) {
+    const context = normalizeContext(sharedContext);
+    const currentModuleId = detectModuleId(options);
+    const transactionType = detectTransactionType(context);
+    const source = [transactionType, context.domain, context.facts, context.desiredOutput].join(' ').toLowerCase();
+    const matchedRule = TRANSACTION_RULES
+      .map(rule => ({
+        rule,
+        score: (rule.type === transactionType ? 100 : 0) + rule.terms.filter(term => source.includes(term)).length
+      }))
+      .reduce((best, candidate) => candidate.score > best.score ? candidate : best, { rule: null, score: 0 })
+      .rule;
+    const moduleId = matchedRule?.moduleId || currentModuleId || 'GP011';
+    const assistant = MODULES.find(module => module.moduleId === moduleId);
+
+    return Object.freeze({
+      context,
+      currentModuleId,
+      moduleId,
+      transactionType,
+      assistant,
+      shouldRedirect: Boolean(currentModuleId && currentModuleId !== moduleId),
+      preservePrompt: true
+    });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
+  window.GovPromptCore.MODULES = MODULES;
+  window.GovPromptCore.TRANSACTION_RULES = TRANSACTION_RULES;
+  window.GovPromptCore.detectModuleId = detectModuleId;
+  window.GovPromptCore.detectTransactionType = detectTransactionType;
   window.GovPromptCore.routeTransaction = routeTransaction;
-  window.GovPromptCore.ROUTE_RULES = ROUTE_RULES;
 })();
