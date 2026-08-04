@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const GP=window.GovPrompt=window.GovPrompt||{};
-GP.version='2.0.2';
+GP.version='2.0.3';
 GP.toast=message=>{let el=document.querySelector('.gp-toast');if(!el){el=document.createElement('div');el.className='gp-toast';el.setAttribute('role','status');document.body.appendChild(el)}el.textContent=message;el.classList.add('show');clearTimeout(GP.toastTimer);GP.toastTimer=setTimeout(()=>el.classList.remove('show'),2200)};
 const main=document.querySelector('main');if(main&&!main.id)main.id='main-content';
 if(main){const skip=document.createElement('a');skip.className='gp-skip';skip.href='#main-content';skip.textContent='ข้ามไปยังเนื้อหาหลัก';document.body.prepend(skip)}
@@ -19,7 +19,7 @@ const attachmentInstruction=`ขั้นตอนตรวจข้อมูล
 6. ห้ามสมมติข้อมูลที่ไม่มีในข้อความหรือเอกสารแนบ ทุกข้อสรุปต้องแยกข้อเท็จจริงออกจากข้อวิเคราะห์
 7. หากเอกสารอ่านไม่ชัด ขัดแย้งกัน หรือไม่ใช่ฉบับปัจจุบัน ให้ระบุจุดที่ต้องยืนยันก่อนนำผลไปใช้
 8. ก่อนแสดงข้อมูลจากเอกสาร ให้ตรวจและปกปิดข้อมูลส่วนบุคคล ข้อมูลอ่อนไหว และข้อมูลลับที่ไม่จำเป็น
-9. ใช้คำว่า [ต้องตรวจสอบ/เพิ่มเติม] เฉพาะจุดที่ยังขาดจริง และอธิบายสั้น ๆ ว่าข้อมูลนั้นมีผลต่อคำตอบอย่างไร`;
+9. ใช้คำว่า [ต้องตรวจสอบ/เพิ่มเติม] เฉพาะจุดที่ยังขาดจริง และอธิบายสั้น ๆ ว่าข้อมูลนั้นมีผลต่อคำตอบอย่างไร\n10. การอ้างแหล่งข้อมูลและลิงก์:\n   10.1 ใช้แหล่งทางการหรือเอกสารปฐมภูมิเป็นหลัก\n   10.2 ก่อนแสดงลิงก์ ต้องตรวจว่าลิงก์เปิดได้และหน้าเอกสารนั้นสนับสนุนข้อความที่อ้างจริง\n   10.3 หากเปิดลิงก์ไม่ได้ ไม่มีสิทธิ์ตรวจเว็บ หรือ URL มีอักขระเสีย เช่น %EF%BF%BD ห้ามแสดงเป็นลิงก์ที่ยืนยันแล้ว ให้ระบุ [ลิงก์ยังไม่ได้ตรวจสอบ] พร้อมชื่อเอกสาร หน่วยงานเจ้าของเอกสาร และคำค้นที่ใช้ค้นหาแทน\n   10.4 ห้ามสร้าง URL เลขหนังสือ วันที่ หรือชื่อเอกสารขึ้นเอง\n   10.5 แยกให้ชัดว่าได้อ่านเอกสารฉบับเต็ม อ่านเพียงบางหน้า หรือเห็นเฉพาะข้อความสรุปจากผลการค้นหา\n11. หากไม่สามารถยืนยันแหล่งอ้างอิงได้ ให้ตอบตามข้อเท็จจริงที่มีและระบุสิ่งที่ต้องตรวจต้นฉบับ ห้ามฟันธงสิทธิ อัตรา หรืออำนาจอนุมัติจากข้อความค้นหาเพียงอย่างเดียว`;
 
 function addAttachmentNotice(){
   const host=document.querySelector('.generator,form,#generatorForm');
