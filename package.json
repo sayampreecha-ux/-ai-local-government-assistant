@@ -5,7 +5,7 @@
   "scripts": {
     "build": "node scripts/build-static.mjs",
     "validate": "node verify-release-2.mjs",
-    "test": "node verify-release-2.mjs && node gp001.test.mjs && node scripts/verify-runtime.mjs",
+    "test": "node verify-release-2.mjs && node gp001.test.mjs && node scripts/verify-runtime.mjs && node scripts/verify-shared-context.mjs",
     "check:syntax": "node --check assets/js/govprompt.js && node --check assets/js/prompt-engine.js && node --check assets/js/search.js && node --check assets/js/mic.js",
     "deploy": "pnpm build && wrangler deploy"
   },

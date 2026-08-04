@@ -1,6 +1,19 @@
 (() => {
   'use strict';
 
+  const CONTEXT_FIELDS = Object.freeze([
+    'organizationType',
+    'owningUnit',
+    'domain',
+    'currentStage',
+    'transactionType',
+    'fundingSource',
+    'facts',
+    'documents',
+    'specialFlags',
+    'desiredOutput'
+  ]);
+
   const DEFAULT_CONTEXT = Object.freeze({
     organizationType: '',
     owningUnit: '',
@@ -10,7 +23,7 @@
     fundingSource: '',
     facts: '',
     documents: '',
-    specialFlags: [],
+    specialFlags: Object.freeze([]),
     desiredOutput: ''
   });
 
@@ -27,19 +40,29 @@
   }
 
   function createSharedContext(input = {}) {
+    const source = input && typeof input === 'object' ? input : {};
+
     return {
       ...DEFAULT_CONTEXT,
-      organizationType: normalizeText(input.organizationType),
-      owningUnit: normalizeText(input.owningUnit),
-      domain: normalizeText(input.domain),
-      currentStage: normalizeText(input.currentStage),
-      transactionType: normalizeText(input.transactionType),
-      fundingSource: normalizeText(input.fundingSource),
-      facts: normalizeText(input.facts),
-      documents: normalizeText(input.documents),
-      specialFlags: normalizeFlags(input.specialFlags),
-      desiredOutput: normalizeText(input.desiredOutput)
+      organizationType: normalizeText(source.organizationType),
+      owningUnit: normalizeText(source.owningUnit),
+      domain: normalizeText(source.domain),
+      currentStage: normalizeText(source.currentStage),
+      transactionType: normalizeText(source.transactionType),
+      fundingSource: normalizeText(source.fundingSource),
+      facts: normalizeText(source.facts),
+      documents: normalizeText(source.documents),
+      specialFlags: normalizeFlags(source.specialFlags),
+      desiredOutput: normalizeText(source.desiredOutput)
     };
+  }
+
+  function getMissingContextFields(context) {
+    const normalized = createSharedContext(context);
+    return CONTEXT_FIELDS.filter(field => {
+      const value = normalized[field];
+      return Array.isArray(value) ? value.length === 0 : value === '';
+    });
   }
 
   function contextToText(context) {
@@ -59,6 +82,9 @@
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
+  window.GovPromptCore.CONTEXT_FIELDS = CONTEXT_FIELDS;
+  window.GovPromptCore.DEFAULT_CONTEXT = DEFAULT_CONTEXT;
   window.GovPromptCore.createSharedContext = createSharedContext;
+  window.GovPromptCore.getMissingContextFields = getMissingContextFields;
   window.GovPromptCore.contextToText = contextToText;
 })();
