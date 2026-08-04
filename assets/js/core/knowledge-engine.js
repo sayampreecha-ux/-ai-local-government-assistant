@@ -87,6 +87,7 @@
     const documents = deepFreeze(inputs.map(createKnowledgeDocument));
     const byId = deepFreeze(Object.fromEntries(documents.map(document => [document.id, document])));
     const index = window.GovPromptCore.createKnowledgeIndex(inputs);
+    const semantic = window.GovPromptCore.createSemanticSearch(index);
 
     function getDocument(id) {
       return byId[normalizeText(id)];
@@ -127,7 +128,11 @@
       return index.search(options);
     }
 
-    return deepFreeze({ documents, index, getDocument, searchDocuments, searchKnowledge, getCitations, createAnswer });
+    function semanticSearch(query, options = {}) {
+      return semantic.search(query, options);
+    }
+
+    return deepFreeze({ documents, index, semantic, getDocument, searchDocuments, searchKnowledge, semanticSearch, getCitations, createAnswer });
   }
 
   function createKnowledgeEngineFromRepository(repository) {

@@ -44,7 +44,7 @@ assert.equal(citations[0].citationId, 'law-v2');
 assert.equal(citations[0].confidenceLevel, 'medium');
 assert.equal(Object.isFrozen(citations), true);
 
-const citationScripts = '<script src="assets/js/core/citation-engine.js"></script><script src="assets/js/core/knowledge-index.js"></script>';
+const citationScripts = '<script src="assets/js/core/citation-engine.js"></script><script src="assets/js/core/knowledge-index.js"></script><script src="assets/js/core/semantic-search.js"></script>';
 for (let index = 1; index <= 12; index += 1) {
   const file = `gp${String(index).padStart(3, '0')}.html`;
   const current = (await readFile(file, 'utf8')).replace(/\r\n/g, '\n');

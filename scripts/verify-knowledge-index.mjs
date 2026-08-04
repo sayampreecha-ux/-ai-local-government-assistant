@@ -51,13 +51,13 @@ for (const field of ['title', 'summary', 'citation', 'confidence', 'source', 'ef
 }
 assert.equal(Object.isFrozen(result), true);
 
-const indexScript = '<script src="assets/js/core/knowledge-index.js"></script>';
+const indexScripts = '<script src="assets/js/core/knowledge-index.js"></script><script src="assets/js/core/semantic-search.js"></script>';
 for (let number = 1; number <= 12; number += 1) {
   const file = `gp${String(number).padStart(3, '0')}.html`;
   const current = (await readFile(file, 'utf8')).replace(/\r\n/g, '\n');
   const baseline = execFileSync('git', ['show', `9f4bdae:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
-  assert.equal(current.includes(indexScript), true, `${file}: knowledge index missing`);
-  assert.equal(current.replace(indexScript, ''), baseline, `${file}: Sprint 4.3 output changed`);
+  assert.equal(current.includes(indexScripts), true, `${file}: knowledge index missing`);
+  assert.equal(current.replace(indexScripts, ''), baseline, `${file}: Sprint 4.3 output changed`);
 }
 
 console.log('Government Knowledge Index verification passed with GP001-GP012 unchanged.');
