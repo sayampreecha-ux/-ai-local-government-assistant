@@ -53,14 +53,19 @@ assert.equal(engine.searchDocuments({ effectiveOn: '2025-12-31' }).length, 0);
 assert.equal(engine.getCitations().length, 2);
 assert.equal(Object.isFrozen(engine.getCitations()), true);
 assert.equal(core.knowledgeEngine.documents.length, 0);
+const repositoryEngine = core.createKnowledgeEngineFromRepository({ documents: [{ ...input, agency: input.issuingAgency, issuingAgency: undefined }] });
+assert.equal(repositoryEngine.documents[0].issuingAgency, input.issuingAgency.trim());
+const loadedEngine = await core.loadKnowledgeRepository({ loadRepository: async () => ({ documents: [input] }) });
+assert.equal(loadedEngine.documents.length, 1);
+assert.throws(() => core.createKnowledgeEngineFromRepository({}), /loaded knowledge repository/);
 
-const engineScript = '<script src="assets/js/core/knowledge-engine.js"></script>';
+const engineScripts = '<script src="assets/js/core/document-loader.js"></script><script src="assets/js/core/knowledge-engine.js"></script>';
 for (let index = 1; index <= 12; index += 1) {
   const file = `gp${String(index).padStart(3, '0')}.html`;
   const current = (await readFile(file, 'utf8')).replace(/\r\n/g, '\n');
   const baseline = execFileSync('git', ['show', `52b0aa2:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
-  assert.equal(current.includes(engineScript), true, `${file}: Knowledge Engine missing`);
-  assert.equal(current.replace(engineScript, ''), baseline, `${file}: Sprint 3.4 output behavior changed`);
+  assert.equal(current.includes(engineScripts), true, `${file}: Knowledge Engine missing`);
+  assert.equal(current.replace(engineScripts, ''), baseline, `${file}: Sprint 3.4 output behavior changed`);
 }
 
 console.log('Knowledge Engine verification passed with GP001-GP012 regressions unchanged.');

@@ -30,8 +30,9 @@
   }
 
   function createKnowledgeDocument(input = {}) {
+    const issuingAgency = input.issuingAgency ?? input.agency;
     const metadata = Object.fromEntries(
-      DOCUMENT_FIELDS.map(field => [field, normalizeText(input[field])])
+      DOCUMENT_FIELDS.map(field => [field, normalizeText(field === 'issuingAgency' ? issuingAgency : input[field])])
     );
     const missingFields = DOCUMENT_FIELDS.filter(field => !metadata[field]);
     if (missingFields.length) throw new TypeError(`Missing document metadata: ${missingFields.join(', ')}`);
@@ -117,12 +118,28 @@
     return deepFreeze({ documents, getDocument, searchDocuments, getCitations });
   }
 
+  function createKnowledgeEngineFromRepository(repository) {
+    if (!repository || !Array.isArray(repository.documents)) {
+      throw new TypeError('A loaded knowledge repository is required');
+    }
+    return createKnowledgeEngine(repository.documents);
+  }
+
+  async function loadKnowledgeRepository(loader = window.GovPromptCore.documentLoader) {
+    if (!loader || typeof loader.loadRepository !== 'function') {
+      throw new TypeError('A document loader is required');
+    }
+    return createKnowledgeEngineFromRepository(await loader.loadRepository());
+  }
+
   const knowledgeEngine = createKnowledgeEngine();
 
   window.GovPromptCore = window.GovPromptCore || {};
   window.GovPromptCore.DOCUMENT_FIELDS = DOCUMENT_FIELDS;
   window.GovPromptCore.createKnowledgeDocument = createKnowledgeDocument;
   window.GovPromptCore.createKnowledgeEngine = createKnowledgeEngine;
+  window.GovPromptCore.createKnowledgeEngineFromRepository = createKnowledgeEngineFromRepository;
+  window.GovPromptCore.loadKnowledgeRepository = loadKnowledgeRepository;
   window.GovPromptCore.compareVersions = compareVersions;
   window.GovPromptCore.checkDocumentVersion = checkDocumentVersion;
   window.GovPromptCore.validateEffectiveDate = validateEffectiveDate;
