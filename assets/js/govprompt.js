@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const GP=window.GovPrompt=window.GovPrompt||{};
-GP.version='2.0.3';
+GP.version='2.0.4';
 GP.toast=message=>{let el=document.querySelector('.gp-toast');if(!el){el=document.createElement('div');el.className='gp-toast';el.setAttribute('role','status');document.body.appendChild(el)}el.textContent=message;el.classList.add('show');clearTimeout(GP.toastTimer);GP.toastTimer=setTimeout(()=>el.classList.remove('show'),2200)};
 const main=document.querySelector('main');if(main&&!main.id)main.id='main-content';
 if(main){const skip=document.createElement('a');skip.className='gp-skip';skip.href='#main-content';skip.textContent='ข้ามไปยังเนื้อหาหลัก';document.body.prepend(skip)}
@@ -24,10 +24,9 @@ const attachmentInstruction=`ขั้นตอนตรวจข้อมูล
 function addAttachmentNotice(){
   const host=document.querySelector('.generator,form,#generatorForm');
   if(!host||document.querySelector('.gp-attachment-notice'))return;
-  const note=document.createElement('aside');
-  note.className='gp-safety gp-attachment-notice';
-  note.setAttribute('role','note');
-  note.innerHTML='<strong>📎 มีเอกสารประกอบ?</strong><br>สร้างและคัดลอก Prompt ไปวางใน ChatGPT ของท่าน แล้วแนบไฟล์ในแชตเดียวกันได้เลย AI จะให้คำตอบเบื้องต้น อ่านเอกสาร และถามเฉพาะข้อมูลที่ยังขาด<br><small>โปรดปกปิดข้อมูลส่วนบุคคล ข้อมูลอ่อนไหว หรือข้อมูลลับที่ไม่จำเป็นก่อนแนบ</small>';
+  const note=document.createElement('details');
+  note.className='gp-attachment-notice';
+  note.innerHTML='<summary>📎 เอกสารประกอบ</summary><div class="gp-attachment-help">คัดลอก Prompt ไปวางใน ChatGPT แล้วแนบไฟล์ในแชตเดียวกัน AI จะอ่านเอกสารและถามเฉพาะข้อมูลที่ยังขาด<br><small>โปรดปกปิดข้อมูลส่วนบุคคล ข้อมูลอ่อนไหว หรือข้อมูลลับที่ไม่จำเป็นก่อนแนบ</small></div>';
   const actions=host.querySelector('.actions,button[type="submit"],#make');
   if(actions)actions.insertAdjacentElement('beforebegin',note);else host.appendChild(note);
 }
