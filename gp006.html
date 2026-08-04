@@ -57,4 +57,4 @@ $('make').onclick=()=>{if(!task)return alert('กรุณาเลือกง�
 $('copy').onclick=async()=>{if(!$('output').textContent)return alert('กรุณาสร้าง Prompt ก่อน');await navigator.clipboard.writeText($('output').textContent);alert('คัดลอกแล้ว')};
 $('clear').onclick=()=>location.reload();
 </script>
-<script src="assets/js/core/shared-context.js"></script><script src="assets/js/core/transaction-router.js"></script><script src="assets/js/govprompt.js"></script><script src="assets/js/prompt-engine.js"></script><script src="assets/js/search.js"></script><script src="assets/js/mic.js"></script></body></html>
+<script src="assets/js/core/shared-context.js"></script><script src="assets/js/core/prompt-registry.js"></script><script src="assets/js/core/transaction-router.js"></script><script src="assets/js/govprompt.js"></script><script src="assets/js/prompt-engine.js"></script><script src="assets/js/search.js"></script><script src="assets/js/mic.js"></script></body></html>

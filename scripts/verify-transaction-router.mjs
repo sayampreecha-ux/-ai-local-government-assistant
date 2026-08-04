@@ -5,6 +5,7 @@ import vm from 'node:vm';
 
 const sandbox = { window: {}, location: { pathname: '/gp005.html' } };
 vm.runInNewContext(await readFile('assets/js/core/shared-context.js', 'utf8'), sandbox);
+vm.runInNewContext(await readFile('assets/js/core/prompt-registry.js', 'utf8'), sandbox);
 vm.runInNewContext(await readFile('assets/js/core/transaction-router.js', 'utf8'), sandbox);
 
 const { MODULES, detectModuleId, detectTransactionType, routeTransaction } = sandbox.window.GovPromptCore;
@@ -20,8 +21,8 @@ const cases = [
   ['จัดทำแผนและงบประมาณ', 'GP004'],
   ['เบิกจ่ายและบันทึกบัญชี', 'GP005'],
   ['โอนย้ายบุคลากร', 'GP006'],
-  ['งานสาธารณสุขและสุขาภิบาล', 'GP007'],
-  ['ควบคุมงานก่อสร้างถนน', 'GP008'],
+  ['ควบคุมงานก่อสร้างถนน', 'GP007'],
+  ['งานสาธารณสุขและสุขาภิบาล', 'GP008'],
   ['แผนการศึกษาโรงเรียน', 'GP009'],
   ['ตรวจสอบภายในและควบคุมความเสี่ยง', 'GP010'],
   ['สรุปเพื่อผู้บริหารตัดสินใจ', 'GP011'],
@@ -42,7 +43,7 @@ assert.equal(normalized.transactionType, 'general');
 assert.deepEqual(Object.keys(normalized.context), Array.from(sandbox.window.GovPromptCore.CONTEXT_FIELDS));
 assert.equal(detectTransactionType({ facts: 'ต้องจัดซื้อวัสดุ' }), 'procurement');
 
-const insertedScripts = '<script src="assets/js/core/shared-context.js"></script><script src="assets/js/core/transaction-router.js"></script>';
+const insertedScripts = '<script src="assets/js/core/shared-context.js"></script><script src="assets/js/core/prompt-registry.js"></script><script src="assets/js/core/transaction-router.js"></script>';
 for (let index = 1; index <= 12; index += 1) {
   const file = `gp${String(index).padStart(3, '0')}.html`;
   const current = await readFile(file, 'utf8');
