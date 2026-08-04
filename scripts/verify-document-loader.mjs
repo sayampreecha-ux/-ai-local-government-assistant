@@ -35,6 +35,8 @@ const valid = {
 const document = core.createRepositoryDocument(valid);
 assert.equal(document.title, 'ระเบียบทดสอบ');
 assert.deepEqual(Array.from(document.keywords), ['ระเบียบ', 'ท้องถิ่น']);
+assert.equal(document.reference, valid.source);
+assert.equal(document.sourceURL, valid.source);
 assert.equal(Object.isFrozen(document), true);
 assert.equal(Object.isFrozen(document.keywords), true);
 assert.throws(() => core.createRepositoryDocument({}), /missing/);
@@ -66,13 +68,13 @@ await assert.rejects(
   /Invalid knowledge document/
 );
 
-const loaderScript = '<script src="assets/js/core/document-loader.js"></script>';
+const loaderScripts = '<script src="assets/js/core/document-loader.js"></script><script src="assets/js/core/citation-engine.js"></script>';
 for (let index = 1; index <= 12; index += 1) {
   const file = `gp${String(index).padStart(3, '0')}.html`;
   const current = (await readFile(file, 'utf8')).replace(/\r\n/g, '\n');
   const baseline = execFileSync('git', ['show', `bdce7a5:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
-  assert.equal(current.includes(loaderScript), true, `${file}: document loader missing`);
-  assert.equal(current.replace(loaderScript, ''), baseline, `${file}: Sprint 4.1 output changed`);
+  assert.equal(current.includes(loaderScripts), true, `${file}: document loader missing`);
+  assert.equal(current.replace(loaderScripts, ''), baseline, `${file}: Sprint 4.1 output changed`);
 }
 
 console.log('Government Knowledge Repository document loader verification passed.');

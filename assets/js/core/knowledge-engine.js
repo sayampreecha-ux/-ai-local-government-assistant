@@ -44,17 +44,12 @@
       metadata.version,
       metadata.effectiveDate
     ].join('|').toLowerCase();
-    const citation = {
-      id,
-      title: metadata.title,
-      source: metadata.source,
-      issuingAgency: metadata.issuingAgency,
-      effectiveDate: metadata.effectiveDate,
-      version: metadata.version,
-      label: `${metadata.title} (${metadata.issuingAgency}, ${metadata.version})`
-    };
+    const agency = metadata.issuingAgency;
+    const reference = normalizeText(input.reference || metadata.source);
+    const sourceURL = normalizeText(input.sourceURL || metadata.source);
+    const citation = window.GovPromptCore.createCitation({ id, ...metadata, agency, reference, sourceURL });
 
-    return deepFreeze({ id, ...metadata, citation });
+    return deepFreeze({ id, ...metadata, agency, reference, sourceURL, citation });
   }
 
   function compareVersions(left, right) {
@@ -111,11 +106,23 @@
       });
     }
 
-    function getCitations(ids = documents.map(document => document.id)) {
-      return deepFreeze(ids.map(getDocument).filter(Boolean).map(document => document.citation));
+    function resolveCurrentDocuments(ids, options = {}) {
+      return ids.map(getDocument).filter(Boolean).map(document =>
+        window.GovPromptCore.rejectObsoleteVersion(document, documents, options.asOf)
+      );
     }
 
-    return deepFreeze({ documents, getDocument, searchDocuments, getCitations });
+    function getCitations(ids = documents.map(document => document.id), options = {}) {
+      return window.GovPromptCore.createCitations(resolveCurrentDocuments(ids, options), options);
+    }
+
+    function createAnswer(text, ids = documents.map(document => document.id), options = {}) {
+      const citations = getCitations(ids, options);
+      if (!citations.length) throw new TypeError('Knowledge answers require at least one effective citation');
+      return deepFreeze({ text: normalizeText(text), citations });
+    }
+
+    return deepFreeze({ documents, getDocument, searchDocuments, getCitations, createAnswer });
   }
 
   function createKnowledgeEngineFromRepository(repository) {
