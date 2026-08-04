@@ -1,11 +1,7 @@
 (() => {
   'use strict';
 
-  const fallbackModules = Array.from({ length: 12 }, (_, index) => {
-    const moduleId = `GP${String(index + 1).padStart(3, '0')}`;
-    return Object.freeze({ moduleId, path: `${moduleId.toLowerCase()}.html` });
-  });
-  const MODULES = window.GovPromptCore?.PROMPT_REGISTRY || Object.freeze(fallbackModules);
+  const MODULES = window.GovPromptCore.PROMPT_REGISTRY;
 
   const TRANSACTION_RULES = Object.freeze([
     { type: 'records', moduleId: 'GP001', terms: ['หนังสือ', 'สารบรรณ', 'บันทึกข้อความ', 'คำสั่ง', 'ประกาศ', 'ประชุม'] },
@@ -37,11 +33,6 @@
     return candidates.map(normalizeModuleId).find(Boolean) || '';
   }
 
-  function normalizeContext(input) {
-    const create = window.GovPromptCore?.createSharedContext;
-    return typeof create === 'function' ? create(input) : (input && typeof input === 'object' ? input : {});
-  }
-
   function detectTransactionType(context) {
     const explicit = String(context.transactionType ?? '').trim();
     if (explicit) return explicit;
@@ -53,7 +44,7 @@
   }
 
   function routeTransaction(sharedContext, options = {}) {
-    const context = normalizeContext(sharedContext);
+    const context = window.GovPromptCore.createSharedContext(sharedContext);
     const currentModuleId = detectModuleId(options);
     const transactionType = detectTransactionType(context);
     const source = [transactionType, context.domain, context.facts, context.desiredOutput].join(' ').toLowerCase();

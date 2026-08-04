@@ -3,9 +3,10 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 
 const sandbox = { window: {} };
+vm.runInNewContext(await readFile('assets/js/core/shared-context.js', 'utf8'), sandbox);
 vm.runInNewContext(await readFile('assets/js/core/prompt-registry.js', 'utf8'), sandbox);
 
-const { PROMPT_REGISTRY, PROMPT_REGISTRY_BY_ID, getPromptDefinition } = sandbox.window.GovPromptCore;
+const { PROMPT_REGISTRY, PROMPT_REGISTRY_BY_ID, getPromptDefinition, createPromptContext } = sandbox.window.GovPromptCore;
 assert.equal(PROMPT_REGISTRY.length, 12);
 assert.equal(Object.isFrozen(PROMPT_REGISTRY), true);
 assert.equal(Object.isFrozen(PROMPT_REGISTRY_BY_ID), true);
@@ -29,6 +30,9 @@ for (let index = 0; index < 12; index += 1) {
 }
 
 assert.equal(getPromptDefinition('GP013'), undefined);
+assert.equal(createPromptContext('GP005', { facts: ' test ', ignored: 'value' }).facts, 'test');
+assert.equal(createPromptContext('GP005', {}).domain, 'finance');
+assert.equal(createPromptContext('GP013', {}), undefined);
 assert.throws(() => PROMPT_REGISTRY.push({}), /object is not extensible/);
 assert.throws(() => { PROMPT_REGISTRY[0].title = 'changed'; }, /read only property/);
 

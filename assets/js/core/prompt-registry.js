@@ -41,8 +41,19 @@
     return PROMPT_REGISTRY_BY_ID[normalized];
   }
 
+  function createPromptContext(moduleId, input = {}) {
+    const definition = getPromptDefinition(moduleId);
+    const createSharedContext = window.GovPromptCore?.createSharedContext;
+    if (!definition || typeof createSharedContext !== 'function') return undefined;
+    return createSharedContext({
+      domain: definition.transactionTypes[0],
+      ...input
+    });
+  }
+
   window.GovPromptCore = window.GovPromptCore || {};
   window.GovPromptCore.PROMPT_REGISTRY = PROMPT_REGISTRY;
   window.GovPromptCore.PROMPT_REGISTRY_BY_ID = PROMPT_REGISTRY_BY_ID;
   window.GovPromptCore.getPromptDefinition = getPromptDefinition;
+  window.GovPromptCore.createPromptContext = createPromptContext;
 })();
