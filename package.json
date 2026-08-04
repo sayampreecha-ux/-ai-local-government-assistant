@@ -3,12 +3,17 @@
   "version": "2.0.0",
   "private": true,
   "scripts": {
+    "build": "node scripts/build-static.mjs",
     "validate": "node verify-release-2.mjs",
     "test": "node verify-release-2.mjs && node gp001.test.mjs && node scripts/verify-runtime.mjs",
-    "check:syntax": "node --check assets/js/govprompt.js && node --check assets/js/prompt-engine.js && node --check assets/js/search.js && node --check assets/js/mic.js"
+    "check:syntax": "node --check assets/js/govprompt.js && node --check assets/js/prompt-engine.js && node --check assets/js/search.js && node --check assets/js/mic.js",
+    "deploy": "pnpm build && wrangler deploy"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.57.4"
+  },
+  "devDependencies": {
+    "wrangler": "4.68.0"
   },
   "engines": {"node": ">=18"},
   "packageManager": "pnpm@11.9.0"
