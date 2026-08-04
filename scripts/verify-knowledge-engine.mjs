@@ -5,6 +5,7 @@ import vm from 'node:vm';
 
 const sandbox = { window: {}, URL };
 vm.runInNewContext(await readFile('assets/js/core/citation-engine.js', 'utf8'), sandbox);
+vm.runInNewContext(await readFile('assets/js/core/knowledge-index.js', 'utf8'), sandbox);
 vm.runInNewContext(await readFile('assets/js/core/knowledge-engine.js', 'utf8'), sandbox);
 const core = sandbox.window.GovPromptCore;
 
@@ -52,6 +53,7 @@ assert.equal(engine.searchDocuments({ query: 'ประกาศ' }).length, 1);
 assert.equal(engine.searchDocuments({ category: 'ระเบียบ' }).length, 1);
 assert.equal(engine.searchDocuments({ issuingAgency: 'หน่วยงานทดสอบ' }).length, 2);
 assert.equal(engine.searchDocuments({ effectiveOn: '2025-12-31' }).length, 0);
+assert.equal(engine.searchKnowledge({ query: 'ประกาศทดสอบ', asOf: '2026-02-01' })[0].title, 'ประกาศทดสอบ');
 assert.equal(engine.getCitations().length, 2);
 assert.equal(Object.isFrozen(engine.getCitations()), true);
 const answer = engine.createAnswer('คำตอบ', ['test-document', 'second'], { asOf: '2026-02-01' });
@@ -71,7 +73,7 @@ const loadedEngine = await core.loadKnowledgeRepository({ loadRepository: async 
 assert.equal(loadedEngine.documents.length, 1);
 assert.throws(() => core.createKnowledgeEngineFromRepository({}), /loaded knowledge repository/);
 
-const engineScripts = '<script src="assets/js/core/document-loader.js"></script><script src="assets/js/core/citation-engine.js"></script><script src="assets/js/core/knowledge-engine.js"></script>';
+const engineScripts = '<script src="assets/js/core/document-loader.js"></script><script src="assets/js/core/citation-engine.js"></script><script src="assets/js/core/knowledge-index.js"></script><script src="assets/js/core/knowledge-engine.js"></script>';
 for (let index = 1; index <= 12; index += 1) {
   const file = `gp${String(index).padStart(3, '0')}.html`;
   const current = (await readFile(file, 'utf8')).replace(/\r\n/g, '\n');

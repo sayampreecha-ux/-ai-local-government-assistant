@@ -34,7 +34,7 @@ assert.equal(context.desiredOutput, 'ร่างคำตอบ');
 assert.equal(core.getCurrentRoute().currentModuleId, 'GP001');
 assert.equal(JSON.stringify(core.getCurrentRoute().context), JSON.stringify(context));
 
-const integrationScripts = '<script src="assets/js/core/context-integration.js"></script><script src="assets/js/core/document-loader.js"></script><script src="assets/js/core/citation-engine.js"></script><script src="assets/js/core/knowledge-engine.js"></script>';
+const integrationScripts = '<script src="assets/js/core/context-integration.js"></script><script src="assets/js/core/document-loader.js"></script><script src="assets/js/core/citation-engine.js"></script><script src="assets/js/core/knowledge-index.js"></script><script src="assets/js/core/knowledge-engine.js"></script>';
 for (let index = 1; index <= 12; index += 1) {
   const file = `gp${String(index).padStart(3, '0')}.html`;
   const current = (await readFile(file, 'utf8')).replace(/\r\n/g, '\n');

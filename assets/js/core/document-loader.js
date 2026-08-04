@@ -48,7 +48,8 @@
       source: normalizeText(input.source),
       content: normalizeText(input.content),
       reference: normalizeText(input.reference || input.source),
-      sourceURL: normalizeText(input.sourceURL || input.source)
+      sourceURL: normalizeText(input.sourceURL || input.source),
+      documentType: normalizeText(input.documentType || input.category)
     };
     const missing = REPOSITORY_DOCUMENT_FIELDS.filter(field =>
       field === 'keywords' ? !Array.isArray(input.keywords) : !document[field]
