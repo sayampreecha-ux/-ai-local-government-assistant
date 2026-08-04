@@ -1,4 +1,4 @@
-import { PROMPT_MASTER } from "./prompt-master.mjs";
+import { PROMPT_MASTER } from "./lib/prompt-master.mjs";
 
 const toolIds = Object.keys(PROMPT_MASTER);
 

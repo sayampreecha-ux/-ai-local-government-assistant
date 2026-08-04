@@ -1,4 +1,4 @@
-import { envFlag, isSupabaseConfigured, json } from "../lib/server.mjs";
+import { envFlag, isSupabaseConfigured, json } from "./lib/server.mjs";
 
 const VERSION = "5.0.0-222";
 

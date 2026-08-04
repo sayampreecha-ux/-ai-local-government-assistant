@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { cleanText, enforceRateLimit, errorResponse, getSupabase, json, verifySession, writeAuditLog } from "../lib/server.mjs";
-import { notifyPaymentProof } from "../lib/notifications.mjs";
+import { cleanText, enforceRateLimit, errorResponse, getSupabase, json, verifySession, writeAuditLog } from "./lib/server.mjs";
+import { notifyPaymentProof } from "./lib/notifications.mjs";
 
 const allowedTypes = new Map([
   ["image/jpeg", "jpg"], ["image/png", "png"], ["image/webp", "webp"], ["application/pdf", "pdf"]

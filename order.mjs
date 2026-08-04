@@ -1,4 +1,4 @@
-import { enforceRateLimit, errorResponse, getSupabase, hashCode, json, normalizeCode, readJson, signSession } from "../lib/server.mjs";
+import { enforceRateLimit, errorResponse, getSupabase, hashCode, json, normalizeCode, readJson, signSession } from "./lib/server.mjs";
 
 const allTools = ["official-letter","memo","meeting-invite","inquiry-letter","executive-summary","project-outline","risk-analysis","public-news","speech","document-review"];
 

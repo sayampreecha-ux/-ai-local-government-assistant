@@ -1,5 +1,5 @@
-import { errorResponse, getSupabase, isSupabaseConfigured, json } from "../lib/server.mjs";
-import { FALLBACK_PACKAGES } from "../lib/catalog.mjs";
+import { errorResponse, getSupabase, isSupabaseConfigured, json } from "./lib/server.mjs";
+import { FALLBACK_PACKAGES } from "./lib/catalog.mjs";
 
 export default {
   async fetch(request) {

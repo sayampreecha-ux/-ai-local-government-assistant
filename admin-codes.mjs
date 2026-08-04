@@ -1,6 +1,6 @@
-import { bearerToken, enforceRateLimit, errorResponse, getSupabase, isSupabaseConfigured, json, readJson, verifySession } from "../lib/server.mjs";
-import { PROMPT_MASTER, PROMPT_COUNT } from "../lib/prompt-master.mjs";
-import { assemblePrompt, cleanPromptFields, TONE_MAP } from "../lib/prompt-assembler.mjs";
+import { bearerToken, enforceRateLimit, errorResponse, getSupabase, isSupabaseConfigured, json, readJson, verifySession } from "./lib/server.mjs";
+import { PROMPT_MASTER, PROMPT_COUNT } from "./lib/prompt-master.mjs";
+import { assemblePrompt, cleanPromptFields, TONE_MAP } from "./lib/prompt-assembler.mjs";
 
 const ALL_TOOL_IDS = Object.keys(PROMPT_MASTER);
 

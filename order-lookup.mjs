@@ -1,4 +1,4 @@
-import { enforceRateLimit, errorResponse, getSupabase, json, verifyAdminRequest } from "../lib/server.mjs";
+import { enforceRateLimit, errorResponse, getSupabase, json, verifyAdminRequest } from "./lib/server.mjs";
 
 export default {
   async fetch(request) {

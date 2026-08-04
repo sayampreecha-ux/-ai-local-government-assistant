@@ -1,8 +1,8 @@
 import {
   cleanText, enforceRateLimit, envFlag, errorResponse, generateRequestRef, getSupabase,
   hashClientIp, json, readJson, signSession, writeAuditLog
-} from "../lib/server.mjs";
-import { notifyNewOrder } from "../lib/notifications.mjs";
+} from "./lib/server.mjs";
+import { notifyNewOrder } from "./lib/notifications.mjs";
 
 export default {
   async fetch(request) {

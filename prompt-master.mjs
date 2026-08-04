@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import {
   cleanText, envFlag, envValue, generateAccessCode, generateRequestRef, hashCode, maskCode,
   normalizeCode, secureEqual, signSession, verifyAdminSecret, verifySession
-} from "./security.mjs";
+} from "./catalog.mjs";
 
 let supabaseClient;
 

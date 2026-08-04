@@ -1,8 +1,8 @@
 import {
   cleanText, enforceRateLimit, errorResponse, generateAccessCode, getSupabase,
   hashCode, json, maskCode, readJson, verifyAdminRequest, writeAuditLog
-} from "../lib/server.mjs";
-import { notifyActivation } from "../lib/notifications.mjs";
+} from "./lib/server.mjs";
+import { notifyActivation } from "./lib/notifications.mjs";
 
 const selectFields = "id,owner_name,customer_email,order_id,package_id,package_name,allowed_tools,masked_code,active,uses,max_uses,created_at,expires_at,last_used_at";
 

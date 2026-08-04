@@ -1,4 +1,4 @@
-import { cleanText, enforceRateLimit, errorResponse, getSupabase, json, readJson, secureEqual, signSession } from "../lib/server.mjs";
+import { cleanText, enforceRateLimit, errorResponse, getSupabase, json, readJson, secureEqual, signSession } from "./lib/server.mjs";
 
 export default {
   async fetch(request) {

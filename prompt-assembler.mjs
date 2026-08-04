@@ -1,5 +1,5 @@
-import { envFlag, getSupabase, isSupabaseConfigured, json } from "../lib/server.mjs";
-import { PROMPT_COUNT } from "../lib/prompt-master.mjs";
+import { envFlag, getSupabase, isSupabaseConfigured, json } from "./lib/server.mjs";
+import { PROMPT_COUNT } from "./lib/prompt-master.mjs";
 
 const VERSION = "5.0.0-222";
 export default {

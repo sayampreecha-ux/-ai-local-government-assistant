@@ -1,4 +1,4 @@
-import { cleanText, env, getSupabase, isSupabaseConfigured } from "./server.mjs";
+import { cleanText, env, getSupabase, isSupabaseConfigured } from "./lib/server.mjs";
 
 function htmlEscape(value) {
   return String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
