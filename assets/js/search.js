@@ -32,7 +32,7 @@ if(q){
   const routeTargets={
     'gp001.html':'facts','gp002.html':'facts','gp003.html':'need','gp004.html':'problem',
     'gp005.html':'facts','gp006.html':'facts','gp007.html':'facts','gp008.html':'facts',
-    'gp009.html':'facts','gp010.html':'facts','gp011.html':'facts','gp012.html':'facts'
+    'gp009.html':'facts','gp010.html':'facts','gp011.html':'facts','gp012.html':'facts','gp013.html':'facts'
   };
   const page=location.pathname.split('/').pop()||'';
   let target=document.getElementById(routeTargets[page]||'facts');
