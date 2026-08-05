@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GovPrompt v7 Master Prompt Smoke Test</title>
+  <style>
+    body{font-family:system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;line-height:1.5}
+    .pass{color:#176b32}.fail{color:#b42318}pre{white-space:pre-wrap;background:#f6f8fa;padding:16px;border-radius:10px}
+  </style>
+</head>
+<body>
+  <h1>GovPrompt v7 Master Prompt Smoke Test</h1>
+  <p id="summary">กำลังทดสอบ…</p>
+  <ol id="results"></ol>
+  <pre id="sample"></pre>
+
+  <script src="../assets/js/core/shared-context.js"></script>
+  <script src="../assets/js/core/master-prompt-engine.js"></script>
+  <script src="../assets/js/core/prompt-registry.js"></script>
+  <script>
+    (() => {
+      const results = [];
+      const assert = (name, condition, detail = '') => results.push({ name, pass: Boolean(condition), detail });
+      const core = window.GovPromptCore || {};
+
+      assert('โหลด Master Prompt Engine', typeof core.buildMasterPrompt === 'function');
+      assert('โหลด Prompt Registry', Array.isArray(core.PROMPT_REGISTRY));
+      assert('มีโมดูลครบ GP001–GP013', core.PROMPT_REGISTRY?.length === 13, `พบ ${core.PROMPT_REGISTRY?.length ?? 0} โมดูล`);
+      assert('มี buildModulePrompt', typeof core.buildModulePrompt === 'function');
+      assert('มี getPromptRuntime', typeof core.getPromptRuntime === 'function');
+
+      const ids = Array.from({ length: 13 }, (_, index) => `GP${String(index + 1).padStart(3, '0')}`);
+      ids.forEach(moduleId => {
+        const runtime = core.getPromptRuntime?.(moduleId, {
+          organizationType: 'องค์การบริหารส่วนจังหวัด',
+          facts: 'ข้อมูลทดสอบ',
+          desiredOutput: 'คำตอบพร้อมข้อเสนอแนะ'
+        });
+        assert(`${moduleId} สร้าง runtime ได้`, Boolean(runtime?.definition && runtime?.context && runtime?.masterPrompt));
+        assert(`${moduleId} ใช้ Master Prompt v7`, runtime?.masterPrompt?.includes('หลักการทำงานกลาง'));
+      });
+
+      const sample = core.getPromptRuntime?.('GP003', {
+        organizationType: 'องค์การบริหารส่วนจังหวัด',
+        facts: 'ตรวจ TOR งานจัดซื้อจัดจ้าง',
+        desiredOutput: 'ระบุความเสี่ยงและข้อเสนอแนะ'
+      });
+      document.getElementById('sample').textContent = sample?.masterPrompt || 'ไม่สามารถสร้าง Prompt ตัวอย่างได้';
+
+      const list = document.getElementById('results');
+      results.forEach(item => {
+        const li = document.createElement('li');
+        li.className = item.pass ? 'pass' : 'fail';
+        li.textContent = `${item.pass ? 'ผ่าน' : 'ไม่ผ่าน'} — ${item.name}${item.detail ? ` (${item.detail})` : ''}`;
+        list.appendChild(li);
+      });
+
+      const passed = results.filter(item => item.pass).length;
+      const failed = results.length - passed;
+      const summary = document.getElementById('summary');
+      summary.className = failed ? 'fail' : 'pass';
+      summary.textContent = `ผลทดสอบ: ผ่าน ${passed} รายการ / ไม่ผ่าน ${failed} รายการ`;
+      document.title = failed ? 'FAIL — GovPrompt v7 Smoke Test' : 'PASS — GovPrompt v7 Smoke Test';
+    })();
+  </script>
+</body>
+</html>
