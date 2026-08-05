@@ -48,7 +48,7 @@ const insertedScripts = '<script src="assets/js/core/shared-context.js"></script
 for (let index = 1; index <= 13; index += 1) {
   const file = `gp${String(index).padStart(3, '0')}.html`;
   const current = await readFile(file, 'utf8');
-  const baseline = execFileSync('git', ['show', `origin/main:${file}`], { encoding: 'utf8' });
+  const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' });
   assert.equal(current.includes(insertedScripts), true, `${file}: router scripts not integrated`);
   const normalizeEol = text => text.replace(/\r\n/g, '\n');
   assert.equal(normalizeEol(current.replace(insertedScripts, '')), normalizeEol(baseline), `${file}: existing UI or prompt behavior changed`);

@@ -72,7 +72,7 @@ const loaderScripts = '<script src="assets/js/core/shared-context.js"></script><
 for (let index = 1; index <= 13; index += 1) {
   const file = `gp${String(index).padStart(3, '0')}.html`;
   const current = (await readFile(file, 'utf8')).replace(/\r\n/g, '\n');
-  const baseline = execFileSync('git', ['show', `origin/main:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+  const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
   assert.equal(current.includes(loaderScripts), true, `${file}: document loader missing`);
   assert.equal(current.replace(loaderScripts, ''), baseline, `${file}: Sprint 4.1 output changed`);
 }
