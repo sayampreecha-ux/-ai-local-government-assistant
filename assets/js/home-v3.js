@@ -8,8 +8,42 @@
   const cameraInput = document.getElementById('cameraInput');
   const attachmentStatus = document.getElementById('attachmentStatus');
   const dialog = document.getElementById('appDialog');
-  const historyKey = 'govprompt-v3-history';
+  const legacyHistoryKey = 'govprompt-v3-history';
+  const history = [];
   let attachments = [];
+
+  // Prompts can contain official or personal information. Keep history only in
+  // this tab's memory and remove data written by the previous implementation.
+  try { localStorage.removeItem(legacyHistoryKey); } catch {}
+
+  // Publish local, non-identifying Web Vitals so release audits can measure the
+  // rendered application without sending telemetry off the device.
+  const runtimeMetrics = { lcp: 0, cls: 0 };
+  try {
+    new PerformanceObserver(list => {
+      const entries = list.getEntries();
+      if (entries.length) runtimeMetrics.lcp = entries[entries.length - 1].startTime;
+    }).observe({ type: 'largest-contentful-paint', buffered: true });
+    new PerformanceObserver(list => {
+      list.getEntries().forEach(entry => { if (!entry.hadRecentInput) runtimeMetrics.cls += entry.value; });
+    }).observe({ type: 'layout-shift', buffered: true });
+  } catch {}
+  window.addEventListener('load', () => setTimeout(() => {
+    const paints = performance.getEntriesByType('paint');
+    const firstPaint = paints.find(entry => entry.name === 'first-paint');
+    const firstContentfulPaint = paints.find(entry => entry.name === 'first-contentful-paint');
+    document.documentElement.dataset.firstPaint = String(firstPaint?.startTime ?? 0);
+    document.documentElement.dataset.fcp = String(firstContentfulPaint?.startTime ?? 0);
+    document.documentElement.dataset.lcp = String(runtimeMetrics.lcp);
+    document.documentElement.dataset.cls = String(runtimeMetrics.cls);
+    const metricTarget = document.getElementById('main-content');
+    if (metricTarget) {
+      metricTarget.dataset.firstPaint = document.documentElement.dataset.firstPaint;
+      metricTarget.dataset.fcp = document.documentElement.dataset.fcp;
+      metricTarget.dataset.lcp = document.documentElement.dataset.lcp;
+      metricTarget.dataset.cls = document.documentElement.dataset.cls;
+    }
+  }, 1000), { once: true });
 
   const escapeHTML = value => String(value).replace(/[&<>'"]/g, character => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
@@ -38,44 +72,73 @@
     const article = document.createElement('article');
     article.className = 'message assistant';
     article.id = 'thinkingMessage';
-    article.innerHTML = '<span class="assistant-mark" aria-hidden="true">กพ</span><div class="assistant-content"><div class="thinking"><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>กำลังวิเคราะห์งานราชการ</span></div><div class="analysis-steps">จำแนกประเภทงาน · ตรวจบริบท · เตรียมแหล่งอ้างอิง</div></div>';
+    article.innerHTML = '<span class="assistant-mark" aria-hidden="true">กพ</span><div class="assistant-content"><div class="thinking"><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>กำลังเลือกเครื่องมือ</span></div><div class="analysis-steps">จำแนกประเภทงาน · จับคู่ผู้ช่วยเฉพาะด้าน</div></div>';
     conversation.appendChild(article);
+  }
+
+  function requireCore() {
+    const core = window.GovPromptCore;
+    if (!core || typeof core.createSharedContext !== 'function' || typeof core.routeTransaction !== 'function') {
+      throw new Error('GovPrompt Core is unavailable');
+    }
+    return core;
   }
 
   function routePrompt(text) {
-    const context = window.GovPromptCore.createSharedContext({ facts: text, desiredOutput: text, documents: attachments.map(file => file.name).join(', ') });
-    return window.GovPromptCore.routeTransaction(context);
+    const core = requireCore();
+    const context = core.createSharedContext({ facts: text, desiredOutput: text, documents: attachments.map(file => file.name).join(', ') });
+    return core.routeTransaction(context);
   }
 
-  function answerCopy(route, text) {
-    const name = domainNames[route.transactionType] || domainNames.general;
-    return {
-      summary: `ระบบจำแนกคำถามนี้เป็น “${name}” และส่งต่อให้ ${route.assistant.title} วิเคราะห์โดยอัตโนมัติ`,
-      laws: 'ควรตรวจสอบกฎหมาย ระเบียบ หนังสือสั่งการ และข้อบัญญัติที่ใช้บังคับ ณ วันที่ดำเนินการ โดยไม่สมมติเลขมาตราหรือแหล่งอ้างอิงที่ยังไม่ผ่านการตรวจสอบ',
-      procedure: `รวบรวมข้อเท็จจริง หน่วยงานเจ้าของเรื่อง ขั้นตอนปัจจุบัน เอกสารที่มี และผลลัพธ์ที่ต้องการ สำหรับเรื่อง “${text}” ก่อนจัดทำร่างหรือดำเนินการ`,
-      risk: 'ข้อมูลสำคัญยังอาจไม่ครบถ้วน การอนุมัติ วงเงิน วันที่ และอำนาจหน้าที่ต้องให้ผู้รับผิดชอบตรวจสอบก่อนใช้จริง',
-      recommendation: 'เปิดเครื่องมือเฉพาะด้านเพื่อกรอกรายละเอียดและสร้าง Prompt ฉบับเต็ม หรือถามต่อในช่องสนทนาเพื่อเพิ่มบริบท',
-      references: 'คลังความรู้และ Citation Engine จะยอมรับเฉพาะเอกสารที่มีผลใช้บังคับและแหล่งราชการที่ตรวจสอบได้'
-    };
-  }
-
-  function addAnswer(route, text) {
-    const copy = answerCopy(route, text);
+  function addRouteResult(route) {
     const article = document.createElement('article');
+    const content = document.createElement('div');
+    const label = document.createElement('span');
+    const card = document.createElement('div');
+    const section = document.createElement('section');
+    const heading = document.createElement('h3');
+    const description = document.createElement('p');
+    const actions = document.createElement('div');
+    const openLink = document.createElement('a');
+    const copyButton = document.createElement('button');
+    const mark = document.createElement('span');
+
     article.className = 'message assistant';
-    article.innerHTML = `<span class="assistant-mark" aria-hidden="true">กพ</span><div class="assistant-content"><span class="route-label">${escapeHTML(domainNames[route.transactionType] || domainNames.general)} · ${route.moduleId}</span><div class="answer-card"><section class="answer-section"><h3>สรุป</h3><p>${escapeHTML(copy.summary)}</p></section><section class="answer-section"><h3>กฎหมายที่เกี่ยวข้อง</h3><p>${escapeHTML(copy.laws)}</p></section><section class="answer-section"><h3>ขั้นตอนดำเนินการ</h3><p>${escapeHTML(copy.procedure)}</p></section><section class="answer-section risk"><h3>ความเสี่ยง</h3><p>${escapeHTML(copy.risk)}</p></section><section class="answer-section"><h3>ข้อเสนอแนะ</h3><p>${escapeHTML(copy.recommendation)}</p><div class="answer-actions"><a href="${escapeHTML(route.assistant.path)}">เปิดเครื่องมือขั้นสูง</a><button type="button" data-copy-answer>คัดลอก</button></div></section><section class="answer-section references"><h3>เอกสารอ้างอิง</h3><p>${escapeHTML(copy.references)}</p></section></div></div>`;
-    conversation.appendChild(article);
-    article.querySelector('[data-copy-answer]').addEventListener('click', async () => {
-      await navigator.clipboard.writeText(Object.values(copy).join('\n\n'));
-      window.GovPrompt?.toast('คัดลอกคำตอบแล้ว');
+    content.className = 'assistant-content';
+    label.className = 'route-label';
+    card.className = 'answer-card';
+    section.className = 'answer-section';
+    actions.className = 'answer-actions';
+    mark.className = 'assistant-mark';
+    mark.setAttribute('aria-hidden', 'true');
+    mark.textContent = 'กพ';
+    label.textContent = `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
+    heading.textContent = 'พบเครื่องมือที่เหมาะกับงานนี้';
+    description.textContent = route.assistant.title;
+    openLink.href = route.assistant.path;
+    openLink.textContent = `เปิด ${route.moduleId}`;
+    copyButton.type = 'button';
+    copyButton.textContent = 'คัดลอกชื่อเครื่องมือ';
+    copyButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(`${route.moduleId} · ${route.assistant.title}`);
+        window.GovPrompt?.toast('คัดลอกชื่อเครื่องมือแล้ว');
+      } catch {
+        window.GovPrompt?.toast('ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
+      }
     });
+
+    actions.append(openLink, copyButton);
+    section.append(heading, description, actions);
+    card.append(section);
+    content.append(label, card);
+    article.append(mark, content);
+    conversation.appendChild(article);
   }
 
   function saveHistory(text, route) {
-    let history = [];
-    try { history = JSON.parse(localStorage.getItem(historyKey) || '[]'); } catch { history = []; }
     history.unshift({ text, moduleId: route.moduleId, domain: domainNames[route.transactionType] || domainNames.general, at: new Date().toISOString() });
-    localStorage.setItem(historyKey, JSON.stringify(history.slice(0, 20)));
+    history.length = Math.min(history.length, 20);
   }
 
   async function submitPrompt(text) {
@@ -83,10 +146,20 @@
     addUserMessage(text);
     addThinking();
     conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    const route = routePrompt(text);
+    let route;
+    try {
+      route = routePrompt(text);
+    } catch {
+      document.getElementById('thinkingMessage')?.remove();
+      window.GovPrompt?.toast('ระบบวิเคราะห์ยังไม่พร้อม กรุณาลองใหม่อีกครั้ง');
+      input.value = text;
+      resizeInput();
+      input.focus();
+      return;
+    }
     await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 850));
     document.getElementById('thinkingMessage')?.remove();
-    addAnswer(route, text);
+    addRouteResult(route);
     saveHistory(text, route);
     conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }
@@ -102,9 +175,23 @@
 
   input.addEventListener('input', resizeInput);
   input.addEventListener('keydown', event => {
+    if (event.isComposing) return;
     if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); form.requestSubmit(); }
   });
-  document.querySelectorAll('[data-prompt]').forEach(button => button.addEventListener('click', () => submitPrompt(button.dataset.prompt)));
+  const promptButtons = [...document.querySelectorAll('[data-prompt]')];
+  promptButtons.forEach((button, index) => {
+    button.addEventListener('click', () => submitPrompt(button.dataset.prompt));
+    button.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const target = event.key === 'Home' ? 0 : event.key === 'End' ? promptButtons.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + promptButtons.length) % promptButtons.length;
+      promptButtons[target].focus();
+    });
+  });
+
+  document.querySelectorAll('[data-file-picker]').forEach(button => button.addEventListener('click', () => {
+    document.getElementById(button.dataset.filePicker)?.click();
+  }));
 
   function collectFiles(fileList) {
     attachments = [...attachments, ...Array.from(fileList)].slice(0, 5);
@@ -128,9 +215,7 @@
   });
 
   function historyPanel() {
-    let history = [];
-    try { history = JSON.parse(localStorage.getItem(historyKey) || '[]'); } catch { history = []; }
-    if (!history.length) return '<div class="empty-panel"><strong>ยังไม่มีประวัติการใช้งาน</strong><p>คำถามล่าสุดจะเก็บไว้เฉพาะในอุปกรณ์นี้</p></div>';
+    if (!history.length) return '<div class="empty-panel"><strong>ยังไม่มีประวัติการใช้งาน</strong><p>คำถามล่าสุดจะเก็บไว้เฉพาะในหน่วยความจำของแท็บนี้ และจะหายไปเมื่อปิดหรือโหลดหน้าใหม่</p></div>';
     return `<div class="tool-list">${history.map(item => `<a href="#" data-history="${escapeHTML(item.text)}"><strong>${escapeHTML(item.text)}</strong><small>${escapeHTML(item.domain)} · ${new Date(item.at).toLocaleString('th-TH')}</small></a>`).join('')}</div>`;
   }
 
@@ -145,8 +230,10 @@
     tools: ['เครื่องมือ', 'ADVANCED USERS', toolsPanel]
   };
 
-  document.querySelectorAll('[data-panel]').forEach(button => button.addEventListener('click', () => {
-    const [title, eyebrow, content] = panels[button.dataset.panel];
+  function openPanel(event) {
+    const panel = panels[event.detail?.panel];
+    if (!panel) return;
+    const [title, eyebrow, content] = panel;
     document.getElementById('dialogTitle').textContent = title;
     document.getElementById('dialogEyebrow').textContent = eyebrow;
     document.getElementById('dialogContent').innerHTML = content();
@@ -154,10 +241,13 @@
     dialog.querySelectorAll('[data-history]').forEach(link => link.addEventListener('click', event => {
       event.preventDefault(); dialog.close(); input.value = link.dataset.history; resizeInput(); input.focus();
     }));
-  }));
-  document.getElementById('closeDialog').addEventListener('click', () => dialog.close());
+  }
+
+  window.GovPrompt.on('shell:panel', openPanel);
+
   document.getElementById('newChat').addEventListener('click', () => {
     conversation.replaceChildren(); attachments = []; attachmentStatus.textContent = '';
     document.querySelector('.chat-main').classList.remove('has-messages'); input.focus();
   });
+
 })();

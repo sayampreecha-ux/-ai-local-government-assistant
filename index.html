@@ -47,14 +47,14 @@
         <textarea id="promptInput" rows="1" maxlength="6000" placeholder="ถามเกี่ยวกับงานราชการ..." required></textarea>
         <div class="composer-tools">
           <div class="input-actions">
-            <label class="tool-button" for="attachmentInput" aria-label="แนบไฟล์" title="แนบไฟล์">
+            <button class="tool-button" type="button" data-file-picker="attachmentInput" aria-label="แนบไฟล์" title="แนบไฟล์">
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21.4 11.6-8.9 8.9a6 6 0 0 1-8.5-8.5l9.6-9.6a4 4 0 0 1 5.7 5.7l-9.6 9.6a2 2 0 1 1-2.8-2.8l8.9-8.9"/></svg>
-            </label>
-            <input class="sr-only" id="attachmentInput" type="file" multiple>
-            <label class="tool-button" for="cameraInput" aria-label="ถ่ายภาพหรือเลือกภาพ" title="ถ่ายภาพหรือเลือกภาพ">
+            </button>
+            <input id="attachmentInput" type="file" multiple hidden>
+            <button class="tool-button" type="button" data-file-picker="cameraInput" aria-label="ถ่ายภาพหรือเลือกภาพ" title="ถ่ายภาพหรือเลือกภาพ">
               <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h3l2-3h6l2 3h3v13H4z"/><circle cx="12" cy="13" r="4"/></svg>
-            </label>
-            <input class="sr-only" id="cameraInput" type="file" accept="image/*" capture="environment">
+            </button>
+            <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
             <button class="tool-button" id="micButton" type="button" aria-label="พิมพ์ด้วยเสียง" title="พิมพ์ด้วยเสียง">
               <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>
             </button>
@@ -78,7 +78,7 @@
   </nav>
 
   <dialog class="app-dialog" id="appDialog" aria-labelledby="dialogTitle">
-    <div class="dialog-head"><div><p class="eyebrow" id="dialogEyebrow"></p><h2 id="dialogTitle"></h2></div><button class="icon-button" id="closeDialog" type="button" aria-label="ปิด">×</button></div>
+    <div class="dialog-head"><div><p class="eyebrow" id="dialogEyebrow"></p><h2 id="dialogTitle"></h2></div><button class="icon-button" id="closeDialog" type="button" aria-label="ปิด" data-dialog-close>×</button></div>
     <div id="dialogContent"></div>
   </dialog>
 
