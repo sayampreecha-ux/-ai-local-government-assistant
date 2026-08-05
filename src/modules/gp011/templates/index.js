@@ -1,0 +1,3 @@
+export const GP011_TEMPLATES = Object.freeze(["pdpa-assessment", "masking-report", "consent-review", "disclosure-review", "compliance-report", "executive-summary"]);
+export const GP011_OUTPUT_FORMATS = Object.freeze(["markdown", "html", "json", "api-response", "audit-log"]);
+export const GP011_TEMPLATE_LABELS = Object.freeze({ "pdpa-assessment": "PDPA Assessment", "masking-report": "Personal Data Masking Report", "consent-review": "Consent Validation Report", "disclosure-review": "Disclosure Review", "compliance-report": "PDPA Compliance Report", "executive-summary": "Executive Privacy Summary" });

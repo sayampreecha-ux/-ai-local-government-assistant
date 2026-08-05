@@ -1,0 +1,17 @@
+GovPrompt Thailand v1.6 — ตั้งค่ารับ Feedback เข้า Google Sheets
+
+1) สร้าง Google Sheet ใหม่ ตั้งชื่อ "GovPrompt Thailand Feedback"
+2) เปิด Extensions > Apps Script
+3) ลบโค้ดเดิม แล้ววางโค้ดจากไฟล์ google-apps-script-feedback.gs
+4) กด Deploy > New deployment > เลือก Web app
+5) Execute as: Me
+6) Who has access: Anyone
+7) กด Deploy และคัดลอก Web app URL
+8) เปิดไฟล์ feedback-config.js แล้วใส่ URL ระหว่างเครื่องหมายคำพูด เช่น
+   window.GOVPROMPT_FEEDBACK_ENDPOINT = 'https://script.google.com/macros/s/XXXXX/exec';
+9) อัปโหลดไฟล์ทั้งหมดขึ้น GitHub Pages แบบ Merge & Upgrade
+10) ทดลองสร้าง Prompt ให้เสร็จ แล้วให้คะแนนและส่งความคิดเห็น 1 ครั้ง
+11) ตรวจแท็บ Feedback ใน Google Sheet
+
+ข้อมูลที่บันทึก: วันเวลา, รหัส GP, คะแนน, ความคิดเห็น, อุปกรณ์, เวอร์ชัน, หน้าที่ส่ง
+ข้อควรระวัง: อย่าให้ผู้ใช้กรอกข้อมูลลับหรือข้อมูลส่วนบุคคลในช่องความคิดเห็น

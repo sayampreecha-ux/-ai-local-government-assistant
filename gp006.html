@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b3b75">
+<title>ผู้ช่วยงานบุคคล | GovPrompt Thailand</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif;background:#f7f9fc;color:#10233f}.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #e4eaf2}.bar{max-width:980px;margin:auto;padding:11px 14px;display:flex;justify-content:space-between}.bar a{text-decoration:none;color:#0b3b75}.wrap{max-width:980px;margin:auto;padding:16px 14px 40px}h1{font-size:25px;margin:4px 0 14px}.search,input,textarea,select{width:100%;border:1px solid #d8e1ec;border-radius:10px;padding:11px;font:inherit;background:#fff}.search{margin-bottom:12px}.list,.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.task{border:1px solid #e0e7f0;background:#fff;border-radius:12px;padding:13px;text-align:left;font:inherit;min-height:58px}.task.active{border-color:#0b3b75;box-shadow:0 0 0 2px #dbe8f7}.generator{margin-top:16px;background:#fff;border:1px solid #dde6f0;border-radius:14px;padding:15px}.full{grid-column:1/-1}label{display:block;font-weight:700;margin:9px 0 5px}.field{position:relative}.field input,.field textarea{padding-right:46px}.mic{position:absolute;right:7px;top:34px;width:34px;height:34px;border:0;border-radius:9px;background:#edf2f7;cursor:pointer}.mic.listening{background:#d93025;color:#fff}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:700}.primary{background:#0b3b75;color:#fff}.secondary{background:#edf2f7;color:#19334f}.output{margin-top:12px;background:#f3f7fb;border-radius:10px;padding:12px;white-space:pre-wrap;display:none}.note{margin-top:10px;color:#65758b;font-size:12px}@media(max-width:700px){.list,.grid{grid-template-columns:1fr}.full{grid-column:auto}}
+</style>
+<link rel="stylesheet" href="assets/css/govprompt.css"></head>
+<body>
+<header class="top"><div class="bar"><a href="index.html"><b>GovPrompt Thailand</b></a><a href="index.html">← ผู้ช่วยทั้งหมด</a></div></header>
+<main class="wrap">
+<h1>👥 ผู้ช่วยงานบุคคล</h1>
+<input class="search" id="filter" placeholder="ค้นหา เช่น บรรจุ โอนย้าย วินัย เงินเดือน">
+<section class="list" id="tasks">
+<button class="task" data-task="บรรจุและแต่งตั้ง">👤 บรรจุและแต่งตั้ง</button>
+<button class="task" data-task="ทดลองปฏิบัติราชการ">🧪 ทดลองปฏิบัติราชการ</button>
+<button class="task" data-task="โอนหรือย้าย">🔄 โอน / ย้าย</button>
+<button class="task" data-task="เลื่อนระดับ">📈 เลื่อนระดับ</button>
+<button class="task" data-task="เลื่อนเงินเดือน">💰 เลื่อนเงินเดือน</button>
+<button class="task" data-task="ประเมินผลการปฏิบัติงาน">🎯 ประเมินผลการปฏิบัติงาน</button>
+<button class="task" data-task="วินัย">⚖️ วินัย</button>
+<button class="task" data-task="อุทธรณ์หรือร้องทุกข์">📨 อุทธรณ์ / ร้องทุกข์</button>
+<button class="task" data-task="การลา">🗓️ การลา</button>
+<button class="task" data-task="เครื่องราชอิสริยาภรณ์">🏅 เครื่องราชอิสริยาภรณ์</button>
+<button class="task" data-task="สิทธิและสวัสดิการ">🏠 สิทธิและสวัสดิการ</button>
+<button class="task" data-task="เกษียณอายุราชการ">🧓 เกษียณอายุราชการ</button>
+<button class="task" data-task="หนังสือหารืองานบุคคล">📄 หนังสือหารือ ก.จ./ก.ท./ก.อบต.</button>
+<button class="task" data-task="ตรวจคำสั่งงานบุคคล">✅ ตรวจคำสั่งงานบุคคล</button>
+</section>
+<section class="generator" id="generator">
+<strong id="selected">เลือกงานด้านบนเพื่อเริ่ม</strong>
+<div class="grid">
+<div class="field"><label>หน่วยงาน</label><input id="agency"><button class="mic" data-target="agency" type="button">🎤</button></div>
+<div class="field"><label>ประเภทบุคลากร</label><input id="personType" placeholder="ข้าราชการ พนักงานจ้าง ลูกจ้าง"><button class="mic" data-target="personType" type="button">🎤</button></div>
+<div class="field"><label>ตำแหน่ง</label><input id="position"><button class="mic" data-target="position" type="button">🎤</button></div>
+<div class="field"><label>ระดับ / ประเภทตำแหน่ง</label><input id="level"><button class="mic" data-target="level" type="button">🎤</button></div>
+<div class="full field"><label>ข้อเท็จจริง</label><textarea id="facts"></textarea><button class="mic" data-target="facts" type="button">🎤</button></div>
+<div class="full field"><label>ระเบียบ / หนังสือสั่งการ / มติที่เกี่ยวข้อง</label><textarea id="rules"></textarea><button class="mic" data-target="rules" type="button">🎤</button></div>
+<div class="full field"><label>ประเด็นที่ต้องการวิเคราะห์หรือดำเนินการ</label><textarea id="issue"></textarea><button class="mic" data-target="issue" type="button">🎤</button></div>
+<div class="full field"><label>วัตถุประสงค์หรือข้อเสนอ</label><textarea id="proposal"></textarea><button class="mic" data-target="proposal" type="button">🎤</button></div>
+</div>
+<div class="actions"><button class="btn primary" id="make">สร้าง Prompt</button><button class="btn secondary" id="copy">คัดลอก</button><button class="btn secondary" id="clear">ล้างข้อมูล</button></div>
+<div class="output" id="output"></div>
+<div class="note">ตรวจสอบข้อมูลส่วนบุคคลและเอกสารฉบับจริงก่อนใช้ผลลัพธ์ทุกครั้ง</div>
+</section>
+</main>
+<script>
+let task='';const $=id=>document.getElementById(id),val=id=>$(id).value.trim(),tasks=[...document.querySelectorAll('.task')];
+tasks.forEach(b=>b.onclick=()=>{task=b.dataset.task;tasks.forEach(x=>x.classList.remove('active'));b.classList.add('active');$('selected').textContent='งานที่เลือก: '+task;$('generator').scrollIntoView({behavior:'smooth'})});
+$('filter').oninput=e=>{const q=e.target.value.toLowerCase();tasks.forEach(x=>x.style.display=x.innerText.toLowerCase().includes(q)?'block':'none')};
+function speakInto(id,btn){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('ไมโครโฟนรองรับดีที่สุดบน Chrome หรือ Edge หรือใช้ไมโครโฟนบนคีย์บอร์ดแทน');return}const r=new SR();r.lang='th-TH';r.interimResults=false;btn.classList.add('listening');r.onresult=e=>{const el=$(id),t=e.results[0][0].transcript;el.value+=(el.value?' ':'')+t};r.onerror=()=>alert('ไม่สามารถรับเสียงได้ กรุณาตรวจสิทธิ์ไมโครโฟน');r.onend=()=>btn.classList.remove('listening');r.start()}
+document.querySelectorAll('.mic').forEach(b=>b.onclick=()=>speakInto(b.dataset.target,b));
+$('make').onclick=()=>{if(!task)return alert('กรุณาเลือกงานก่อน');const text=`บทบาท\nคุณเป็น Government AI Copilot ผู้เชี่ยวชาญการบริหารงานบุคคลส่วนท้องถิ่น\n\nภารกิจ\n${task}\n\nข้อมูลจากผู้ใช้\n- หน่วยงาน: ${val('agency')||'[ยังไม่ได้ระบุ]'}\n- ประเภทบุคลากร: ${val('personType')||'[ยังไม่ได้ระบุ]'}\n- ตำแหน่ง: ${val('position')||'[ยังไม่ได้ระบุ]'}\n- ระดับ/ประเภทตำแหน่ง: ${val('level')||'[ยังไม่ได้ระบุ]'}\n- ข้อเท็จจริง: ${val('facts')||'[ยังไม่ได้ระบุ]'}\n- ระเบียบ/หนังสือสั่งการ/มติที่เกี่ยวข้อง: ${val('rules')||'[ไม่มีหรือยังไม่ได้ระบุ]'}\n- ประเด็นที่ต้องการวิเคราะห์หรือดำเนินการ: ${val('issue')||'[ยังไม่ได้ระบุ]'}\n- วัตถุประสงค์หรือข้อเสนอ: ${val('proposal')||'[ยังไม่ได้ระบุ]'}\n\nข้อกำหนด\n- ใช้ข้อเท็จจริงและเอกสารที่ผู้ใช้ให้เป็นหลัก\n- ห้ามสมมติชื่อบุคคล วันที่ เลขหนังสือ มติ หรือข้อกฎหมาย\n- แยกข้อเท็จจริง ข้อมูลที่ขาด ฐานอำนาจ ขั้นตอน การวิเคราะห์ ความเสี่ยง และข้อเสนอแนะ\n- ตรวจ PDPA และตัดข้อมูลส่วนบุคคลที่ไม่จำเป็น\n- ระบุ [ต้องตรวจสอบ/เพิ่มเติม] เมื่อข้อมูลไม่ครบ\n- ให้ตรวจสอบระเบียบและมติที่มีผลใช้บังคับล่าสุดก่อนนำไปใช้จริง`;$('output').textContent=text;$('output').style.display='block'};
+$('copy').onclick=async()=>{if(!$('output').textContent)return alert('กรุณาสร้าง Prompt ก่อน');await navigator.clipboard.writeText($('output').textContent);alert('คัดลอกแล้ว')};
+$('clear').onclick=()=>location.reload();
+</script>
+<script src="assets/js/core/shared-context.js"></script><script src="assets/js/core/prompt-registry.js"></script><script src="assets/js/core/transaction-router.js"></script><script src="assets/js/core/context-integration.js"></script><script src="assets/js/core/document-loader.js"></script><script src="assets/js/core/citation-engine.js"></script><script src="assets/js/core/knowledge-index.js"></script><script src="assets/js/core/semantic-search.js"></script><script src="assets/js/core/knowledge-engine.js"></script><script src="assets/js/govprompt.js"></script><script src="assets/js/prompt-engine.js"></script><script src="assets/js/search.js"></script><script src="assets/js/mic.js"></script></body></html>

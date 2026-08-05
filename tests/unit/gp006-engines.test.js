@@ -1,0 +1,28 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { validateQualifications } from "../../src/modules/gp006/qualification-engine.js";
+import { analyzeAppointment } from "../../src/modules/gp006/appointment-engine.js";
+import { analyzePromotion } from "../../src/modules/gp006/promotion-engine.js";
+import { analyzeTransfer } from "../../src/modules/gp006/transfer-engine.js";
+import { analyzeDiscipline } from "../../src/modules/gp006/discipline-engine.js";
+import { analyzeSalary } from "../../src/modules/gp006/salary-engine.js";
+import { analyzePositionAllowance } from "../../src/modules/gp006/allowance-engine.js";
+import { analyzeWorkforce } from "../../src/modules/gp006/workforce-engine.js";
+import { analyzeRetirement } from "../../src/modules/gp006/retirement-engine.js";
+import { analyzeHR } from "../../src/modules/gp006/hr-engine.js";
+import { formatGP006Output } from "../../src/modules/gp006/output-engine.js";
+import { GP006_KNOWLEDGE } from "../../src/modules/gp006/knowledge/index.js";
+import { GP006_TEMPLATES } from "../../src/modules/gp006/templates/index.js";
+
+test("validates required position qualifications", () => { const r = validateQualifications({ qualifications: ["degree"] }, { requiredQualifications: ["degree", "license"] }); assert.equal(r.valid, false); assert.deepEqual(r.missing, ["license"]); });
+test("analyzes appointment authority, vacancy, selection, and qualifications", () => { const r = analyzeAppointment({ position: { id: "p", vacant: true }, candidate: { selectionPassed: true, appointmentAuthorityApproved: true } }, { valid: true }); assert.equal(r.eligible, true); });
+test("analyzes promotion tenure, performance, discipline, and qualification", () => { const r = analyzePromotion({ promotion: { tenureYears: 4, minimumTenureYears: 3, performanceScore: 90, minimumPerformanceScore: 80 }, discipline: {} }, { valid: true }); assert.equal(r.eligible, true); });
+test("analyzes transfer consent, vacancy, standards, and jurisdiction", () => { const r = analyzeTransfer({ transfer: { destinationVacant: true, originConsent: true, destinationConsent: true, samePositionStandard: true, originJurisdiction: "a", destinationJurisdiction: "b" } }); assert.equal(r.eligible, true); assert.equal(r.jurisdictionChange, true); });
+test("analyzes discipline evidence, proportional sanction, and due process", () => { const r = analyzeDiscipline({ discipline: { evidence: ["e1"], noticeGiven: true, responseOpportunity: true, impartialCommittee: true, severity: "serious" } }); assert.equal(r.procedurallyValid, true); assert.equal(r.recommendedSanction, "major-disciplinary-review"); });
+test("calculates salary increment with maximum cap", () => { const r = analyzeSalary({ salary: { current: 900, increment: 200, maximum: 1000, performanceEligible: true }, discipline: {} }); assert.equal(r.increment, 100); assert.equal(r.proposed, 1000); });
+test("caps eligible position allowance", () => { const r = analyzePositionAllowance({ allowances: { requested: 6000 }, position: { allowanceEligible: true, allowanceCap: 5000 } }); assert.equal(r.allowed, 5000); });
+test("projects workforce vacancies, retirements, hires, and gaps", () => { const r = analyzeWorkforce({ workforce: { authorized: 10, filled: 8, forecastRetirements: 2, plannedHires: 1 } }); assert.equal(r.projectedFilled, 7); assert.equal(r.projectedGap, 3); });
+test("calculates retirement eligibility on an as-of date", () => { const r = analyzeRetirement({ employee: { birthDate: "1966-01-01", retirementAge: 60 }, asOfDate: "2026-08-05" }); assert.equal(r.eligible, true); assert.equal(r.age, 60); });
+test("produces deterministic executive HR decision", () => { const analyses = { qualification: { valid: true }, promotion: { eligible: true }, discipline: { procedurallyValid: true } }; const r = analyzeHR({ action: "promotion" }, analyses, {}); assert.equal(r.decision, "eligible"); assert.equal(r.confidence, 1); });
+test("formats JSON, Markdown, audit, and API outputs", () => { const r = { template: "hr-opinion", hr: { decision: "eligible", recommendation: "Proceed" }, qualification: { valid: true }, appointment: { eligible: true }, promotion: { eligible: true }, transfer: { eligible: true }, salary: { proposed: 100 }, discipline: { recommendedSanction: "none" }, retirement: { reason: "not-yet-eligible" }, workforce: { projectedGap: 0 }, allowance: {} }; assert.match(formatGP006Output(r, "markdown"), /^# HR Opinion/); assert.equal(formatGP006Output(r, "json").template, "hr-opinion"); assert.equal(formatGP006Output(r, "audit-log").event, "gp006.hr-analysis"); assert.equal(formatGP006Output(r, "api-response").moduleId, "GP006"); });
+test("registers six templates and ten controlled knowledge sources", () => { assert.equal(GP006_TEMPLATES.length, 6); assert.equal(GP006_KNOWLEDGE.length, 10); });

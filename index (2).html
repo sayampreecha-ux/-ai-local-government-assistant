@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="GovPrompt Thailand ทดลองใช้ฟรี 20 Prompt สำหรับงานราชการ ใช้งานได้ทันที">
+  <meta name="theme-color" content="#0a2b55">
+  <title>GovPrompt Thailand — 20 Prompt ฟรี</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=free20-20260727-1">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top">
+      <span class="brand-mark">G</span>
+      <span><strong>GovPrompt Thailand</strong><small>ระบบผู้ช่วย AI สำหรับงานราชการไทย</small></span>
+    </a>
+    <nav><a href="#tools">เครื่องมือฟรี</a><a href="#feedback">ข้อเสนอแนะ</a></nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">GovPrompt Thailand 5.0</div>
+        <h1>ทดลองใช้ฟรี 20 Prompt<br><span>สำหรับงานราชการ ใช้งานได้ทันที</span></h1>
+        <p class="lead">เลือกประเภทงาน กรอกข้อเท็จจริง แล้วรับ Prompt พร้อมคัดลอกไปใช้กับ ChatGPT, Gemini, Claude หรือ AI ที่คุณเลือก โดยไม่ต้องสมัครสมาชิก</p>
+        <div class="hero-actions"><a class="btn primary" href="#tools">🚀 เริ่มใช้ฟรีทันที</a></div>
+        <div class="trust-row">
+          <span>✓ ไม่ต้องเข้าสู่ระบบ</span>
+          <span>✓ ใช้ได้ทั้งมือถือและคอมพิวเตอร์</span>
+          <span>✓ ดาวน์โหลด Word และบันทึก PDF ได้</span>
+        </div>
+      </div>
+      <aside class="hero-panel">
+        <div class="hero-stat"><strong>20</strong><span>Prompt ฟรีพร้อมใช้</span></div>
+        <div class="hero-stat"><strong>222</strong><span>Prompt ในคลังทั้งหมด</span></div>
+        <div class="notice">AI เป็นผู้ช่วยร่าง ผู้ใช้ต้องตรวจสอบข้อเท็จจริง กฎหมาย อำนาจหน้าที่ และความถูกต้องก่อนนำไปใช้จริง</div>
+      </aside>
+    </section>
+
+    <section class="section" id="tools">
+      <div class="section-head">
+        <div><span class="kicker">เครื่องมือพร้อมใช้</span><h2>เลือก 1 ใน 20 Prompt ฟรี</h2></div>
+        <p>ออกแบบให้ถามข้อมูลสำคัญก่อนสร้างงาน ลดการเดา และแยกข้อเท็จจริงออกจากการวิเคราะห์</p>
+      </div>
+      <div id="toolGrid" class="tool-grid"><div class="loading-box">กำลังโหลดเครื่องมือ...</div></div>
+    </section>
+
+    <section class="section soft" id="preview">
+      <div class="preview-grid">
+        <div>
+          <span class="kicker">ดูแนวทางก่อนใช้งาน</span>
+          <h2>ตัวอย่างรูปแบบ Prompt</h2>
+          <p>เลือกเครื่องมือเพื่อดูแนวทาง แล้วกดเปิดเครื่องมือเพื่อกรอกข้อมูลและสร้าง Prompt ได้ทันที</p>
+          <label for="previewTool">เลือกตัวอย่าง</label>
+          <select id="previewTool" class="input"></select>
+        </div>
+        <article class="sample-output">
+          <div class="sample-top"><span>ตัวอย่าง Prompt</span><span class="pill">ใช้ฟรี</span></div>
+          <div id="previewOutput">กำลังโหลดตัวอย่าง...</div>
+          <div class="fade-lock">✅ เปิดใช้ฟรีได้ทันที ไม่ต้องเข้าสู่ระบบ</div>
+        </article>
+      </div>
+    </section>
+
+  </main>
+
+  <section id="workspace" class="workspace hidden" aria-live="polite">
+    <header class="workspace-head">
+      <div><span class="kicker">พื้นที่ใช้งานฟรี</span><h2>สร้าง Prompt งานราชการฟรี</h2><p id="memberInfo">ทดลองใช้ฟรี 20 Prompt โดยไม่ต้องสมัครสมาชิกหรือกรอกรหัส</p></div>
+      <button id="closeWorkspace" class="btn secondary" type="button">ปิดพื้นที่ทำงาน</button>
+    </header>
+    <div class="workspace-grid">
+      <form id="generatorForm" class="generator-form">
+        <label>เลือกเครื่องมือ<select id="toolSelect"></select></label>
+        <div id="toolAccessNote" class="form-message"></div>
+        <div id="dynamicFields"></div>
+        <label>รูปแบบภาษา
+          <select id="tone">
+            <option value="official">ภาษาราชการ กระชับ ชัดเจน</option>
+            <option value="executive">สรุปสำหรับผู้บริหาร</option>
+            <option value="plain">อ่านง่ายสำหรับประชาชน</option>
+          </select>
+        </label>
+        <label class="check"><input required type="checkbox" id="confirmFacts"> ยืนยันว่าข้อมูลที่กรอกเป็นข้อเท็จจริงที่ตรวจสอบได้ และจะตรวจทานผลลัพธ์จาก AI ก่อนใช้จริง</label>
+        <button class="btn primary full" type="submit" id="generateBtn">สร้าง Prompt พร้อมคัดลอก</button>
+        <div id="generateMessage" class="form-message" aria-live="polite"></div>
+      </form>
+
+      <article class="result-card">
+        <div class="result-actions">
+          <span id="resultLabel">Prompt พร้อมคัดลอก</span>
+          <div>
+            <button id="copyBtn" class="mini" type="button" disabled>📋 คัดลอก</button>
+            <button id="wordBtn" class="mini" type="button" disabled>📝 Word</button>
+            <button id="pdfBtn" class="mini" type="button" disabled>📄 PDF</button>
+          </div>
+        </div>
+        <div id="watermark" class="watermark"></div>
+        <div id="nextStep" class="next-step hidden">✅ สร้างสำเร็จ — คัดลอก Prompt แล้วนำไปวางใน ChatGPT, Gemini, Claude หรือ Copilot</div>
+        <div id="resultOutput" class="result-output empty">Prompt ที่ประกอบจากข้อมูลของคุณจะแสดงที่นี่</div>
+      </article>
+    </div>
+
+    <section id="feedback" class="section feedback-section">
+      <div class="section-head compact">
+        <div><span class="kicker">ช่วยพัฒนา GovPrompt Thailand</span><h2>ประสบการณ์ใช้งานเป็นอย่างไร?</h2></div>
+        <p>ส่งคะแนนและข้อเสนอแนะสั้น ๆ เพื่อใช้ปรับปรุงระบบ ข้อมูลจะบันทึกใน Google Sheet ของโครงการ</p>
+      </div>
+      <form id="feedbackForm" class="feedback-form">
+        <label>คะแนนความพึงพอใจ
+          <select id="feedbackRating" required>
+            <option value="">เลือกคะแนน</option>
+            <option value="5">5 — ดีมาก</option>
+            <option value="4">4 — ดี</option>
+            <option value="3">3 — พอใช้</option>
+            <option value="2">2 — ควรปรับปรุง</option>
+            <option value="1">1 — ใช้งานยาก</option>
+          </select>
+        </label>
+        <label>ความคิดเห็นหรือข้อเสนอแนะ
+          <textarea id="feedbackComment" placeholder="เช่น ใช้ง่าย แต่ควรเพิ่มตัวอย่างข้อมูล"></textarea>
+        </label>
+        <button class="btn primary full" type="submit">ส่งความคิดเห็น</button>
+        <div id="feedbackMessage" class="form-message" aria-live="polite"></div>
+      </form>
+    </section>
+  </section>
+
+  <footer>
+    <strong>GovPrompt Thailand</strong>
+    <p>ระบบช่วยร่างและวิเคราะห์ ผู้ใช้ต้องตรวจสอบข้อเท็จจริง อำนาจหน้าที่ ระเบียบ และความถูกต้องก่อนนำไปใช้จริง</p>
+    <p><a href="terms.html">เงื่อนไข</a> · <a href="privacy.html">ความเป็นส่วนตัว</a></p>
+  </footer>
+
+  <script src="catalog-public.js?v=free20-20260727-1" defer></script>
+  <script src="app.js?v=free20-20260727-1" defer></script>
+</body>
+</html>

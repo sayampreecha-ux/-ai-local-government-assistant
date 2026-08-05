@@ -1,0 +1,22 @@
+GovPrompt Thailand — Baseline v1.4 Smart Workspace
+
+พัฒนาต่อจาก Baseline v1.3 ด้วยวิธี Merge & Upgrade เท่านั้น
+
+เพิ่ม:
+- Smart Dashboard สำหรับเริ่มงาน
+- Task Router ค้นหา Prompt จากภาษาธรรมชาติ/คำค้น
+- Quick Actions สำหรับงานหลัก
+- Favorites บันทึกใน Local Storage
+- Recent History สูงสุด 10 รายการใน Local Storage
+- ปุ่มเริ่มใช้ฟรีจากคลัง GP001–GP222
+- ปรับ Mobile UX สำหรับ Dashboard
+
+แก้ไข:
+- แก้ JavaScript syntax error ใน collectFacts()
+- ตรวจสอบ app.js ด้วย node --check
+
+คงเดิม:
+- GP001–GP222
+- Prompt Master ไม่ถูกเปิดเผย
+- ไม่มีการลบข้อมูลเดิม
+- Backend-only sections ยังคงซ่อนบน GitHub Pages

@@ -1,0 +1,19 @@
+ติดตั้งระบบ Google Sheet + User Experience
+
+1. แตกไฟล์ ZIP นี้
+2. เข้า GitHub repository:
+   sayampreecha-ux/-ai-local-government-assistant
+3. กด Add file > Upload files
+4. อัปโหลดเฉพาะ app.js ทับไฟล์เดิม
+5. Commit message:
+   Restore Google Sheet feedback tracking
+6. ใน index.html เปลี่ยนเลขเวอร์ชัน app.js เป็น:
+   <script src="app.js?v=20260727-3" defer></script>
+7. Commit แล้วรอประมาณ 1-2 นาที
+
+ระบบจะ:
+- บันทึกทุกครั้งที่สร้าง Prompt ลงชีตเดิม
+- เก็บ Prompt Code, Device, Version และ Page
+- เพิ่มฟอร์มให้คะแนน 1-5 และความคิดเห็น
+- ไม่เก็บข้อความที่ผู้ใช้กรอกในงานราชการ
+- ไม่เก็บชื่อ อีเมล หรือข้อมูลส่วนบุคคล

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#082b55">
+<title>GovPrompt Thailand Professional</title>
+<style>
+:root{--navy:#082b55;--blue:#0e5aa7;--gold:#d6a53a;--bg:#f5f8fc;--ink:#172033;--muted:#667085;--line:#dfe7f1;--ok:#067647;--bad:#b42318}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans Thai",sans-serif;background:var(--bg);color:var(--ink)}
+.wrap{max-width:980px;margin:auto;padding:0 20px}.top{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;padding:26px 0}.brand{font-size:22px;font-weight:900}.subbrand{opacity:.85;margin-top:4px}
+main{padding:52px 0}.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:30px;box-shadow:0 14px 36px rgba(8,43,85,.09)}
+.gate{max-width:560px;margin:auto;text-align:center}.pill{display:inline-block;background:#fff4d6;color:#694f00;border-radius:999px;padding:8px 12px;font-weight:800}
+h1{font-size:clamp(34px,6vw,54px);margin:16px 0 10px}.muted{color:var(--muted);line-height:1.75}
+input{width:100%;padding:15px 16px;border:1px solid var(--line);border-radius:12px;font:inherit;font-size:17px;text-transform:uppercase;text-align:center;letter-spacing:.05em}
+button,.btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 20px;border:0;border-radius:12px;font-weight:850;cursor:pointer;background:var(--blue);color:#fff;text-decoration:none}
+button:disabled{opacity:.55;cursor:not-allowed}.row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:14px}.hidden{display:none}.msg{margin-top:12px;font-weight:800}.ok{color:var(--ok)}.bad{color:var(--bad)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:22px}.tool{border:1px solid var(--line);border-radius:16px;padding:20px;background:#fff}.tool h3{margin:0 0 8px}
+.notice{margin-top:18px;padding:14px;border-radius:12px;background:#f7f9fc;color:var(--muted);font-size:14px}footer{text-align:center;padding:30px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap"><div class="brand">🇹🇭 GovPrompt Thailand Professional</div><div class="subbrand">AI ที่เข้าใจงานราชการไทย</div></div></header>
+<main class="wrap">
+<section id="gate" class="card gate">
+<span class="pill">ระบบสมาชิก</span>
+<h1>กรอกรหัสก่อนใช้งาน</h1>
+<p class="muted">กรอกรหัสสมาชิกที่ได้รับหลังยืนยันการชำระเงิน</p>
+<input id="code" placeholder="GP69-0001-XXXXXXXX" autocomplete="one-time-code" maxlength="18" aria-label="รหัสสมาชิก">
+<div class="row"><button id="login">เข้าใช้งาน</button></div>
+<div id="msg" class="msg" aria-live="polite"></div>
+<p class="muted" style="font-size:13px">รหัสสำหรับผู้ซื้อ GovPrompt Thailand Professional เท่านั้น</p>
+</section>
+
+<section id="app" class="hidden">
+<div class="card">
+<span class="pill">ยืนยันสิทธิ์แล้ว</span>
+<h1>พร้อมใช้งาน GP001–GP222</h1>
+<p class="muted">ระบบได้บันทึกสิทธิ์บนอุปกรณ์นี้แล้ว</p>
+<div class="row" style="justify-content:flex-start">
+<a class="btn" href="https://government-ai-copilot-demo.foggy-robin-5368.chatgpt.site/" target="_blank" rel="noopener">เปิด Government AI Copilot</a>
+<button id="logout" style="background:#475467">ออกจากระบบ</button>
+</div>
+<div class="notice">เก็บรหัสสมาชิกไว้เป็นความลับ ไม่ควรส่งต่อให้บุคคลอื่น</div>
+</div>
+<div class="grid">
+<div class="tool"><h3>📄 งานสารบรรณ</h3><p class="muted">หนังสือราชการ บันทึกข้อความ คำสั่ง และประกาศ</p></div>
+<div class="tool"><h3>⚖️ งานกฎหมาย</h3><p class="muted">วิเคราะห์ข้อกฎหมาย อำนาจหน้าที่ และความเสี่ยง</p></div>
+<div class="tool"><h3>📊 งานผู้บริหาร</h3><p class="muted">สรุปประเด็น ทางเลือก และข้อเสนอเพื่อพิจารณา</p></div>
+<div class="tool"><h3>📣 งานประชาสัมพันธ์</h3><p class="muted">ข่าวกิจกรรม โพสต์ และคำกล่าวในพิธี</p></div>
+</div>
+</section>
+</main>
+<footer>© 2026 GovPrompt Thailand Professional</footer>
+<script>
+const SECRET='GPTH-SIMPLE-2569-SAYAM';
+const KEY='gp_simple_access';
+const CODE_KEY='gp_simple_code';
+const enc=new TextEncoder();
+async function sign(serial){
+  const key=await crypto.subtle.importKey('raw',enc.encode(SECRET),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+  const sig=await crypto.subtle.sign('HMAC',key,enc.encode(serial));
+  return [...new Uint8Array(sig)].map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,8).toUpperCase();
+}
+async function validate(raw){
+  const value=raw.trim().toUpperCase();
+  const match=value.match(/^GP69-(\d{4})-([A-F0-9]{8})$/);
+  if(!match)return false;
+  return await sign(match[1])===match[2];
+}
+function showApp(){document.getElementById('gate').classList.add('hidden');document.getElementById('app').classList.remove('hidden')}
+if(localStorage.getItem(KEY)==='ok')showApp();
+document.getElementById('login').onclick=async()=>{
+  const btn=document.getElementById('login');
+  const msg=document.getElementById('msg');
+  btn.disabled=true;msg.className='msg';msg.textContent='กำลังตรวจสอบ...';
+  const value=document.getElementById('code').value.trim().toUpperCase();
+  if(await validate(value)){
+    localStorage.setItem(KEY,'ok');localStorage.setItem(CODE_KEY,value);
+    msg.className='msg ok';msg.textContent='ยืนยันสำเร็จ';setTimeout(showApp,250);
+  }else{msg.className='msg bad';msg.textContent='รหัสไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง';btn.disabled=false;}
+};
+document.getElementById('code').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase().replace(/\s+/g,'')});
+document.getElementById('code').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('login').click()});
+document.getElementById('logout').onclick=()=>{localStorage.removeItem(KEY);localStorage.removeItem(CODE_KEY);location.reload()};
+</script>
+</body>
+</html>

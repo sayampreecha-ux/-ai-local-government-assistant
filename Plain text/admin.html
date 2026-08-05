@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#082b55">
+<title>GovPrompt Code Generator</title>
+<style>
+body{font-family:system-ui,-apple-system,"Segoe UI","Noto Sans Thai",sans-serif;background:#f5f8fc;color:#172033;margin:0}.wrap{max-width:920px;margin:48px auto;padding:0 18px}.card{background:#fff;border:1px solid #dfe7f1;border-radius:20px;padding:28px;box-shadow:0 12px 32px rgba(8,43,85,.08)}input,button{font:inherit;padding:13px 15px;border-radius:10px}input{width:100%;border:1px solid #dfe7f1}button{border:0;background:#0e5aa7;color:#fff;font-weight:850;cursor:pointer}.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.hidden{display:none}.muted{color:#667085}.code{font-size:24px;font-weight:900;letter-spacing:.05em;background:#f7f9fc;border:1px dashed #98a2b3;padding:18px;border-radius:12px;margin:18px 0;word-break:break-all}table{width:100%;border-collapse:collapse;margin-top:18px}th,td{padding:10px;border-bottom:1px solid #eaecf0;text-align:left;font-size:14px}.toolbar{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:16px}.danger{background:#b42318}.secondary{background:#475467}.success{background:#067647}@media(max-width:700px){.toolbar{grid-template-columns:1fr}table{display:block;overflow:auto}}
+</style>
+</head>
+<body><div class="wrap">
+<div id="loginBox" class="card"><h1>ระบบออกรหัสสมาชิก</h1><p class="muted">สำหรับผู้ดูแล GovPrompt Thailand</p><input id="pw" type="password" placeholder="รหัสผ่านผู้ดูแล"><div class="row"><button id="unlock">เข้าสู่ระบบ</button></div><p id="err" style="color:#b42318"></p></div>
+<div id="panel" class="card hidden"><h1>ออกรหัสให้ลูกค้า</h1><p class="muted">ใส่ชื่อลูกค้า แล้วกดออกรหัสถัดไป</p><label>ชื่อลูกค้า / LINE / Facebook</label><input id="name" placeholder="เช่น นายสมชาย ใจดี"><div class="row"><button id="issue">ออกรหัสถัดไป</button><button id="export" class="secondary">ส่งออก CSV</button><button id="lock" class="secondary">ออกจากระบบ</button></div><div id="out" class="hidden"><div class="code" id="newCode"></div><div class="row"><button id="copy">คัดลอกรหัส</button><button id="copyMsg" class="success">คัดลอกข้อความส่งลูกค้า</button></div><p id="copyStatus" class="muted"></p></div><div class="toolbar"><input id="search" placeholder="ค้นหาชื่อลูกค้าหรือรหัส"><button id="clearAll" class="danger">ล้างข้อมูลทั้งหมด</button></div><table><thead><tr><th>#</th><th>ลูกค้า</th><th>รหัส</th><th>วันที่</th><th></th></tr></thead><tbody id="log"></tbody></table></div>
+</div>
+<script>
+const ADMIN_HASH='7465c123be24cfc6738aff11a7f11172bd5ad6cb416aa1ed5396aad717593c34';
+const SECRET='GPTH-SIMPLE-2569-SAYAM';
+const STORE='gp_simple_issued';
+const COUNTER='gp_simple_counter';
+const enc=new TextEncoder();
+async function sha256(s){const b=await crypto.subtle.digest('SHA-256',enc.encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+async function sign(serial){const key=await crypto.subtle.importKey('raw',enc.encode(SECRET),{name:'HMAC',hash:'SHA-256'},false,['sign']);const sig=await crypto.subtle.sign('HMAC',key,enc.encode(serial));return [...new Uint8Array(sig)].map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,8).toUpperCase()}
+function records(){try{return JSON.parse(localStorage.getItem(STORE)||'[]')}catch{return []}}
+function save(v){localStorage.setItem(STORE,JSON.stringify(v))}
+function esc(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function render(){const q=document.getElementById('search').value.trim().toLowerCase();const rs=records();document.getElementById('log').innerHTML=rs.map((r,i)=>({...r,idx:i})).filter(r=>!q||r.name.toLowerCase().includes(q)||r.code.toLowerCase().includes(q)).map(r=>`<tr><td>${r.idx+1}</td><td>${esc(r.name)}</td><td>${esc(r.code)}</td><td>${esc(r.date)}</td><td><button class="danger" onclick="removeRecord(${r.idx})">ลบ</button></td></tr>`).join('')}
+function nextSerial(){const current=Math.max(Number(localStorage.getItem(COUNTER)||0),...records().map(r=>Number((r.code.match(/^GP69-(\d{4})-/)||[])[1]||0)));const next=current+1;localStorage.setItem(COUNTER,String(next));return String(next).padStart(4,'0')}
+async function copyText(text){await navigator.clipboard.writeText(text);document.getElementById('copyStatus').textContent='คัดลอกแล้ว ✅';setTimeout(()=>document.getElementById('copyStatus').textContent='',1800)}
+window.removeRecord=(idx)=>{if(!confirm('ยืนยันการลบรายการนี้?'))return;const rs=records();rs.splice(idx,1);save(rs);render()};
+document.getElementById('unlock').onclick=async()=>{if(await sha256(document.getElementById('pw').value)===ADMIN_HASH){loginBox.classList.add('hidden');panel.classList.remove('hidden');sessionStorage.setItem('gp_admin','1');render()}else err.textContent='รหัสผ่านไม่ถูกต้อง'};
+document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('unlock').click()});
+if(sessionStorage.getItem('gp_admin')==='1'){loginBox.classList.add('hidden');panel.classList.remove('hidden');render()}
+document.getElementById('lock').onclick=()=>{sessionStorage.removeItem('gp_admin');location.reload()};
+document.getElementById('issue').onclick=async()=>{const name=document.getElementById('name').value.trim();if(!name){alert('กรุณาใส่ชื่อลูกค้า');return}const rs=records();const serial=nextSerial();const code=`GP69-${serial}-${await sign(serial)}`;rs.push({name,code,date:new Date().toLocaleString('th-TH')});save(rs);newCode.textContent=code;out.classList.remove('hidden');document.getElementById('name').value='';render()};
+document.getElementById('copy').onclick=()=>copyText(newCode.textContent);
+document.getElementById('copyMsg').onclick=()=>copyText(`ยืนยันการชำระเงินเรียบร้อยแล้ว ✅\n\nสินค้า: GovPrompt Thailand Professional\nสิทธิ์ใช้งาน: GP001–GP222\n\nรหัสสมาชิก:\n${newCode.textContent}\n\nเข้าใช้งานที่:\nhttps://govprompt-thailand-starter.netlify.app/\n\nโปรดเก็บรหัสไว้เป็นความลับและไม่ส่งต่อให้บุคคลอื่น`);
+document.getElementById('search').addEventListener('input',render);
+document.getElementById('clearAll').onclick=()=>{if(confirm('ยืนยันล้างรายชื่อลูกค้าทั้งหมด? การดำเนินการนี้ย้อนกลับไม่ได้')){localStorage.removeItem(STORE);render()}};
+document.getElementById('export').onclick=()=>{const rows=[['ลำดับ','ลูกค้า','รหัส','วันที่'],...records().map((r,i)=>[i+1,r.name,r.code,r.date])];const csv='\ufeff'+rows.map(x=>x.map(v=>`"${String(v).replaceAll('"','""')}"`).join(',')).join('\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`govprompt-members-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href)};
+</script></body></html>

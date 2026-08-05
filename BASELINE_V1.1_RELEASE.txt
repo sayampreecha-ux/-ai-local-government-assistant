@@ -1,0 +1,7 @@
+GovPrompt Thailand Baseline v1.1
+- เพิ่ม 20 Prompt ฟรีแบบใช้งานจริง
+- ไม่ต้องสมัครสมาชิก
+- ประกอบ Prompt ในเบราว์เซอร์
+- ไม่เปิดเผย Prompt Master
+- ปุ่มเริ่มใช้ฟรีเชื่อมไปยัง #free20
+อัปโหลดไฟล์ทั้งหมดใน ZIP ทับ Repository เดิมแบบ Commit directly to main

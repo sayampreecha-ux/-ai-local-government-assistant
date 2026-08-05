@@ -1,0 +1,5 @@
+{
+  "version": "1.0",
+  "note": "Reserved for future server-side member storage. The current version stores issued codes in the administrator browser's localStorage.",
+  "members": []
+}

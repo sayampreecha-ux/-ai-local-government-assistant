@@ -1,0 +1,27 @@
+# GovPrompt Thailand — Merge & Upgrade Report
+
+Date: 2026-07-25
+Base: govprompt-thailand-v5.0-222-deploy.zip
+
+## Files changed
+- index.html
+  - Updated page title and description.
+  - Updated Hero title to “GovPrompt Thailand”.
+  - Added “ทดลองใช้ฟรี 20 Prompt สำหรับงานราชการ ใช้งานได้ทันที”.
+  - Added “สำหรับส่วนราชการและองค์กรปกครองส่วนท้องถิ่น”.
+  - Added large CTA “🚀 เริ่มใช้ฟรีทันที”, linked to the existing public preview section (`#preview`).
+  - Preserved the existing member login action.
+- styles.css
+  - Added responsive Hero and CTA styles for desktop, tablet, and mobile.
+
+## Backup
+- index.html.backup-v5.0-222
+
+## Preserved
+- GP001–GP222 and prompt codes.
+- PROMPT_CATALOG_222.json and catalog-public.js.
+- API, Supabase migrations, authentication, package, order, payment, admin, history, favorites, drafts, and database-related files.
+- Existing navigation and page sections.
+
+## Important verification note
+The supplied base contains an existing public `#preview` section described as a 20% preview. No separate full “20 Prompt free” route was found. Therefore the new CTA safely links to that existing public section rather than inventing or exposing Prompt Master content.

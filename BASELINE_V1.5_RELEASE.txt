@@ -1,0 +1,18 @@
+GovPrompt Thailand Baseline v1.5 — Core Engine Lite
+
+Merge & Upgrade from Baseline v1.4. No rebuild.
+
+Added:
+- Public Prompt Registry (metadata only; Prompt Master is not exposed)
+- Normalized Search Engine for Task Router and GP001–GP222 catalog
+- Review Engine for free Prompt builder
+- Readiness score and missing-information checks
+- Registry fields: code, title, category, version, status, publicFree, form schema, search text
+
+Preserved:
+- GP001–GP222 identities and public catalog
+- 20 free Prompt experience
+- favorites and recent history in Local Storage
+- GitHub Pages static operation
+- backend-only sections remain hidden
+- no user data or database deletion

@@ -1,0 +1,34 @@
+วิธีติดตั้งด่วน
+
+1. เข้า Repository:
+   https://github.com/sayampreecha-ux/-ai-local-government-assistant
+
+2. กด Add file > Upload files
+
+3. อัปโหลดไฟล์ 2 ไฟล์:
+   - register.html
+   - thanks.html
+
+4. กด Commit changes
+
+5. เปิดไฟล์ index.html ใน GitHub แล้วแก้ลิงก์ปุ่มสมัครทุกจุด:
+   จาก href="#register"
+   เป็น href="register.html"
+
+6. ในฟอร์มเดิม แนะนำให้เปลี่ยนทั้งส่วน <form ...> เป็นลิงก์ไป register.html
+   หรืออย่างน้อยเพิ่มปุ่ม:
+   <a class="btn btn-primary" href="register.html">ลงทะเบียนรับชุดทดลอง</a>
+
+7. ทดลองกรอกแบบฟอร์มด้วยข้อมูลของคุณเอง
+
+8. ตรวจอีเมล sayampreecha@gmail.com
+   ครั้งแรกจะมีอีเมลจาก FormSubmit ให้กด Activate Form เพียงครั้งเดียว
+
+9. หลังยืนยันแล้ว ทดสอบสมัครอีกครั้ง
+   หัวข้ออีเมลจะเป็น “สมาชิกใหม่ GovPrompt Thailand”
+
+หมายเหตุ:
+- ระบบนี้เหมาะสำหรับเปิดตัวเร่งด่วนและ GitHub Pages
+- รายชื่อจะอยู่ใน Gmail โดยค้นหาด้วย:
+  subject:"สมาชิกใหม่ GovPrompt Thailand"
+- ห้ามส่งหรือเผยแพร่ข้อมูลสมาชิกแก่บุคคลอื่นโดยไม่มีฐานทางกฎหมาย

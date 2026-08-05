@@ -1,0 +1,9 @@
+allowBuilds:
+  esbuild: true
+  sharp: true
+  workerd: true
+overrides:
+  undici: 7.29.0
+minimumReleaseAgeExclude:
+  - miniflare@5.20260801.0-alpha
+  - wrangler@4.119.0
