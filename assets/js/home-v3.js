@@ -1,0 +1,253 @@
+(() => {
+  'use strict';
+
+  const form = document.getElementById('chatForm');
+  const input = document.getElementById('promptInput');
+  const conversation = document.getElementById('conversation');
+  const attachmentInput = document.getElementById('attachmentInput');
+  const cameraInput = document.getElementById('cameraInput');
+  const attachmentStatus = document.getElementById('attachmentStatus');
+  const dialog = document.getElementById('appDialog');
+  const legacyHistoryKey = 'govprompt-v3-history';
+  const history = [];
+  let attachments = [];
+
+  // Prompts can contain official or personal information. Keep history only in
+  // this tab's memory and remove data written by the previous implementation.
+  try { localStorage.removeItem(legacyHistoryKey); } catch {}
+
+  // Publish local, non-identifying Web Vitals so release audits can measure the
+  // rendered application without sending telemetry off the device.
+  const runtimeMetrics = { lcp: 0, cls: 0 };
+  try {
+    new PerformanceObserver(list => {
+      const entries = list.getEntries();
+      if (entries.length) runtimeMetrics.lcp = entries[entries.length - 1].startTime;
+    }).observe({ type: 'largest-contentful-paint', buffered: true });
+    new PerformanceObserver(list => {
+      list.getEntries().forEach(entry => { if (!entry.hadRecentInput) runtimeMetrics.cls += entry.value; });
+    }).observe({ type: 'layout-shift', buffered: true });
+  } catch {}
+  window.addEventListener('load', () => setTimeout(() => {
+    const paints = performance.getEntriesByType('paint');
+    const firstPaint = paints.find(entry => entry.name === 'first-paint');
+    const firstContentfulPaint = paints.find(entry => entry.name === 'first-contentful-paint');
+    document.documentElement.dataset.firstPaint = String(firstPaint?.startTime ?? 0);
+    document.documentElement.dataset.fcp = String(firstContentfulPaint?.startTime ?? 0);
+    document.documentElement.dataset.lcp = String(runtimeMetrics.lcp);
+    document.documentElement.dataset.cls = String(runtimeMetrics.cls);
+    const metricTarget = document.getElementById('main-content');
+    if (metricTarget) {
+      metricTarget.dataset.firstPaint = document.documentElement.dataset.firstPaint;
+      metricTarget.dataset.fcp = document.documentElement.dataset.fcp;
+      metricTarget.dataset.lcp = document.documentElement.dataset.lcp;
+      metricTarget.dataset.cls = document.documentElement.dataset.cls;
+    }
+  }, 1000), { once: true });
+
+  const escapeHTML = value => String(value).replace(/[&<>'"]/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+  })[character]);
+
+  const domainNames = Object.freeze({
+    records: 'งานสารบรรณ', legal: 'กฎหมายและข้อบัญญัติ', procurement: 'พัสดุและจัดซื้อจัดจ้าง',
+    'planning-budget': 'แผนและงบประมาณ', finance: 'การเงินและการคลัง', 'human-resources': 'งานบุคคล',
+    engineering: 'งานช่างและวิศวกรรม', 'public-health': 'สาธารณสุข', education: 'การศึกษา',
+    'internal-audit': 'ตรวจสอบภายใน', executive: 'งานบริหาร', 'public-relations': 'ประชาสัมพันธ์', general: 'งานราชการทั่วไป'
+  });
+
+  function resizeInput() {
+    input.style.height = 'auto';
+    input.style.height = `${Math.min(input.scrollHeight, 160)}px`;
+  }
+
+  function addUserMessage(text) {
+    const article = document.createElement('article');
+    article.className = 'message user';
+    article.innerHTML = `<div class="message-body">${escapeHTML(text)}</div>`;
+    conversation.appendChild(article);
+  }
+
+  function addThinking() {
+    const article = document.createElement('article');
+    article.className = 'message assistant';
+    article.id = 'thinkingMessage';
+    article.innerHTML = '<span class="assistant-mark" aria-hidden="true">กพ</span><div class="assistant-content"><div class="thinking"><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>กำลังเลือกเครื่องมือ</span></div><div class="analysis-steps">จำแนกประเภทงาน · จับคู่ผู้ช่วยเฉพาะด้าน</div></div>';
+    conversation.appendChild(article);
+  }
+
+  function requireCore() {
+    const core = window.GovPromptCore;
+    if (!core || typeof core.createSharedContext !== 'function' || typeof core.routeTransaction !== 'function') {
+      throw new Error('GovPrompt Core is unavailable');
+    }
+    return core;
+  }
+
+  function routePrompt(text) {
+    const core = requireCore();
+    const context = core.createSharedContext({ facts: text, desiredOutput: text, documents: attachments.map(file => file.name).join(', ') });
+    return core.routeTransaction(context);
+  }
+
+  function addRouteResult(route) {
+    const article = document.createElement('article');
+    const content = document.createElement('div');
+    const label = document.createElement('span');
+    const card = document.createElement('div');
+    const section = document.createElement('section');
+    const heading = document.createElement('h3');
+    const description = document.createElement('p');
+    const actions = document.createElement('div');
+    const openLink = document.createElement('a');
+    const copyButton = document.createElement('button');
+    const mark = document.createElement('span');
+
+    article.className = 'message assistant';
+    content.className = 'assistant-content';
+    label.className = 'route-label';
+    card.className = 'answer-card';
+    section.className = 'answer-section';
+    actions.className = 'answer-actions';
+    mark.className = 'assistant-mark';
+    mark.setAttribute('aria-hidden', 'true');
+    mark.textContent = 'กพ';
+    label.textContent = `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
+    heading.textContent = 'พบเครื่องมือที่เหมาะกับงานนี้';
+    description.textContent = route.assistant.title;
+    openLink.href = route.assistant.path;
+    openLink.textContent = `เปิด ${route.moduleId}`;
+    copyButton.type = 'button';
+    copyButton.textContent = 'คัดลอกชื่อเครื่องมือ';
+    copyButton.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(`${route.moduleId} · ${route.assistant.title}`);
+        window.GovPrompt?.toast('คัดลอกชื่อเครื่องมือแล้ว');
+      } catch {
+        window.GovPrompt?.toast('ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
+      }
+    });
+
+    actions.append(openLink, copyButton);
+    section.append(heading, description, actions);
+    card.append(section);
+    content.append(label, card);
+    article.append(mark, content);
+    conversation.appendChild(article);
+  }
+
+  function saveHistory(text, route) {
+    history.unshift({ text, moduleId: route.moduleId, domain: domainNames[route.transactionType] || domainNames.general, at: new Date().toISOString() });
+    history.length = Math.min(history.length, 20);
+  }
+
+  async function submitPrompt(text) {
+    document.querySelector('.chat-main').classList.add('has-messages');
+    addUserMessage(text);
+    addThinking();
+    conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    let route;
+    try {
+      route = routePrompt(text);
+    } catch {
+      document.getElementById('thinkingMessage')?.remove();
+      window.GovPrompt?.toast('ระบบวิเคราะห์ยังไม่พร้อม กรุณาลองใหม่อีกครั้ง');
+      input.value = text;
+      resizeInput();
+      input.focus();
+      return;
+    }
+    await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 850));
+    document.getElementById('thinkingMessage')?.remove();
+    addRouteResult(route);
+    saveHistory(text, route);
+    conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    resizeInput();
+    submitPrompt(text);
+  });
+
+  input.addEventListener('input', resizeInput);
+  input.addEventListener('keydown', event => {
+    if (event.isComposing) return;
+    if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); form.requestSubmit(); }
+  });
+  const promptButtons = [...document.querySelectorAll('[data-prompt]')];
+  promptButtons.forEach((button, index) => {
+    button.addEventListener('click', () => submitPrompt(button.dataset.prompt));
+    button.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const target = event.key === 'Home' ? 0 : event.key === 'End' ? promptButtons.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + promptButtons.length) % promptButtons.length;
+      promptButtons[target].focus();
+    });
+  });
+
+  document.querySelectorAll('[data-file-picker]').forEach(button => button.addEventListener('click', () => {
+    document.getElementById(button.dataset.filePicker)?.click();
+  }));
+
+  function collectFiles(fileList) {
+    attachments = [...attachments, ...Array.from(fileList)].slice(0, 5);
+    attachmentStatus.textContent = attachments.length ? `แนบแล้ว ${attachments.length} ไฟล์: ${attachments.map(file => file.name).join(', ')}` : '';
+  }
+  attachmentInput.addEventListener('change', () => collectFiles(attachmentInput.files));
+  cameraInput.addEventListener('change', () => collectFiles(cameraInput.files));
+
+  document.getElementById('micButton').addEventListener('click', () => {
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) { window.GovPrompt?.toast('เบราว์เซอร์นี้ยังไม่รองรับการพิมพ์ด้วยเสียง'); return; }
+    const recognition = new Recognition();
+    const button = document.getElementById('micButton');
+    recognition.lang = 'th-TH';
+    recognition.interimResults = false;
+    recognition.onstart = () => button.classList.add('listening');
+    recognition.onresult = event => { input.value += `${input.value ? ' ' : ''}${event.results[0][0].transcript.trim()}`; resizeInput(); };
+    recognition.onerror = () => window.GovPrompt?.toast('ไม่สามารถเข้าถึงไมโครโฟนได้ตามนโยบายความปลอดภัย');
+    recognition.onend = () => button.classList.remove('listening');
+    recognition.start();
+  });
+
+  function historyPanel() {
+    if (!history.length) return '<div class="empty-panel"><strong>ยังไม่มีประวัติการใช้งาน</strong><p>คำถามล่าสุดจะเก็บไว้เฉพาะในหน่วยความจำของแท็บนี้ และจะหายไปเมื่อปิดหรือโหลดหน้าใหม่</p></div>';
+    return `<div class="tool-list">${history.map(item => `<a href="#" data-history="${escapeHTML(item.text)}"><strong>${escapeHTML(item.text)}</strong><small>${escapeHTML(item.domain)} · ${new Date(item.at).toLocaleString('th-TH')}</small></a>`).join('')}</div>`;
+  }
+
+  function toolsPanel() {
+    return `<p>เครื่องมือเฉพาะทางสำหรับผู้ใช้ขั้นสูง ระบบสนทนาจะเลือกเครื่องมือเหล่านี้ให้อัตโนมัติ</p><div class="tool-list">${window.GovPromptCore.PROMPT_REGISTRY.map(tool => `<a href="${tool.path}"><strong>${tool.moduleId} · ${escapeHTML(tool.title)}</strong><small>เปิดแบบฟอร์มเฉพาะด้าน</small></a>`).join('')}</div>`;
+  }
+
+  const panels = {
+    history: ['ประวัติ', 'บทสนทนาล่าสุด', historyPanel],
+    knowledge: ['คลังความรู้', 'Knowledge Engine', () => '<div class="empty-panel"><strong>คลังความรู้พร้อมใช้งาน</strong><p>ระบบตรวจรุ่นเอกสาร วันที่มีผล และแหล่งราชการก่อนสร้างการอ้างอิง โดยไม่แสดงข้อมูลภายในที่ไม่จำเป็น</p></div>'],
+    profile: ['โปรไฟล์', 'บริบทการทำงาน', () => '<div class="empty-panel"><strong>บริบทส่วนตัวจะมาในรุ่นถัดไป</strong><p>ขณะนี้ระบบไม่ส่งหรือจัดเก็บข้อมูลโปรไฟล์จากหน้านี้</p></div>'],
+    tools: ['เครื่องมือ', 'ADVANCED USERS', toolsPanel]
+  };
+
+  function openPanel(event) {
+    const panel = panels[event.detail?.panel];
+    if (!panel) return;
+    const [title, eyebrow, content] = panel;
+    document.getElementById('dialogTitle').textContent = title;
+    document.getElementById('dialogEyebrow').textContent = eyebrow;
+    document.getElementById('dialogContent').innerHTML = content();
+    dialog.showModal();
+    dialog.querySelectorAll('[data-history]').forEach(link => link.addEventListener('click', event => {
+      event.preventDefault(); dialog.close(); input.value = link.dataset.history; resizeInput(); input.focus();
+    }));
+  }
+
+  window.GovPrompt.on('shell:panel', openPanel);
+
+  document.getElementById('newChat').addEventListener('click', () => {
+    conversation.replaceChildren(); attachments = []; attachmentStatus.textContent = '';
+    document.querySelector('.chat-main').classList.remove('has-messages'); input.focus();
+  });
+
+})();

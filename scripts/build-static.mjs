@@ -5,7 +5,7 @@ const output = "dist";
 const publicExtensions = new Set([
   ".html", ".htlm", ".css", ".js", ".json", ".webmanifest", ".txt"
 ]);
-const publicDirectories = ["assets", "access-system", "Plain text"];
+const publicDirectories = ["assets", "access-system", "Plain text", "knowledge"];
 
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
