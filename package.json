@@ -5,8 +5,8 @@
   "scripts": {
     "build": "node scripts/build-static.mjs",
     "validate": "node verify-release-2.mjs",
-    "test": "node verify-release-2.mjs && node gp001.test.mjs && node scripts/verify-runtime.mjs",
-    "check:syntax": "node --check assets/js/govprompt.js && node --check assets/js/prompt-engine.js && node --check assets/js/search.js && node --check assets/js/mic.js",
+    "test": "node verify-release-2.mjs && node gp001.test.mjs && node scripts/verify-runtime.mjs && node scripts/verify-shared-context.mjs && node scripts/verify-prompt-registry.mjs && node scripts/verify-transaction-router.mjs && node scripts/verify-context-integration.mjs && node scripts/verify-document-loader.mjs && node scripts/verify-citation-engine.mjs && node scripts/verify-knowledge-index.mjs && node scripts/verify-semantic-search.mjs && node scripts/verify-knowledge-engine.mjs",
+    "check:syntax": "node --check assets/js/govprompt.js && node --check assets/js/home-v3.js && node --check assets/js/prompt-engine.js && node --check assets/js/search.js && node --check assets/js/mic.js && node --check assets/js/core/shared-context.js && node --check assets/js/core/prompt-registry.js && node --check assets/js/core/transaction-router.js && node --check assets/js/core/context-integration.js && node --check assets/js/core/document-loader.js && node --check assets/js/core/citation-engine.js && node --check assets/js/core/knowledge-index.js && node --check assets/js/core/semantic-search.js && node --check assets/js/core/knowledge-engine.js",
     "deploy": "pnpm build && wrangler deploy"
   },
   "dependencies": {
