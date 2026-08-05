@@ -2,22 +2,28 @@
   'use strict';
 
   const MODULES = window.GovPromptCore.PROMPT_REGISTRY;
+  const V7_MODULE_IDS = Object.freeze(Array.from({ length: 12 }, (_, index) => `GP${String(index + 1).padStart(3, '0')}`));
+  const DEFAULT_OPTIONS = Object.freeze({ confidenceThreshold: 0.45, multiModuleThreshold: 0.3, fallbackModule: 'GP001' });
+  const definitions = [
+    ['GP001', 'official-letter', ['gp001', 'official letter', 'หนังสือราชการ', 'สารบรรณ', 'บันทึกข้อความ', 'คำสั่ง', 'ประกาศ']],
+    ['GP002', 'government-law', ['gp002', 'law', 'legal', 'กฎหมาย', 'ระเบียบ', 'อำนาจหน้าที่', 'ข้อหารือ']],
+    ['GP003', 'procurement', ['gp003', 'procurement', 'tor', 'จัดซื้อ', 'จัดจ้าง', 'พัสดุ', 'ราคากลาง', 'e-gp']],
+    ['GP004', 'finance', ['gp004', 'finance', 'reimbursement', 'travel expense', 'การเงิน', 'เบิกจ่าย', 'ค่าเดินทาง', 'ค่าเช่าบ้าน']],
+    ['GP005', 'budget', ['gp005', 'budget', 'appropriation', 'งบประมาณ', 'โอนงบ', 'เงินสำรอง', 'ผูกพันงบประมาณ']],
+    ['GP006', 'human-resources', ['gp006', 'human resources', 'hr', 'บุคคล', 'แต่งตั้ง', 'เลื่อนระดับ', 'โอนย้าย', 'วินัย', 'เกษียณ']],
+    ['GP007', 'council', ['gp007', 'council', 'quorum', 'motion', 'resolution', 'สภาท้องถิ่น', 'ญัตติ', 'องค์ประชุม', 'มติสภา', 'ข้อบัญญัติ']],
+    ['GP008', 'project', ['gp008', 'project', 'feasibility', 'โครงการ', 'ความเป็นไปได้', 'ตัวชี้วัด', 'kpi', 'แผนจัดซื้อ']],
+    ['GP009', 'public-relations', ['gp009', 'public relations', 'press release', 'ประชาสัมพันธ์', 'ข่าว', 'facebook', 'infographic']],
+    ['GP010', 'meeting', ['gp010', 'meeting', 'minutes', 'ประชุม', 'วาระประชุม', 'รายงานการประชุม', 'มติที่ประชุม']],
+    ['GP011', 'pdpa', ['gp011', 'pdpa', 'privacy', 'personal data', 'ข้อมูลส่วนบุคคล', 'ความยินยอม', 'ปกปิดข้อมูล']],
+    ['GP012', 'knowledge-search', ['gp012', 'knowledge search', 'semantic search', 'ค้นหาความรู้', 'สืบค้น', 'อ้างอิง', 'citation', 'แหล่งข้อมูล']]
+  ];
 
-  const TRANSACTION_RULES = Object.freeze([
-    { type: 'records', moduleId: 'GP001', terms: ['หนังสือ', 'สารบรรณ', 'บันทึกข้อความ', 'คำสั่ง', 'ประกาศ', 'ประชุม'] },
-    { type: 'legal', moduleId: 'GP002', terms: ['กฎหมาย', 'ระเบียบ', 'ข้อบัญญัติ', 'นิติกรรม', 'อุทธรณ์', 'ร้องเรียน'] },
-    { type: 'procurement', moduleId: 'GP003', terms: ['พัสดุ', 'จัดซื้อ', 'จัดจ้าง', 'tor', 'ราคากลาง', 'ตรวจรับ', 'สัญญา'] },
-    { type: 'council', moduleId: 'GP013', terms: ['สภาท้องถิ่น', 'ประชุมสภา', 'สมัยประชุม', 'ประชุมสามัญ', 'ประชุมวิสามัญ', 'ญัตติ', 'กระทู้ถาม', 'องค์ประชุม', 'มติสภา', 'ประธานสภา', 'สมาชิกสภา', 'แปรญัตติ', 'รายงานประชุมสภา', 'รายงานการประชุมสภา', 'พิจารณาข้อบัญญัติงบประมาณ', 'แปรญัตติงบประมาณ', 'วาระงบประมาณ'] },
-    { type: 'planning-budget', moduleId: 'GP004', terms: ['แผน', 'โครงการ', 'งบประมาณ', 'ยุทธศาสตร์', 'ตัวชี้วัด', 'ร่างข้อบัญญัติงบประมาณ', 'จัดทำข้อบัญญัติงบประมาณ'] },
-    { type: 'finance', moduleId: 'GP005', terms: ['การเงิน', 'การคลัง', 'เบิกจ่าย', 'เงินยืม', 'รายได้', 'ภาษี', 'ค่าธรรมเนียม', 'บัญชี'] },
-    { type: 'human-resources', moduleId: 'GP006', terms: ['บุคคล', 'บุคลากร', 'บรรจุ', 'แต่งตั้ง', 'โอน', 'ย้าย', 'วินัย', 'เงินเดือน'] },
-    { type: 'engineering', moduleId: 'GP007', terms: ['ช่าง', 'วิศวกรรม', 'ก่อสร้าง', 'ถนน', 'สะพาน', 'อาคาร', 'boq'] },
-    { type: 'public-health', moduleId: 'GP008', terms: ['สาธารณสุข', 'สุขภาพ', 'โรค', 'ผู้ป่วย', 'ขยะ', 'สุขาภิบาล', 'รพ.สต', 'เงินบำรุง', 'แผนเงินบำรุง', 'โครงการสุขภาพ'] },
-    { type: 'education', moduleId: 'GP009', terms: ['การศึกษา', 'โรงเรียน', 'ศูนย์เด็ก', 'นักเรียน', 'หลักสูตร'] },
-    { type: 'internal-audit', moduleId: 'GP010', terms: ['ตรวจสอบภายใน', 'ควบคุมภายใน', 'audit', 'ความเสี่ยง', 'หลักฐาน'] },
-    { type: 'executive', moduleId: 'GP011', terms: ['ผู้บริหาร', 'บริหาร', 'ตัดสินใจ', 'ข้อสั่งการ', 'dashboard', 'one page'] },
-    { type: 'public-relations', moduleId: 'GP012', terms: ['ประชาสัมพันธ์', 'ข่าว', 'facebook', 'เว็บไซต์', 'สื่อสาร', 'อินโฟกราฟิก'] }
-  ].map(rule => Object.freeze({ ...rule, terms: Object.freeze(rule.terms) })));
+  const TRANSACTION_RULES = Object.freeze(definitions.map(([moduleId, type, terms]) => Object.freeze({ moduleId, type, weight: 1, terms: Object.freeze(terms) })));
+
+  function tokenize(value) {
+    return String(value ?? '').normalize('NFKC').toLocaleLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+  }
 
   function normalizeModuleId(value) {
     const match = String(value ?? '').trim().toUpperCase().match(/(?:^|[^A-Z0-9])GP\s*0*(1[0-3]|[1-9])(?:[^A-Z0-9]|$)/);
@@ -25,55 +31,50 @@
   }
 
   function detectModuleId(options = {}) {
-    const candidates = [
-      options.moduleId,
-      options.pathname,
-      typeof location === 'object' ? location.pathname : '',
-      typeof document === 'object' ? document.documentElement?.dataset?.moduleId : ''
-    ];
+    const candidates = [options.moduleId, options.pathname, typeof location === 'object' ? location.pathname : '', typeof document === 'object' ? document.documentElement?.dataset?.moduleId : ''];
     return candidates.map(normalizeModuleId).find(Boolean) || '';
   }
 
-  function detectTransactionType(context) {
+  function scoreRequest(request) {
+    const source = String(request ?? '').normalize('NFKC').toLocaleLowerCase();
+    const requestTokens = new Set(tokenize(source));
+    return TRANSACTION_RULES.map(rule => {
+      const matchedIntents = rule.terms.filter(intent => {
+        const normalized = intent.normalize('NFKC').toLocaleLowerCase();
+        const intentTokens = tokenize(normalized);
+        return source.includes(normalized) || (intentTokens.length > 0 && intentTokens.every(token => requestTokens.has(token)));
+      });
+      const confidence = Math.min(1, matchedIntents.reduce((total, intent) => total + Math.max(1, tokenize(intent).length), 0) / Math.max(2, requestTokens.size));
+      return Object.freeze({ moduleId: rule.moduleId, type: rule.type, confidence, matchedIntents: Object.freeze([...matchedIntents]) });
+    }).sort((left, right) => right.confidence - left.confidence || left.moduleId.localeCompare(right.moduleId));
+  }
+
+  function routeRequest(request, options = {}) {
+    if (typeof request !== 'string' || !request.trim()) throw new TypeError('request must be a non-empty string');
+    const settings = { ...DEFAULT_OPTIONS, ...options };
+    const ranking = scoreRequest(request);
+    const activeModule = V7_MODULE_IDS.includes(options.activeModule) ? options.activeModule : '';
+    const primaryModule = ranking[0].confidence >= settings.confidenceThreshold ? ranking[0].moduleId : activeModule || settings.fallbackModule;
+    const modules = options.multiModule === false ? [primaryModule] : [...new Set([primaryModule, ...ranking.filter(item => item.confidence >= settings.multiModuleThreshold).map(item => item.moduleId)])];
+    return Object.freeze({ primaryModule, modules: Object.freeze(modules), confidence: ranking.find(item => item.moduleId === primaryModule)?.confidence ?? 0, fallback: ranking[0].confidence < settings.confidenceThreshold, ranking: Object.freeze(ranking) });
+  }
+
+  function detectTransactionType(context = {}) {
     const explicit = String(context.transactionType ?? '').trim();
-    if (explicit) return explicit;
-    const source = [context.domain, context.currentStage, context.facts, context.documents, context.desiredOutput]
-      .concat(Array.isArray(context.specialFlags) ? context.specialFlags : [])
-      .join(' ')
-      .toLowerCase();
-    return TRANSACTION_RULES.find(rule => rule.terms.some(term => source.includes(term)))?.type || 'general';
+    const source = [explicit, context.domain, context.currentStage, context.facts, context.documents, context.desiredOutput].concat(Array.isArray(context.specialFlags) ? context.specialFlags : []).join(' ');
+    const route = source.trim() ? routeRequest(source, { activeModule: '', fallbackModule: 'GP001', multiModule: false }) : null;
+    return TRANSACTION_RULES.find(rule => rule.moduleId === route?.primaryModule)?.type || explicit || 'general';
   }
 
   function routeTransaction(sharedContext, options = {}) {
     const context = window.GovPromptCore.createSharedContext(sharedContext);
     const currentModuleId = detectModuleId(options);
-    const transactionType = detectTransactionType(context);
-    const source = [transactionType, context.domain, context.facts, context.desiredOutput].join(' ').toLowerCase();
-    const matchedRule = TRANSACTION_RULES
-      .map(rule => ({
-        rule,
-        score: (rule.type === transactionType ? 100 : 0) + rule.terms.filter(term => source.includes(term)).length
-      }))
-      .reduce((best, candidate) => candidate.score > best.score ? candidate : best, { rule: null, score: 0 })
-      .rule;
-    const moduleId = matchedRule?.moduleId || currentModuleId || 'GP011';
-    const assistant = MODULES.find(module => module.moduleId === moduleId);
-
-    return Object.freeze({
-      context,
-      currentModuleId,
-      moduleId,
-      transactionType,
-      assistant,
-      shouldRedirect: Boolean(currentModuleId && currentModuleId !== moduleId),
-      preservePrompt: true
-    });
+    const source = [context.transactionType, context.domain, context.currentStage, context.facts, context.documents, context.desiredOutput].concat(context.specialFlags ?? []).join(' ').trim();
+    const route = source ? routeRequest(source, { activeModule: V7_MODULE_IDS.includes(currentModuleId) ? currentModuleId : '', fallbackModule: V7_MODULE_IDS.includes(currentModuleId) ? currentModuleId : 'GP001' }) : { primaryModule: currentModuleId || 'GP001', modules: [currentModuleId || 'GP001'], confidence: 0, fallback: true, ranking: [] };
+    const moduleId = route.primaryModule;
+    return Object.freeze({ context, currentModuleId, moduleId, transactionType: TRANSACTION_RULES.find(rule => rule.moduleId === moduleId)?.type || 'general', assistant: MODULES.find(module => module.moduleId === moduleId), shouldRedirect: Boolean(currentModuleId && currentModuleId !== moduleId), preservePrompt: true, confidence: route.confidence, modules: route.modules, fallback: route.fallback, ranking: route.ranking });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
-  window.GovPromptCore.MODULES = MODULES;
-  window.GovPromptCore.TRANSACTION_RULES = TRANSACTION_RULES;
-  window.GovPromptCore.detectModuleId = detectModuleId;
-  window.GovPromptCore.detectTransactionType = detectTransactionType;
-  window.GovPromptCore.routeTransaction = routeTransaction;
+  Object.assign(window.GovPromptCore, { MODULES, V7_MODULE_IDS, TRANSACTION_RULES, ROUTER_DEFAULTS: DEFAULT_OPTIONS, detectModuleId, detectTransactionType, scoreRequest, routeRequest, routeTransaction });
 })();

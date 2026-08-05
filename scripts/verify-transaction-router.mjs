@@ -8,41 +8,42 @@ vm.runInNewContext(await readFile('assets/js/core/shared-context.js', 'utf8'), s
 vm.runInNewContext(await readFile('assets/js/core/prompt-registry.js', 'utf8'), sandbox);
 vm.runInNewContext(await readFile('assets/js/core/transaction-router.js', 'utf8'), sandbox);
 
-const { MODULES, detectModuleId, detectTransactionType, routeTransaction } = sandbox.window.GovPromptCore;
+const { MODULES, V7_MODULE_IDS, detectModuleId, detectTransactionType, routeRequest, routeTransaction } = sandbox.window.GovPromptCore;
 assert.equal(MODULES.length, 13);
+assert.equal(V7_MODULE_IDS.length, 12);
 assert.equal(detectModuleId({ pathname: '/tools/gp1.html' }), 'GP001');
 assert.equal(detectModuleId({ moduleId: ' gp012 ' }), 'GP012');
 assert.equal(detectModuleId({ pathname: '/gp013.html' }), 'GP013');
 
 const cases = [
-  ['งานสารบรรณและหนังสือภายใน', 'GP001'],
-  ['ตรวจข้อกฎหมายและระเบียบ', 'GP002'],
-  ['จัดซื้อพัสดุและจัดทำ TOR', 'GP003'],
-  ['จัดทำแผนและงบประมาณ', 'GP004'],
-  ['เบิกจ่ายและบันทึกบัญชี', 'GP005'],
-  ['โอนย้ายบุคลากร', 'GP006'],
-  ['ควบคุมงานก่อสร้างถนน', 'GP007'],
-  ['งานสาธารณสุขและสุขาภิบาล', 'GP008'],
-  ['แผนการศึกษาโรงเรียน', 'GP009'],
-  ['ตรวจสอบภายในและควบคุมความเสี่ยง', 'GP010'],
-  ['สรุปเพื่อผู้บริหารตัดสินใจ', 'GP011'],
-  ['เขียนข่าวประชาสัมพันธ์', 'GP012'],
-  ['งานสภาท้องถิ่นและญัตติ', 'GP013']
+  ['official letter memorandum', 'GP001'], ['legal authority law', 'GP002'],
+  ['procurement TOR', 'GP003'], ['travel expense reimbursement', 'GP004'],
+  ['budget appropriation', 'GP005'], ['human resources promotion', 'GP006'],
+  ['council quorum motion', 'GP007'], ['project feasibility KPI', 'GP008'],
+  ['public relations press release', 'GP009'], ['meeting minutes agenda', 'GP010'],
+  ['PDPA personal data consent', 'GP011'], ['knowledge search citation', 'GP012']
 ];
 
-for (const [transactionType, expectedModuleId] of cases) {
-  const route = routeTransaction({ transactionType }, { moduleId: 'GP001' });
-  assert.equal(route.moduleId, expectedModuleId, transactionType);
-  assert.equal(route.assistant.path, `${expectedModuleId.toLowerCase()}.html`);
-  assert.equal(route.context.transactionType, transactionType);
-  assert.equal(route.preservePrompt, true);
+for (const [request, expectedModuleId] of cases) {
+  const routed = routeRequest(request, { multiModule: false });
+  assert.equal(routed.primaryModule, expectedModuleId, request);
+  assert.equal(typeof routed.confidence, 'number');
+  const compatible = routeTransaction({ transactionType: request }, { moduleId: 'GP001' });
+  assert.equal(compatible.moduleId, expectedModuleId, request);
+  assert.equal(compatible.assistant.path, `${expectedModuleId.toLowerCase()}.html`);
+  assert.equal(compatible.preservePrompt, true);
 }
+
+const multi = routeRequest('procurement law budget', { confidenceThreshold: 0.3, multiModuleThreshold: 0.2 });
+assert.equal(multi.primaryModule, 'GP002');
+assert.equal(multi.modules.includes('GP003'), true);
+assert.equal(multi.modules.includes('GP005'), true);
 
 const normalized = routeTransaction(null, { moduleId: 'GP005' });
 assert.equal(normalized.moduleId, 'GP005');
-assert.equal(normalized.transactionType, 'general');
+assert.equal(normalized.transactionType, 'budget');
 assert.deepEqual(Object.keys(normalized.context), Array.from(sandbox.window.GovPromptCore.CONTEXT_FIELDS));
-assert.equal(detectTransactionType({ facts: 'ต้องจัดซื้อวัสดุ' }), 'procurement');
+assert.equal(detectTransactionType({ facts: 'procurement TOR review' }), 'procurement');
 
 const insertedScripts = '<script src="assets/js/core/shared-context.js"></script><script src="assets/js/core/prompt-registry.js"></script><script src="assets/js/core/transaction-router.js"></script><script src="assets/js/core/context-integration.js"></script><script src="assets/js/core/document-loader.js"></script><script src="assets/js/core/citation-engine.js"></script><script src="assets/js/core/knowledge-index.js"></script><script src="assets/js/core/semantic-search.js"></script><script src="assets/js/core/knowledge-engine.js"></script>';
 for (let index = 1; index <= 13; index += 1) {
@@ -54,4 +55,4 @@ for (let index = 1; index <= 13; index += 1) {
   assert.equal(normalizeEol(current.replace(insertedScripts, '')), normalizeEol(baseline), `${file}: existing UI or prompt behavior changed`);
 }
 
-console.log('Transaction Router verification passed for GP001-GP013 against origin/main baselines.');
+console.log('GovPrompt v7 Transaction Router verification passed for GP001-GP012 with legacy page compatibility.');
