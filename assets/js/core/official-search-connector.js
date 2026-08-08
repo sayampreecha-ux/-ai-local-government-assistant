@@ -78,28 +78,57 @@
     ));
   }
 
-  function createOfficialSearchConnector({ endpoint = '', fetcher } = {}) {
+  function planOnly(plan, warning, errorCode = '') {
+    return Object.freeze({
+      mode: 'plan-only',
+      plan,
+      results: Object.freeze([]),
+      freshness: null,
+      warning,
+      errorCode
+    });
+  }
+
+  function createOfficialSearchConnector({ endpoint = '/api/official-search', fetcher } = {}) {
     const searchEndpoint = normalize(endpoint);
     const doFetch = fetcher || (typeof fetch === 'function' ? fetch.bind(globalThis) : null);
 
     async function search(query, options = {}) {
       const plan = createSearchPlan(query, options);
       if (!searchEndpoint || typeof doFetch !== 'function') {
-        return Object.freeze({
-          mode: 'plan-only',
-          plan,
-          results: Object.freeze([]),
-          freshness: null,
-          warning: 'ยังไม่ได้เชื่อมบริการค้นเว็บราชการสด — ใช้แผนค้นจาก Primary Source ก่อน'
-        });
+        return planOnly(plan, 'ยังไม่ได้เชื่อมบริการค้นเว็บราชการสด — ใช้แผนค้นจาก Primary Source ก่อน', 'SEARCH_UNAVAILABLE');
       }
 
-      const response = await doFetch(searchEndpoint, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ query: plan.query, plans: plan.plans })
-      });
-      if (!response.ok) throw new Error(`Official search request failed: ${response.status}`);
+      let response;
+      try {
+        response = await doFetch(searchEndpoint, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            query: plan.query,
+            sites: plan.sources.map(source => source.host),
+            count: Math.min(20, Math.max(5, Number(options.count) || 10))
+          })
+        });
+      } catch {
+        return planOnly(plan, 'ยังเชื่อมบริการค้นเว็บราชการสดไม่ได้ — ระบบจะใช้แผนค้นจาก Primary Source ก่อน', 'SEARCH_NETWORK_ERROR');
+      }
+
+      if (!response.ok) {
+        let errorCode = `HTTP_${response.status}`;
+        try {
+          const errorPayload = await response.json();
+          errorCode = normalize(errorPayload?.error) || errorCode;
+        } catch {}
+        return planOnly(
+          plan,
+          errorCode === 'SEARCH_PROVIDER_NOT_CONFIGURED'
+            ? 'ยังไม่ได้ตั้งค่าผู้ให้บริการค้นเว็บบนเซิร์ฟเวอร์ — ระบบจะใช้แผนค้นจาก Primary Source ก่อน'
+            : 'บริการค้นเว็บราชการสดยังไม่พร้อม — ระบบจะใช้แผนค้นจาก Primary Source ก่อน',
+          errorCode
+        );
+      }
+
       const payload = await response.json();
       const results = rankResults(Array.isArray(payload.results) ? payload.results : []);
       const freshness = typeof window.GovPromptCore.selectBestCurrent === 'function'
@@ -111,6 +140,8 @@
         plan,
         results,
         freshness,
+        searchedAt: normalize(payload.searchedAt),
+        provider: normalize(payload.provider),
         warning: freshness?.warning || ''
       });
     }
