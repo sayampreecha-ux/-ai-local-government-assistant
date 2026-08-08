@@ -51,11 +51,6 @@ function parseRequestBody(body) {
   return { query, sites, count };
 }
 
-function buildProviderQuery(query, sites) {
-  const siteClause = sites.length ? ` (${sites.map(site => `site:${site}`).join(' OR ')})` : '';
-  return `${query}${siteClause}`.trim();
-}
-
 function normalizeResult(item) {
   const url = cleanText(item?.url, 1200);
   let host = '';
@@ -64,45 +59,58 @@ function normalizeResult(item) {
   return {
     title: cleanText(item?.title, 300),
     url,
-    snippet: cleanText(item?.description ?? item?.snippet, 700),
+    snippet: cleanText(item?.content ?? item?.description ?? item?.snippet, 700),
     host: normalizeHost(host),
     sourceTier: 'primary',
-    documentDate: normalizeDate(item?.page_age),
+    documentDate: normalizeDate(item?.published_date ?? item?.date),
     effectiveDate: '',
     status: 'unknown',
     lastVerifiedAt: ''
   };
 }
 
-async function searchBrave(env, payload) {
-  if (!env.BRAVE_SEARCH_API_KEY) {
+async function searchTavily(env, payload) {
+  if (!env.TAVILY_API_KEY) {
     return { ok: false, status: 503, error: 'SEARCH_PROVIDER_NOT_CONFIGURED' };
   }
-  const providerQuery = buildProviderQuery(payload.query, payload.sites);
-  const endpoint = new URL('https://api.search.brave.com/res/v1/web/search');
-  endpoint.searchParams.set('q', providerQuery);
-  endpoint.searchParams.set('count', String(payload.count));
-  endpoint.searchParams.set('search_lang', 'th');
-  endpoint.searchParams.set('safesearch', 'moderate');
 
-  const response = await fetch(endpoint, {
+  const response = await fetch('https://api.tavily.com/search', {
+    method: 'POST',
     headers: {
       accept: 'application/json',
-      'x-subscription-token': env.BRAVE_SEARCH_API_KEY
-    }
+      'content-type': 'application/json',
+      authorization: `Bearer ${env.TAVILY_API_KEY}`
+    },
+    body: JSON.stringify({
+      query: payload.query,
+      topic: 'general',
+      search_depth: 'basic',
+      max_results: payload.count,
+      include_answer: false,
+      include_raw_content: false,
+      include_images: false,
+      ...(payload.sites.length ? { include_domains: payload.sites } : {})
+    })
   });
+
   if (!response.ok) {
     return { ok: false, status: 502, error: 'SEARCH_PROVIDER_ERROR', providerStatus: response.status };
   }
+
   const data = await response.json();
-  const results = (data?.web?.results || []).map(normalizeResult).filter(Boolean);
-  return { ok: true, results, provider: 'brave' };
+  const results = (Array.isArray(data?.results) ? data.results : []).map(normalizeResult).filter(Boolean);
+  return { ok: true, results, provider: 'tavily' };
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env = {}) {
     const url = new URL(request.url);
-    if (url.pathname !== '/api/official-search') return env.ASSETS.fetch(request);
+
+    if (url.pathname !== '/api/official-search') {
+      if (env.ASSETS && typeof env.ASSETS.fetch === 'function') return env.ASSETS.fetch(request);
+      return json({ ok: true, service: 'govprompt-official-search', status: 'ready' }, 200);
+    }
+
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { allow: 'POST, OPTIONS' } });
     if (request.method !== 'POST') return json({ ok: false, error: 'METHOD_NOT_ALLOWED' }, 405);
 
@@ -111,7 +119,7 @@ export default {
     const payload = parseRequestBody(body);
     if (!payload.query) return json({ ok: false, error: 'QUERY_REQUIRED' }, 400);
 
-    const search = await searchBrave(env, payload);
+    const search = await searchTavily(env, payload);
     if (!search.ok) return json({ ok: false, error: search.error, providerStatus: search.providerStatus ?? null }, search.status);
 
     return json({
