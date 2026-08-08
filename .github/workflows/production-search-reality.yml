@@ -1,0 +1,20 @@
+name: Production Search Reality
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/benchmark-production-endpoint.mjs'
+      - '.github/workflows/production-search-reality.yml'
+  workflow_dispatch:
+
+jobs:
+  production-search:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Test production Cloudflare search endpoint
+        run: node scripts/benchmark-production-endpoint.mjs
