@@ -62,7 +62,7 @@ function normalizeResult(item) {
     snippet: cleanText(item?.content ?? item?.description ?? item?.snippet, 700),
     host: normalizeHost(host),
     sourceTier: 'primary',
-    documentDate: normalizeDate(item?.published_date ?? item?.date),
+    documentDate: normalizeDate(item?.published_date ?? item?.page_age),
     effectiveDate: '',
     status: 'unknown',
     lastVerifiedAt: ''
@@ -78,18 +78,16 @@ async function searchTavily(env, payload) {
     method: 'POST',
     headers: {
       accept: 'application/json',
-      'content-type': 'application/json',
-      authorization: `Bearer ${env.TAVILY_API_KEY}`
+      authorization: `Bearer ${env.TAVILY_API_KEY}`,
+      'content-type': 'application/json'
     },
     body: JSON.stringify({
       query: payload.query,
-      topic: 'general',
-      search_depth: 'basic',
+      search_depth: 'advanced',
       max_results: payload.count,
       include_answer: false,
       include_raw_content: false,
-      include_images: false,
-      ...(payload.sites.length ? { include_domains: payload.sites } : {})
+      include_domains: payload.sites
     })
   });
 
@@ -102,15 +100,24 @@ async function searchTavily(env, payload) {
   return { ok: true, results, provider: 'tavily' };
 }
 
+async function fetchAsset(request, env, url) {
+  if (!env?.ASSETS || typeof env.ASSETS.fetch !== 'function') {
+    return new Response('Not Found', { status: 404 });
+  }
+
+  if (url.pathname === '/') {
+    const indexUrl = new URL(request.url);
+    indexUrl.pathname = '/index.html';
+    return env.ASSETS.fetch(new Request(indexUrl, request));
+  }
+
+  return env.ASSETS.fetch(request);
+}
+
 export default {
-  async fetch(request, env = {}) {
+  async fetch(request, env) {
     const url = new URL(request.url);
-
-    if (url.pathname !== '/api/official-search') {
-      if (env.ASSETS && typeof env.ASSETS.fetch === 'function') return env.ASSETS.fetch(request);
-      return json({ ok: true, service: 'govprompt-official-search', status: 'ready' }, 200);
-    }
-
+    if (url.pathname !== '/api/official-search') return fetchAsset(request, env, url);
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { allow: 'POST, OPTIONS' } });
     if (request.method !== 'POST') return json({ ok: false, error: 'METHOD_NOT_ALLOWED' }, 405);
 
