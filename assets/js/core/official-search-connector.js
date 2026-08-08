@@ -1,6 +1,8 @@
 (() => {
   'use strict';
 
+  const UNVERIFIED_LATEST_WARNING = 'ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง';
+
   function normalize(value) {
     return String(value ?? '').normalize('NFKC').trim();
   }
@@ -48,16 +50,21 @@
     const official = sourceTier === 'primary';
 
     return Object.freeze({
-      id: normalize(item.id),
+      id: normalize(item.id) || sourceUrl,
       title: normalize(item.title),
+      documentTitle: normalize(item.documentTitle || item.title),
       snippet: normalize(item.snippet || item.summary),
       sourceUrl,
+      sourceURL: sourceUrl,
       sourceName: matched?.name || normalize(item.sourceName),
+      issuingAgency: matched?.name || normalize(item.issuingAgency || item.sourceName),
       sourceId: matched?.id || normalize(item.sourceId),
       sourceTier,
+      sourceLevel: sourceTier,
       sourcePriority,
       official,
       documentNumber: normalize(item.documentNumber || item.reference),
+      reference: normalize(item.documentNumber || item.reference) || sourceUrl,
       documentDate: normalize(item.documentDate || item.date),
       effectiveDate: normalize(item.effectiveDate),
       status: normalize(item.status) || 'unknown',
@@ -78,12 +85,47 @@
     ));
   }
 
+  function createSearchCitations(results = []) {
+    const createCitation = window.GovPromptCore.createCitation;
+    if (typeof createCitation !== 'function') return Object.freeze([]);
+    return Object.freeze(results.filter(result => result.official).map(result => {
+      try {
+        return createCitation(result, { confidenceLevel: 'medium', verify: true });
+      } catch {
+        return null;
+      }
+    }).filter(Boolean));
+  }
+
+  function createEvidence(results, freshness) {
+    const primaryResults = Object.freeze(results.filter(result => result.official));
+    const secondaryResults = Object.freeze(results.filter(result => !result.official));
+    const citations = createSearchCitations(primaryResults);
+    const verifiedCurrent = Boolean(freshness?.verifiedCurrent && freshness?.best?.official);
+    return Object.freeze({
+      primaryResults,
+      secondaryResults,
+      citations,
+      verifiedCurrent,
+      conclusionEligible: verifiedCurrent && primaryResults.length > 0,
+      warning: verifiedCurrent ? '' : UNVERIFIED_LATEST_WARNING
+    });
+  }
+
   function planOnly(plan, warning, errorCode = '') {
     return Object.freeze({
       mode: 'plan-only',
       plan,
       results: Object.freeze([]),
       freshness: null,
+      evidence: Object.freeze({
+        primaryResults: Object.freeze([]),
+        secondaryResults: Object.freeze([]),
+        citations: Object.freeze([]),
+        verifiedCurrent: false,
+        conclusionEligible: false,
+        warning
+      }),
       warning,
       errorCode
     });
@@ -134,24 +176,28 @@
       const freshness = typeof window.GovPromptCore.selectBestCurrent === 'function'
         ? window.GovPromptCore.selectBestCurrent(results, options)
         : null;
+      const evidence = createEvidence(results, freshness);
 
       return Object.freeze({
         mode: 'live',
         plan,
         results,
         freshness,
+        evidence,
         searchedAt: normalize(payload.searchedAt),
         provider: normalize(payload.provider),
-        warning: freshness?.warning || ''
+        warning: freshness?.warning || evidence.warning
       });
     }
 
-    return Object.freeze({ search, createSearchPlan, rankResults });
+    return Object.freeze({ search, createSearchPlan, rankResults, createEvidence });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
+  window.GovPromptCore.UNVERIFIED_LATEST_WARNING = UNVERIFIED_LATEST_WARNING;
   window.GovPromptCore.createOfficialSearchPlan = createSearchPlan;
   window.GovPromptCore.rankOfficialSearchResults = rankResults;
+  window.GovPromptCore.createOfficialSearchEvidence = createEvidence;
   window.GovPromptCore.createOfficialSearchConnector = createOfficialSearchConnector;
   window.GovPromptCore.officialSearchConnector = createOfficialSearchConnector();
 })();
