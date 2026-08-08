@@ -48,7 +48,7 @@ const ranked = core.rankOfficialSearchResults([
 assert.equal(ranked[0].official, true);
 assert.equal(ranked[0].sourceId, 'moi');
 assert.equal(ranked[0].queryRelevance > ranked.find(item => item.title === 'ข่าวกิจกรรมทั่วไป').queryRelevance, true);
-assert.equal(ranked.filter(item => item.sourceUrl.includes('/a')).length, 1, 'tracking-url duplicate should be removed');
+assert.equal(ranked.filter(item => item.sourceId === 'moi' && item.title === 'ระเบียบค่าใช้จ่ายในการเดินทางไปราชการ').length, 1, 'tracking-url duplicate should be removed');
 assert.equal(core.officialSearchCitationConfidence(ranked[0]), 'high');
 
 const evidence = core.createOfficialSearchEvidence(ranked, { verifiedCurrent: true, best: ranked[0] }, { verificationRequired: true });
