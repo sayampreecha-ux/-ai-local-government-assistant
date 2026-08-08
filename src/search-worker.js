@@ -13,10 +13,15 @@ const OFFICIAL_HOSTS = new Set([
   'audit.go.th'
 ]);
 
+const FRONTEND_ORIGIN = 'https://sayampreecha-ux.github.io';
 const JSON_HEADERS = Object.freeze({
   'content-type': 'application/json; charset=utf-8',
   'cache-control': 'no-store',
-  'x-content-type-options': 'nosniff'
+  'x-content-type-options': 'nosniff',
+  'access-control-allow-origin': FRONTEND_ORIGIN,
+  'access-control-allow-methods': 'POST, OPTIONS',
+  'access-control-allow-headers': 'content-type',
+  'vary': 'Origin'
 });
 
 function json(body, status = 200) {
@@ -36,6 +41,12 @@ function cleanText(value, max = 500) {
   return String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
 }
 
+function normalizeDate(value) {
+  const raw = cleanText(value, 80);
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(raw);
+  return match ? match[1] : '';
+}
+
 function parseRequestBody(body) {
   const query = cleanText(body?.query, 400);
   const sites = Array.isArray(body?.sites)
@@ -43,11 +54,6 @@ function parseRequestBody(body) {
     : [];
   const count = Math.min(Math.max(Number(body?.count) || 10, 1), 20);
   return { query, sites, count };
-}
-
-function buildProviderQuery(query, sites) {
-  const siteClause = sites.length ? ` (${sites.map(site => `site:${site}`).join(' OR ')})` : '';
-  return `${query}${siteClause}`.trim();
 }
 
 function normalizeResult(item) {
@@ -58,42 +64,66 @@ function normalizeResult(item) {
   return {
     title: cleanText(item?.title, 300),
     url,
-    snippet: cleanText(item?.description ?? item?.snippet, 700),
+    snippet: cleanText(item?.content ?? item?.description ?? item?.snippet, 700),
     host: normalizeHost(host),
-    sourceTier: 'primary'
+    sourceTier: 'primary',
+    documentDate: normalizeDate(item?.published_date ?? item?.page_age),
+    effectiveDate: '',
+    status: 'unknown',
+    lastVerifiedAt: ''
   };
 }
 
-async function searchBrave(env, payload) {
-  if (!env.BRAVE_SEARCH_API_KEY) {
+async function searchTavily(env, payload) {
+  if (!env.TAVILY_API_KEY) {
     return { ok: false, status: 503, error: 'SEARCH_PROVIDER_NOT_CONFIGURED' };
   }
-  const providerQuery = buildProviderQuery(payload.query, payload.sites);
-  const endpoint = new URL('https://api.search.brave.com/res/v1/web/search');
-  endpoint.searchParams.set('q', providerQuery);
-  endpoint.searchParams.set('count', String(payload.count));
-  endpoint.searchParams.set('search_lang', 'th');
-  endpoint.searchParams.set('safesearch', 'moderate');
 
-  const response = await fetch(endpoint, {
+  const response = await fetch('https://api.tavily.com/search', {
+    method: 'POST',
     headers: {
       accept: 'application/json',
-      'x-subscription-token': env.BRAVE_SEARCH_API_KEY
-    }
+      authorization: `Bearer ${env.TAVILY_API_KEY}`,
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      query: payload.query,
+      search_depth: 'advanced',
+      max_results: payload.count,
+      include_answer: false,
+      include_raw_content: false,
+      include_domains: payload.sites
+    })
   });
+
   if (!response.ok) {
     return { ok: false, status: 502, error: 'SEARCH_PROVIDER_ERROR', providerStatus: response.status };
   }
+
   const data = await response.json();
-  const results = (data?.web?.results || []).map(normalizeResult).filter(Boolean);
-  return { ok: true, results, provider: 'brave' };
+  const results = (Array.isArray(data?.results) ? data.results : []).map(normalizeResult).filter(Boolean);
+  return { ok: true, results, provider: 'tavily' };
+}
+
+async function fetchAsset(request, env, url) {
+  if (!env?.ASSETS || typeof env.ASSETS.fetch !== 'function') {
+    return new Response('Not Found', { status: 404 });
+  }
+
+  if (url.pathname === '/') {
+    const indexUrl = new URL(request.url);
+    indexUrl.pathname = '/index.html';
+    return env.ASSETS.fetch(new Request(indexUrl, request));
+  }
+
+  return env.ASSETS.fetch(request);
 }
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname !== '/api/official-search') return env.ASSETS.fetch(request);
-    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { allow: 'POST, OPTIONS' } });
+    if (url.pathname !== '/api/official-search') return fetchAsset(request, env, url);
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
     if (request.method !== 'POST') return json({ ok: false, error: 'METHOD_NOT_ALLOWED' }, 405);
 
     let body;
@@ -101,7 +131,7 @@ export default {
     const payload = parseRequestBody(body);
     if (!payload.query) return json({ ok: false, error: 'QUERY_REQUIRED' }, 400);
 
-    const search = await searchBrave(env, payload);
+    const search = await searchTavily(env, payload);
     if (!search.ok) return json({ ok: false, error: search.error, providerStatus: search.providerStatus ?? null }, search.status);
 
     return json({
