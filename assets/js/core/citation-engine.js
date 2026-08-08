@@ -14,7 +14,7 @@
   }
 
   function verifySource(document) {
-    const sourceURL = normalizeText(document.sourceURL || document.source);
+    const sourceURL = normalizeText(document.sourceURL || document.sourceUrl || document.source);
     try {
       const url = new URL(sourceURL);
       const official = url.protocol === 'https:' && (url.hostname === 'go.th' || url.hostname.endsWith('.go.th'));
@@ -35,11 +35,18 @@
   function isEffective(document, asOf = new Date()) {
     const reference = asOf instanceof Date ? asOf : new Date(asOf);
     if (Number.isNaN(reference.getTime())) return false;
-    return new Date(`${document.effectiveDate}T00:00:00.000Z`).getTime() <= reference.getTime();
+    const effectiveDate = normalizeText(document.effectiveDate || document.documentDate);
+    if (!effectiveDate) return true;
+    const effective = new Date(`${effectiveDate}T00:00:00.000Z`);
+    return !Number.isNaN(effective.getTime()) && effective.getTime() <= reference.getTime();
   }
 
   function documentFamily(document) {
-    return [document.agency || document.issuingAgency, document.title, document.reference || document.source]
+    return [
+      document.agency || document.issuingAgency,
+      document.title || document.documentTitle,
+      document.reference || document.documentNumber || document.sourceUrl || document.source
+    ]
       .map(normalizeText)
       .join('|')
       .toLowerCase();
@@ -50,9 +57,11 @@
     documents.filter(document => isEffective(document, asOf)).forEach(document => {
       const key = documentFamily(document);
       const current = selected.get(key);
+      const documentDate = normalizeText(document.effectiveDate || document.documentDate);
+      const currentDate = normalizeText(current?.effectiveDate || current?.documentDate);
       if (!current
-        || document.effectiveDate > current.effectiveDate
-        || (document.effectiveDate === current.effectiveDate && compareVersions(document.version, current.version) > 0)) {
+        || documentDate > currentDate
+        || (documentDate === currentDate && compareVersions(document.version, current.version) > 0)) {
         selected.set(key, document);
       }
     });
@@ -74,21 +83,24 @@
     if (verify && !sourceVerification.verified) throw new TypeError(`Unverified official source: ${document.id}`);
     const confidence = normalizeText(confidenceLevel) || (sourceVerification.verified ? 'high' : 'low');
     if (!CONFIDENCE_LEVELS.includes(confidence)) throw new TypeError('Invalid citation confidence level');
-    const agency = normalizeText(document.agency || document.issuingAgency);
-    const reference = normalizeText(document.reference || document.source);
+    const agency = normalizeText(document.agency || document.issuingAgency || document.sourceName);
+    const reference = normalizeText(document.reference || document.documentNumber || document.sourceUrl || document.source);
+    const title = normalizeText(document.title || document.documentTitle);
+    const effectiveDate = normalizeText(document.effectiveDate || document.documentDate);
+    const version = normalizeText(document.version);
     return deepFreeze({
       id: normalizeText(document.id),
       citationId: normalizeText(document.id),
-      title: normalizeText(document.title),
+      title,
       agency,
-      effectiveDate: normalizeText(document.effectiveDate),
-      version: normalizeText(document.version),
+      effectiveDate,
+      version,
       reference,
       officialReference: reference,
       sourceURL: sourceVerification.sourceURL,
       confidenceLevel: confidence,
       sourceVerified: sourceVerification.verified,
-      label: `${normalizeText(document.title)} (${agency}, ${reference}, ${normalizeText(document.version)})`
+      label: `${title} (${agency}${reference ? `, ${reference}` : ''}${version ? `, ${version}` : ''})`
     });
   }
 
