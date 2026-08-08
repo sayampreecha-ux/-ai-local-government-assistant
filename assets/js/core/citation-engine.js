@@ -42,14 +42,10 @@
   }
 
   function documentFamily(document) {
-    return [
-      document.agency || document.issuingAgency,
-      document.title || document.documentTitle,
-      document.reference || document.documentNumber || document.sourceUrl || document.source
-    ]
-      .map(normalizeText)
-      .join('|')
-      .toLowerCase();
+    const agency = normalizeText(document.agency || document.issuingAgency || document.sourceName).toLowerCase();
+    const title = normalizeText(document.title || document.documentTitle).toLowerCase();
+    if (agency || title) return `${agency}|${title}`;
+    return normalizeText(document.reference || document.documentNumber || document.sourceUrl || document.source).toLowerCase();
   }
 
   function selectNewestEffectiveVersions(documents, asOf = new Date()) {
