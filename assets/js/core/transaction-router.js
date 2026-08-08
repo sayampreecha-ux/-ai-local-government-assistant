@@ -3,37 +3,37 @@
 
   const MODULES = window.GovPromptCore.PROMPT_REGISTRY;
   const V7_MODULE_IDS = Object.freeze(Array.from({ length: 13 }, (_, index) => `GP${String(index + 1).padStart(3, '0')}`));
-  const DEFAULT_OPTIONS = Object.freeze({ confidenceThreshold: 0.45, multiModuleThreshold: 0.3, fallbackModule: 'GP001' });
+  const DEFAULT_OPTIONS = Object.freeze({ confidenceThreshold: 0.38, multiModuleThreshold: 0.3, fallbackModule: 'GP002' });
   const definitions = [
-    ['GP001', 'records', ['gp001', 'official letter', 'หนังสือราชการ', 'สารบรรณ', 'บันทึกข้อความ', 'คำสั่ง', 'ประกาศ']],
-    ['GP002', 'legal', ['gp002', 'law', 'legal', 'กฎหมาย', 'ข้อกฎหมาย', 'วิเคราะห์ข้อกฎหมาย', 'ฐานอำนาจ', 'ระเบียบ', 'อำนาจหน้าที่', 'ข้อหารือ', 'หนังสือสั่งการ', 'ซักซ้อม']],
-    ['GP003', 'procurement', ['gp003', 'procurement', 'tor', 'จัดซื้อ', 'จัดจ้าง', 'พัสดุ', 'ราคากลาง', 'e-gp', 'ตรวจรับ', 'เฉพาะเจาะจง', 'คัดเลือก', 'ประกวดราคา']],
-    ['GP004', 'planning-budget', ['gp004', 'plan', 'project', 'budget', 'planning', 'appropriation', 'แผน', 'โครงการ', 'งบประมาณ', 'โอนงบ', 'เงินสำรอง', 'ตัวชี้วัด', 'kpi']],
-    ['GP005', 'finance', ['gp005', 'finance', 'reimbursement', 'travel expense', 'payment', 'การเงิน', 'เบิกจ่าย', 'ค่าเดินทาง', 'เดินทางไปราชการ', 'ค่าเช่าบ้าน', 'ฎีกา', 'ค่าใช้จ่ายเดินทาง']],
-    ['GP006', 'human-resources', ['gp006', 'human resources', 'hr', 'personnel', 'promotion', 'บุคคล', 'แต่งตั้ง', 'เลื่อนระดับ', 'เลื่อนเงินเดือน', 'เงินเดือน', 'โอนย้าย', 'วินัย', 'เกษียณ', 'สอบแข่งขัน']],
-    ['GP007', 'engineering', ['gp007', 'engineering', 'construction', 'road', 'งานช่าง', 'วิศวกรรม', 'ก่อสร้าง', 'ถนน', 'แบบแปลน', 'ผู้ควบคุมงาน']],
-    ['GP008', 'public-health', ['gp008', 'public health', 'health', 'hospital', 'สาธารณสุข', 'รพ.สต.', 'รพสต', 'เงินบำรุง', 'บริการสุขภาพ']],
-    ['GP009', 'education', ['gp009', 'education', 'school', 'teacher', 'student', 'การศึกษา', 'โรงเรียน', 'ครู', 'นักเรียน', 'ศูนย์พัฒนาเด็กเล็ก']],
-    ['GP010', 'internal-audit', ['gp010', 'internal audit', 'audit', 'internal control', 'ตรวจสอบภายใน', 'ควบคุมภายใน', 'ปค.4', 'ปค.5', 'ปค.6', 'ความเสี่ยงองค์กร']],
-    ['GP011', 'executive', ['gp011', 'executive', 'policy', 'management', 'ผู้บริหาร', 'นายก', 'ปลัด', 'นโยบาย', 'ข้อสั่งการ', 'สรุปผู้บริหาร']],
-    ['GP012', 'public-relations', ['gp012', 'public relations', 'press release', 'pr', 'ประชาสัมพันธ์', 'ข่าว', 'facebook', 'infographic', 'โพสต์']],
-    ['GP013', 'council', ['gp013', 'council', 'quorum', 'motion', 'resolution', 'local council', 'สภาท้องถิ่น', 'ญัตติ', 'องค์ประชุม', 'มติสภา', 'ข้อบัญญัติ', 'สมัยประชุม']]
+    ['GP001', 'records', ['gp001', 'official letter', 'หนังสือราชการ', 'สารบรรณ', 'บันทึกข้อความ', 'ร่างหนังสือ', 'เลขหนังสือ', 'หนังสือภายนอก', 'หนังสือภายใน']],
+    ['GP002', 'legal', ['gp002', 'law', 'legal', 'กฎหมาย', 'ข้อกฎหมาย', 'วิเคราะห์ข้อกฎหมาย', 'ฐานอำนาจ', 'ระเบียบ', 'อำนาจหน้าที่', 'ข้อหารือ', 'หนังสือสั่งการ', 'ซักซ้อม', 'ผิดไหม', 'ถูกไหม', 'ทำได้ไหม']],
+    ['GP003', 'procurement', ['gp003', 'procurement', 'tor', 'จัดซื้อ', 'จัดจ้าง', 'พัสดุ', 'ราคากลาง', 'e-gp', 'ตรวจรับ', 'เฉพาะเจาะจง', 'คัดเลือก', 'ประกวดราคา', 'ซื้อ', 'จ้าง', 'สเปก', 'ล็อกสเปก']],
+    ['GP004', 'planning-budget', ['gp004', 'plan', 'project', 'budget', 'planning', 'appropriation', 'แผน', 'โครงการ', 'งบประมาณ', 'โอนงบ', 'เงินสำรอง', 'ตัวชี้วัด', 'kpi', 'ของบ', 'ตั้งงบ']],
+    ['GP005', 'finance', ['gp005', 'finance', 'reimbursement', 'travel expense', 'payment', 'การเงิน', 'เบิกจ่าย', 'ค่าเดินทาง', 'เดินทางไปราชการ', 'ค่าเช่าบ้าน', 'ฎีกา', 'ค่าใช้จ่ายเดินทาง', 'เบิกได้ไหม', 'จ่ายได้ไหม', 'รถเสีย']],
+    ['GP006', 'human-resources', ['gp006', 'human resources', 'hr', 'personnel', 'promotion', 'บุคคล', 'แต่งตั้ง', 'เลื่อนระดับ', 'เลื่อนเงินเดือน', 'เงินเดือน', 'โอนย้าย', 'วินัย', 'เกษียณ', 'สอบแข่งขัน', 'บรรจุ', 'เลื่อนขั้น']],
+    ['GP007', 'engineering', ['gp007', 'engineering', 'construction', 'road', 'งานช่าง', 'วิศวกรรม', 'ก่อสร้าง', 'ถนน', 'แบบแปลน', 'ผู้ควบคุมงาน', 'ถนนพัง', 'ซ่อมถนน', 'งานโยธา']],
+    ['GP008', 'public-health', ['gp008', 'public health', 'health', 'hospital', 'สาธารณสุข', 'รพ.สต.', 'รพสต', 'เงินบำรุง', 'บริการสุขภาพ', 'ผู้ป่วย', 'โครงการสุขภาพ']],
+    ['GP009', 'education', ['gp009', 'education', 'school', 'teacher', 'student', 'การศึกษา', 'โรงเรียน', 'ครู', 'นักเรียน', 'ศูนย์พัฒนาเด็กเล็ก', 'เด็กเล็ก']],
+    ['GP010', 'internal-audit', ['gp010', 'internal audit', 'audit', 'internal control', 'ตรวจสอบภายใน', 'ควบคุมภายใน', 'ปค.4', 'ปค.5', 'ปค.6', 'ความเสี่ยงองค์กร', 'ตรวจความเสี่ยง']],
+    ['GP011', 'executive', ['gp011', 'executive', 'policy', 'management', 'ผู้บริหาร', 'นายก', 'ปลัด', 'นโยบาย', 'ข้อสั่งการ', 'สรุปผู้บริหาร', 'ตัดสินใจ', 'บริหารงาน']],
+    ['GP012', 'public-relations', ['gp012', 'public relations', 'press release', 'pr', 'ประชาสัมพันธ์', 'ข่าว', 'facebook', 'infographic', 'โพสต์', 'ทำภาพ', 'ประชาสัมพันธ์ข่าว']],
+    ['GP013', 'council', ['gp013', 'council', 'quorum', 'motion', 'resolution', 'local council', 'สภาท้องถิ่น', 'ญัตติ', 'องค์ประชุม', 'มติสภา', 'ข้อบัญญัติ', 'สมัยประชุม', 'ประชุมสภา']]
   ];
 
   const HIGH_SIGNAL_RULES = Object.freeze([
-    Object.freeze({ moduleId: 'GP003', patterns: Object.freeze([/\btor\b/i, /วิธีเฉพาะเจาะจง/, /จัดซื้อ/, /จัดจ้าง/, /พัสดุ/, /ราคากลาง/, /ตรวจรับ/, /e-?bidding/i, /ประกวดราคา/, /วิธีคัดเลือก/]) }),
-    Object.freeze({ moduleId: 'GP006', patterns: Object.freeze([/เลื่อนเงินเดือน/, /เลื่อนระดับ/, /แต่งตั้ง/, /โอนย้าย/, /สอบแข่งขัน/, /บรรจุ/, /วินัย/, /เกษียณ/, /งานบุคคล/]) }),
-    Object.freeze({ moduleId: 'GP005', patterns: Object.freeze([/ค่าเดินทาง/, /ค่าใช้จ่าย.*เดินทาง/, /เดินทางไปราชการ/, /รถเสีย.*ราชการ/, /ราชการ.*รถเสีย/, /เบิกจ่าย/, /ฎีกา/, /ค่าเช่าบ้าน/]) }),
-    Object.freeze({ moduleId: 'GP008', patterns: Object.freeze([/เงินบำรุง/, /รพ\.?สต\.?/, /สาธารณสุข/, /บริการสุขภาพ/]) }),
-    Object.freeze({ moduleId: 'GP007', patterns: Object.freeze([/งานช่าง/, /ก่อสร้าง/, /ถนน/, /แบบแปลน/, /ผู้ควบคุมงาน/]) }),
-    Object.freeze({ moduleId: 'GP013', patterns: Object.freeze([/สภาท้องถิ่น/, /สมัยประชุม/, /องค์ประชุม/, /ญัตติ/, /มติสภา/, /ข้อบัญญัติ/]) }),
-    Object.freeze({ moduleId: 'GP004', patterns: Object.freeze([/งบประมาณ/, /โอนงบ/, /เงินสำรอง/, /แผนพัฒนา/, /โครงการ/]) }),
-    Object.freeze({ moduleId: 'GP010', patterns: Object.freeze([/ตรวจสอบภายใน/, /ควบคุมภายใน/, /ปค\.?\s*[456]/, /ความเสี่ยงองค์กร/]) }),
-    Object.freeze({ moduleId: 'GP012', patterns: Object.freeze([/ประชาสัมพันธ์/, /อินโฟกราฟิก/, /โพสต์/, /facebook/i, /ข่าวประชาสัมพันธ์/]) }),
-    Object.freeze({ moduleId: 'GP009', patterns: Object.freeze([/การศึกษา/, /โรงเรียน/, /ครู/, /นักเรียน/, /ศูนย์พัฒนาเด็กเล็ก/]) }),
-    Object.freeze({ moduleId: 'GP011', patterns: Object.freeze([/สรุปผู้บริหาร/, /ข้อสั่งการ/, /นโยบายผู้บริหาร/]) }),
-    Object.freeze({ moduleId: 'GP002', patterns: Object.freeze([/วิเคราะห์ข้อกฎหมาย/, /ข้อกฎหมาย/, /ฐานอำนาจ/, /ข้อหารือ/, /กฎหมายที่เกี่ยวข้อง/, /อำนาจหน้าที่ตามกฎหมาย/]) }),
-    Object.freeze({ moduleId: 'GP001', patterns: Object.freeze([/หนังสือราชการ/, /บันทึกข้อความ/, /งานสารบรรณ/, /ร่างหนังสือ/, /เลขหนังสือ/]) })
+    Object.freeze({ moduleId: 'GP003', patterns: Object.freeze([/\btor\b/i, /วิธีเฉพาะเจาะจง/, /จัดซื้อ/, /จัดจ้าง/, /พัสดุ/, /ราคากลาง/, /ตรวจรับ/, /e-?bidding/i, /ประกวดราคา/, /วิธีคัดเลือก/, /ซื้อ.*ของ/, /จ้าง.*งาน/, /สเปก/, /ล็อกสเปก/]) }),
+    Object.freeze({ moduleId: 'GP006', patterns: Object.freeze([/เลื่อนเงินเดือน/, /เลื่อนขั้น/, /เลื่อนระดับ/, /แต่งตั้ง/, /โอนย้าย/, /สอบแข่งขัน/, /บรรจุ/, /วินัย/, /เกษียณ/, /งานบุคคล/]) }),
+    Object.freeze({ moduleId: 'GP005', patterns: Object.freeze([/ค่าเดินทาง/, /ค่าใช้จ่าย.*เดินทาง/, /เดินทางไปราชการ/, /รถเสีย.*ราชการ/, /ราชการ.*รถเสีย/, /เบิกได้ไหม/, /จ่ายได้ไหม/, /เบิกจ่าย/, /ฎีกา/, /ค่าเช่าบ้าน/]) }),
+    Object.freeze({ moduleId: 'GP008', patterns: Object.freeze([/เงินบำรุง/, /รพ\.?สต\.?/, /สาธารณสุข/, /บริการสุขภาพ/, /โครงการ.*สุขภาพ/]) }),
+    Object.freeze({ moduleId: 'GP007', patterns: Object.freeze([/งานช่าง/, /ก่อสร้าง/, /ถนนพัง/, /ซ่อมถนน/, /ถนน/, /แบบแปลน/, /ผู้ควบคุมงาน/, /งานโยธา/]) }),
+    Object.freeze({ moduleId: 'GP013', patterns: Object.freeze([/สภาท้องถิ่น/, /ประชุมสภา/, /สมัยประชุม/, /องค์ประชุม/, /ญัตติ/, /มติสภา/, /ข้อบัญญัติ/]) }),
+    Object.freeze({ moduleId: 'GP004', patterns: Object.freeze([/งบประมาณ/, /ตั้งงบ/, /ของบ/, /โอนงบ/, /เงินสำรอง/, /แผนพัฒนา/, /ทำโครงการ/, /โครงการ/]) }),
+    Object.freeze({ moduleId: 'GP010', patterns: Object.freeze([/ตรวจสอบภายใน/, /ควบคุมภายใน/, /ปค\.?\s*[456]/, /ความเสี่ยงองค์กร/, /ตรวจความเสี่ยง/]) }),
+    Object.freeze({ moduleId: 'GP012', patterns: Object.freeze([/ประชาสัมพันธ์/, /อินโฟกราฟิก/, /ทำภาพ/, /โพสต์/, /facebook/i, /ข่าวประชาสัมพันธ์/]) }),
+    Object.freeze({ moduleId: 'GP009', patterns: Object.freeze([/การศึกษา/, /โรงเรียน/, /ครู/, /นักเรียน/, /ศูนย์พัฒนาเด็กเล็ก/, /เด็กเล็ก/]) }),
+    Object.freeze({ moduleId: 'GP011', patterns: Object.freeze([/สรุปผู้บริหาร/, /ข้อสั่งการ/, /นโยบายผู้บริหาร/, /ตัดสินใจ.*บริหาร/, /บริหารงาน/]) }),
+    Object.freeze({ moduleId: 'GP002', patterns: Object.freeze([/วิเคราะห์ข้อกฎหมาย/, /ข้อกฎหมาย/, /ฐานอำนาจ/, /ข้อหารือ/, /กฎหมายที่เกี่ยวข้อง/, /อำนาจหน้าที่ตามกฎหมาย/, /ระเบียบ.*ล่าสุด/, /ผิดไหม/, /ถูกไหม/, /ทำได้ไหม/]) }),
+    Object.freeze({ moduleId: 'GP001', patterns: Object.freeze([/หนังสือราชการ/, /บันทึกข้อความ/, /งานสารบรรณ/, /ร่างหนังสือ/, /เลขหนังสือ/, /หนังสือภายนอก/, /หนังสือภายใน/]) })
   ]);
 
   const TRANSACTION_RULES = Object.freeze(definitions.map(([moduleId, type, terms]) => Object.freeze({ moduleId, type, weight: 1, terms: Object.freeze(terms) })));
@@ -91,7 +91,7 @@
   function detectTransactionType(context = {}) {
     const explicit = String(context.transactionType ?? '').trim();
     const source = [explicit, context.domain, context.currentStage, context.facts, context.documents, context.desiredOutput].concat(Array.isArray(context.specialFlags) ? context.specialFlags : []).join(' ');
-    const route = source.trim() ? routeRequest(source, { activeModule: '', fallbackModule: 'GP001', multiModule: false }) : null;
+    const route = source.trim() ? routeRequest(source, { activeModule: '', fallbackModule: 'GP002', multiModule: false }) : null;
     return TRANSACTION_RULES.find(rule => rule.moduleId === route?.primaryModule)?.type || explicit || 'general';
   }
 
@@ -99,7 +99,8 @@
     const context = window.GovPromptCore.createSharedContext(sharedContext);
     const currentModuleId = detectModuleId(options);
     const source = [context.transactionType, context.domain, context.currentStage, context.facts, context.documents, context.desiredOutput].concat(context.specialFlags ?? []).join(' ').trim();
-    const route = source ? routeRequest(source, { activeModule: V7_MODULE_IDS.includes(currentModuleId) ? currentModuleId : '', fallbackModule: V7_MODULE_IDS.includes(currentModuleId) ? currentModuleId : 'GP001' }) : { primaryModule: currentModuleId || 'GP001', modules: [currentModuleId || 'GP001'], confidence: 0, fallback: true, ranking: [] };
+    const preferredActiveModule = currentModuleId && currentModuleId !== 'GP001' ? currentModuleId : '';
+    const route = source ? routeRequest(source, { activeModule: preferredActiveModule, fallbackModule: preferredActiveModule || 'GP002' }) : { primaryModule: preferredActiveModule || 'GP002', modules: [preferredActiveModule || 'GP002'], confidence: 0, fallback: true, ranking: [] };
     const moduleId = route.primaryModule;
     return Object.freeze({ context, currentModuleId, moduleId, transactionType: TRANSACTION_RULES.find(rule => rule.moduleId === moduleId)?.type || 'general', assistant: MODULES.find(module => module.moduleId === moduleId), shouldRedirect: Boolean(currentModuleId && currentModuleId !== moduleId), preservePrompt: true, confidence: route.confidence, modules: route.modules, fallback: route.fallback, ranking: route.ranking });
   }
