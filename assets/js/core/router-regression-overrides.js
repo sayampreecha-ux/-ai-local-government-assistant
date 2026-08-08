@@ -54,6 +54,8 @@
     ]) })
   ]);
 
+  const EXPLICIT_PLANNING = /โครงการ|แผนพัฒนา|แผนงาน|งบประมาณ|โอนงบ|เงินสำรอง|ข้อบัญญัติงบประมาณ|ตัวชี้วัด|\bkpi\b|งบรายจ่าย|งบลงทุน|งบกลาง|งบดำเนินงาน/i;
+
   function normalize(value) {
     return String(value ?? '').normalize('NFC').toLocaleLowerCase().trim();
   }
@@ -77,14 +79,14 @@
     return '';
   }
 
-  core.routeTransaction = function routeTransactionWithRegressionGuardrails(sharedContext, options = {}) {
-    const result = originalRouteTransaction(sharedContext, options);
-    const source = getSource(result.context || sharedContext);
-    const moduleId = forcedModule(source);
-    if (!moduleId || moduleId === result.moduleId) return result;
+  function nextEvidenceModule(result) {
+    return (result?.ranking || []).find(item => item.moduleId !== 'GP004' && item.rawScore > 0)?.moduleId || 'GP002';
+  }
 
+  function buildCorrectedResult(result, moduleId, reason) {
+    if (!moduleId || moduleId === result.moduleId) return result;
     const assistant = core.PROMPT_REGISTRY?.find(item => item.moduleId === moduleId);
-    const modules = Object.freeze([...new Set([moduleId, ...(result.modules || [])])].slice(0, 3));
+    const modules = Object.freeze([...new Set([moduleId, ...(result.modules || []).filter(id => id !== moduleId)])].slice(0, 3));
     return Object.freeze({
       ...result,
       moduleId,
@@ -94,9 +96,24 @@
       confidence: 0.97,
       fallback: false,
       ambiguous: false,
-      reason: 'regression-guardrail'
+      reason
     });
+  }
+
+  core.routeTransaction = function routeTransactionWithRegressionGuardrails(sharedContext, options = {}) {
+    const result = originalRouteTransaction(sharedContext, options);
+    const source = getSource(result.context || sharedContext);
+    const forced = forcedModule(source);
+    if (forced) return buildCorrectedResult(result, forced, 'regression-guardrail');
+
+    // The legacy GP004 low-signal token “งบ” can appear inside unrelated Thai words such as “เครื่องบิน”.
+    // Reject GP004 unless the request contains an explicit planning/budget concept.
+    if (result.moduleId === 'GP004' && !EXPLICIT_PLANNING.test(source)) {
+      return buildCorrectedResult(result, nextEvidenceModule(result), 'spurious-planning-token-rejected');
+    }
+    return result;
   };
 
   core.ROUTER_REGRESSION_RULES = RULES;
+  core.ROUTER_EXPLICIT_PLANNING_PATTERN = EXPLICIT_PLANNING;
 })();
