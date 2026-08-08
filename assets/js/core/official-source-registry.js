@@ -7,9 +7,9 @@
     { id: 'cgd', name: 'กรมบัญชีกลาง', host: 'cgd.go.th', tier: 'primary', priority: 96, topics: ['พัสดุ', 'การเงิน', 'ค่าใช้จ่าย', 'หนังสือเวียน'] },
     { id: 'moi', name: 'กระทรวงมหาดไทย', host: 'moi.go.th', tier: 'primary', priority: 94, topics: ['ท้องถิ่น', 'ระเบียบ', 'หนังสือสั่งการ'] },
     { id: 'dla', name: 'กรมส่งเสริมการปกครองท้องถิ่น', host: 'dla.go.th', tier: 'primary', priority: 93, topics: ['ท้องถิ่น', 'การเงิน', 'บุคคล', 'พัสดุ', 'สภา', 'สาธารณสุข'] },
-    { id: 'budget', name: 'สำนักงบประมาณ', host: 'bb.go.th', tier: 'primary', priority: 90, topics: ['งบประมาณ', 'หลักเกณฑ์งบประมาณ'] },
     { id: 'admincourt', name: 'ศาลปกครอง', host: 'admincourt.go.th', tier: 'primary', priority: 92, topics: ['คำพิพากษา', 'คำสั่งศาล', 'คดีปกครอง'] },
-    { id: 'supremecourt', name: 'ศาลฎีกา', host: 'deka.in.th', tier: 'secondary', priority: 55, topics: ['คำพิพากษา'] },
+    { id: 'coj', name: 'สำนักงานศาลยุติธรรม', host: 'coj.go.th', tier: 'primary', priority: 91, topics: ['ศาลยุติธรรม', 'คำพิพากษา', 'คำสั่งศาล'] },
+    { id: 'budget', name: 'สำนักงบประมาณ', host: 'bb.go.th', tier: 'primary', priority: 90, topics: ['งบประมาณ', 'หลักเกณฑ์งบประมาณ'] },
     { id: 'nacc', name: 'สำนักงาน ป.ป.ช.', host: 'nacc.go.th', tier: 'primary', priority: 90, topics: ['ป.ป.ช.', 'ทุจริต', 'วินัย'] },
     { id: 'oag', name: 'สำนักงานการตรวจเงินแผ่นดิน', host: 'audit.go.th', tier: 'primary', priority: 89, topics: ['สตง.', 'ตรวจสอบ', 'การเงิน', 'พัสดุ'] }
   ]);
