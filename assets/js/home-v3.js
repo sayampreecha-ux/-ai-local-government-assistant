@@ -69,7 +69,7 @@
     const article = document.createElement('article');
     article.className = 'message assistant';
     article.id = 'thinkingMessage';
-    article.innerHTML = '<span class="assistant-mark" aria-hidden="true">กพ</span><div class="assistant-content"><div class="thinking"><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>กำลังจัดคำถามให้เป็นงานราชการ</span></div><div class="analysis-steps">จำแนกงาน · จัดบริบท · ตรวจความเสี่ยง · เตรียม Prompt</div></div>';
+    article.innerHTML = '<span class="assistant-mark" aria-hidden="true">กพ</span><div class="assistant-content"><div class="thinking"><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>กำลังค้นและจัดคำถามให้เป็นงานราชการ</span></div><div class="analysis-steps">จำแนกงาน · ค้นแหล่งราชการ · ตรวจความใหม่ · เตรียมหลักฐานและ Prompt</div></div>';
     conversation.appendChild(article);
   }
 
@@ -78,13 +78,45 @@
     if (!core
       || typeof core.createSharedContext !== 'function'
       || typeof core.routeTransaction !== 'function'
-      || typeof core.createGovernmentPrompt !== 'function') {
+      || typeof core.createGovernmentPrompt !== 'function'
+      || typeof core.officialSearchConnector?.search !== 'function') {
       throw new Error('GovPrompt Core is unavailable');
     }
     return core;
   }
 
-  function preparePrompt(text) {
+  function enrichPromptWithSearch(promptBundle, searchResult) {
+    const results = searchResult?.evidence?.primaryResults || [];
+    const evidenceLines = results.slice(0, 8).map((item, index) => [
+      `${index + 1}. ${item.title || '[ไม่มีชื่อเอกสาร]'}`,
+      `หน่วยงาน/แหล่ง: ${item.sourceName || item.issuingAgency || item.sourceId || 'แหล่งราชการ'}`,
+      `URL: ${item.sourceUrl}`,
+      item.documentDate ? `วันที่เอกสาร: ${item.documentDate}` : '',
+      item.snippet ? `ข้อมูลย่อจากผลค้น: ${item.snippet}` : ''
+    ].filter(Boolean).join('\n'));
+
+    const searchBlock = [
+      'ผลค้นแหล่งราชการสดจาก GovPrompt',
+      `- สถานะการค้น: ${searchResult?.mode === 'live' ? 'ค้นสดแล้ว' : 'ยังค้นสดไม่ได้'}`,
+      searchResult?.searchedAt ? `- เวลาค้น: ${searchResult.searchedAt}` : '',
+      searchResult?.provider ? `- Search provider: ${searchResult.provider}` : '',
+      searchResult?.warning ? `- คำเตือน: ${searchResult.warning}` : '',
+      '- หลักการใช้หลักฐาน: Primary Source First; ห้ามใช้ secondary source ฟันธงเมื่อมี primary source',
+      evidenceLines.length ? evidenceLines.join('\n\n') : '- ยังไม่มีผลค้นต้นฉบับราชการที่นำมาใช้อ้างอิงได้',
+      '',
+      'คำสั่งเพิ่มเติมสำหรับการวิเคราะห์',
+      '- ตรวจเนื้อหาในต้นฉบับจาก URL ก่อนอ้างข้อกฎหมาย เลขหนังสือ วันที่ หรือข้อสรุปสำคัญ',
+      '- ผลค้นเว็บเป็นตัวชี้ไปยังต้นฉบับ ไม่ใช่หลักฐานว่าฉบับนั้นยังมีผลโดยอัตโนมัติ',
+      `- หากยังยืนยันสถานะฉบับล่าสุดไม่ได้ ให้แสดง “${window.GovPromptCore.UNVERIFIED_LATEST_WARNING || 'ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง'}”`
+    ].filter(Boolean).join('\n');
+
+    return Object.freeze({
+      ...promptBundle,
+      prompt: `${promptBundle.prompt}\n\n${searchBlock}`
+    });
+  }
+
+  async function preparePrompt(text) {
     const core = requireCore();
     const context = core.createSharedContext({
       facts: text,
@@ -93,7 +125,12 @@
     });
     const route = core.routeTransaction(context);
     const promptBundle = core.createGovernmentPrompt({ question: text, route, context, attachments });
-    return Object.freeze({ route, promptBundle });
+    const searchResult = await core.officialSearchConnector.search(text, { limitSources: 6, count: 10 });
+    return Object.freeze({
+      route,
+      promptBundle: enrichPromptWithSearch(promptBundle, searchResult),
+      searchResult
+    });
   }
 
   async function copyText(text) {
@@ -118,7 +155,44 @@
     }
   }
 
-  function addRouteResult({ route, promptBundle }) {
+  function appendSearchDetails(section, searchResult) {
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    const results = searchResult?.evidence?.primaryResults || [];
+    summary.textContent = searchResult?.mode === 'live'
+      ? `แหล่งราชการที่ค้นสด (${results.length})`
+      : 'สถานะการค้นข้อมูลราชการสด';
+    details.append(summary);
+
+    if (searchResult?.warning) {
+      const warning = document.createElement('p');
+      warning.textContent = searchResult.warning;
+      details.append(warning);
+    }
+
+    results.slice(0, 8).forEach(result => {
+      const item = document.createElement('p');
+      const link = document.createElement('a');
+      link.href = result.sourceUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = result.title || result.sourceName || result.sourceUrl;
+      item.append(link);
+      if (result.sourceName) item.append(document.createTextNode(` — ${result.sourceName}`));
+      details.append(item);
+    });
+
+    if (!results.length) {
+      const empty = document.createElement('p');
+      empty.textContent = searchResult?.mode === 'live'
+        ? 'ไม่พบต้นฉบับจากแหล่งราชการที่อยู่ใน Official Source Registry สำหรับคำถามนี้'
+        : 'ระบบยังไม่สามารถเรียก live search ได้ จึงยังไม่อ้างว่าได้ค้นข้อมูลล่าสุดแล้ว';
+      details.append(empty);
+    }
+    section.append(details);
+  }
+
+  function addRouteResult({ route, promptBundle, searchResult }) {
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
@@ -147,18 +221,23 @@
     mark.textContent = 'กพ';
 
     label.textContent = `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
-    heading.textContent = 'GovPrompt เตรียมคำสั่งงานให้แล้ว';
-    description.textContent = `ระบบจัดคำถามไปที่ ${route.assistant.title} และเพิ่มโครงวิเคราะห์ราชการ ความใหม่ของข้อมูล แหล่งอ้างอิง และการตรวจความเสี่ยงให้แล้ว`;
-    status.textContent = route.fallback
-      ? 'ℹ️ ระบบยังไม่มั่นใจในหมวด 100% แต่ได้เตรียม Prompt แบบกลางที่นำไปใช้ต่อได้'
-      : '✅ พร้อมนำ Prompt ไปวิเคราะห์ต่อใน ChatGPT';
+    heading.textContent = 'GovPrompt เตรียมคำสั่งงานและแหล่งค้นให้แล้ว';
+    description.textContent = `ระบบจัดคำถามไปที่ ${route.assistant.title} พร้อมค้น Primary Source ตรวจความใหม่ และส่งแหล่งอ้างอิงเข้า Prompt สำหรับวิเคราะห์ต่อ`;
+
+    if (searchResult?.mode === 'live' && searchResult?.evidence?.conclusionEligible) {
+      status.textContent = '✅ ค้นสดและยืนยันหลักฐานปัจจุบันได้ตาม metadata ที่มี';
+    } else if (searchResult?.mode === 'live') {
+      status.textContent = `⚠️ ค้นสดแล้ว แต่ ${searchResult.warning || 'ยังยืนยันฉบับปัจจุบันล่าสุดไม่ได้'}`;
+    } else {
+      status.textContent = `ℹ️ ${searchResult?.warning || 'ยังเชื่อมบริการค้นเว็บราชการสดไม่ได้'}`;
+    }
 
     openChatGPT.type = 'button';
     openChatGPT.textContent = 'เปิดใน ChatGPT';
     openChatGPT.addEventListener('click', async () => {
       const chatWindow = window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
       const copied = await copyText(promptBundle.prompt);
-      if (copied) window.GovPrompt?.toast('คัดลอก Prompt แล้ว — วางใน ChatGPT ได้เลย');
+      if (copied) window.GovPrompt?.toast('คัดลอก Prompt พร้อมแหล่งค้นแล้ว — วางใน ChatGPT ได้เลย');
       else window.GovPrompt?.toast('เปิด ChatGPT แล้ว แต่คัดลอกอัตโนมัติไม่สำเร็จ');
       if (!chatWindow) window.GovPrompt?.toast('เบราว์เซอร์บล็อกหน้าต่างใหม่ กรุณาอนุญาต pop-up');
     });
@@ -167,11 +246,13 @@
     copyButton.textContent = 'คัดลอก Prompt';
     copyButton.addEventListener('click', async () => {
       const copied = await copyText(promptBundle.prompt);
-      window.GovPrompt?.toast(copied ? 'คัดลอก Prompt แล้ว' : 'ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
+      window.GovPrompt?.toast(copied ? 'คัดลอก Prompt พร้อมแหล่งค้นแล้ว' : 'ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
     });
 
     specialistLink.href = route.assistant.path;
     specialistLink.textContent = `เปิดแบบฟอร์ม ${route.moduleId}`;
+
+    appendSearchDetails(section, searchResult);
 
     summary.textContent = 'ดู Prompt ที่ GovPrompt จัดให้';
     preview.textContent = promptBundle.prompt;
@@ -205,17 +286,17 @@
 
     let prepared;
     try {
-      prepared = preparePrompt(text);
+      prepared = await preparePrompt(text);
     } catch {
       document.getElementById('thinkingMessage')?.remove();
-      window.GovPrompt?.toast('ระบบวิเคราะห์ยังไม่พร้อม กรุณาลองใหม่อีกครั้ง');
+      window.GovPrompt?.toast('ระบบวิเคราะห์หรือค้นข้อมูลยังไม่พร้อม กรุณาลองใหม่อีกครั้ง');
       input.value = text;
       resizeInput();
       input.focus();
       return;
     }
 
-    await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 500));
+    await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 250));
     document.getElementById('thinkingMessage')?.remove();
     addRouteResult(prepared);
     saveHistory(text, prepared.route);
