@@ -25,6 +25,51 @@ const JSON_HEADERS = Object.freeze({
   'vary': 'Origin'
 });
 
+const TOPIC_PLANS = Object.freeze([
+  {
+    id: 'travel-finance',
+    match: /(เดินทาง|ไปราชการ|ค่าเบี้ยเลี้ยง|ค่าที่พัก|ค่าพาหนะ|แท็กซี่|เบิกจ่าย)/,
+    phrases: ['ค่าใช้จ่ายในการเดินทางไปราชการ', 'องค์กรปกครองส่วนท้องถิ่น'],
+    preferredHosts: ['dla.go.th', 'moi.go.th', 'ratchakitcha.soc.go.th', 'krisdika.go.th', 'cgd.go.th']
+  },
+  {
+    id: 'procurement',
+    match: /(พัสดุ|จัดซื้อ|จัดจ้าง|tor|ราคากลาง|e-bidding|เฉพาะเจาะจง|คัดเลือก|ผู้รับจ้าง)/i,
+    phrases: ['การจัดซื้อจัดจ้างและการบริหารพัสดุภาครัฐ', 'องค์กรปกครองส่วนท้องถิ่น'],
+    preferredHosts: ['cgd.go.th', 'dla.go.th', 'moi.go.th', 'ratchakitcha.soc.go.th', 'krisdika.go.th', 'audit.go.th']
+  },
+  {
+    id: 'personnel',
+    match: /(บุคคล|ข้าราชการ|พนักงานส่วนท้องถิ่น|เลื่อนเงินเดือน|สอบแข่งขัน|บรรจุ|แต่งตั้ง|โอน|ย้าย|วินัย)/,
+    phrases: ['การบริหารงานบุคคลส่วนท้องถิ่น', 'มาตรฐานทั่วไป'],
+    preferredHosts: ['dla.go.th', 'moi.go.th', 'ratchakitcha.soc.go.th', 'krisdika.go.th', 'admincourt.go.th']
+  },
+  {
+    id: 'council',
+    match: /(สภาท้องถิ่น|สภา อบจ|สภาเทศบาล|สภา อบต|ข้อบัญญัติ|ญัตติ|สมัยประชุม|ประชุมสภา)/,
+    phrases: ['สภาท้องถิ่น', 'องค์กรปกครองส่วนท้องถิ่น'],
+    preferredHosts: ['dla.go.th', 'moi.go.th', 'ratchakitcha.soc.go.th', 'krisdika.go.th']
+  },
+  {
+    id: 'public-health',
+    match: /(รพ\.สต|สาธารณสุข|เงินบำรุง|สถานีอนามัย|โรงพยาบาลส่งเสริมสุขภาพตำบล)/i,
+    phrases: ['องค์กรปกครองส่วนท้องถิ่น', 'สาธารณสุข'],
+    preferredHosts: ['dla.go.th', 'moi.go.th', 'ratchakitcha.soc.go.th', 'krisdika.go.th']
+  },
+  {
+    id: 'budget',
+    match: /(งบประมาณ|ข้อบัญญัติงบประมาณ|โอนงบ|เปลี่ยนแปลงคำชี้แจง|เงินสะสม|กันเงิน)/,
+    phrases: ['งบประมาณองค์กรปกครองส่วนท้องถิ่น'],
+    preferredHosts: ['dla.go.th', 'moi.go.th', 'bb.go.th', 'audit.go.th', 'ratchakitcha.soc.go.th']
+  },
+  {
+    id: 'law',
+    match: /(พระราชบัญญัติ|พ\.ร\.บ|กฎกระทรวง|ระเบียบ|ประกาศ|มาตรา|คำพิพากษา|อำนาจหน้าที่)/i,
+    phrases: ['กฎหมายท้องถิ่น'],
+    preferredHosts: ['ratchakitcha.soc.go.th', 'krisdika.go.th', 'dla.go.th', 'moi.go.th', 'admincourt.go.th', 'supremecourt.or.th']
+  }
+]);
+
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
 }
@@ -61,7 +106,7 @@ function normalizeDate(value) {
 function parseRequestBody(body) {
   const query = cleanText(body?.query, 400);
   const sites = Array.isArray(body?.sites)
-    ? body.sites.map(normalizeHost).filter(isOfficialHost).slice(0, 10)
+    ? body.sites.map(normalizeHost).filter(isOfficialHost).slice(0, 12)
     : [];
   const count = Math.min(Math.max(Number(body?.count) || 10, 1), 20);
   return { query, sites, count };
@@ -75,17 +120,41 @@ function queryTerms(query) {
   return normalizeForMatch(query)
     .split(/[\s,.;:()\[\]{}"'\/\\|+-]+/)
     .map(term => term.trim())
-    .filter(term => term.length >= 2 && !['ล่าสุด', 'ปัจจุบัน', 'เรื่อง', 'และ', 'หรือ', 'ของ', 'ให้', 'กับ'].includes(term));
+    .filter(term => term.length >= 2 && !['ล่าสุด', 'ปัจจุบัน', 'เรื่อง', 'และ', 'หรือ', 'ของ', 'ให้', 'กับ', 'ช่วย', 'หา', 'ค้น'].includes(term));
+}
+
+function classifyTopic(query) {
+  const normalized = normalizeForMatch(query);
+  return TOPIC_PLANS.find(plan => plan.match.test(normalized)) || {
+    id: 'general-local-government',
+    phrases: ['องค์กรปกครองส่วนท้องถิ่น'],
+    preferredHosts: ['dla.go.th', 'moi.go.th', 'ratchakitcha.soc.go.th', 'krisdika.go.th', 'cgd.go.th']
+  };
+}
+
+function buildSearchPlan(query, requestedSites) {
+  const topic = classifyTopic(query);
+  const wantsLatest = /(ล่าสุด|ปัจจุบัน|แก้ไขล่าสุด|ฉบับปัจจุบัน|ยังใช้บังคับ)/.test(normalizeForMatch(query));
+  const sites = requestedSites.length
+    ? requestedSites
+    : topic.preferredHosts.filter(isOfficialHost);
+  const core = cleanText(query.replace(/\b(ล่าสุด|ปัจจุบัน)\b/g, ''), 300);
+  const context = topic.phrases.join(' ');
+  const variants = [
+    `${core} ${context}`.trim(),
+    wantsLatest ? `${core} ${context} ฉบับปัจจุบัน แก้ไขเพิ่มเติม หนังสือสั่งการ` : `${core} ${context} ระเบียบ ประกาศ หนังสือสั่งการ`
+  ];
+  return { topicId: topic.id, wantsLatest, sites, variants: [...new Set(variants)].slice(0, 2), preferredHosts: topic.preferredHosts };
 }
 
 function freshnessScore(date, wantsLatest) {
-  if (!date) return wantsLatest ? -8 : 0;
+  if (!date) return wantsLatest ? -12 : -2;
   const ageDays = Math.max(0, (Date.now() - Date.parse(`${date}T00:00:00Z`)) / 86400000);
-  if (ageDays <= 30) return 20;
-  if (ageDays <= 180) return 14;
-  if (ageDays <= 365) return 10;
+  if (ageDays <= 30) return 24;
+  if (ageDays <= 180) return 18;
+  if (ageDays <= 365) return 12;
   if (ageDays <= 1095) return 4;
-  return wantsLatest ? -4 : 0;
+  return wantsLatest ? -8 : 0;
 }
 
 function normalizeResult(item) {
@@ -109,11 +178,25 @@ function normalizeResult(item) {
   };
 }
 
-function rankResults(results, query, count) {
-  const terms = queryTerms(query);
-  const wantsLatest = /(ล่าสุด|ปัจจุบัน|แก้ไขล่าสุด|ฉบับปัจจุบัน)/.test(normalizeForMatch(query));
-  const seen = new Set();
+function topicHostBoost(host, plan) {
+  const index = plan.preferredHosts.indexOf(host);
+  if (index < 0) return 0;
+  return Math.max(4, 24 - index * 4);
+}
 
+function documentTypeBoost(result, query) {
+  const haystack = normalizeForMatch(`${result.title} ${result.snippet} ${result.url}`);
+  let score = 0;
+  if (/\.pdf(?:$|[?#])/.test(result.url.toLowerCase())) score += 5;
+  if (/(ระเบียบ|ประกาศ|หนังสือ|กฎกระทรวง|พระราชบัญญัติ|พ\.ร\.บ|ข้อหารือ|คำวินิจฉัย)/i.test(haystack)) score += 7;
+  if (/(ข่าว|กิจกรรม|ประชาสัมพันธ์|facebook|youtube)/i.test(haystack)) score -= 10;
+  if (/(ระเบียบ|กฎกระทรวง|พระราชบัญญัติ|หนังสือสั่งการ)/i.test(query) && !/(ระเบียบ|กฎกระทรวง|พระราชบัญญัติ|พ\.ร\.บ|หนังสือ|ประกาศ)/i.test(haystack)) score -= 8;
+  return score;
+}
+
+function rankResults(results, query, count, plan) {
+  const terms = queryTerms(query);
+  const seen = new Set();
   return results
     .filter(result => {
       const key = result.url.replace(/[?#].*$/, '').replace(/\/$/, '');
@@ -124,19 +207,19 @@ function rankResults(results, query, count) {
     .map(result => {
       const title = normalizeForMatch(result.title);
       const snippet = normalizeForMatch(result.snippet);
-      const matchedTerms = terms.reduce((sum, term) => sum + (title.includes(term) ? 8 : 0) + (snippet.includes(term) ? 3 : 0), 0);
-      const score = result.sourcePriority + matchedTerms + freshnessScore(result.documentDate, wantsLatest);
+      const matchedTerms = terms.reduce((sum, term) => sum + (title.includes(term) ? 10 : 0) + (snippet.includes(term) ? 3 : 0), 0);
+      const score = result.sourcePriority
+        + matchedTerms
+        + freshnessScore(result.documentDate, plan.wantsLatest)
+        + topicHostBoost(result.host, plan)
+        + documentTypeBoost(result, query);
       return { ...result, relevanceScore: score };
     })
     .sort((a, b) => b.relevanceScore - a.relevanceScore || (b.documentDate || '').localeCompare(a.documentDate || '') || b.sourcePriority - a.sourcePriority)
     .slice(0, count);
 }
 
-async function searchTavily(env, payload) {
-  if (!env.TAVILY_API_KEY) {
-    return { ok: false, status: 503, error: 'SEARCH_PROVIDER_NOT_CONFIGURED' };
-  }
-
+async function tavilyRequest(env, query, sites, maxResults) {
   const response = await fetch('https://api.tavily.com/search', {
     method: 'POST',
     headers: {
@@ -145,35 +228,56 @@ async function searchTavily(env, payload) {
       'content-type': 'application/json'
     },
     body: JSON.stringify({
-      query: payload.query,
+      query,
       search_depth: 'advanced',
-      max_results: Math.min(Math.max(payload.count * 2, 10), 20),
+      max_results: maxResults,
       include_answer: false,
       include_raw_content: false,
-      include_domains: payload.sites
+      include_domains: sites
     })
   });
+  if (!response.ok) return { ok: false, status: response.status, results: [] };
+  const data = await response.json();
+  return { ok: true, status: response.status, results: Array.isArray(data?.results) ? data.results : [] };
+}
 
-  if (!response.ok) {
-    return { ok: false, status: 502, error: 'SEARCH_PROVIDER_ERROR', providerStatus: response.status };
+async function searchTavily(env, payload) {
+  if (!env.TAVILY_API_KEY) {
+    return { ok: false, status: 503, error: 'SEARCH_PROVIDER_NOT_CONFIGURED' };
   }
 
-  const data = await response.json();
-  const normalized = (Array.isArray(data?.results) ? data.results : []).map(normalizeResult).filter(Boolean);
-  return { ok: true, results: rankResults(normalized, payload.query, payload.count), provider: 'tavily' };
+  const plan = buildSearchPlan(payload.query, payload.sites);
+  const candidateLimit = Math.min(Math.max(payload.count, 8), 12);
+  const collected = [];
+
+  for (const variant of plan.variants) {
+    const response = await tavilyRequest(env, variant, plan.sites, candidateLimit);
+    if (!response.ok) {
+      if (!collected.length) return { ok: false, status: 502, error: 'SEARCH_PROVIDER_ERROR', providerStatus: response.status };
+      break;
+    }
+    collected.push(...response.results);
+    if (collected.length >= payload.count * 2) break;
+  }
+
+  const normalized = collected.map(normalizeResult).filter(Boolean);
+  return {
+    ok: true,
+    results: rankResults(normalized, payload.query, payload.count, plan),
+    provider: 'tavily',
+    plan: { topicId: plan.topicId, wantsLatest: plan.wantsLatest, variants: plan.variants, sites: plan.sites }
+  };
 }
 
 async function fetchAsset(request, env, url) {
   if (!env?.ASSETS || typeof env.ASSETS.fetch !== 'function') {
     return new Response('Not Found', { status: 404 });
   }
-
   if (url.pathname === '/') {
     const indexUrl = new URL(request.url);
     indexUrl.pathname = '/index.html';
     return env.ASSETS.fetch(new Request(indexUrl, request));
   }
-
   return env.ASSETS.fetch(request);
 }
 
@@ -195,9 +299,10 @@ export default {
     return json({
       ok: true,
       query: payload.query,
-      sites: payload.sites,
+      sites: search.plan?.sites ?? payload.sites,
       provider: search.provider,
       searchedAt: new Date().toISOString(),
+      searchPlan: search.plan,
       results: search.results
     });
   }
