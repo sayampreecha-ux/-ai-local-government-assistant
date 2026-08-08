@@ -8,6 +8,25 @@
   <title>GovPrompt Thailand — Government AI Copilot</title>
   <link rel="stylesheet" href="assets/css/govprompt.css?v=2.3.3">
   <link rel="stylesheet" href="assets/css/home-v3.css?v=2.3.3">
+  <style>
+    @media (max-width:620px){
+      .chat-main{padding-bottom:148px}
+      .chat-main.has-messages{padding-bottom:118px}
+      .chat-main.has-messages .composer-region{bottom:calc(68px + env(safe-area-inset-bottom));width:calc(100% - 16px)}
+      .chat-main.has-messages .composer{padding:7px 8px;border-radius:18px;box-shadow:0 10px 28px rgba(18,55,42,.10)}
+      .chat-main.has-messages .composer textarea{min-height:42px;max-height:120px;padding:9px 10px 4px;font-size:15px}
+      .chat-main.has-messages .composer:not(:focus-within) .input-actions,
+      .chat-main.has-messages .composer:not(:focus-within) .attachment-status{display:none}
+      .chat-main.has-messages .composer:not(:focus-within) .composer-tools{justify-content:flex-end;padding-top:0;margin-top:-42px;pointer-events:none}
+      .chat-main.has-messages .composer:not(:focus-within) .send-button{width:40px;height:40px;border-radius:12px;pointer-events:auto}
+      .chat-main.has-messages .privacy-note{display:none}
+      .chat-main.has-messages .conversation{padding-bottom:18px}
+      .chat-main.has-messages .answer-card{border-radius:18px}
+      .chat-main.has-messages .answer-section{padding:14px 15px}
+      .quick-actions{gap:8px;margin-top:26px}
+      .quick-actions button{min-height:40px;padding:7px 13px}
+    }
+  </style>
 </head>
 <body class="app-shell">
   <header class="app-header">
@@ -30,12 +49,12 @@
       <h1 id="welcomeTitle">วันนี้ให้ช่วยเรื่องอะไรดี</h1>
       <p>ค้นข้อมูลราชการล่าสุด · วิเคราะห์ · อ้างอิง · สร้างงานพร้อมใช้</p>
       <div class="quick-actions" aria-label="คำถามแนะนำ">
-        <button type="button" data-prompt="รถเสียระหว่างไปราชการ ต้องดำเนินการอย่างไร">รถเสียระหว่างไปราชการ</button>
+        <button type="button" data-prompt="เบิกค่าเดินทางไปราชการได้อะไรบ้าง และมีเงื่อนไขอย่างไร">เบิกค่าเดินทางไปราชการ</button>
         <button type="button" data-prompt="ช่วยร่างหนังสือราชการ">ร่างหนังสือราชการ</button>
         <button type="button" data-prompt="ช่วยตรวจ TOR และระบุความเสี่ยง">ตรวจ TOR</button>
         <button type="button" data-prompt="ช่วยวิเคราะห์ข้อกฎหมายที่เกี่ยวข้อง">วิเคราะห์ข้อกฎหมาย</button>
         <button type="button" data-prompt="แนวทางการใช้และเบิกจ่ายเงินบำรุง">เงินบำรุง</button>
-        <button type="button" data-prompt="ช่วยวิเคราะห์และร่างข้อบัญญัติ">ข้อบัญญัติ</button>
+        <button type="button" data-prompt="ช่วยตรวจขั้นตอนและเงื่อนไขการจัดซื้อจัดจ้างภาครัฐ">จัดซื้อจัดจ้าง</button>
       </div>
     </section>
 
