@@ -10,18 +10,19 @@ vm.runInNewContext(await readFile('assets/js/core/transaction-router.js', 'utf8'
 
 const { MODULES, V7_MODULE_IDS, detectModuleId, detectTransactionType, routeRequest, routeTransaction } = sandbox.window.GovPromptCore;
 assert.equal(MODULES.length, 13);
-assert.equal(V7_MODULE_IDS.length, 12);
+assert.equal(V7_MODULE_IDS.length, 13);
 assert.equal(detectModuleId({ pathname: '/tools/gp1.html' }), 'GP001');
 assert.equal(detectModuleId({ moduleId: ' gp012 ' }), 'GP012');
 assert.equal(detectModuleId({ pathname: '/gp013.html' }), 'GP013');
 
 const cases = [
   ['official letter memorandum', 'GP001'], ['legal authority law', 'GP002'],
-  ['procurement TOR', 'GP003'], ['travel expense reimbursement', 'GP004'],
-  ['budget appropriation', 'GP005'], ['human resources promotion', 'GP006'],
-  ['council quorum motion', 'GP007'], ['project feasibility KPI', 'GP008'],
-  ['public relations press release', 'GP009'], ['meeting minutes agenda', 'GP010'],
-  ['PDPA personal data consent', 'GP011'], ['knowledge search citation', 'GP012']
+  ['procurement TOR', 'GP003'], ['budget project KPI', 'GP004'],
+  ['travel expense reimbursement', 'GP005'], ['human resources promotion', 'GP006'],
+  ['engineering construction road', 'GP007'], ['public health รพ.สต.', 'GP008'],
+  ['education school teacher', 'GP009'], ['internal audit ปค.5', 'GP010'],
+  ['executive policy นายก', 'GP011'], ['public relations press release', 'GP012'],
+  ['council quorum motion', 'GP013']
 ];
 
 for (const [request, expectedModuleId] of cases) {
@@ -37,13 +38,14 @@ for (const [request, expectedModuleId] of cases) {
 const multi = routeRequest('procurement law budget', { confidenceThreshold: 0.3, multiModuleThreshold: 0.2 });
 assert.equal(multi.primaryModule, 'GP002');
 assert.equal(multi.modules.includes('GP003'), true);
-assert.equal(multi.modules.includes('GP005'), true);
+assert.equal(multi.modules.includes('GP004'), true);
 
 const normalized = routeTransaction(null, { moduleId: 'GP005' });
 assert.equal(normalized.moduleId, 'GP005');
-assert.equal(normalized.transactionType, 'budget');
+assert.equal(normalized.transactionType, 'finance');
 assert.deepEqual(Object.keys(normalized.context), Array.from(sandbox.window.GovPromptCore.CONTEXT_FIELDS));
 assert.equal(detectTransactionType({ facts: 'procurement TOR review' }), 'procurement');
+assert.equal(detectTransactionType({ facts: 'ข้อบัญญัติและองค์ประชุมสภาท้องถิ่น' }), 'council');
 
 const insertedScripts = '<script src="assets/js/core/shared-context.js"></script><script src="assets/js/core/prompt-registry.js"></script><script src="assets/js/core/transaction-router.js"></script><script src="assets/js/core/context-integration.js"></script><script src="assets/js/core/document-loader.js"></script><script src="assets/js/core/citation-engine.js"></script><script src="assets/js/core/knowledge-index.js"></script><script src="assets/js/core/semantic-search.js"></script><script src="assets/js/core/knowledge-engine.js"></script>';
 for (let index = 1; index <= 13; index += 1) {
@@ -55,4 +57,4 @@ for (let index = 1; index <= 13; index += 1) {
   assert.equal(normalizeEol(current.replace(insertedScripts, '')), normalizeEol(baseline), `${file}: existing UI or prompt behavior changed`);
 }
 
-console.log('GovPrompt v7 Transaction Router verification passed for GP001-GP012 with legacy page compatibility.');
+console.log('GovPrompt v7 Transaction Router verification passed for GP001-GP013 with registry alignment and legacy page compatibility.');
