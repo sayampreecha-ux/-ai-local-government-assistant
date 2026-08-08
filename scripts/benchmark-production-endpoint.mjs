@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+
+const endpoint = process.env.GOVPROMPT_SEARCH_ENDPOINT || 'https://ai-local-government-assistant.sayampreecha.workers.dev/api/official-search';
+const cases = [
+  { query:'ซื้อคอม', sites:['cgd.go.th','dla.go.th'] },
+  { query:'รถเสียเบิกได้ไหม', sites:['cgd.go.th','dla.go.th','moi.go.th'] },
+  { query:'เงินบำรุงซื้อของได้ไหม', sites:['dla.go.th','moi.go.th'] },
+  { query:'ตรวจ TOR ถนน', sites:['cgd.go.th','dla.go.th'] },
+  { query:'เบิกค่าเครื่องบิน', sites:['cgd.go.th','dla.go.th','moi.go.th'] }
+];
+
+const report = [];
+for (const item of cases) {
+  const started = Date.now();
+  const response = await fetch(endpoint, {
+    method:'POST',
+    headers:{'content-type':'application/json'},
+    body:JSON.stringify({
+      query:item.query,
+      originalQuery:item.query,
+      sites:item.sites,
+      count:5
+    })
+  });
+  const latencyMs = Date.now() - started;
+  const body = await response.json().catch(() => ({}));
+  assert.equal(response.ok, true, `${item.query}: HTTP ${response.status} ${JSON.stringify(body)}`);
+  assert.equal(Array.isArray(body.results), true, `${item.query}: results missing`);
+  assert.equal(body.results.length > 0, true, `${item.query}: no results`);
+  const top3 = body.results.slice(0,3);
+  assert.equal(top3.every(r => r.sourceTier === 'primary' || r.official === true), true, `${item.query}: non-official result in top3`);
+  assert.equal(top3.every(r => item.sites.some(site => r.host === site || String(r.host||'').endsWith(`.${site}`))), true, `${item.query}: result outside requested domains`);
+  assert.equal(top3.every(r => /^https:\/\//.test(String(r.sourceUrl || r.url || ''))), true, `${item.query}: insecure URL`);
+  report.push({ query:item.query, status:response.status, provider:body.provider || '', latencyMs, top3:top3.map(r => ({ title:r.title, host:r.host, documentDate:r.documentDate || '' })) });
+}
+
+console.log(JSON.stringify({ endpoint, passed:report.length, total:cases.length, report }, null, 2));

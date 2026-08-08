@@ -58,12 +58,13 @@ function parseRequestBody(body) {
 
 function normalizeResult(item) {
   const url = cleanText(item?.url, 1200);
-  let host = '';
-  try { host = new URL(url).hostname; } catch {}
-  if (!url || !isOfficialHost(host)) return null;
+  let parsed;
+  try { parsed = new URL(url); } catch { return null; }
+  const host = parsed.hostname;
+  if (!url || parsed.protocol !== 'https:' || !isOfficialHost(host)) return null;
   return {
     title: cleanText(item?.title, 300),
-    url,
+    url: parsed.toString(),
     snippet: cleanText(item?.content ?? item?.description ?? item?.snippet, 700),
     host: normalizeHost(host),
     sourceTier: 'primary',
