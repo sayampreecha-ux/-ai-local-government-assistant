@@ -20,7 +20,8 @@
     GP013: 'สภาท้องถิ่น ญัตติ มติสภา สมัยประชุม ข้อบัญญัติ'
   });
 
-  function normalize(value) { return String(value ?? '').normalize('NFKC').trim(); }
+  // NFC preserves Thai composed characters (notably ำ) so routing/search phrases remain identical to user input.
+  function normalize(value) { return String(value ?? '').normalize('NFC').trim(); }
   function quote(value) { const text = normalize(value).replace(/"/g, ''); return text ? `"${text}"` : ''; }
   function requiresFreshnessVerification(query, options = {}) {
     if (typeof options.requireFreshness === 'boolean') return options.requireFreshness;
