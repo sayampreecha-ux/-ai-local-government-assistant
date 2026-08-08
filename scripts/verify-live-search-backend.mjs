@@ -21,6 +21,16 @@ assert.equal(noKeyBody.error, 'SEARCH_PROVIDER_NOT_CONFIGURED');
 
 const invalidMethod = await worker.fetch(new Request('https://example.test/api/official-search'), { ASSETS: assets });
 assert.equal(invalidMethod.status, 405);
+assert.equal(typeof (await invalidMethod.json()).requestId, 'string');
+
+const preflight = await worker.fetch(new Request('https://example.test/api/official-search', {
+  method: 'OPTIONS',
+  headers: { origin: 'https://sayampreecha-ux.github.io' }
+}), { ASSETS: assets });
+assert.equal(preflight.status, 204);
+assert.equal(preflight.headers.get('access-control-allow-origin'), 'https://sayampreecha-ux.github.io');
+assert.equal(preflight.headers.get('access-control-allow-methods'), 'POST, OPTIONS');
+assert.equal(preflight.headers.get('access-control-allow-headers'), 'content-type');
 
 const originalFetch = globalThis.fetch;
 let providerRequest;

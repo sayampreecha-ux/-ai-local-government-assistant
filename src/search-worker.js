@@ -28,6 +28,13 @@ function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
 }
 
+function logSearch(level, fields) {
+  const entry = JSON.stringify({ service: 'official-search', ...fields });
+  if (level === 'error') console.error(entry);
+  else if (level === 'warn') console.warn(entry);
+  else console.log(entry);
+}
+
 function normalizeHost(value) {
   return String(value || '').trim().toLowerCase().replace(/^www\./, '');
 }
@@ -80,22 +87,27 @@ async function searchTavily(env, payload) {
     return { ok: false, status: 503, error: 'SEARCH_PROVIDER_NOT_CONFIGURED' };
   }
 
-  const response = await fetch('https://api.tavily.com/search', {
-    method: 'POST',
-    headers: {
-      accept: 'application/json',
-      authorization: `Bearer ${env.TAVILY_API_KEY}`,
-      'content-type': 'application/json'
-    },
-    body: JSON.stringify({
-      query: payload.query,
-      search_depth: 'advanced',
-      max_results: payload.count,
-      include_answer: false,
-      include_raw_content: false,
-      include_domains: payload.sites
-    })
-  });
+  let response;
+  try {
+    response = await fetch('https://api.tavily.com/search', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        authorization: `Bearer ${env.TAVILY_API_KEY}`,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        query: payload.query,
+        search_depth: 'advanced',
+        max_results: payload.count,
+        include_answer: false,
+        include_raw_content: false,
+        include_domains: payload.sites
+      })
+    });
+  } catch {
+    return { ok: false, status: 502, error: 'SEARCH_PROVIDER_NETWORK_ERROR' };
+  }
 
   if (!response.ok) {
     return { ok: false, status: 502, error: 'SEARCH_PROVIDER_ERROR', providerStatus: response.status };
@@ -124,19 +136,48 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname !== '/api/official-search') return fetchAsset(request, env, url);
+    const requestId = request.headers.get('cf-ray') || crypto.randomUUID();
+    const startedAt = Date.now();
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
-    if (request.method !== 'POST') return json({ ok: false, error: 'METHOD_NOT_ALLOWED' }, 405);
+    if (request.method !== 'POST') {
+      logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'METHOD_NOT_ALLOWED' });
+      return json({ ok: false, error: 'METHOD_NOT_ALLOWED', requestId }, 405);
+    }
 
     let body;
-    try { body = await request.json(); } catch { return json({ ok: false, error: 'INVALID_JSON' }, 400); }
+    try { body = await request.json(); } catch {
+      logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'INVALID_JSON' });
+      return json({ ok: false, error: 'INVALID_JSON', requestId }, 400);
+    }
     const payload = parseRequestBody(body);
-    if (!payload.query) return json({ ok: false, error: 'QUERY_REQUIRED' }, 400);
+    if (!payload.query) {
+      logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'QUERY_REQUIRED' });
+      return json({ ok: false, error: 'QUERY_REQUIRED', requestId }, 400);
+    }
+
+    logSearch('info', {
+      event: 'search_started', requestId, method: request.method,
+      queryLength: payload.query.length, siteCount: payload.sites.length,
+      requestedCount: payload.count, providerConfigured: Boolean(env.TAVILY_API_KEY)
+    });
 
     const search = await searchTavily(env, payload);
-    if (!search.ok) return json({ ok: false, error: search.error, providerStatus: search.providerStatus ?? null }, search.status);
+    if (!search.ok) {
+      logSearch('error', {
+        event: 'search_failed', requestId, error: search.error,
+        providerStatus: search.providerStatus ?? null, durationMs: Date.now() - startedAt
+      });
+      return json({ ok: false, error: search.error, providerStatus: search.providerStatus ?? null, requestId }, search.status);
+    }
+
+    logSearch('info', {
+      event: 'search_completed', requestId, provider: search.provider,
+      resultCount: search.results.length, durationMs: Date.now() - startedAt
+    });
 
     return json({
       ok: true,
+      requestId,
       query: payload.query,
       sites: payload.sites,
       provider: search.provider,

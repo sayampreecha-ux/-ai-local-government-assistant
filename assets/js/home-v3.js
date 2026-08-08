@@ -158,7 +158,9 @@
   function appendSearchDetails(section, searchResult) {
     const details = document.createElement('details');
     const summary = document.createElement('summary');
-    const results = searchResult?.evidence?.primaryResults || [];
+    // Show every normalized official provider hit. Evidence thresholds still
+    // control which results may be used to support a conclusion or prompt.
+    const results = (searchResult?.results || []).filter(result => result.official);
     summary.textContent = searchResult?.mode === 'live'
       ? `แหล่งราชการที่ค้นสด (${results.length})`
       : 'สถานะการค้นข้อมูลราชการสด';

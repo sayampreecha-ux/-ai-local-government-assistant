@@ -4,7 +4,7 @@
   const UNVERIFIED_LATEST_WARNING = 'ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง';
   const DEFAULT_OFFICIAL_SEARCH_ENDPOINT = 'https://ai-local-government-assistant.sayampreecha.workers.dev/api/official-search';
   const FRESHNESS_TERMS = Object.freeze(['ล่าสุด','ปัจจุบัน','ขณะนี้','ตอนนี้','ฉบับใหม่','ฉบับล่าสุด','อัปเดต','ยังใช้','ยังมีผล','มีผลใช้บังคับ','ถูกยกเลิก','ยกเลิกแล้ว','แก้ไขล่าสุด','latest','current','effective','repealed','superseded']);
-  const STOP_TERMS = new Set(['ช่วย','หน่อย','เรื่อง','เกี่ยวกับ','อย่างไร','ยังไง','ไหม','หรือไม่','ได้ไหม','ทำ','การ','และ','ของ','ให้','ใน','ที่','จาก','เป็น']);
+  const STOP_TERMS = new Set(['ช่วย','หน่อย','เรื่อง','เกี่ยวกับ','อย่างไร','ยังไง','ไหม','หรือไม่','ได้','ได้ไหม','ทำ','ต้อง','ดู','อะไร','บ้าง','หรือ','ว่า','ถือว่า','ขอ','ไม่','การ','และ','ของ','ให้','ใน','ที่','จาก','เป็น']);
   const DOMAIN_HINTS = Object.freeze({
     GP001: 'งานสารบรรณ หนังสือราชการ ระเบียบสำนักนายกรัฐมนตรี งานสารบรรณ',
     GP002: 'กฎหมาย ระเบียบ หนังสือสั่งการ ฐานอำนาจ องค์กรปกครองส่วนท้องถิ่น',
@@ -31,7 +31,15 @@
   }
 
   function queryTerms(query) {
-    const raw = lower(query).match(/[\p{L}\p{N}.]+/gu) || [];
+    const normalized = lower(query)
+      .replace(/([\p{Script=Thai}])([a-z0-9])/gu, '$1 $2')
+      .replace(/([a-z0-9])([\p{Script=Thai}])/gu, '$1 $2');
+    const segmenter = typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function'
+      ? new Intl.Segmenter('th', { granularity: 'word' })
+      : null;
+    const raw = segmenter
+      ? [...segmenter.segment(normalized)].filter(part => part.isWordLike).map(part => part.segment)
+      : (normalized.match(/[\p{L}\p{N}.]+/gu) || []);
     const terms = raw.filter(term => term.length > 1 && !STOP_TERMS.has(term));
     return Object.freeze([...new Set(terms)]);
   }
@@ -183,8 +191,13 @@
         try { const errorPayload = await response.json(); errorCode = normalize(errorPayload?.error) || errorCode; } catch {}
         return planOnly(plan, errorCode === 'SEARCH_PROVIDER_NOT_CONFIGURED' ? 'ยังไม่ได้ตั้งค่าผู้ให้บริการค้นเว็บบนเซิร์ฟเวอร์ — ระบบจะใช้แผนค้นจาก Primary Source ก่อน' : 'บริการค้นเว็บราชการสดยังไม่พร้อม — ระบบจะใช้แผนค้นจาก Primary Source ก่อน', errorCode);
       }
-      const payload = await response.json();
-      const results = rankResults(Array.isArray(payload.results) ? payload.results : [], plan);
+      let payload;
+      try { payload = await response.json(); }
+      catch { return planOnly(plan, 'บริการค้นเว็บราชการสดส่งข้อมูลกลับมาไม่ถูกต้อง — ระบบจะใช้แผนค้นจาก Primary Source ก่อน', 'INVALID_SEARCH_RESPONSE'); }
+      const providerResults = Array.isArray(payload?.results)
+        ? payload.results
+        : (Array.isArray(payload?.data?.results) ? payload.data.results : []);
+      const results = rankResults(providerResults, plan);
       const freshness = typeof window.GovPromptCore.selectBestCurrent === 'function' ? window.GovPromptCore.selectBestCurrent(results, options) : null;
       const evidence = createEvidence(results, freshness, { verificationRequired });
       return Object.freeze({ mode: 'live', plan, results, freshness, evidence, verificationRequired, searchedAt: normalize(payload.searchedAt), provider: normalize(payload.provider), warning: evidence.warning });
