@@ -138,7 +138,7 @@ function buildSearchPlan(query, requestedSites) {
   const sites = requestedSites.length
     ? requestedSites
     : topic.preferredHosts.filter(isOfficialHost);
-  const core = cleanText(query.replace(/\b(ล่าสุด|ปัจจุบัน)\b/g, ''), 300);
+  const core = cleanText(query.replace(/ล่าสุด|ปัจจุบัน/g, ' '), 300);
   const context = topic.phrases.join(' ');
   const variants = [
     `${core} ${context}`.trim(),
