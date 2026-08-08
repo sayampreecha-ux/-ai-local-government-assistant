@@ -4,6 +4,7 @@
   const UNVERIFIED_LATEST_WARNING = 'ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง';
   const DEFAULT_OFFICIAL_SEARCH_ENDPOINT = 'https://ai-local-government-assistant.sayampreecha.workers.dev/api/official-search';
   const FRESHNESS_TERMS = Object.freeze(['ล่าสุด','ปัจจุบัน','ขณะนี้','ตอนนี้','ฉบับใหม่','ฉบับล่าสุด','อัปเดต','ยังใช้','ยังมีผล','มีผลใช้บังคับ','ถูกยกเลิก','ยกเลิกแล้ว','แก้ไขล่าสุด','latest','current','effective','repealed','superseded']);
+  const STOP_TERMS = new Set(['ช่วย','หน่อย','เรื่อง','เกี่ยวกับ','อย่างไร','ยังไง','ไหม','หรือไม่','ได้ไหม','ทำ','การ','และ','ของ','ให้','ใน','ที่','จาก','เป็น']);
   const DOMAIN_HINTS = Object.freeze({
     GP001: 'งานสารบรรณ หนังสือราชการ ระเบียบสำนักนายกรัฐมนตรี งานสารบรรณ',
     GP002: 'กฎหมาย ระเบียบ หนังสือสั่งการ ฐานอำนาจ องค์กรปกครองส่วนท้องถิ่น',
@@ -20,13 +21,19 @@
     GP013: 'สภาท้องถิ่น ญัตติ มติสภา สมัยประชุม ข้อบัญญัติ'
   });
 
-  // NFC preserves Thai composed characters (notably ำ) so routing/search phrases remain identical to user input.
-  function normalize(value) { return String(value ?? '').normalize('NFC').trim(); }
+  function normalize(value) { return String(value ?? '').normalize('NFC').replace(/\s+/g, ' ').trim(); }
   function quote(value) { const text = normalize(value).replace(/"/g, ''); return text ? `"${text}"` : ''; }
+  function lower(value) { return normalize(value).toLocaleLowerCase(); }
   function requiresFreshnessVerification(query, options = {}) {
     if (typeof options.requireFreshness === 'boolean') return options.requireFreshness;
-    const q = normalize(query).toLocaleLowerCase();
+    const q = lower(query);
     return FRESHNESS_TERMS.some(term => q.includes(term.toLocaleLowerCase()));
+  }
+
+  function queryTerms(query) {
+    const raw = lower(query).match(/[\p{L}\p{N}.]+/gu) || [];
+    const terms = raw.filter(term => term.length > 1 && !STOP_TERMS.has(term));
+    return Object.freeze([...new Set(terms)]);
   }
 
   function rewriteQuery(query) {
@@ -37,7 +44,7 @@
     const moduleIds = route?.modules?.length ? route.modules.slice(0, 2) : [route?.primaryModule].filter(Boolean);
     const hints = moduleIds.map(id => DOMAIN_HINTS[id]).filter(Boolean);
     const rewritten = [original, ...hints].filter(Boolean).join(' ');
-    return Object.freeze({ original, rewritten, moduleIds: Object.freeze(moduleIds), route });
+    return Object.freeze({ original, rewritten, moduleIds: Object.freeze(moduleIds), route, terms: queryTerms(original) });
   }
 
   function createSearchPlan(query, { limitSources = 6 } = {}) {
@@ -55,10 +62,11 @@
     return Object.freeze({
       query: rewritten.rewritten,
       originalQuery: rewritten.original,
+      queryTerms: rewritten.terms,
       routedModules: rewritten.moduleIds,
       route: rewritten.route,
       sources: Object.freeze(sources), plans: Object.freeze(plans),
-      policy: Object.freeze({ primaryFirst: true, verifyCurrentStatus: true, rejectUnsupportedSecondaryOnlyConclusion: true, intentAwareRewrite: true })
+      policy: Object.freeze({ primaryFirst: true, verifyCurrentStatus: true, rejectUnsupportedSecondaryOnlyConclusion: true, intentAwareRewrite: true, evidenceWeightedRanking: true, deduplicateResults: true })
     });
   }
 
@@ -81,15 +89,43 @@
     });
   }
 
-  function relevanceScore(result, plan) {
-    const haystack = `${result.title} ${result.snippet} ${result.sourceName}`.toLocaleLowerCase();
-    const tokens = normalize(plan.originalQuery).toLocaleLowerCase().match(/[\p{L}\p{N}]+/gu) || [];
-    const matched = tokens.filter(token => token.length > 2 && haystack.includes(token)).length;
-    return matched / Math.max(1, tokens.filter(token => token.length > 2).length);
+  function evidenceFeatures(result, plan) {
+    const terms = plan.queryTerms?.length ? plan.queryTerms : queryTerms(plan.originalQuery);
+    const title = lower(result.title);
+    const snippet = lower(result.snippet);
+    const agency = lower(result.sourceName);
+    const full = `${title} ${snippet} ${agency}`;
+    const matched = terms.filter(term => full.includes(term));
+    const titleMatched = terms.filter(term => title.includes(term));
+    const coverage = matched.length / Math.max(1, terms.length);
+    const titleCoverage = titleMatched.length / Math.max(1, terms.length);
+    const exactPhrase = plan.originalQuery && (title.includes(lower(plan.originalQuery)) || snippet.includes(lower(plan.originalQuery))) ? 1 : 0;
+    const metadata = [result.documentNumber, result.documentDate || result.effectiveDate, result.title].filter(Boolean).length / 3;
+    const relevance = Math.min(1, coverage * 0.52 + titleCoverage * 0.23 + exactPhrase * 0.15 + metadata * 0.10);
+    return Object.freeze({ coverage, titleCoverage, exactPhrase, metadataCompleteness: metadata, relevance });
+  }
+
+  function canonicalKey(result) {
+    try {
+      const url = new URL(result.sourceUrl);
+      url.hash = '';
+      ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'].forEach(key => url.searchParams.delete(key));
+      return url.toString().replace(/\/$/, '').toLocaleLowerCase();
+    } catch {
+      return `${lower(result.title)}|${lower(result.sourceName)}`;
+    }
   }
 
   function rankResults(results = [], plan = {}) {
-    return Object.freeze(results.map(normalizeResult).map(result => Object.freeze({ ...result, queryRelevance: relevanceScore(result, plan) })).sort((a, b) =>
+    const deduped = new Map();
+    results.map(normalizeResult).forEach(result => {
+      const features = evidenceFeatures(result, plan);
+      const enriched = Object.freeze({ ...result, queryRelevance: features.relevance, evidenceFeatures: features });
+      const key = canonicalKey(enriched);
+      const existing = deduped.get(key);
+      if (!existing || enriched.queryRelevance > existing.queryRelevance || (enriched.queryRelevance === existing.queryRelevance && enriched.sourcePriority > existing.sourcePriority)) deduped.set(key, enriched);
+    });
+    return Object.freeze([...deduped.values()].sort((a, b) =>
       Number(b.official) - Number(a.official)
       || b.queryRelevance - a.queryRelevance
       || b.sourcePriority - a.sourcePriority
@@ -98,25 +134,37 @@
     ));
   }
 
+  function citationConfidence(result) {
+    if (!result.official) return 'low';
+    const metadata = result.evidenceFeatures?.metadataCompleteness ?? 0;
+    const relevance = result.queryRelevance ?? 0;
+    if (relevance >= 0.72 && metadata >= 0.66) return 'high';
+    if (relevance >= 0.30) return 'medium';
+    return 'low';
+  }
+
   function createSearchCitations(results = []) {
     const createCitation = window.GovPromptCore.createCitation;
     if (typeof createCitation !== 'function') return Object.freeze([]);
-    return Object.freeze(results.filter(result => result.official).map(result => { try { return createCitation(result, { confidenceLevel: 'medium', verify: true }); } catch { return null; } }).filter(Boolean));
+    return Object.freeze(results.filter(result => result.official).map(result => {
+      try { return createCitation(result, { confidenceLevel: citationConfidence(result), verify: true }); } catch { return null; }
+    }).filter(Boolean));
   }
 
   function createEvidence(results, freshness, { verificationRequired = true } = {}) {
-    const primaryResults = Object.freeze(results.filter(result => result.official && result.queryRelevance >= 0.18));
-    const secondaryResults = Object.freeze(results.filter(result => !result.official || result.queryRelevance < 0.18));
+    const primaryResults = Object.freeze(results.filter(result => result.official && result.queryRelevance >= 0.24));
+    const secondaryResults = Object.freeze(results.filter(result => !result.official || result.queryRelevance < 0.24));
     const citations = createSearchCitations(primaryResults);
     const verifiedCurrent = Boolean(freshness?.verifiedCurrent && freshness?.best?.official);
     const hasPrimaryEvidence = primaryResults.length > 0;
-    const conclusionEligible = hasPrimaryEvidence && (!verificationRequired || verifiedCurrent);
-    return Object.freeze({ primaryResults, secondaryResults, citations, verificationRequired, verifiedCurrent, conclusionEligible, warning: verificationRequired && !verifiedCurrent ? UNVERIFIED_LATEST_WARNING : '' });
+    const strongPrimaryEvidence = primaryResults.some(result => result.queryRelevance >= 0.45);
+    const conclusionEligible = hasPrimaryEvidence && strongPrimaryEvidence && (!verificationRequired || verifiedCurrent);
+    return Object.freeze({ primaryResults, secondaryResults, citations, verificationRequired, verifiedCurrent, strongPrimaryEvidence, conclusionEligible, warning: verificationRequired && !verifiedCurrent ? UNVERIFIED_LATEST_WARNING : '' });
   }
 
   function planOnly(plan, warning, errorCode = '') {
     return Object.freeze({ mode: 'plan-only', plan, results: Object.freeze([]), freshness: null,
-      evidence: Object.freeze({ primaryResults: Object.freeze([]), secondaryResults: Object.freeze([]), citations: Object.freeze([]), verificationRequired: false, verifiedCurrent: false, conclusionEligible: false, warning }), warning, errorCode });
+      evidence: Object.freeze({ primaryResults: Object.freeze([]), secondaryResults: Object.freeze([]), citations: Object.freeze([]), verificationRequired: false, verifiedCurrent: false, strongPrimaryEvidence: false, conclusionEligible: false, warning }), warning, errorCode });
   }
 
   function createOfficialSearchConnector({ endpoint = DEFAULT_OFFICIAL_SEARCH_ENDPOINT, fetcher } = {}) {
@@ -128,7 +176,7 @@
       if (!searchEndpoint || typeof doFetch !== 'function') return planOnly(plan, 'ยังไม่ได้เชื่อมบริการค้นเว็บราชการสด — ใช้แผนค้นจาก Primary Source ก่อน', 'SEARCH_UNAVAILABLE');
       let response;
       try {
-        response = await doFetch(searchEndpoint, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ query: plan.query, sites: plan.sources.map(source => source.host), count: Math.min(20, Math.max(5, Number(options.count) || 10)) }) });
+        response = await doFetch(searchEndpoint, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ query: plan.query, originalQuery: plan.originalQuery, routedModules: plan.routedModules, sites: plan.sources.map(source => source.host), count: Math.min(20, Math.max(5, Number(options.count) || 10)) }) });
       } catch { return planOnly(plan, 'ยังเชื่อมบริการค้นเว็บราชการสดไม่ได้ — ระบบจะใช้แผนค้นจาก Primary Source ก่อน', 'SEARCH_NETWORK_ERROR'); }
       if (!response.ok) {
         let errorCode = `HTTP_${response.status}`;
@@ -141,7 +189,7 @@
       const evidence = createEvidence(results, freshness, { verificationRequired });
       return Object.freeze({ mode: 'live', plan, results, freshness, evidence, verificationRequired, searchedAt: normalize(payload.searchedAt), provider: normalize(payload.provider), warning: evidence.warning });
     }
-    return Object.freeze({ search, createSearchPlan, rewriteQuery, rankResults, createEvidence, requiresFreshnessVerification });
+    return Object.freeze({ search, createSearchPlan, rewriteQuery, rankResults, createEvidence, requiresFreshnessVerification, queryTerms, citationConfidence });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
@@ -151,6 +199,8 @@
   window.GovPromptCore.createOfficialSearchPlan = createSearchPlan;
   window.GovPromptCore.rankOfficialSearchResults = rankResults;
   window.GovPromptCore.createOfficialSearchEvidence = createEvidence;
+  window.GovPromptCore.officialSearchQueryTerms = queryTerms;
+  window.GovPromptCore.officialSearchCitationConfidence = citationConfidence;
   window.GovPromptCore.createOfficialSearchConnector = createOfficialSearchConnector;
   window.GovPromptCore.officialSearchConnector = createOfficialSearchConnector();
 })();
