@@ -1,9 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "ai-local-government-assistant",
+  "main": "src/search-worker.js",
   "compatibility_date": "2026-08-04",
   "assets": {
     "directory": ".",
+    "binding": "ASSETS",
     "html_handling": "none",
     "not_found_handling": "404-page"
   },
