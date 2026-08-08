@@ -140,11 +140,17 @@ function buildSearchPlan(query, requestedSites) {
     : topic.preferredHosts.filter(isOfficialHost);
   const core = cleanText(query.replace(/ล่าสุด|ปัจจุบัน/g, ' '), 300);
   const context = topic.phrases.join(' ');
-  const variants = [
-    `${core} ${context}`.trim(),
-    wantsLatest ? `${core} ${context} ฉบับปัจจุบัน แก้ไขเพิ่มเติม หนังสือสั่งการ` : `${core} ${context} ระเบียบ ประกาศ หนังสือสั่งการ`
-  ];
-  return { topicId: topic.id, wantsLatest, sites, variants: [...new Set(variants)].slice(0, 2), preferredHosts: topic.preferredHosts };
+  const primary = `${core} ${context}`.trim();
+  const verification = wantsLatest
+    ? `${core} ${context} ฉบับปัจจุบัน แก้ไขเพิ่มเติม หนังสือสั่งการ`
+    : `${core} ${context} ระเบียบ ประกาศ หนังสือสั่งการ`;
+  return {
+    topicId: topic.id,
+    wantsLatest,
+    sites,
+    variants: primary === verification ? [primary] : [primary, verification],
+    preferredHosts: topic.preferredHosts
+  };
 }
 
 function freshnessScore(date, wantsLatest) {
@@ -250,13 +256,15 @@ async function searchTavily(env, payload) {
   const candidateLimit = Math.min(Math.max(payload.count, 8), 12);
   const collected = [];
 
-  for (const variant of plan.variants) {
+  for (let i = 0; i < plan.variants.length; i += 1) {
+    const variant = plan.variants[i];
     const response = await tavilyRequest(env, variant, plan.sites, candidateLimit);
     if (!response.ok) {
       if (!collected.length) return { ok: false, status: 502, error: 'SEARCH_PROVIDER_ERROR', providerStatus: response.status };
       break;
     }
     collected.push(...response.results);
+    if (!plan.wantsLatest && collected.length >= payload.count) break;
     if (collected.length >= payload.count * 2) break;
   }
 
