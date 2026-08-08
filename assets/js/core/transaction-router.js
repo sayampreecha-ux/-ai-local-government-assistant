@@ -148,7 +148,7 @@
 
   const TRANSACTION_RULES = Object.freeze(definitions.map(([moduleId, type]) => Object.freeze({ moduleId, type })));
 
-  function normalize(value) { return String(value ?? '').normalize('NFKC').toLocaleLowerCase().trim(); }
+  function normalize(value) { return String(value ?? '').normalize('NFC').toLocaleLowerCase().trim(); }
   function normalizeModuleId(value) {
     const match = String(value ?? '').trim().toUpperCase().match(/(?:^|[^A-Z0-9])GP\s*0*(1[0-3]|[1-9])(?:[^A-Z0-9]|$)/);
     return match ? `GP${match[1].padStart(3, '0')}` : '';
