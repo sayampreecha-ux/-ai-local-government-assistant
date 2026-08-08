@@ -2,21 +2,22 @@
   'use strict';
 
   const MODULES = window.GovPromptCore.PROMPT_REGISTRY;
-  const V7_MODULE_IDS = Object.freeze(Array.from({ length: 12 }, (_, index) => `GP${String(index + 1).padStart(3, '0')}`));
+  const V7_MODULE_IDS = Object.freeze(Array.from({ length: 13 }, (_, index) => `GP${String(index + 1).padStart(3, '0')}`));
   const DEFAULT_OPTIONS = Object.freeze({ confidenceThreshold: 0.45, multiModuleThreshold: 0.3, fallbackModule: 'GP001' });
   const definitions = [
-    ['GP001', 'official-letter', ['gp001', 'official letter', 'หนังสือราชการ', 'สารบรรณ', 'บันทึกข้อความ', 'คำสั่ง', 'ประกาศ']],
-    ['GP002', 'government-law', ['gp002', 'law', 'legal', 'กฎหมาย', 'ระเบียบ', 'อำนาจหน้าที่', 'ข้อหารือ']],
-    ['GP003', 'procurement', ['gp003', 'procurement', 'tor', 'จัดซื้อ', 'จัดจ้าง', 'พัสดุ', 'ราคากลาง', 'e-gp']],
-    ['GP004', 'finance', ['gp004', 'finance', 'reimbursement', 'travel expense', 'การเงิน', 'เบิกจ่าย', 'ค่าเดินทาง', 'ค่าเช่าบ้าน']],
-    ['GP005', 'budget', ['gp005', 'budget', 'appropriation', 'งบประมาณ', 'โอนงบ', 'เงินสำรอง', 'ผูกพันงบประมาณ']],
-    ['GP006', 'human-resources', ['gp006', 'human resources', 'hr', 'บุคคล', 'แต่งตั้ง', 'เลื่อนระดับ', 'โอนย้าย', 'วินัย', 'เกษียณ']],
-    ['GP007', 'council', ['gp007', 'council', 'quorum', 'motion', 'resolution', 'สภาท้องถิ่น', 'ญัตติ', 'องค์ประชุม', 'มติสภา', 'ข้อบัญญัติ']],
-    ['GP008', 'project', ['gp008', 'project', 'feasibility', 'โครงการ', 'ความเป็นไปได้', 'ตัวชี้วัด', 'kpi', 'แผนจัดซื้อ']],
-    ['GP009', 'public-relations', ['gp009', 'public relations', 'press release', 'ประชาสัมพันธ์', 'ข่าว', 'facebook', 'infographic']],
-    ['GP010', 'meeting', ['gp010', 'meeting', 'minutes', 'ประชุม', 'วาระประชุม', 'รายงานการประชุม', 'มติที่ประชุม']],
-    ['GP011', 'pdpa', ['gp011', 'pdpa', 'privacy', 'personal data', 'ข้อมูลส่วนบุคคล', 'ความยินยอม', 'ปกปิดข้อมูล']],
-    ['GP012', 'knowledge-search', ['gp012', 'knowledge search', 'semantic search', 'ค้นหาความรู้', 'สืบค้น', 'อ้างอิง', 'citation', 'แหล่งข้อมูล']]
+    ['GP001', 'records', ['gp001', 'official letter', 'หนังสือราชการ', 'สารบรรณ', 'บันทึกข้อความ', 'คำสั่ง', 'ประกาศ']],
+    ['GP002', 'legal', ['gp002', 'law', 'legal', 'กฎหมาย', 'ระเบียบ', 'อำนาจหน้าที่', 'ข้อหารือ', 'หนังสือสั่งการ', 'ซักซ้อม']],
+    ['GP003', 'procurement', ['gp003', 'procurement', 'tor', 'จัดซื้อ', 'จัดจ้าง', 'พัสดุ', 'ราคากลาง', 'e-gp', 'ตรวจรับ']],
+    ['GP004', 'planning-budget', ['gp004', 'plan', 'project', 'budget', 'planning', 'appropriation', 'แผน', 'โครงการ', 'งบประมาณ', 'โอนงบ', 'เงินสำรอง', 'ตัวชี้วัด', 'kpi']],
+    ['GP005', 'finance', ['gp005', 'finance', 'reimbursement', 'travel expense', 'payment', 'การเงิน', 'เบิกจ่าย', 'ค่าเดินทาง', 'ค่าเช่าบ้าน', 'ฎีกา']],
+    ['GP006', 'human-resources', ['gp006', 'human resources', 'hr', 'personnel', 'promotion', 'บุคคล', 'แต่งตั้ง', 'เลื่อนระดับ', 'โอนย้าย', 'วินัย', 'เกษียณ', 'สอบแข่งขัน']],
+    ['GP007', 'engineering', ['gp007', 'engineering', 'construction', 'road', 'งานช่าง', 'วิศวกรรม', 'ก่อสร้าง', 'ถนน', 'แบบแปลน', 'ผู้ควบคุมงาน']],
+    ['GP008', 'public-health', ['gp008', 'public health', 'health', 'hospital', 'สาธารณสุข', 'รพ.สต.', 'รพสต', 'เงินบำรุง', 'บริการสุขภาพ']],
+    ['GP009', 'education', ['gp009', 'education', 'school', 'teacher', 'student', 'การศึกษา', 'โรงเรียน', 'ครู', 'นักเรียน', 'ศูนย์พัฒนาเด็กเล็ก']],
+    ['GP010', 'internal-audit', ['gp010', 'internal audit', 'audit', 'internal control', 'ตรวจสอบภายใน', 'ควบคุมภายใน', 'ปค.4', 'ปค.5', 'ปค.6', 'ความเสี่ยงองค์กร']],
+    ['GP011', 'executive', ['gp011', 'executive', 'policy', 'management', 'ผู้บริหาร', 'นายก', 'ปลัด', 'นโยบาย', 'ข้อสั่งการ', 'สรุปผู้บริหาร']],
+    ['GP012', 'public-relations', ['gp012', 'public relations', 'press release', 'pr', 'ประชาสัมพันธ์', 'ข่าว', 'facebook', 'infographic', 'โพสต์']],
+    ['GP013', 'council', ['gp013', 'council', 'quorum', 'motion', 'resolution', 'local council', 'สภาท้องถิ่น', 'ญัตติ', 'องค์ประชุม', 'มติสภา', 'ข้อบัญญัติ', 'สมัยประชุม']]
   ];
 
   const TRANSACTION_RULES = Object.freeze(definitions.map(([moduleId, type, terms]) => Object.freeze({ moduleId, type, weight: 1, terms: Object.freeze(terms) })));

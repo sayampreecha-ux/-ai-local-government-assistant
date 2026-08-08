@@ -12,12 +12,8 @@
   const history = [];
   let attachments = [];
 
-  // Prompts can contain official or personal information. Keep history only in
-  // this tab's memory and remove data written by the previous implementation.
   try { localStorage.removeItem(legacyHistoryKey); } catch {}
 
-  // Publish local, non-identifying Web Vitals so release audits can measure the
-  // rendered application without sending telemetry off the device.
   const runtimeMetrics = { lcp: 0, cls: 0 };
   try {
     new PerformanceObserver(list => {
@@ -51,9 +47,10 @@
 
   const domainNames = Object.freeze({
     records: 'งานสารบรรณ', legal: 'กฎหมายและข้อบัญญัติ', procurement: 'พัสดุและจัดซื้อจัดจ้าง',
-    'planning-budget': 'แผนและงบประมาณ', finance: 'การเงินและการคลัง', 'human-resources': 'งานบุคคล',
+    'planning-budget': 'แผน โครงการ และงบประมาณ', finance: 'การเงินและการคลัง', 'human-resources': 'งานบุคคล',
     engineering: 'งานช่างและวิศวกรรม', 'public-health': 'สาธารณสุข', education: 'การศึกษา',
-    'internal-audit': 'ตรวจสอบภายใน', executive: 'งานบริหาร', 'public-relations': 'ประชาสัมพันธ์', general: 'งานราชการทั่วไป'
+    'internal-audit': 'ตรวจสอบภายใน', executive: 'งานบริหาร', 'public-relations': 'ประชาสัมพันธ์',
+    council: 'งานสภาท้องถิ่น', general: 'งานราชการทั่วไป'
   });
 
   function resizeInput() {
@@ -72,25 +69,56 @@
     const article = document.createElement('article');
     article.className = 'message assistant';
     article.id = 'thinkingMessage';
-    article.innerHTML = '<span class="assistant-mark" aria-hidden="true">กพ</span><div class="assistant-content"><div class="thinking"><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>กำลังเลือกเครื่องมือ</span></div><div class="analysis-steps">จำแนกประเภทงาน · จับคู่ผู้ช่วยเฉพาะด้าน</div></div>';
+    article.innerHTML = '<span class="assistant-mark" aria-hidden="true">กพ</span><div class="assistant-content"><div class="thinking"><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>กำลังจัดคำถามให้เป็นงานราชการ</span></div><div class="analysis-steps">จำแนกงาน · จัดบริบท · ตรวจความเสี่ยง · เตรียม Prompt</div></div>';
     conversation.appendChild(article);
   }
 
   function requireCore() {
     const core = window.GovPromptCore;
-    if (!core || typeof core.createSharedContext !== 'function' || typeof core.routeTransaction !== 'function') {
+    if (!core
+      || typeof core.createSharedContext !== 'function'
+      || typeof core.routeTransaction !== 'function'
+      || typeof core.createGovernmentPrompt !== 'function') {
       throw new Error('GovPrompt Core is unavailable');
     }
     return core;
   }
 
-  function routePrompt(text) {
+  function preparePrompt(text) {
     const core = requireCore();
-    const context = core.createSharedContext({ facts: text, desiredOutput: text, documents: attachments.map(file => file.name).join(', ') });
-    return core.routeTransaction(context);
+    const context = core.createSharedContext({
+      facts: text,
+      desiredOutput: text,
+      documents: attachments.map(file => file.name).join(', ')
+    });
+    const route = core.routeTransaction(context);
+    const promptBundle = core.createGovernmentPrompt({ question: text, route, context, attachments });
+    return Object.freeze({ route, promptBundle });
   }
 
-  function addRouteResult(route) {
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand('copy');
+        textarea.remove();
+        return copied;
+      } catch {
+        return false;
+      }
+    }
+  }
+
+  function addRouteResult({ route, promptBundle }) {
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
@@ -98,9 +126,14 @@
     const section = document.createElement('section');
     const heading = document.createElement('h3');
     const description = document.createElement('p');
+    const status = document.createElement('p');
     const actions = document.createElement('div');
-    const openLink = document.createElement('a');
+    const openChatGPT = document.createElement('button');
     const copyButton = document.createElement('button');
+    const specialistLink = document.createElement('a');
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    const preview = document.createElement('pre');
     const mark = document.createElement('span');
 
     article.className = 'message assistant';
@@ -112,24 +145,42 @@
     mark.className = 'assistant-mark';
     mark.setAttribute('aria-hidden', 'true');
     mark.textContent = 'กพ';
+
     label.textContent = `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
-    heading.textContent = 'พบเครื่องมือที่เหมาะกับงานนี้';
-    description.textContent = route.assistant.title;
-    openLink.href = route.assistant.path;
-    openLink.textContent = `เปิด ${route.moduleId}`;
-    copyButton.type = 'button';
-    copyButton.textContent = 'คัดลอกชื่อเครื่องมือ';
-    copyButton.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(`${route.moduleId} · ${route.assistant.title}`);
-        window.GovPrompt?.toast('คัดลอกชื่อเครื่องมือแล้ว');
-      } catch {
-        window.GovPrompt?.toast('ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
-      }
+    heading.textContent = 'GovPrompt เตรียมคำสั่งงานให้แล้ว';
+    description.textContent = `ระบบจัดคำถามไปที่ ${route.assistant.title} และเพิ่มโครงวิเคราะห์ราชการ ความใหม่ของข้อมูล แหล่งอ้างอิง และการตรวจความเสี่ยงให้แล้ว`;
+    status.textContent = route.fallback
+      ? 'ℹ️ ระบบยังไม่มั่นใจในหมวด 100% แต่ได้เตรียม Prompt แบบกลางที่นำไปใช้ต่อได้'
+      : '✅ พร้อมนำ Prompt ไปวิเคราะห์ต่อใน ChatGPT';
+
+    openChatGPT.type = 'button';
+    openChatGPT.textContent = 'เปิดใน ChatGPT';
+    openChatGPT.addEventListener('click', async () => {
+      const chatWindow = window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
+      const copied = await copyText(promptBundle.prompt);
+      if (copied) window.GovPrompt?.toast('คัดลอก Prompt แล้ว — วางใน ChatGPT ได้เลย');
+      else window.GovPrompt?.toast('เปิด ChatGPT แล้ว แต่คัดลอกอัตโนมัติไม่สำเร็จ');
+      if (!chatWindow) window.GovPrompt?.toast('เบราว์เซอร์บล็อกหน้าต่างใหม่ กรุณาอนุญาต pop-up');
     });
 
-    actions.append(openLink, copyButton);
-    section.append(heading, description, actions);
+    copyButton.type = 'button';
+    copyButton.textContent = 'คัดลอก Prompt';
+    copyButton.addEventListener('click', async () => {
+      const copied = await copyText(promptBundle.prompt);
+      window.GovPrompt?.toast(copied ? 'คัดลอก Prompt แล้ว' : 'ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
+    });
+
+    specialistLink.href = route.assistant.path;
+    specialistLink.textContent = `เปิดแบบฟอร์ม ${route.moduleId}`;
+
+    summary.textContent = 'ดู Prompt ที่ GovPrompt จัดให้';
+    preview.textContent = promptBundle.prompt;
+    preview.style.whiteSpace = 'pre-wrap';
+    preview.style.overflowWrap = 'anywhere';
+    details.append(summary, preview);
+
+    actions.append(openChatGPT, copyButton, specialistLink);
+    section.append(heading, description, status, actions, details);
     card.append(section);
     content.append(label, card);
     article.append(mark, content);
@@ -137,7 +188,12 @@
   }
 
   function saveHistory(text, route) {
-    history.unshift({ text, moduleId: route.moduleId, domain: domainNames[route.transactionType] || domainNames.general, at: new Date().toISOString() });
+    history.unshift({
+      text,
+      moduleId: route.moduleId,
+      domain: domainNames[route.transactionType] || domainNames.general,
+      at: new Date().toISOString()
+    });
     history.length = Math.min(history.length, 20);
   }
 
@@ -146,9 +202,10 @@
     addUserMessage(text);
     addThinking();
     conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    let route;
+
+    let prepared;
     try {
-      route = routePrompt(text);
+      prepared = preparePrompt(text);
     } catch {
       document.getElementById('thinkingMessage')?.remove();
       window.GovPrompt?.toast('ระบบวิเคราะห์ยังไม่พร้อม กรุณาลองใหม่อีกครั้ง');
@@ -157,10 +214,11 @@
       input.focus();
       return;
     }
-    await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 850));
+
+    await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 500));
     document.getElementById('thinkingMessage')?.remove();
-    addRouteResult(route);
-    saveHistory(text, route);
+    addRouteResult(prepared);
+    saveHistory(text, prepared.route);
     conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }
 
@@ -176,15 +234,23 @@
   input.addEventListener('input', resizeInput);
   input.addEventListener('keydown', event => {
     if (event.isComposing) return;
-    if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); form.requestSubmit(); }
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      form.requestSubmit();
+    }
   });
+
   const promptButtons = [...document.querySelectorAll('[data-prompt]')];
   promptButtons.forEach((button, index) => {
     button.addEventListener('click', () => submitPrompt(button.dataset.prompt));
     button.addEventListener('keydown', event => {
       if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
       event.preventDefault();
-      const target = event.key === 'Home' ? 0 : event.key === 'End' ? promptButtons.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + promptButtons.length) % promptButtons.length;
+      const target = event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? promptButtons.length - 1
+          : (index + (event.key === 'ArrowRight' ? 1 : -1) + promptButtons.length) % promptButtons.length;
       promptButtons[target].focus();
     });
   });
@@ -195,20 +261,28 @@
 
   function collectFiles(fileList) {
     attachments = [...attachments, ...Array.from(fileList)].slice(0, 5);
-    attachmentStatus.textContent = attachments.length ? `แนบแล้ว ${attachments.length} ไฟล์: ${attachments.map(file => file.name).join(', ')}` : '';
+    attachmentStatus.textContent = attachments.length
+      ? `แนบแล้ว ${attachments.length} ไฟล์: ${attachments.map(file => file.name).join(', ')}`
+      : '';
   }
   attachmentInput.addEventListener('change', () => collectFiles(attachmentInput.files));
   cameraInput.addEventListener('change', () => collectFiles(cameraInput.files));
 
   document.getElementById('micButton').addEventListener('click', () => {
     const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Recognition) { window.GovPrompt?.toast('เบราว์เซอร์นี้ยังไม่รองรับการพิมพ์ด้วยเสียง'); return; }
+    if (!Recognition) {
+      window.GovPrompt?.toast('เบราว์เซอร์นี้ยังไม่รองรับการพิมพ์ด้วยเสียง');
+      return;
+    }
     const recognition = new Recognition();
     const button = document.getElementById('micButton');
     recognition.lang = 'th-TH';
     recognition.interimResults = false;
     recognition.onstart = () => button.classList.add('listening');
-    recognition.onresult = event => { input.value += `${input.value ? ' ' : ''}${event.results[0][0].transcript.trim()}`; resizeInput(); };
+    recognition.onresult = event => {
+      input.value += `${input.value ? ' ' : ''}${event.results[0][0].transcript.trim()}`;
+      resizeInput();
+    };
     recognition.onerror = () => window.GovPrompt?.toast('ไม่สามารถเข้าถึงไมโครโฟนได้ตามนโยบายความปลอดภัย');
     recognition.onend = () => button.classList.remove('listening');
     recognition.start();
@@ -225,7 +299,7 @@
 
   const panels = {
     history: ['ประวัติ', 'บทสนทนาล่าสุด', historyPanel],
-    knowledge: ['คลังความรู้', 'Knowledge Engine', () => '<div class="empty-panel"><strong>คลังความรู้พร้อมใช้งาน</strong><p>ระบบตรวจรุ่นเอกสาร วันที่มีผล และแหล่งราชการก่อนสร้างการอ้างอิง โดยไม่แสดงข้อมูลภายในที่ไม่จำเป็น</p></div>'],
+    knowledge: ['คลังความรู้', 'Knowledge Engine', () => '<div class="empty-panel"><strong>คลังความรู้แบบ Metadata + Index</strong><p>GovPrompt จะใช้คลังเบาเป็นตัวชี้ไปยังต้นฉบับราชการ และตรวจความใหม่ก่อนนำข้อมูลมาใช้</p></div>'],
     profile: ['โปรไฟล์', 'บริบทการทำงาน', () => '<div class="empty-panel"><strong>บริบทส่วนตัวจะมาในรุ่นถัดไป</strong><p>ขณะนี้ระบบไม่ส่งหรือจัดเก็บข้อมูลโปรไฟล์จากหน้านี้</p></div>'],
     tools: ['เครื่องมือ', 'ADVANCED USERS', toolsPanel]
   };
@@ -239,15 +313,21 @@
     document.getElementById('dialogContent').innerHTML = content();
     dialog.showModal();
     dialog.querySelectorAll('[data-history]').forEach(link => link.addEventListener('click', event => {
-      event.preventDefault(); dialog.close(); input.value = link.dataset.history; resizeInput(); input.focus();
+      event.preventDefault();
+      dialog.close();
+      input.value = link.dataset.history;
+      resizeInput();
+      input.focus();
     }));
   }
 
   window.GovPrompt.on('shell:panel', openPanel);
 
   document.getElementById('newChat').addEventListener('click', () => {
-    conversation.replaceChildren(); attachments = []; attachmentStatus.textContent = '';
-    document.querySelector('.chat-main').classList.remove('has-messages'); input.focus();
+    conversation.replaceChildren();
+    attachments = [];
+    attachmentStatus.textContent = '';
+    document.querySelector('.chat-main').classList.remove('has-messages');
+    input.focus();
   });
-
 })();
