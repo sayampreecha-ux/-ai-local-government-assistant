@@ -11,6 +11,42 @@
     ['GP009', 'education'], ['GP010', 'internal-audit'], ['GP011', 'executive'], ['GP012', 'public-relations'], ['GP013', 'council']
   ]);
 
+  // Action intent answers “what does the user want to do?” before subject-domain scoring.
+  const ACTION_INTENT_RULES = Object.freeze([
+    Object.freeze({
+      moduleId: 'GP001',
+      weight: 7.5,
+      patterns: Object.freeze([
+        /(?:ช่วย)?(?:ร่าง|เขียน|จัดทำ|ทำ).{0,20}(?:หนังสือราชการ|หนังสือภายนอก|บันทึกข้อความ|คำสั่ง|ประกาศ|หนังสือตอบ|หนังสือแจ้ง)/,
+        /(?:หนังสือราชการ|หนังสือภายนอก|บันทึกข้อความ).{0,20}(?:ร่าง|เขียน|จัดทำ|ทำ)/
+      ])
+    }),
+    Object.freeze({
+      moduleId: 'GP010',
+      weight: 7.2,
+      patterns: Object.freeze([
+        /(?:audit|ตรวจสอบภายใน|ตรวจติดตาม|ประเมินการควบคุมภายใน)/i,
+        /(?:ตรวจ|สอบทาน).{0,15}(?:ระบบควบคุม|ความเสี่ยงองค์กร)/
+      ])
+    }),
+    Object.freeze({
+      moduleId: 'GP003',
+      weight: 7.0,
+      patterns: Object.freeze([
+        /^(?:ช่วย)?\s*(?:ซื้อ|จัดซื้อ|จัดหา|เช่า|จ้าง|จัดจ้าง)\s*\S+/,
+        /(?:ต้องการ|จะ|ขอ).{0,8}(?:ซื้อ|จัดซื้อ|จัดหา|เช่า|จ้าง|จัดจ้าง)\s*\S+/,
+        /(?:ซื้อ|จัดซื้อ|จัดหา|เช่า|จ้าง|จัดจ้าง).{0,20}(?:คอม|คอมพิวเตอร์|โน้ตบุ๊ก|เครื่องพิมพ์|โต๊ะ|เก้าอี้|รถ|ครุภัณฑ์|วัสดุ|อุปกรณ์)/
+      ])
+    }),
+    Object.freeze({
+      moduleId: 'GP012',
+      weight: 6.8,
+      patterns: Object.freeze([
+        /(?:ทำ|เขียน|ร่าง|สร้าง).{0,12}(?:โพสต์|ข่าวประชาสัมพันธ์|แคปชัน|อินโฟกราฟิก)/
+      ])
+    })
+  ]);
+
   const INTENT_RULES = Object.freeze([
     ['GP001', [
       [4.5, /(?:ร่าง|ทำ|เขียน|จัดทำ).{0,12}(?:หนังสือราชการ|บันทึกข้อความ|หนังสือภายนอก|คำสั่ง|ประกาศ)/],
@@ -26,6 +62,7 @@
     ['GP003', [
       [5.0, /\btor\b/i], [4.8, /วิธีเฉพาะเจาะจง|วิธีคัดเลือก|e-?bidding|ประกวดราคา/i],
       [4.5, /ล็อกสเปก|ราคากลาง|ตรวจรับ|จัดซื้อ|จัดจ้าง|พัสดุ/],
+      [4.2, /(?:^|\s)(?:ซื้อ|จัดหา|เช่า|จ้าง)(?:\s|\S)/],
       [3.6, /ซื้อ(?:ของ|ครุภัณฑ์|วัสดุ)|จ้าง(?:งาน|เหมาบริการ|ที่ปรึกษา)|ผู้รับจ้าง|สัญญาจ้าง/]
     ]],
     ['GP004', [
@@ -58,7 +95,7 @@
       [4.8, /ศูนย์พัฒนาเด็กเล็ก|โรงเรียน|นักเรียน|ครู|การศึกษา/], [4.2, /อาหารกลางวัน|ทุนการศึกษา|เด็กปฐมวัย/], [3.0, /การเรียน|การสอน/]
     ]],
     ['GP010', [
-      [4.8, /ตรวจสอบภายใน|ควบคุมภายใน|ปค\.?\s*[456]/], [4.5, /บริหารความเสี่ยง|ความเสี่ยงองค์กร|ตรวจติดตาม/], [3.0, /audit|ตรวจสอบ/i]
+      [5.4, /\baudit\b/i], [4.8, /ตรวจสอบภายใน|ควบคุมภายใน|ปค\.?\s*[456]/], [4.5, /บริหารความเสี่ยง|ความเสี่ยงองค์กร|ตรวจติดตาม/], [3.0, /ตรวจสอบ/i]
     ]],
     ['GP011', [
       [4.6, /สรุปผู้บริหาร|ข้อสั่งการ|นโยบายผู้บริหาร/], [4.0, /นายก|ปลัด|ผู้บริหาร|ประชุมผู้บริหาร/], [3.0, /นโยบาย|บริหารองค์กร/]
@@ -84,13 +121,24 @@
   const TRANSACTION_RULES = Object.freeze(definitions.map(([moduleId, type]) => Object.freeze({ moduleId, type })));
 
   function normalize(value) { return String(value ?? '').normalize('NFKC').toLocaleLowerCase().trim(); }
+
   function normalizeModuleId(value) {
     const match = String(value ?? '').trim().toUpperCase().match(/(?:^|[^A-Z0-9])GP\s*0*(1[0-3]|[1-9])(?:[^A-Z0-9]|$)/);
     return match ? `GP${match[1].padStart(3, '0')}` : '';
   }
+
   function detectModuleId(options = {}) {
     const candidates = [options.moduleId, options.pathname, typeof location === 'object' ? location.pathname : '', typeof document === 'object' ? document.documentElement?.dataset?.moduleId : ''];
     return candidates.map(normalizeModuleId).find(Boolean) || '';
+  }
+
+  function detectActionIntent(request) {
+    const source = normalize(request);
+    for (const rule of ACTION_INTENT_RULES) {
+      const matched = rule.patterns.filter(pattern => pattern.test(source));
+      if (matched.length) return Object.freeze({ moduleId: rule.moduleId, weight: rule.weight, matched: Object.freeze(matched.map(pattern => pattern.source)) });
+    }
+    return null;
   }
 
   function scoreRequest(request) {
@@ -119,23 +167,29 @@
     if (typeof request !== 'string' || !request.trim()) throw new TypeError('request must be a non-empty string');
     const settings = { ...DEFAULT_OPTIONS, ...options };
     const ranking = scoreRequest(request);
+    const action = detectActionIntent(request);
     const activeModule = V7_MODULE_IDS.includes(options.activeModule) ? options.activeModule : '';
     const top = ranking[0];
     const second = ranking[1];
     const hasEvidence = top.rawScore > 0;
     const ambiguous = hasEvidence && second.rawScore > 0 && (top.confidence - second.confidence) < settings.ambiguityGap;
-    const primaryModule = hasEvidence ? top.moduleId : (activeModule || settings.fallbackModule);
+    const primaryModule = action?.moduleId || (hasEvidence ? top.moduleId : (activeModule || settings.fallbackModule));
+
+    const domainModules = ranking.filter(item => item.rawScore > 0 && item.moduleId !== primaryModule).slice(0, 2).map(item => item.moduleId);
     const modules = options.multiModule === false
       ? [primaryModule]
-      : [...new Set([primaryModule, ...ranking.filter(item => item.rawScore > 0 && (item.confidence >= settings.multiModuleThreshold || item === second && ambiguous)).slice(0, 3).map(item => item.moduleId)])];
+      : [...new Set([primaryModule, ...domainModules])];
+
+    const actionConfidence = action ? Math.min(0.99, 0.55 + action.weight / 20) : 0;
     return Object.freeze({
       primaryModule,
       modules: Object.freeze(modules),
-      confidence: hasEvidence ? top.confidence : 0,
-      fallback: !hasEvidence,
-      ambiguous,
+      confidence: action ? actionConfidence : (hasEvidence ? top.confidence : 0),
+      fallback: !action && !hasEvidence,
+      ambiguous: !action && ambiguous,
       ranking: Object.freeze(ranking),
-      reason: hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence'
+      actionIntent: action,
+      reason: action ? 'action-intent-primary' : (hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence')
     });
   }
 
@@ -159,10 +213,13 @@
       assistant: MODULES.find(module => module.moduleId === moduleId),
       shouldRedirect: Boolean(currentModuleId && currentModuleId !== moduleId), preservePrompt: true,
       confidence: route.confidence, modules: route.modules, fallback: route.fallback, ambiguous: route.ambiguous,
-      reason: route.reason, ranking: route.ranking
+      reason: route.reason, actionIntent: route.actionIntent, ranking: route.ranking
     });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
-  Object.assign(window.GovPromptCore, { MODULES, V7_MODULE_IDS, TRANSACTION_RULES, INTENT_RULES, ROUTER_DEFAULTS: DEFAULT_OPTIONS, detectModuleId, detectTransactionType, scoreRequest, routeRequest, routeTransaction });
+  Object.assign(window.GovPromptCore, {
+    MODULES, V7_MODULE_IDS, TRANSACTION_RULES, ACTION_INTENT_RULES, INTENT_RULES, ROUTER_DEFAULTS: DEFAULT_OPTIONS,
+    detectModuleId, detectTransactionType, detectActionIntent, scoreRequest, routeRequest, routeTransaction
+  });
 })();
