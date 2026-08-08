@@ -36,6 +36,12 @@ function cleanText(value, max = 500) {
   return String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
 }
 
+function normalizeDate(value) {
+  const raw = cleanText(value, 80);
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(raw);
+  return match ? match[1] : '';
+}
+
 function parseRequestBody(body) {
   const query = cleanText(body?.query, 400);
   const sites = Array.isArray(body?.sites)
@@ -60,7 +66,11 @@ function normalizeResult(item) {
     url,
     snippet: cleanText(item?.description ?? item?.snippet, 700),
     host: normalizeHost(host),
-    sourceTier: 'primary'
+    sourceTier: 'primary',
+    documentDate: normalizeDate(item?.page_age),
+    effectiveDate: '',
+    status: 'unknown',
+    lastVerifiedAt: ''
   };
 }
 
