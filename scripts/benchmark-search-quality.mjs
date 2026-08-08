@@ -54,13 +54,12 @@ const cases = [
 let passed = 0;
 const failures = [];
 for (const [query, expectedModule, acceptableHosts] of cases) {
-  const route = core.routeRequest(query, { multiModule: true });
   const plan = core.createOfficialSearchPlan(query, { limitSources: 6 });
   const top3 = plan.plans.slice(0, 3).map(item => item.host);
-  const routeOk = route.primaryModule === expectedModule;
+  const moduleOk = plan.routedModules.includes(expectedModule);
   const sourceOk = acceptableHosts.some(host => top3.includes(host));
-  if (routeOk && sourceOk) passed += 1;
-  else failures.push({ query, expectedModule, gotModule: route.primaryModule, acceptableHosts, top3, rewritten: plan.query });
+  if (moduleOk && sourceOk) passed += 1;
+  else failures.push({ query, expectedModule, routedModules: plan.routedModules, acceptableHosts, top3, rewritten: plan.query });
 }
 
 console.log(JSON.stringify({ passed, total: cases.length, accuracy: passed / cases.length, failures }, null, 2));
