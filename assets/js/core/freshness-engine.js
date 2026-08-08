@@ -27,15 +27,6 @@
     return ({ current: 5, amended: 3, unknown: 2, superseded: 1, repealed: 0 })[text(status).toLowerCase()] ?? 2;
   }
 
-  function relationshipIds(record) {
-    return new Set([
-      text(record.supersedesDocumentId),
-      text(record.supersededByDocumentId),
-      ...(Array.isArray(record.amendedBy) ? record.amendedBy.map(text) : []),
-      ...(Array.isArray(record.repealedBy) ? record.repealedBy.map(text) : [])
-    ].filter(Boolean));
-  }
-
   function compareFreshness(left, right) {
     const leftPriority = window.GovPromptCore.sourcePriority ? window.GovPromptCore.sourcePriority(left).priority : 0;
     const rightPriority = window.GovPromptCore.sourcePriority ? window.GovPromptCore.sourcePriority(right).priority : 0;
@@ -50,20 +41,25 @@
   function resolveFreshness(records = [], { asOf = new Date() } = {}) {
     const reference = asOf instanceof Date ? asOf : new Date(asOf);
     if (Number.isNaN(reference.getTime())) throw new TypeError('Invalid freshness reference date');
-    const byId = new Map(records.map(record => [text(record.id), record]));
+
     const eligible = records.filter(record => {
       const effective = dateValue(record.effectiveDate || record.documentDate);
       return effective === Number.NEGATIVE_INFINITY || effective <= reference.getTime();
     });
 
+    const byId = new Map(eligible.map(record => [text(record.id), record]));
     const invalidated = new Set();
+
     eligible.forEach(record => {
-      if (text(record.status).toLowerCase() === 'repealed' || text(record.status).toLowerCase() === 'superseded') invalidated.add(text(record.id));
+      const id = text(record.id);
+      const status = text(record.status).toLowerCase();
+      if (status === 'repealed' || status === 'superseded') invalidated.add(id);
+
       const supersedesId = text(record.supersedesDocumentId);
-      if (supersedesId) invalidated.add(supersedesId);
-      (Array.isArray(record.repealedBy) ? record.repealedBy : []).forEach(id => {
-        if (byId.has(text(id))) invalidated.add(text(record.id));
-      });
+      if (supersedesId && byId.has(supersedesId)) invalidated.add(supersedesId);
+
+      if (text(record.supersededByDocumentId) && byId.has(text(record.supersededByDocumentId))) invalidated.add(id);
+      if ((Array.isArray(record.repealedBy) ? record.repealedBy : []).some(ref => byId.has(text(ref)))) invalidated.add(id);
     });
 
     const groups = new Map();
@@ -77,7 +73,7 @@
     const rejected = [];
     for (const group of groups.values()) {
       const sorted = [...group].sort(compareFreshness);
-      const chosen = sorted.find(record => !invalidated.has(text(record.id))) || sorted[0];
+      const chosen = sorted.find(record => !invalidated.has(text(record.id))) || null;
       if (chosen) current.push(chosen);
       sorted.filter(record => record !== chosen).forEach(record => rejected.push(Object.freeze({
         record,
@@ -87,7 +83,8 @@
 
     const unresolved = current.filter(record => {
       const status = text(record.status).toLowerCase();
-      return status === 'unknown' || !text(record.lastVerifiedAt);
+      const classification = window.GovPromptCore.classifySource?.(record);
+      return status === 'unknown' || !text(record.lastVerifiedAt) || classification?.sourceLevel !== 'primary';
     });
 
     return Object.freeze({
