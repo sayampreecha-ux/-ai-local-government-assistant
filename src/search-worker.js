@@ -13,10 +13,15 @@ const OFFICIAL_HOSTS = new Set([
   'audit.go.th'
 ]);
 
+const FRONTEND_ORIGIN = 'https://sayampreecha-ux.github.io';
 const JSON_HEADERS = Object.freeze({
   'content-type': 'application/json; charset=utf-8',
   'cache-control': 'no-store',
-  'x-content-type-options': 'nosniff'
+  'x-content-type-options': 'nosniff',
+  'access-control-allow-origin': FRONTEND_ORIGIN,
+  'access-control-allow-methods': 'POST, OPTIONS',
+  'access-control-allow-headers': 'content-type',
+  'vary': 'Origin'
 });
 
 function json(body, status = 200) {
@@ -118,7 +123,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname !== '/api/official-search') return fetchAsset(request, env, url);
-    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { allow: 'POST, OPTIONS' } });
+    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
     if (request.method !== 'POST') return json({ ok: false, error: 'METHOD_NOT_ALLOWED' }, 405);
 
     let body;
