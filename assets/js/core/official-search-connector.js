@@ -3,6 +3,11 @@
 
   const UNVERIFIED_LATEST_WARNING = 'ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง';
   const DEFAULT_OFFICIAL_SEARCH_ENDPOINT = 'https://ai-local-government-assistant.sayampreecha.workers.dev/api/official-search';
+  const FRESHNESS_TERMS = Object.freeze([
+    'ล่าสุด', 'ปัจจุบัน', 'ขณะนี้', 'ตอนนี้', 'ฉบับใหม่', 'ฉบับล่าสุด', 'อัปเดต',
+    'ยังใช้', 'ยังมีผล', 'มีผลใช้บังคับ', 'ถูกยกเลิก', 'ยกเลิกแล้ว', 'แก้ไขล่าสุด',
+    'latest', 'current', 'currently', 'effective', 'repealed', 'superseded'
+  ]);
 
   function normalize(value) {
     return String(value ?? '').normalize('NFKC').trim();
@@ -11,6 +16,12 @@
   function quote(value) {
     const text = normalize(value).replace(/"/g, '');
     return text ? `"${text}"` : '';
+  }
+
+  function requiresFreshnessVerification(query, options = {}) {
+    if (typeof options.requireFreshness === 'boolean') return options.requireFreshness;
+    const q = normalize(query).toLocaleLowerCase();
+    return FRESHNESS_TERMS.some(term => q.includes(term.toLocaleLowerCase()));
   }
 
   function createSearchPlan(query, { limitSources = 6 } = {}) {
@@ -98,18 +109,21 @@
     }).filter(Boolean));
   }
 
-  function createEvidence(results, freshness) {
+  function createEvidence(results, freshness, { verificationRequired = true } = {}) {
     const primaryResults = Object.freeze(results.filter(result => result.official));
     const secondaryResults = Object.freeze(results.filter(result => !result.official));
     const citations = createSearchCitations(primaryResults);
     const verifiedCurrent = Boolean(freshness?.verifiedCurrent && freshness?.best?.official);
+    const hasPrimaryEvidence = primaryResults.length > 0;
+    const conclusionEligible = hasPrimaryEvidence && (!verificationRequired || verifiedCurrent);
     return Object.freeze({
       primaryResults,
       secondaryResults,
       citations,
+      verificationRequired,
       verifiedCurrent,
-      conclusionEligible: verifiedCurrent && primaryResults.length > 0,
-      warning: verifiedCurrent ? '' : UNVERIFIED_LATEST_WARNING
+      conclusionEligible,
+      warning: verificationRequired && !verifiedCurrent ? UNVERIFIED_LATEST_WARNING : ''
     });
   }
 
@@ -123,6 +137,7 @@
         primaryResults: Object.freeze([]),
         secondaryResults: Object.freeze([]),
         citations: Object.freeze([]),
+        verificationRequired: false,
         verifiedCurrent: false,
         conclusionEligible: false,
         warning
@@ -138,6 +153,7 @@
 
     async function search(query, options = {}) {
       const plan = createSearchPlan(query, options);
+      const verificationRequired = requiresFreshnessVerification(query, options);
       if (!searchEndpoint || typeof doFetch !== 'function') {
         return planOnly(plan, 'ยังไม่ได้เชื่อมบริการค้นเว็บราชการสด — ใช้แผนค้นจาก Primary Source ก่อน', 'SEARCH_UNAVAILABLE');
       }
@@ -177,7 +193,7 @@
       const freshness = typeof window.GovPromptCore.selectBestCurrent === 'function'
         ? window.GovPromptCore.selectBestCurrent(results, options)
         : null;
-      const evidence = createEvidence(results, freshness);
+      const evidence = createEvidence(results, freshness, { verificationRequired });
 
       return Object.freeze({
         mode: 'live',
@@ -185,17 +201,19 @@
         results,
         freshness,
         evidence,
+        verificationRequired,
         searchedAt: normalize(payload.searchedAt),
         provider: normalize(payload.provider),
-        warning: freshness?.warning || evidence.warning
+        warning: evidence.warning
       });
     }
 
-    return Object.freeze({ search, createSearchPlan, rankResults, createEvidence });
+    return Object.freeze({ search, createSearchPlan, rankResults, createEvidence, requiresFreshnessVerification });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
   window.GovPromptCore.UNVERIFIED_LATEST_WARNING = UNVERIFIED_LATEST_WARNING;
+  window.GovPromptCore.requiresFreshnessVerification = requiresFreshnessVerification;
   window.GovPromptCore.createOfficialSearchPlan = createSearchPlan;
   window.GovPromptCore.rankOfficialSearchResults = rankResults;
   window.GovPromptCore.createOfficialSearchEvidence = createEvidence;
