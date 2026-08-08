@@ -13,7 +13,7 @@ for (const file of [
 }
 
 const core = sandbox.window.GovPromptCore;
-const question = 'ช่วยตรวจ TOR งานก่อสร้างและดูว่าระเบียบล่าสุดใช้ฉบับไหน';
+const question = 'ช่วยตรวจ TOR การจัดซื้อจัดจ้างและระบุความเสี่ยง';
 const context = core.createSharedContext({ facts: question, desiredOutput: 'วิเคราะห์ความเสี่ยงและข้อเสนอแนะ' });
 const route = core.routeTransaction(context);
 assert.equal(route.moduleId, 'GP003');
