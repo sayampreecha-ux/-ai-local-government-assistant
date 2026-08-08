@@ -60,6 +60,43 @@ for (const [request, expectedModuleId] of adversarial) {
   assert.equal(routeTransaction({ facts: request }).moduleId, expectedModuleId, `transaction adversarial: ${request}`);
 }
 
+const realLanguage = [
+  ['ซื้อคอม', 'GP003'],
+  ['รถเสียเบิกได้ไหม', 'GP005'],
+  ['ขาดงาน 16 วันทำไง', 'GP006'],
+  ['ร่างหนังสือถึงผู้ว่า', 'GP001'],
+  ['ช่วยทำหนังสือเชิญ', 'GP001'],
+  ['เปิดงานวันเด็กพูดว่าไง', 'GP011'],
+  ['กล่าวปิดแข่งกีฬา', 'GP011'],
+  ['เงินบำรุงซื้อของได้ไหม', 'GP008'],
+  ['รพ.สต.ทำโครงการได้ไหม', 'GP008'],
+  ['ตรวจ TOR ถนน', 'GP003'],
+  ['จ้างทำถนน', 'GP003'],
+  ['ถนนพังตรวจยังไง', 'GP007'],
+  ['เบิกค่าเครื่องบิน', 'GP005'],
+  ['ค่าโรงแรมเบิกไหม', 'GP005'],
+  ['ครูเบิกค่าอาหารเด็ก', 'GP009'],
+  ['ศพด.จัดงานวันเด็ก', 'GP009'],
+  ['ตรวจการเบิกเงิน', 'GP010'],
+  ['audit พัสดุ', 'GP010'],
+  ['ทำอินโฟกฎหมาย', 'GP012'],
+  ['โพสต์ข่าวให้หน่อย', 'GP012'],
+  ['สภาจะเปิดประชุม', 'GP013'],
+  ['ญัตติงบ', 'GP013'],
+  ['มติสภาเรื่องเงินบำรุง', 'GP013'],
+  ['หน่วยงานทำเรื่องนี้ได้ไหม', 'GP002'],
+  ['ผิดกฎหมายไหม', 'GP002'],
+  ['ซื้อของให้ รพ.สต.', 'GP003'],
+  ['จัดซื้ออาหารโรงเรียน', 'GP003'],
+  ['ร่างคำสั่งแต่งตั้ง', 'GP001'],
+  ['โอนงบทำยังไง', 'GP004'],
+  ['ทำโครงการ 5 แสน', 'GP004']
+];
+for (const [request, expectedModuleId] of realLanguage) {
+  assert.equal(routeRequest(request).primaryModule, expectedModuleId, `real-language: ${request}`);
+  assert.equal(routeTransaction({ facts: request }).moduleId, expectedModuleId, `transaction real-language: ${request}`);
+}
+
 const multi = routeRequest('ตรวจ TOR งานก่อสร้าง', { multiModule: true });
 assert.equal(multi.primaryModule, 'GP003');
 assert.equal(multi.modules.includes('GP007'), true);
@@ -81,4 +118,4 @@ for (let index = 1; index <= 13; index += 1) {
   assert.equal(normalizeEol(current.replace(insertedScripts, '')), normalizeEol(baseline), `${file}: existing UI or prompt behavior changed`);
 }
 
-console.log('GovPrompt hybrid intent router verification passed for GP001-GP013 and cross-domain adversarial cases.');
+console.log('GovPrompt hybrid intent router verification passed for GP001-GP013, cross-domain adversarial cases, and 30 real-language production queries.');
