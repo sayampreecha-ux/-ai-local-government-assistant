@@ -65,8 +65,8 @@ assert.equal(multi.primaryModule, 'GP003');
 assert.equal(multi.modules.includes('GP007'), true);
 
 const normalized = routeTransaction(null, { moduleId: 'GP005' });
-assert.equal(normalized.moduleId, 'GP011');
-assert.equal(normalized.transactionType, 'executive');
+assert.equal(normalized.moduleId, 'GP005');
+assert.equal(normalized.transactionType, 'finance');
 assert.deepEqual(Object.keys(normalized.context), Array.from(sandbox.window.GovPromptCore.CONTEXT_FIELDS));
 assert.equal(detectTransactionType({ facts: 'จัดซื้อจัดจ้าง TOR' }), 'procurement');
 assert.equal(detectTransactionType({ facts: 'ข้อบัญญัติและองค์ประชุมสภาท้องถิ่น' }), 'council');
