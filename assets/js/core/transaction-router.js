@@ -11,7 +11,53 @@
     ['GP009', 'education'], ['GP010', 'internal-audit'], ['GP011', 'executive'], ['GP012', 'public-relations'], ['GP013', 'council']
   ]);
 
-  // Action intent answers “what does the user want to do?” before subject-domain scoring.
+  // Strong domain overrides represent subject matter that should remain primary even when the sentence contains a generic action such as buy, reimburse, or create a project.
+  const DOMAIN_OVERRIDE_RULES = Object.freeze([
+    Object.freeze({
+      moduleId: 'GP002',
+      weight: 9.0,
+      patterns: Object.freeze([
+        /(?:มีอำนาจ|ไม่มีอำนาจ|อำนาจหน้าที่).{0,30}(?:ไหม|หรือไม่|ทำ|ดำเนิน|โครงการ|เรื่อง)/,
+        /(?:ทำ|ดำเนิน|จัดทำ).{0,30}(?:ได้ไหม|ได้หรือไม่).{0,20}(?:ตามกฎหมาย|มีอำนาจ)/,
+        /(?:ผิดกฎหมาย|ถูกกฎหมาย|ชอบด้วยกฎหมาย|ฐานอำนาจ)/
+      ])
+    }),
+    Object.freeze({
+      moduleId: 'GP003',
+      weight: 8.9,
+      patterns: Object.freeze([
+        /\btor\b/i,
+        /วิธีเฉพาะเจาะจง|วิธีคัดเลือก|e-?bidding|ประกวดราคา|ราคากลาง|ล็อกสเปก/i
+      ])
+    }),
+    Object.freeze({
+      moduleId: 'GP008',
+      weight: 8.8,
+      patterns: Object.freeze([
+        /เงินบำรุง/,
+        /รพ\.?สต\.?|โรงพยาบาลส่งเสริมสุขภาพตำบล/,
+        /(?:สาธารณสุข|บริการสุขภาพ|ส่งเสริมสุขภาพ).{0,30}(?:ซื้อ|เบิก|จ่าย|โครงการ|วัสดุ|ค่าอาหาร)/
+      ])
+    }),
+    Object.freeze({
+      moduleId: 'GP009',
+      weight: 8.6,
+      patterns: Object.freeze([
+        /(?:โรงเรียน|ศูนย์พัฒนาเด็กเล็ก|เด็กปฐมวัย|นักเรียน|ครู).{0,30}(?:เบิก|จ่าย|ค่าอาหาร|ซื้อ|โครงการ)/,
+        /(?:เบิก|จ่าย|ค่าอาหาร|ซื้อ|โครงการ).{0,30}(?:โรงเรียน|ศูนย์พัฒนาเด็กเล็ก|เด็กปฐมวัย|นักเรียน|ครู)/
+      ])
+    }),
+    Object.freeze({
+      moduleId: 'GP010',
+      weight: 8.5,
+      patterns: Object.freeze([
+        /\baudit\b/i,
+        /ตรวจสอบภายใน|ประเมินการควบคุมภายใน|สอบทานระบบควบคุม/
+      ])
+    })
+  ]);
+
+  // Action intent answers “what does the user want to do?” after checking strong domain ownership.
   const ACTION_INTENT_RULES = Object.freeze([
     Object.freeze({
       moduleId: 'GP001',
@@ -132,6 +178,15 @@
     return candidates.map(normalizeModuleId).find(Boolean) || '';
   }
 
+  function detectDomainOverride(request) {
+    const source = normalize(request);
+    for (const rule of DOMAIN_OVERRIDE_RULES) {
+      const matched = rule.patterns.filter(pattern => pattern.test(source));
+      if (matched.length) return Object.freeze({ moduleId: rule.moduleId, weight: rule.weight, matched: Object.freeze(matched.map(pattern => pattern.source)) });
+    }
+    return null;
+  }
+
   function detectActionIntent(request) {
     const source = normalize(request);
     for (const rule of ACTION_INTENT_RULES) {
@@ -167,29 +222,32 @@
     if (typeof request !== 'string' || !request.trim()) throw new TypeError('request must be a non-empty string');
     const settings = { ...DEFAULT_OPTIONS, ...options };
     const ranking = scoreRequest(request);
+    const domainOverride = detectDomainOverride(request);
     const action = detectActionIntent(request);
     const activeModule = V7_MODULE_IDS.includes(options.activeModule) ? options.activeModule : '';
     const top = ranking[0];
     const second = ranking[1];
     const hasEvidence = top.rawScore > 0;
     const ambiguous = hasEvidence && second.rawScore > 0 && (top.confidence - second.confidence) < settings.ambiguityGap;
-    const primaryModule = action?.moduleId || (hasEvidence ? top.moduleId : (activeModule || settings.fallbackModule));
+    const primaryModule = domainOverride?.moduleId || action?.moduleId || (hasEvidence ? top.moduleId : (activeModule || settings.fallbackModule));
 
     const domainModules = ranking.filter(item => item.rawScore > 0 && item.moduleId !== primaryModule).slice(0, 2).map(item => item.moduleId);
     const modules = options.multiModule === false
       ? [primaryModule]
-      : [...new Set([primaryModule, ...domainModules])];
+      : [...new Set([primaryModule, action?.moduleId, ...domainModules].filter(Boolean))].slice(0, 3);
 
+    const overrideConfidence = domainOverride ? Math.min(0.99, 0.58 + domainOverride.weight / 20) : 0;
     const actionConfidence = action ? Math.min(0.99, 0.55 + action.weight / 20) : 0;
     return Object.freeze({
       primaryModule,
       modules: Object.freeze(modules),
-      confidence: action ? actionConfidence : (hasEvidence ? top.confidence : 0),
-      fallback: !action && !hasEvidence,
-      ambiguous: !action && ambiguous,
+      confidence: domainOverride ? overrideConfidence : (action ? actionConfidence : (hasEvidence ? top.confidence : 0)),
+      fallback: !domainOverride && !action && !hasEvidence,
+      ambiguous: !domainOverride && !action && ambiguous,
       ranking: Object.freeze(ranking),
+      domainOverride,
       actionIntent: action,
-      reason: action ? 'action-intent-primary' : (hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence')
+      reason: domainOverride ? 'strong-domain-override' : (action ? 'action-intent-primary' : (hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence'))
     });
   }
 
@@ -213,13 +271,13 @@
       assistant: MODULES.find(module => module.moduleId === moduleId),
       shouldRedirect: Boolean(currentModuleId && currentModuleId !== moduleId), preservePrompt: true,
       confidence: route.confidence, modules: route.modules, fallback: route.fallback, ambiguous: route.ambiguous,
-      reason: route.reason, actionIntent: route.actionIntent, ranking: route.ranking
+      reason: route.reason, domainOverride: route.domainOverride, actionIntent: route.actionIntent, ranking: route.ranking
     });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
   Object.assign(window.GovPromptCore, {
-    MODULES, V7_MODULE_IDS, TRANSACTION_RULES, ACTION_INTENT_RULES, INTENT_RULES, ROUTER_DEFAULTS: DEFAULT_OPTIONS,
-    detectModuleId, detectTransactionType, detectActionIntent, scoreRequest, routeRequest, routeTransaction
+    MODULES, V7_MODULE_IDS, TRANSACTION_RULES, DOMAIN_OVERRIDE_RULES, ACTION_INTENT_RULES, INTENT_RULES, ROUTER_DEFAULTS: DEFAULT_OPTIONS,
+    detectModuleId, detectTransactionType, detectDomainOverride, detectActionIntent, scoreRequest, routeRequest, routeTransaction
   });
 })();
