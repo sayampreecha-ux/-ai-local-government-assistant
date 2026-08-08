@@ -2,6 +2,7 @@
   'use strict';
 
   const UNVERIFIED_LATEST_WARNING = 'ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง';
+  const DEFAULT_OFFICIAL_SEARCH_ENDPOINT = 'https://ai-local-government-assistant.sayampreecha.workers.dev/api/official-search';
 
   function normalize(value) {
     return String(value ?? '').normalize('NFKC').trim();
@@ -131,7 +132,7 @@
     });
   }
 
-  function createOfficialSearchConnector({ endpoint = '/api/official-search', fetcher } = {}) {
+  function createOfficialSearchConnector({ endpoint = DEFAULT_OFFICIAL_SEARCH_ENDPOINT, fetcher } = {}) {
     const searchEndpoint = normalize(endpoint);
     const doFetch = fetcher || (typeof fetch === 'function' ? fetch.bind(globalThis) : null);
 
