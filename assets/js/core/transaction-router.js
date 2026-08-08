@@ -3,75 +3,112 @@
 
   const MODULES = window.GovPromptCore.PROMPT_REGISTRY;
   const V7_MODULE_IDS = Object.freeze(Array.from({ length: 13 }, (_, index) => `GP${String(index + 1).padStart(3, '0')}`));
-  const DEFAULT_OPTIONS = Object.freeze({ confidenceThreshold: 0.45, multiModuleThreshold: 0.3, fallbackModule: 'GP001' });
-  const definitions = [
-    ['GP001', 'records', ['gp001', 'official letter', 'หนังสือราชการ', 'สารบรรณ', 'บันทึกข้อความ', 'คำสั่ง', 'ประกาศ']],
-    ['GP002', 'legal', ['gp002', 'law', 'legal', 'กฎหมาย', 'ข้อกฎหมาย', 'วิเคราะห์ข้อกฎหมาย', 'ฐานอำนาจ', 'ระเบียบ', 'อำนาจหน้าที่', 'ข้อหารือ', 'หนังสือสั่งการ', 'ซักซ้อม']],
-    ['GP003', 'procurement', ['gp003', 'procurement', 'tor', 'จัดซื้อ', 'จัดจ้าง', 'พัสดุ', 'ราคากลาง', 'e-gp', 'ตรวจรับ', 'เฉพาะเจาะจง', 'คัดเลือก', 'ประกวดราคา']],
-    ['GP004', 'planning-budget', ['gp004', 'plan', 'project', 'budget', 'planning', 'appropriation', 'แผน', 'โครงการ', 'งบประมาณ', 'โอนงบ', 'เงินสำรอง', 'ตัวชี้วัด', 'kpi']],
-    ['GP005', 'finance', ['gp005', 'finance', 'reimbursement', 'travel expense', 'payment', 'การเงิน', 'เบิกจ่าย', 'ค่าเดินทาง', 'เดินทางไปราชการ', 'ค่าเช่าบ้าน', 'ฎีกา', 'ค่าใช้จ่ายเดินทาง']],
-    ['GP006', 'human-resources', ['gp006', 'human resources', 'hr', 'personnel', 'promotion', 'บุคคล', 'แต่งตั้ง', 'เลื่อนระดับ', 'เลื่อนเงินเดือน', 'เงินเดือน', 'โอนย้าย', 'วินัย', 'เกษียณ', 'สอบแข่งขัน']],
-    ['GP007', 'engineering', ['gp007', 'engineering', 'construction', 'road', 'งานช่าง', 'วิศวกรรม', 'ก่อสร้าง', 'ถนน', 'แบบแปลน', 'ผู้ควบคุมงาน']],
-    ['GP008', 'public-health', ['gp008', 'public health', 'health', 'hospital', 'สาธารณสุข', 'รพ.สต.', 'รพสต', 'เงินบำรุง', 'บริการสุขภาพ']],
-    ['GP009', 'education', ['gp009', 'education', 'school', 'teacher', 'student', 'การศึกษา', 'โรงเรียน', 'ครู', 'นักเรียน', 'ศูนย์พัฒนาเด็กเล็ก']],
-    ['GP010', 'internal-audit', ['gp010', 'internal audit', 'audit', 'internal control', 'ตรวจสอบภายใน', 'ควบคุมภายใน', 'ปค.4', 'ปค.5', 'ปค.6', 'ความเสี่ยงองค์กร']],
-    ['GP011', 'executive', ['gp011', 'executive', 'policy', 'management', 'ผู้บริหาร', 'นายก', 'ปลัด', 'นโยบาย', 'ข้อสั่งการ', 'สรุปผู้บริหาร']],
-    ['GP012', 'public-relations', ['gp012', 'public relations', 'press release', 'pr', 'ประชาสัมพันธ์', 'ข่าว', 'facebook', 'infographic', 'โพสต์']],
-    ['GP013', 'council', ['gp013', 'council', 'quorum', 'motion', 'resolution', 'local council', 'สภาท้องถิ่น', 'ญัตติ', 'องค์ประชุม', 'มติสภา', 'ข้อบัญญัติ', 'สมัยประชุม']]
-  ];
+  const DEFAULT_OPTIONS = Object.freeze({ confidenceThreshold: 0.34, multiModuleThreshold: 0.22, ambiguityGap: 0.12, fallbackModule: 'GP002' });
 
-  const HIGH_SIGNAL_RULES = Object.freeze([
-    Object.freeze({ moduleId: 'GP003', patterns: Object.freeze([/\btor\b/i, /วิธีเฉพาะเจาะจง/, /จัดซื้อ/, /จัดจ้าง/, /พัสดุ/, /ราคากลาง/, /ตรวจรับ/, /e-?bidding/i, /ประกวดราคา/, /วิธีคัดเลือก/]) }),
-    Object.freeze({ moduleId: 'GP006', patterns: Object.freeze([/เลื่อนเงินเดือน/, /เลื่อนระดับ/, /แต่งตั้ง/, /โอนย้าย/, /สอบแข่งขัน/, /บรรจุ/, /วินัย/, /เกษียณ/, /งานบุคคล/]) }),
-    Object.freeze({ moduleId: 'GP005', patterns: Object.freeze([/ค่าเดินทาง/, /ค่าใช้จ่าย.*เดินทาง/, /เดินทางไปราชการ/, /รถเสีย.*ราชการ/, /ราชการ.*รถเสีย/, /เบิกจ่าย/, /ฎีกา/, /ค่าเช่าบ้าน/]) }),
-    Object.freeze({ moduleId: 'GP008', patterns: Object.freeze([/เงินบำรุง/, /รพ\.?สต\.?/, /สาธารณสุข/, /บริการสุขภาพ/]) }),
-    Object.freeze({ moduleId: 'GP007', patterns: Object.freeze([/งานช่าง/, /ก่อสร้าง/, /ถนน/, /แบบแปลน/, /ผู้ควบคุมงาน/]) }),
-    Object.freeze({ moduleId: 'GP013', patterns: Object.freeze([/สภาท้องถิ่น/, /สมัยประชุม/, /องค์ประชุม/, /ญัตติ/, /มติสภา/, /ข้อบัญญัติ/]) }),
-    Object.freeze({ moduleId: 'GP004', patterns: Object.freeze([/งบประมาณ/, /โอนงบ/, /เงินสำรอง/, /แผนพัฒนา/, /โครงการ/]) }),
-    Object.freeze({ moduleId: 'GP010', patterns: Object.freeze([/ตรวจสอบภายใน/, /ควบคุมภายใน/, /ปค\.?\s*[456]/, /ความเสี่ยงองค์กร/]) }),
-    Object.freeze({ moduleId: 'GP012', patterns: Object.freeze([/ประชาสัมพันธ์/, /อินโฟกราฟิก/, /โพสต์/, /facebook/i, /ข่าวประชาสัมพันธ์/]) }),
-    Object.freeze({ moduleId: 'GP009', patterns: Object.freeze([/การศึกษา/, /โรงเรียน/, /ครู/, /นักเรียน/, /ศูนย์พัฒนาเด็กเล็ก/]) }),
-    Object.freeze({ moduleId: 'GP011', patterns: Object.freeze([/สรุปผู้บริหาร/, /ข้อสั่งการ/, /นโยบายผู้บริหาร/]) }),
-    Object.freeze({ moduleId: 'GP002', patterns: Object.freeze([/วิเคราะห์ข้อกฎหมาย/, /ข้อกฎหมาย/, /ฐานอำนาจ/, /ข้อหารือ/, /กฎหมายที่เกี่ยวข้อง/, /อำนาจหน้าที่ตามกฎหมาย/]) }),
-    Object.freeze({ moduleId: 'GP001', patterns: Object.freeze([/หนังสือราชการ/, /บันทึกข้อความ/, /งานสารบรรณ/, /ร่างหนังสือ/, /เลขหนังสือ/]) })
+  const definitions = Object.freeze([
+    ['GP001', 'records'], ['GP002', 'legal'], ['GP003', 'procurement'], ['GP004', 'planning-budget'],
+    ['GP005', 'finance'], ['GP006', 'human-resources'], ['GP007', 'engineering'], ['GP008', 'public-health'],
+    ['GP009', 'education'], ['GP010', 'internal-audit'], ['GP011', 'executive'], ['GP012', 'public-relations'], ['GP013', 'council']
   ]);
 
-  const TRANSACTION_RULES = Object.freeze(definitions.map(([moduleId, type, terms]) => Object.freeze({ moduleId, type, weight: 1, terms: Object.freeze(terms) })));
+  const INTENT_RULES = Object.freeze([
+    ['GP001', [
+      [4.5, /(?:ร่าง|ทำ|เขียน|จัดทำ).{0,12}(?:หนังสือราชการ|บันทึกข้อความ|หนังสือภายนอก|คำสั่ง|ประกาศ)/],
+      [4.0, /งานสารบรรณ|เลขหนังสือ|ลงรับ|ทะเบียนหนังสือ/],
+      [3.0, /หนังสือราชการ|บันทึกข้อความ|หนังสือภายนอก/]
+    ]],
+    ['GP002', [
+      [4.5, /วิเคราะห์ข้อกฎหมาย|ข้อหารือ|ฐานอำนาจ|อำนาจหน้าที่ตามกฎหมาย/],
+      [4.0, /ผิดกฎหมายไหม|ถูกกฎหมายไหม|มีอำนาจไหม|ทำได้ตามกฎหมายไหม/],
+      [3.2, /ข้อกฎหมาย|กฎหมายที่เกี่ยวข้อง|ระเบียบที่เกี่ยวข้อง|หนังสือสั่งการ/],
+      [2.2, /กฎหมาย|ระเบียบ|ประกาศกระทรวง|กฎกระทรวง/]
+    ]],
+    ['GP003', [
+      [5.0, /\btor\b/i], [4.8, /วิธีเฉพาะเจาะจง|วิธีคัดเลือก|e-?bidding|ประกวดราคา/i],
+      [4.5, /ล็อกสเปก|ราคากลาง|ตรวจรับ|จัดซื้อ|จัดจ้าง|พัสดุ/],
+      [3.6, /ซื้อ(?:ของ|ครุภัณฑ์|วัสดุ)|จ้าง(?:งาน|เหมาบริการ|ที่ปรึกษา)|ผู้รับจ้าง|สัญญาจ้าง/]
+    ]],
+    ['GP004', [
+      [4.8, /ทำโครงการ|เขียนโครงการ|จัดทำโครงการ/], [4.5, /งบประมาณ|โอนงบ|เงินสำรอง|ข้อบัญญัติงบประมาณ/],
+      [4.0, /แผนพัฒนา|แผนงาน|ตัวชี้วัด|\bkpi\b/i], [3.0, /โครงการ|แผน|งบ/]
+    ]],
+    ['GP005', [
+      [5.0, /รถเสีย.{0,18}(?:ไปราชการ|ราชการ)|(?:ไปราชการ|ราชการ).{0,18}รถเสีย/],
+      [4.8, /เดินทางไปราชการ|ค่าเดินทาง|ค่าใช้จ่ายเดินทาง/],
+      [4.5, /เบิกได้ไหม|เบิกได้หรือไม่|จ่ายได้ไหม|จ่ายได้หรือไม่|เบิกจ่าย|ฎีกา/],
+      [4.2, /ค่าเช่าบ้าน|ค่าที่พัก|ค่าอาหาร|ค่าพาหนะ|เงินยืม/], [3.0, /การเงิน|การคลัง|เบิก|จ่ายเงิน/]
+    ]],
+    ['GP006', [
+      [4.8, /เลื่อนเงินเดือน|เลื่อนขั้น|เลื่อนระดับ|แต่งตั้ง|โอนย้าย/],
+      [4.6, /สอบแข่งขัน|บรรจุ|บัญชีผู้สอบ|วินัย|เกษียณ/],
+      [4.0, /อัตรากำลัง|ตำแหน่ง|งานบุคคล|ข้าราชการ|พนักงานส่วนท้องถิ่น/], [3.0, /เงินเดือน|บุคลากร/]
+    ]],
+    ['GP007', [
+      [4.8, /ถนนพัง|ถนนชำรุด|งานก่อสร้าง|งานช่าง|แบบแปลน|ผู้ควบคุมงาน/],
+      [4.5, /ความหนาแน่นดิน|คอนกรีต|แอสฟัลต์|สะพาน|ระบายน้ำ|โครงสร้าง/], [3.0, /ก่อสร้าง|ถนน|วิศวกรรม/]
+    ]],
+    ['GP008', [
+      [5.0, /เงินบำรุง/], [4.8, /รพ\.?สต\.?|โรงพยาบาลส่งเสริมสุขภาพตำบล/],
+      [4.5, /สาธารณสุข|ส่งเสริมสุขภาพ|ผู้ป่วย|บริการสุขภาพ|digital health/i], [3.0, /สุขภาพ|อนามัย/]
+    ]],
+    ['GP009', [
+      [4.8, /ศูนย์พัฒนาเด็กเล็ก|โรงเรียน|นักเรียน|ครู|การศึกษา/], [4.2, /อาหารกลางวัน|ทุนการศึกษา|เด็กปฐมวัย/], [3.0, /การเรียน|การสอน/]
+    ]],
+    ['GP010', [
+      [4.8, /ตรวจสอบภายใน|ควบคุมภายใน|ปค\.?\s*[456]/], [4.5, /บริหารความเสี่ยง|ความเสี่ยงองค์กร|ตรวจติดตาม/], [3.0, /audit|ตรวจสอบ/i]
+    ]],
+    ['GP011', [
+      [4.6, /สรุปผู้บริหาร|ข้อสั่งการ|นโยบายผู้บริหาร/], [4.0, /นายก|ปลัด|ผู้บริหาร|ประชุมผู้บริหาร/], [3.0, /นโยบาย|บริหารองค์กร/]
+    ]],
+    ['GP012', [
+      [4.8, /อินโฟกราฟิก|ข่าวประชาสัมพันธ์|โพสต์เฟซบุ๊ก|โพสต์facebook|ประชาสัมพันธ์/], [4.2, /ทำโพสต์|ทำข่าว|แคปชัน|สื่อประชาสัมพันธ์/], [3.0, /โพสต์|facebook|ข่าว/i]
+    ]],
+    ['GP013', [
+      [5.0, /ข้อบัญญัติ(?!งบประมาณ)/], [4.8, /สภาท้องถิ่น|สมัยประชุม|องค์ประชุม|ญัตติ|มติสภา/],
+      [4.3, /ประชุมสภา|ประธานสภา|สมาชิกสภา/], [3.0, /สภา/]
+    ]]
+  ].map(([moduleId, rules]) => Object.freeze({ moduleId, rules: Object.freeze(rules.map(([weight, pattern]) => Object.freeze({ weight, pattern }))) })));
 
-  function tokenize(value) {
-    return String(value ?? '').normalize('NFKC').toLocaleLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
-  }
+  const CROSS_INTENT_BONUSES = Object.freeze([
+    Object.freeze({ moduleId: 'GP003', weight: 2.2, all: [/\btor\b/i, /ก่อสร้าง|ถนน|งานช่าง/] }),
+    Object.freeze({ moduleId: 'GP005', weight: 2.4, all: [/เดินทาง|ไปราชการ/, /เบิก|ค่าใช้จ่าย|พาหนะ|รถเสีย/] }),
+    Object.freeze({ moduleId: 'GP004', weight: 1.8, all: [/โครงการ/, /งบประมาณ|แผน|ตัวชี้วัด/] }),
+    Object.freeze({ moduleId: 'GP006', weight: 1.8, all: [/บุคคล|ข้าราชการ|พนักงาน/, /เลื่อน|แต่งตั้ง|โอน|สอบ|วินัย/] }),
+    Object.freeze({ moduleId: 'GP013', weight: 1.8, all: [/สภา/, /ญัตติ|มติ|สมัยประชุม|องค์ประชุม|ข้อบัญญัติ/] })
+  ]);
 
+  const TRANSACTION_RULES = Object.freeze(definitions.map(([moduleId, type]) => Object.freeze({ moduleId, type })));
+
+  function normalize(value) { return String(value ?? '').normalize('NFKC').toLocaleLowerCase().trim(); }
   function normalizeModuleId(value) {
     const match = String(value ?? '').trim().toUpperCase().match(/(?:^|[^A-Z0-9])GP\s*0*(1[0-3]|[1-9])(?:[^A-Z0-9]|$)/);
     return match ? `GP${match[1].padStart(3, '0')}` : '';
   }
-
   function detectModuleId(options = {}) {
     const candidates = [options.moduleId, options.pathname, typeof location === 'object' ? location.pathname : '', typeof document === 'object' ? document.documentElement?.dataset?.moduleId : ''];
     return candidates.map(normalizeModuleId).find(Boolean) || '';
   }
 
-  function detectHighSignalModule(request) {
-    const source = String(request ?? '').normalize('NFKC').toLocaleLowerCase();
-    for (const rule of HIGH_SIGNAL_RULES) {
-      if (rule.patterns.some(pattern => pattern.test(source))) return rule.moduleId;
-    }
-    return '';
-  }
-
   function scoreRequest(request) {
-    const source = String(request ?? '').normalize('NFKC').toLocaleLowerCase();
-    const requestTokens = new Set(tokenize(source));
-    return TRANSACTION_RULES.map(rule => {
-      const matchedIntents = rule.terms.filter(intent => {
-        const normalized = intent.normalize('NFKC').toLocaleLowerCase();
-        const intentTokens = tokenize(normalized);
-        return source.includes(normalized) || (intentTokens.length > 0 && intentTokens.every(token => requestTokens.has(token)));
+    const source = normalize(request);
+    return INTENT_RULES.map(group => {
+      const matches = [];
+      let rawScore = 0;
+      group.rules.forEach(rule => {
+        if (rule.pattern.test(source)) {
+          rawScore += rule.weight;
+          matches.push(rule.pattern.source);
+        }
       });
-      const confidence = Math.min(1, matchedIntents.reduce((total, intent) => total + Math.max(1, tokenize(intent).length), 0) / Math.max(2, requestTokens.size));
-      return Object.freeze({ moduleId: rule.moduleId, type: rule.type, confidence, matchedIntents: Object.freeze([...matchedIntents]) });
-    }).sort((left, right) => right.confidence - left.confidence || left.moduleId.localeCompare(right.moduleId));
+      CROSS_INTENT_BONUSES.filter(item => item.moduleId === group.moduleId).forEach(item => {
+        if (item.all.every(pattern => pattern.test(source))) {
+          rawScore += item.weight;
+          matches.push('context-bonus');
+        }
+      });
+      const confidence = rawScore <= 0 ? 0 : Math.min(0.99, 0.28 + rawScore / 10);
+      return Object.freeze({ moduleId: group.moduleId, type: TRANSACTION_RULES.find(item => item.moduleId === group.moduleId)?.type || 'general', rawScore, confidence, matchedIntents: Object.freeze(matches) });
+    }).sort((a, b) => b.rawScore - a.rawScore || b.confidence - a.confidence || a.moduleId.localeCompare(b.moduleId));
   }
 
   function routeRequest(request, options = {}) {
@@ -79,19 +116,29 @@
     const settings = { ...DEFAULT_OPTIONS, ...options };
     const ranking = scoreRequest(request);
     const activeModule = V7_MODULE_IDS.includes(options.activeModule) ? options.activeModule : '';
-    const highSignalModule = detectHighSignalModule(request);
-    const primaryModule = highSignalModule || (ranking[0].confidence >= settings.confidenceThreshold ? ranking[0].moduleId : activeModule || settings.fallbackModule);
+    const top = ranking[0];
+    const second = ranking[1];
+    const hasEvidence = top.rawScore > 0;
+    const ambiguous = hasEvidence && second.rawScore > 0 && (top.confidence - second.confidence) < settings.ambiguityGap;
+    const primaryModule = hasEvidence ? top.moduleId : (activeModule || settings.fallbackModule);
     const modules = options.multiModule === false
       ? [primaryModule]
-      : [...new Set([primaryModule, ...ranking.filter(item => item.confidence >= settings.multiModuleThreshold).map(item => item.moduleId)])];
-    const confidence = highSignalModule ? Math.max(0.9, ranking.find(item => item.moduleId === primaryModule)?.confidence ?? 0) : (ranking.find(item => item.moduleId === primaryModule)?.confidence ?? 0);
-    return Object.freeze({ primaryModule, modules: Object.freeze(modules), confidence, fallback: !highSignalModule && ranking[0].confidence < settings.confidenceThreshold, ranking: Object.freeze(ranking), highSignal: Boolean(highSignalModule) });
+      : [...new Set([primaryModule, ...ranking.filter(item => item.rawScore > 0 && (item.confidence >= settings.multiModuleThreshold || item === second && ambiguous)).slice(0, 3).map(item => item.moduleId)])];
+    return Object.freeze({
+      primaryModule,
+      modules: Object.freeze(modules),
+      confidence: hasEvidence ? top.confidence : 0,
+      fallback: !hasEvidence,
+      ambiguous,
+      ranking: Object.freeze(ranking),
+      reason: hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence'
+    });
   }
 
   function detectTransactionType(context = {}) {
     const explicit = String(context.transactionType ?? '').trim();
     const source = [explicit, context.domain, context.currentStage, context.facts, context.documents, context.desiredOutput].concat(Array.isArray(context.specialFlags) ? context.specialFlags : []).join(' ');
-    const route = source.trim() ? routeRequest(source, { activeModule: '', fallbackModule: 'GP001', multiModule: false }) : null;
+    const route = source.trim() ? routeRequest(source, { activeModule: '', fallbackModule: 'GP002', multiModule: false }) : null;
     return TRANSACTION_RULES.find(rule => rule.moduleId === route?.primaryModule)?.type || explicit || 'general';
   }
 
@@ -99,11 +146,19 @@
     const context = window.GovPromptCore.createSharedContext(sharedContext);
     const currentModuleId = detectModuleId(options);
     const source = [context.transactionType, context.domain, context.currentStage, context.facts, context.documents, context.desiredOutput].concat(context.specialFlags ?? []).join(' ').trim();
-    const route = source ? routeRequest(source, { activeModule: V7_MODULE_IDS.includes(currentModuleId) ? currentModuleId : '', fallbackModule: V7_MODULE_IDS.includes(currentModuleId) ? currentModuleId : 'GP001' }) : { primaryModule: currentModuleId || 'GP001', modules: [currentModuleId || 'GP001'], confidence: 0, fallback: true, ranking: [] };
+    const activeModule = V7_MODULE_IDS.includes(currentModuleId) && currentModuleId !== 'GP001' ? currentModuleId : '';
+    const route = source ? routeRequest(source, { activeModule, fallbackModule: 'GP002' }) : routeRequest('ทั่วไป', { activeModule, fallbackModule: 'GP002' });
     const moduleId = route.primaryModule;
-    return Object.freeze({ context, currentModuleId, moduleId, transactionType: TRANSACTION_RULES.find(rule => rule.moduleId === moduleId)?.type || 'general', assistant: MODULES.find(module => module.moduleId === moduleId), shouldRedirect: Boolean(currentModuleId && currentModuleId !== moduleId), preservePrompt: true, confidence: route.confidence, modules: route.modules, fallback: route.fallback, ranking: route.ranking });
+    return Object.freeze({
+      context, currentModuleId, moduleId,
+      transactionType: TRANSACTION_RULES.find(rule => rule.moduleId === moduleId)?.type || 'general',
+      assistant: MODULES.find(module => module.moduleId === moduleId),
+      shouldRedirect: Boolean(currentModuleId && currentModuleId !== moduleId), preservePrompt: true,
+      confidence: route.confidence, modules: route.modules, fallback: route.fallback, ambiguous: route.ambiguous,
+      reason: route.reason, ranking: route.ranking
+    });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
-  Object.assign(window.GovPromptCore, { MODULES, V7_MODULE_IDS, TRANSACTION_RULES, HIGH_SIGNAL_RULES, ROUTER_DEFAULTS: DEFAULT_OPTIONS, detectModuleId, detectTransactionType, detectHighSignalModule, scoreRequest, routeRequest, routeTransaction });
+  Object.assign(window.GovPromptCore, { MODULES, V7_MODULE_IDS, TRANSACTION_RULES, INTENT_RULES, ROUTER_DEFAULTS: DEFAULT_OPTIONS, detectModuleId, detectTransactionType, scoreRequest, routeRequest, routeTransaction });
 })();
