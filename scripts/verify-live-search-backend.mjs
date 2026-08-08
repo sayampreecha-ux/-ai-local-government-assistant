@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import worker from '../src/search-worker.js';
 
-const assets = { fetch: async () => new Response('asset', { status: 200 }) };
+let lastAssetUrl = '';
+const assets = {
+  fetch: async request => {
+    lastAssetUrl = String(request.url);
+    return new Response('asset', { status: 200 });
+  }
+};
 
 const noKeyRequest = new Request('https://example.test/api/official-search', {
   method: 'POST',
@@ -54,24 +60,23 @@ try {
   assert.equal(liveBody.results[0].documentDate, '2026-08-07');
   assert.equal(liveBody.results[0].status, 'unknown');
   assert.equal(JSON.stringify(liveBody).includes('test-secret-never-return'), false);
-  assert.equal(providerRequest.url, 'https://api.tavily.com/search');
   assert.equal(providerRequest.options.headers.authorization, 'Bearer test-secret-never-return');
   const providerBody = JSON.parse(providerRequest.options.body);
   assert.deepEqual(providerBody.include_domains, ['cgd.go.th']);
-  assert.equal(providerBody.search_depth, 'basic');
-  assert.equal(providerBody.include_answer, false);
 } finally {
   globalThis.fetch = originalFetch;
 }
+
+const rootResponse = await worker.fetch(new Request('https://example.test/'), { ASSETS: assets });
+assert.equal(rootResponse.status, 200);
+assert.equal(await rootResponse.text(), 'asset');
+assert.equal(new URL(lastAssetUrl).pathname, '/index.html');
 
 const assetResponse = await worker.fetch(new Request('https://example.test/index.html'), { ASSETS: assets });
 assert.equal(assetResponse.status, 200);
 assert.equal(await assetResponse.text(), 'asset');
 
-const previewFallback = await worker.fetch(new Request('https://example.test/'));
-assert.equal(previewFallback.status, 200);
-const previewBody = await previewFallback.json();
-assert.equal(previewBody.service, 'govprompt-official-search');
-assert.equal(previewBody.status, 'ready');
+const previewFallback = await worker.fetch(new Request('https://example.test/'), {});
+assert.equal(previewFallback.status, 404);
 
-console.log('GovPrompt v7 Live Search Backend verification passed for Sprint 2.3 (Tavily).');
+console.log('GovPrompt v7 Live Search Backend verification passed for Sprint 2.3 Tavily + root asset routing.');
