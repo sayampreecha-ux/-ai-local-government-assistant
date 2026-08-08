@@ -6,7 +6,7 @@
   const DEFAULT_OPTIONS = Object.freeze({ confidenceThreshold: 0.45, multiModuleThreshold: 0.3, fallbackModule: 'GP001' });
   const definitions = [
     ['GP001', 'records', ['gp001', 'official letter', 'หนังสือราชการ', 'สารบรรณ', 'บันทึกข้อความ', 'คำสั่ง', 'ประกาศ']],
-    ['GP002', 'legal', ['gp002', 'law', 'legal', 'กฎหมาย', 'ระเบียบ', 'อำนาจหน้าที่', 'ข้อหารือ', 'หนังสือสั่งการ', 'ซักซ้อม']],
+    ['GP002', 'legal', ['gp002', 'law', 'legal', 'กฎหมาย', 'ข้อกฎหมาย', 'วิเคราะห์ข้อกฎหมาย', 'ฐานอำนาจ', 'ระเบียบ', 'อำนาจหน้าที่', 'ข้อหารือ', 'หนังสือสั่งการ', 'ซักซ้อม']],
     ['GP003', 'procurement', ['gp003', 'procurement', 'tor', 'จัดซื้อ', 'จัดจ้าง', 'พัสดุ', 'ราคากลาง', 'e-gp', 'ตรวจรับ', 'เฉพาะเจาะจง', 'คัดเลือก', 'ประกวดราคา']],
     ['GP004', 'planning-budget', ['gp004', 'plan', 'project', 'budget', 'planning', 'appropriation', 'แผน', 'โครงการ', 'งบประมาณ', 'โอนงบ', 'เงินสำรอง', 'ตัวชี้วัด', 'kpi']],
     ['GP005', 'finance', ['gp005', 'finance', 'reimbursement', 'travel expense', 'payment', 'การเงิน', 'เบิกจ่าย', 'ค่าเดินทาง', 'เดินทางไปราชการ', 'ค่าเช่าบ้าน', 'ฎีกา', 'ค่าใช้จ่ายเดินทาง']],
@@ -32,6 +32,7 @@
     Object.freeze({ moduleId: 'GP012', patterns: Object.freeze([/ประชาสัมพันธ์/, /อินโฟกราฟิก/, /โพสต์/, /facebook/i, /ข่าวประชาสัมพันธ์/]) }),
     Object.freeze({ moduleId: 'GP009', patterns: Object.freeze([/การศึกษา/, /โรงเรียน/, /ครู/, /นักเรียน/, /ศูนย์พัฒนาเด็กเล็ก/]) }),
     Object.freeze({ moduleId: 'GP011', patterns: Object.freeze([/สรุปผู้บริหาร/, /ข้อสั่งการ/, /นโยบายผู้บริหาร/]) }),
+    Object.freeze({ moduleId: 'GP002', patterns: Object.freeze([/วิเคราะห์ข้อกฎหมาย/, /ข้อกฎหมาย/, /ฐานอำนาจ/, /ข้อหารือ/, /กฎหมายที่เกี่ยวข้อง/, /อำนาจหน้าที่ตามกฎหมาย/]) }),
     Object.freeze({ moduleId: 'GP001', patterns: Object.freeze([/หนังสือราชการ/, /บันทึกข้อความ/, /งานสารบรรณ/, /ร่างหนังสือ/, /เลขหนังสือ/]) })
   ]);
 
