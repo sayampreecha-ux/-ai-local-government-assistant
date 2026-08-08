@@ -11,83 +11,61 @@
     ['GP009', 'education'], ['GP010', 'internal-audit'], ['GP011', 'executive'], ['GP012', 'public-relations'], ['GP013', 'council']
   ]);
 
-  // Strong domain overrides represent subject matter that should remain primary even when the sentence contains a generic action such as buy, reimburse, or create a project.
   const DOMAIN_OVERRIDE_RULES = Object.freeze([
-    Object.freeze({
-      moduleId: 'GP002',
-      weight: 9.0,
-      patterns: Object.freeze([
-        /(?:มีอำนาจ|ไม่มีอำนาจ|อำนาจหน้าที่).{0,30}(?:ไหม|หรือไม่|ทำ|ดำเนิน|โครงการ|เรื่อง)/,
-        /(?:ทำ|ดำเนิน|จัดทำ).{0,30}(?:ได้ไหม|ได้หรือไม่).{0,20}(?:ตามกฎหมาย|มีอำนาจ)/,
-        /(?:ผิดกฎหมาย|ถูกกฎหมาย|ชอบด้วยกฎหมาย|ฐานอำนาจ)/
-      ])
-    }),
-    Object.freeze({
-      moduleId: 'GP003',
-      weight: 8.9,
-      patterns: Object.freeze([
-        /\btor\b/i,
-        /วิธีเฉพาะเจาะจง|วิธีคัดเลือก|e-?bidding|ประกวดราคา|ราคากลาง|ล็อกสเปก/i
-      ])
-    }),
-    Object.freeze({
-      moduleId: 'GP008',
-      weight: 8.8,
-      patterns: Object.freeze([
-        /เงินบำรุง/,
-        /รพ\.?สต\.?|โรงพยาบาลส่งเสริมสุขภาพตำบล/,
-        /(?:สาธารณสุข|บริการสุขภาพ|ส่งเสริมสุขภาพ).{0,30}(?:ซื้อ|เบิก|จ่าย|โครงการ|วัสดุ|ค่าอาหาร)/
-      ])
-    }),
-    Object.freeze({
-      moduleId: 'GP009',
-      weight: 8.6,
-      patterns: Object.freeze([
-        /(?:โรงเรียน|ศูนย์พัฒนาเด็กเล็ก|เด็กปฐมวัย|นักเรียน|ครู).{0,30}(?:เบิก|จ่าย|ค่าอาหาร|ซื้อ|โครงการ)/,
-        /(?:เบิก|จ่าย|ค่าอาหาร|ซื้อ|โครงการ).{0,30}(?:โรงเรียน|ศูนย์พัฒนาเด็กเล็ก|เด็กปฐมวัย|นักเรียน|ครู)/
-      ])
-    }),
-    Object.freeze({
-      moduleId: 'GP010',
-      weight: 8.5,
-      patterns: Object.freeze([
-        /\baudit\b/i,
-        /ตรวจสอบภายใน|ประเมินการควบคุมภายใน|สอบทานระบบควบคุม/
-      ])
-    })
+    Object.freeze({ moduleId: 'GP002', weight: 9.0, patterns: Object.freeze([
+      /(?:มีอำนาจ|ไม่มีอำนาจ|อำนาจหน้าที่).{0,30}(?:ไหม|หรือไม่|ทำ|ดำเนิน|โครงการ|เรื่อง)/,
+      /(?:ทำ|ดำเนิน|จัดทำ).{0,30}(?:ได้ไหม|ได้หรือไม่).{0,20}(?:ตามกฎหมาย|มีอำนาจ)/,
+      /(?:ผิดกฎหมาย|ถูกกฎหมาย|ชอบด้วยกฎหมาย|ฐานอำนาจ)/
+    ]) }),
+    Object.freeze({ moduleId: 'GP003', weight: 8.9, patterns: Object.freeze([
+      /\btor\b/i,
+      /วิธีเฉพาะเจาะจง|วิธีคัดเลือก|e-?bidding|ประกวดราคา|ราคากลาง|ล็อกสเปก/i
+    ]) }),
+    Object.freeze({ moduleId: 'GP008', weight: 8.8, patterns: Object.freeze([
+      /เงินบำรุง/,
+      /รพ\.?สต\.?|โรงพยาบาลส่งเสริมสุขภาพตำบล/,
+      /(?:สาธารณสุข|บริการสุขภาพ|ส่งเสริมสุขภาพ).{0,30}(?:ซื้อ|เบิก|จ่าย|โครงการ|วัสดุ|ค่าอาหาร)/
+    ]) }),
+    Object.freeze({ moduleId: 'GP009', weight: 8.6, patterns: Object.freeze([
+      /(?:โรงเรียน|ศูนย์พัฒนาเด็กเล็ก|เด็กปฐมวัย|นักเรียน|ครู).{0,30}(?:เบิก|จ่าย|ค่าอาหาร|ซื้อ|โครงการ)/,
+      /(?:เบิก|จ่าย|ค่าอาหาร|ซื้อ|โครงการ).{0,30}(?:โรงเรียน|ศูนย์พัฒนาเด็กเล็ก|เด็กปฐมวัย|นักเรียน|ครู)/
+    ]) }),
+    Object.freeze({ moduleId: 'GP010', weight: 8.5, patterns: Object.freeze([
+      /\baudit\b/i,
+      /ตรวจสอบภายใน|ประเมินการควบคุมภายใน|สอบทานระบบควบคุม/
+    ]) })
   ]);
 
-  // Action intent answers “what does the user want to do?” after checking strong domain ownership.
   const ACTION_INTENT_RULES = Object.freeze([
     Object.freeze({
-      moduleId: 'GP001',
-      weight: 7.5,
-      patterns: Object.freeze([
+      moduleId: 'GP001', weight: 7.6, patterns: Object.freeze([
         /(?:ช่วย)?(?:ร่าง|เขียน|จัดทำ|ทำ).{0,20}(?:หนังสือราชการ|หนังสือภายนอก|บันทึกข้อความ|คำสั่ง|ประกาศ|หนังสือตอบ|หนังสือแจ้ง)/,
-        /(?:หนังสือราชการ|หนังสือภายนอก|บันทึกข้อความ).{0,20}(?:ร่าง|เขียน|จัดทำ|ทำ)/
+        /(?:หนังสือราชการ|หนังสือภายนอก|บันทึกข้อความ).{0,20}(?:ร่าง|เขียน|จัดทำ|ทำ)/,
+        /(?:บันทึกข้อความ|หนังสือราชการ|หนังสือภายนอก).{0,20}(?:เสนอ|เรียน|ถึง).{0,20}(?:นายก|ปลัด|ผู้บริหาร|หัวหน้าส่วน)/
       ])
     }),
     Object.freeze({
-      moduleId: 'GP010',
-      weight: 7.2,
-      patterns: Object.freeze([
+      moduleId: 'GP011', weight: 7.4, patterns: Object.freeze([
+        /(?:ช่วย)?(?:ร่าง|เขียน|ทำ|จัดทำ)?.{0,10}(?:คำกล่าวเปิด|คำกล่าวปิด|กล่าวเปิด|กล่าวปิด|สุนทรพจน์|โอวาท|คำกล่าวต้อนรับ|คำกล่าวรายงาน)/,
+        /(?:พิธีเปิด|พิธีปิด).{0,20}(?:การแข่งขัน|กีฬา|งาน|โครงการ|กิจกรรม)/,
+        /(?:การแข่งขัน|กีฬา|งาน|โครงการ|กิจกรรม).{0,20}(?:คำกล่าวเปิด|คำกล่าวปิด|พิธีเปิด|พิธีปิด)/
+      ])
+    }),
+    Object.freeze({
+      moduleId: 'GP010', weight: 7.2, patterns: Object.freeze([
         /(?:audit|ตรวจสอบภายใน|ตรวจติดตาม|ประเมินการควบคุมภายใน)/i,
         /(?:ตรวจ|สอบทาน).{0,15}(?:ระบบควบคุม|ความเสี่ยงองค์กร)/
       ])
     }),
     Object.freeze({
-      moduleId: 'GP003',
-      weight: 7.0,
-      patterns: Object.freeze([
+      moduleId: 'GP003', weight: 7.0, patterns: Object.freeze([
         /^(?:ช่วย)?\s*(?:ซื้อ|จัดซื้อ|จัดหา|เช่า|จ้าง|จัดจ้าง)\s*\S+/,
         /(?:ต้องการ|จะ|ขอ).{0,8}(?:ซื้อ|จัดซื้อ|จัดหา|เช่า|จ้าง|จัดจ้าง)\s*\S+/,
         /(?:ซื้อ|จัดซื้อ|จัดหา|เช่า|จ้าง|จัดจ้าง).{0,20}(?:คอม|คอมพิวเตอร์|โน้ตบุ๊ก|เครื่องพิมพ์|โต๊ะ|เก้าอี้|รถ|ครุภัณฑ์|วัสดุ|อุปกรณ์)/
       ])
     }),
     Object.freeze({
-      moduleId: 'GP012',
-      weight: 6.8,
-      patterns: Object.freeze([
+      moduleId: 'GP012', weight: 6.8, patterns: Object.freeze([
         /(?:ทำ|เขียน|ร่าง|สร้าง).{0,12}(?:โพสต์|ข่าวประชาสัมพันธ์|แคปชัน|อินโฟกราฟิก)/
       ])
     })
@@ -96,6 +74,7 @@
   const INTENT_RULES = Object.freeze([
     ['GP001', [
       [4.5, /(?:ร่าง|ทำ|เขียน|จัดทำ).{0,12}(?:หนังสือราชการ|บันทึกข้อความ|หนังสือภายนอก|คำสั่ง|ประกาศ)/],
+      [4.2, /(?:บันทึกข้อความ|หนังสือราชการ).{0,20}(?:เสนอ|เรียน|ถึง)/],
       [4.0, /งานสารบรรณ|เลขหนังสือ|ลงรับ|ทะเบียนหนังสือ/],
       [3.0, /หนังสือราชการ|บันทึกข้อความ|หนังสือภายนอก/]
     ]],
@@ -144,6 +123,8 @@
       [5.4, /\baudit\b/i], [4.8, /ตรวจสอบภายใน|ควบคุมภายใน|ปค\.?\s*[456]/], [4.5, /บริหารความเสี่ยง|ความเสี่ยงองค์กร|ตรวจติดตาม/], [3.0, /ตรวจสอบ/i]
     ]],
     ['GP011', [
+      [5.4, /คำกล่าวเปิด|คำกล่าวปิด|กล่าวเปิด|กล่าวปิด|สุนทรพจน์|โอวาท|คำกล่าวต้อนรับ|คำกล่าวรายงาน/],
+      [4.8, /พิธีเปิด|พิธีปิด/],
       [4.6, /สรุปผู้บริหาร|ข้อสั่งการ|นโยบายผู้บริหาร/], [4.0, /นายก|ปลัด|ผู้บริหาร|ประชุมผู้บริหาร/], [3.0, /นโยบาย|บริหารองค์กร/]
     ]],
     ['GP012', [
@@ -161,18 +142,17 @@
     Object.freeze({ moduleId: 'GP004', weight: 1.8, all: [/โครงการ/, /งบประมาณ|แผน|ตัวชี้วัด/] }),
     Object.freeze({ moduleId: 'GP006', weight: 2.6, all: [/ขาดราชการ|ขาดงาน|ละทิ้งหน้าที่|ไม่มาปฏิบัติราชการ/, /วัน|วินัย|ลา|งาน/] }),
     Object.freeze({ moduleId: 'GP006', weight: 1.8, all: [/บุคคล|ข้าราชการ|พนักงาน/, /เลื่อน|แต่งตั้ง|โอน|สอบ|วินัย|ลา/] }),
+    Object.freeze({ moduleId: 'GP011', weight: 2.3, all: [/คำกล่าว|พิธีเปิด|พิธีปิด/, /กีฬา|การแข่งขัน|งาน|โครงการ|กิจกรรม/] }),
     Object.freeze({ moduleId: 'GP013', weight: 1.8, all: [/สภา/, /ญัตติ|มติ|สมัยประชุม|องค์ประชุม|ข้อบัญญัติ/] })
   ]);
 
   const TRANSACTION_RULES = Object.freeze(definitions.map(([moduleId, type]) => Object.freeze({ moduleId, type })));
 
   function normalize(value) { return String(value ?? '').normalize('NFKC').toLocaleLowerCase().trim(); }
-
   function normalizeModuleId(value) {
     const match = String(value ?? '').trim().toUpperCase().match(/(?:^|[^A-Z0-9])GP\s*0*(1[0-3]|[1-9])(?:[^A-Z0-9]|$)/);
     return match ? `GP${match[1].padStart(3, '0')}` : '';
   }
-
   function detectModuleId(options = {}) {
     const candidates = [options.moduleId, options.pathname, typeof location === 'object' ? location.pathname : '', typeof document === 'object' ? document.documentElement?.dataset?.moduleId : ''];
     return candidates.map(normalizeModuleId).find(Boolean) || '';
@@ -230,12 +210,8 @@
     const hasEvidence = top.rawScore > 0;
     const ambiguous = hasEvidence && second.rawScore > 0 && (top.confidence - second.confidence) < settings.ambiguityGap;
     const primaryModule = domainOverride?.moduleId || action?.moduleId || (hasEvidence ? top.moduleId : (activeModule || settings.fallbackModule));
-
     const domainModules = ranking.filter(item => item.rawScore > 0 && item.moduleId !== primaryModule).slice(0, 2).map(item => item.moduleId);
-    const modules = options.multiModule === false
-      ? [primaryModule]
-      : [...new Set([primaryModule, action?.moduleId, ...domainModules].filter(Boolean))].slice(0, 3);
-
+    const modules = options.multiModule === false ? [primaryModule] : [...new Set([primaryModule, action?.moduleId, ...domainModules].filter(Boolean))].slice(0, 3);
     const overrideConfidence = domainOverride ? Math.min(0.99, 0.58 + domainOverride.weight / 20) : 0;
     const actionConfidence = action ? Math.min(0.99, 0.55 + action.weight / 20) : 0;
     return Object.freeze({
@@ -244,9 +220,7 @@
       confidence: domainOverride ? overrideConfidence : (action ? actionConfidence : (hasEvidence ? top.confidence : 0)),
       fallback: !domainOverride && !action && !hasEvidence,
       ambiguous: !domainOverride && !action && ambiguous,
-      ranking: Object.freeze(ranking),
-      domainOverride,
-      actionIntent: action,
+      ranking: Object.freeze(ranking), domainOverride, actionIntent: action,
       reason: domainOverride ? 'strong-domain-override' : (action ? 'action-intent-primary' : (hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence'))
     });
   }
