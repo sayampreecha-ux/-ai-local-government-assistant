@@ -12,6 +12,7 @@
     "deploy": "pnpm build && wrangler deploy",
     "test:security:pilot": "node scripts/verify-internal-pilot-security.mjs",
     "test:official-search:production": "node scripts/benchmark-production-endpoint.mjs && node scripts/verify-production-security.mjs && node scripts/benchmark-official-search-integration.mjs",
+    "test:production:surface": "node scripts/verify-frontend-production.mjs && node scripts/verify-production-security.mjs",
     "test:official-search:thai": "node scripts/benchmark-thai-relevance.mjs"
   },
   "dependencies": { "@supabase/supabase-js": "2.57.4" },
