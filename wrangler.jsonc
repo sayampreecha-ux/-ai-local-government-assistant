@@ -4,7 +4,7 @@
   "main": "src/search-worker.js",
   "compatibility_date": "2026-08-04",
   "assets": {
-    "directory": ".",
+    "directory": "./dist",
     "binding": "ASSETS",
     "html_handling": "none",
     "not_found_handling": "404-page"

@@ -8,7 +8,7 @@ const cases = [
   { query:'รถเสียเบิกได้ไหม', sites:['cgd.go.th','dla.go.th','moi.go.th'] },
   { query:'เงินบำรุงซื้อของได้ไหม', sites:['dla.go.th','moi.go.th'] },
   { query:'ตรวจ TOR ถนน', sites:['cgd.go.th','dla.go.th'] },
-  { query:'เบิกค่าเครื่องบิน', sites:['cgd.go.th','dla.go.th','moi.go.th'] }
+  { query:'การเดินทางไปราชการโดยเครื่องบินโดยสาร', sites:['cgd.go.th','dla.go.th','moi.go.th'] }
 ];
 
 const report = [];

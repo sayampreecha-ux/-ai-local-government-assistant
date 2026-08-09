@@ -29,7 +29,7 @@ globalThis.fetch = async (_url, options) => {
 try {
   for (const [query, sites] of cases) {
     const response = await worker.fetch(new Request('https://example.test/api/official-search', {
-      method:'POST', headers:{'content-type':'application/json'},
+      method:'POST', headers:{'content-type':'application/json', origin:'https://sayampreecha-ux.github.io'},
       body:JSON.stringify({ query, originalQuery:query, sites, count:3 })
     }), { TAVILY_API_KEY:'benchmark-secret' });
     assert.equal(response.status, 200, query);

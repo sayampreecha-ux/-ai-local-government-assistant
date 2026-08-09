@@ -5,12 +5,18 @@
   const DEFAULT_OFFICIAL_SEARCH_ENDPOINT = 'https://ai-local-government-assistant.sayampreecha.workers.dev/api/official-search';
   const FRESHNESS_TERMS = Object.freeze(['ล่าสุด','ปัจจุบัน','ขณะนี้','ตอนนี้','ฉบับใหม่','ฉบับล่าสุด','อัปเดต','ยังใช้','ยังมีผล','มีผลใช้บังคับ','ถูกยกเลิก','ยกเลิกแล้ว','แก้ไขล่าสุด','latest','current','effective','repealed','superseded']);
   const STOP_TERMS = new Set(['ช่วย','หน่อย','เรื่อง','เกี่ยวกับ','อย่างไร','ยังไง','ไหม','หรือไม่','ได้','ได้ไหม','ทำ','ต้อง','ดู','อะไร','บ้าง','หรือ','ว่า','ถือว่า','ขอ','ไม่','การ','และ','ของ','ให้','ใน','ที่','จาก','เป็น']);
+  const PRIMARY_DOCUMENT_TERMS = Object.freeze(['พระราชบัญญัติ','กฎกระทรวง','ระเบียบ','ประกาศ','ข้อบังคับ','หนังสือสั่งการ','หนังสือเวียน','หลักเกณฑ์','ด่วนที่สุด']);
+  const SECONDARY_DOCUMENT_TERMS = Object.freeze(['คำถาม','คำตอบ','ถาม-ตอบ','faq','ข้อเสนอแนะ','ข่าว','ประชาสัมพันธ์','เว็บไซด์อินเตอร์เน็ต']);
+  const NAVIGATION_TITLE_PATTERNS = Object.freeze([
+    /^เว็บไซด์อินเตอร์เน็ต/, /^ค้นหา(?:\s|$)/, /^หน้าหลัก(?:\s|$)/, /^ข่าว(?:จัดซื้อจัดจ้าง|ประกวดราคา)?(?:\s*-|$)/,
+    /^ประกาศร่าง\s*tor(?:\s*-|$)/i, /^ระเบียบ ข้อบังคับหลักเกณฑ์และขั้นตอนการปฏิบัติงาน$/
+  ]);
   const DOMAIN_HINTS = Object.freeze({
     GP001: 'งานสารบรรณ หนังสือราชการ ระเบียบสำนักนายกรัฐมนตรี งานสารบรรณ',
     GP002: 'กฎหมาย ระเบียบ หนังสือสั่งการ ฐานอำนาจ องค์กรปกครองส่วนท้องถิ่น',
     GP003: 'จัดซื้อจัดจ้าง พัสดุภาครัฐ TOR ราคากลาง วิธีจัดซื้อจัดจ้าง กรมบัญชีกลาง',
     GP004: 'แผนพัฒนาท้องถิ่น โครงการ งบประมาณ ข้อบัญญัติงบประมาณ กระทรวงมหาดไทย',
-    GP005: 'การเงิน การคลัง การเบิกจ่าย ค่าใช้จ่าย เดินทางไปราชการ องค์กรปกครองส่วนท้องถิ่น',
+    GP005: 'การเงิน การคลัง การเบิกจ่าย ค่าใช้จ่าย ระเบียบ หลักเกณฑ์ องค์กรปกครองส่วนท้องถิ่น',
     GP006: 'บริหารงานบุคคลท้องถิ่น เลื่อนเงินเดือน แต่งตั้ง โอนย้าย วินัย สอบแข่งขัน',
     GP007: 'งานช่าง วิศวกรรม ก่อสร้าง ถนน มาตรฐานงานทาง ท้องถิ่น',
     GP008: 'สาธารณสุข รพ.สต. เงินบำรุง บริการสุขภาพ องค์กรปกครองส่วนท้องถิ่น',
@@ -21,13 +27,46 @@
     GP013: 'สภาท้องถิ่น ญัตติ มติสภา สมัยประชุม ข้อบัญญัติ'
   });
   const INTENT_PROFILES = Object.freeze([
-    Object.freeze({ id: 'travel', triggers: ['เดินทาง','ไปราชการ','ค่าเดินทาง','ค่าโดยสาร','เครื่องบิน','แท็กซี่','เบี้ยเลี้ยง'], boosts: ['ค่าใช้จ่ายในการเดินทาง','เดินทางไปราชการ','ค่าโดยสาร','พาหนะ','เบี้ยเลี้ยง','ค่าเช่าที่พัก'], conflicts: ['tor','term of reference','ประกาศจัดซื้อ','ประกาศจัดจ้าง','งานก่อสร้าง','ความผิดวินัย'] }),
-    Object.freeze({ id: 'vehicle-repair', triggers: ['รถเสีย','ซ่อมรถ','ค่าซ่อม','บำรุงรักษารถ'], boosts: ['ซ่อมรถ','รถราชการ','บำรุงรักษา','ค่าซ่อม','ค่าใช้จ่ายซ่อม'], conflicts: ['tor','term of reference','ประกาศจัดซื้อ','ประกาศจัดจ้าง','งานก่อสร้าง'] }),
-    Object.freeze({ id: 'tor', triggers: ['tor','ขอบเขตของงาน','ตรวจ tor'], boosts: ['tor','term of reference','ขอบเขตของงาน','คุณลักษณะเฉพาะ','ราคากลาง'], conflicts: ['ค่าใช้จ่ายในการเดินทาง','เบี้ยเลี้ยง','เงินบำรุง'] }),
-    Object.freeze({ id: 'procurement', triggers: ['จัดซื้อ','จัดจ้าง','พัสดุ','ราคากลาง','เฉพาะเจาะจง','e-bidding'], boosts: ['จัดซื้อจัดจ้าง','พัสดุ','ราคากลาง','วิธีเฉพาะเจาะจง','ประกวดราคา','e-bidding'], conflicts: ['ค่าใช้จ่ายในการเดินทาง','เบี้ยเลี้ยง'] }),
-    Object.freeze({ id: 'health-fund', triggers: ['เงินบำรุง'], boosts: ['เงินบำรุง','หน่วยบริการ','รพ.สต.','สาธารณสุข','ค่าใช้จ่ายเงินบำรุง'], conflicts: ['tor','term of reference','ค่าเดินทาง'] }),
-    Object.freeze({ id: 'personnel', triggers: ['เลื่อนเงินเดือน','โอนย้าย','สอบแข่งขัน','แต่งตั้ง','วินัย'], boosts: ['บริหารงานบุคคล','เลื่อนเงินเดือน','โอนย้าย','สอบแข่งขัน','แต่งตั้ง','วินัย'], conflicts: ['tor','จัดซื้อจัดจ้าง','ค่าเดินทาง'] }),
-    Object.freeze({ id: 'council', triggers: ['สภาท้องถิ่น','สมัยประชุม','ญัตติ','มติสภา','ข้อบัญญัติ'], boosts: ['สภาท้องถิ่น','สมัยประชุม','ญัตติ','มติสภา','ข้อบัญญัติ'], conflicts: ['tor','ค่าเดินทาง','จัดซื้อจัดจ้าง'] })
+    Object.freeze({
+      id: 'vehicle-maintenance',
+      when: Object.freeze([Object.freeze(['รถ','ยานพาหนะ']), Object.freeze(['ซ่อม','บำรุง','บำรุงรักษา','ชำรุด','เสีย'])]),
+      expansion: 'ซ่อม บำรุงรักษา รถราชการ รถส่วนกลาง ยานพาหนะ องค์กรปกครองส่วนท้องถิ่น ระเบียบ หนังสือสั่งการ หนังสือเวียน หลักเกณฑ์',
+      required: Object.freeze([Object.freeze(['รถราชการ','รถส่วนกลาง','ยานพาหนะ','รถ']), Object.freeze(['ซ่อม','บำรุง','บำรุงรักษา','ชำรุด'])]),
+      preferred: Object.freeze(['รถราชการ','รถส่วนกลาง','ยานพาหนะ','ซ่อม','บำรุงรักษา','ชำรุด','ระเบียบ','หนังสือสั่งการ','หนังสือเวียน','หลักเกณฑ์']),
+      negative: Object.freeze(['tor','เช่ารถ','ค่าเดินทาง','เดินทางไปราชการ','ค่าพาหนะ','ค่าโดยสาร','เบี้ยเลี้ยง'])
+    }),
+    Object.freeze({
+      id: 'procurement-tor',
+      when: Object.freeze([Object.freeze(['tor','ขอบเขตงาน','จัดซื้อ','จัดจ้าง','ราคากลาง','ตรวจรับ'])]),
+      expansion: 'จัดซื้อจัดจ้าง พัสดุภาครัฐ TOR ขอบเขตงาน ราคากลาง ระเบียบ กรมบัญชีกลาง',
+      required: Object.freeze([Object.freeze(['tor','ขอบเขตงาน','จัดซื้อ','จัดจ้าง','ราคากลาง','ตรวจรับ','พัสดุ','ยี่ห้อ','คุณลักษณะเฉพาะ','การแข่งขัน'])]),
+      preferred: Object.freeze(['tor','ขอบเขตงาน','จัดซื้อ','จัดจ้าง','ราคากลาง','ตรวจรับ','พัสดุ','ยี่ห้อ','คุณลักษณะเฉพาะ','การแข่งขัน','ระเบียบ']),
+      negative: Object.freeze(['ค่าเดินทาง','เบี้ยเลี้ยง','ค่าที่พัก'])
+    }),
+    Object.freeze({
+      id: 'official-travel',
+      when: Object.freeze([Object.freeze(['เดินทางไปราชการ','ค่าเดินทาง','ค่าเครื่องบิน','ค่าโดยสาร','ค่าพาหนะ','เบี้ยเลี้ยง','ค่าที่พัก'])]),
+      expansion: 'เดินทางไปราชการ ค่าเดินทาง ค่าโดยสาร ค่าพาหนะ เบี้ยเลี้ยง ค่าที่พัก ระเบียบ หลักเกณฑ์ การเบิกจ่าย',
+      required: Object.freeze([Object.freeze(['เดินทางไปราชการ','ค่าเดินทาง','เครื่องบิน','ค่าโดยสาร','ค่าพาหนะ','เบี้ยเลี้ยง','ที่พัก'])]),
+      preferred: Object.freeze(['เดินทางไปราชการ','ค่าเดินทาง','เครื่องบิน','ค่าโดยสาร','ค่าพาหนะ','เบี้ยเลี้ยง','ที่พัก','ระเบียบ','หลักเกณฑ์']),
+      negative: Object.freeze(['tor','เช่ารถราชการ','ซ่อมรถ','บำรุงรักษารถ'])
+    }),
+    Object.freeze({
+      id: 'health-maintenance-fund',
+      when: Object.freeze([Object.freeze(['เงินบำรุง']), Object.freeze(['รพ.สต','รพสต','โรงพยาบาล','สาธารณสุข','หน่วยบริการ','ซื้อ','จัดหา','ใช้'])]),
+      expansion: 'เงินบำรุง การใช้จ่ายเงินบำรุง ระเบียบเงินบำรุง หน่วยบริการสาธารณสุข รพ.สต. หนังสือสั่งการ กรมส่งเสริมการปกครองท้องถิ่น กระทรวงมหาดไทย',
+      fallback: 'ระเบียบเงินบำรุง การใช้จ่ายเงินบำรุง หน่วยบริการสาธารณสุข รพ.สต. กรมส่งเสริมการปกครองท้องถิ่น',
+      required: Object.freeze([Object.freeze(['เงินบำรุง']), Object.freeze(['รพ.สต','รพสต','โรงพยาบาล','สาธารณสุข','หน่วยบริการ','ซื้อ','จัดหา','ใช้จ่าย'])]),
+      preferred: Object.freeze(['เงินบำรุง','รพ.สต','รพสต','หน่วยบริการ','สาธารณสุข','จัดซื้อ','ใช้จ่าย','ระเบียบ','หลักเกณฑ์']),
+      negative: Object.freeze(['เงินบำรุงท้องถิ่น','ค่าซ่อมรถ','เดินทางไปราชการ'])
+    })
+  ]);
+
+  const SUBJECT_PROFILES = Object.freeze([
+    Object.freeze({ id: 'road-works', when: Object.freeze(['ถนน','งานทาง','ก่อสร้างทาง','ผิวทาง','ลาดยาง','แอสฟัลต์','คอนกรีตเสริมเหล็ก']), expansion: 'TOR ขอบเขตงานก่อสร้างถนน งานทาง ผิวทาง ลาดยาง แอสฟัลต์ คอนกรีตเสริมเหล็ก ราคากลาง กรมส่งเสริมการปกครองท้องถิ่น', fallback: 'หลักเกณฑ์การคำนวณราคากลางงานก่อสร้างทาง TOR งานก่อสร้างถนน ขอบเขตงานถนน งานทาง ผิวทาง กรมส่งเสริมการปกครองท้องถิ่น', evidence: Object.freeze(['ถนน','งานทาง','ก่อสร้างทาง','ผิวทาง','ลาดยาง','แอสฟัลต์','คอนกรีตเสริมเหล็ก']) }),
+    Object.freeze({ id: 'vehicle', when: Object.freeze(['รถ','ยานพาหนะ']), expansion: 'รถ ยานพาหนะ รถราชการ', evidence: Object.freeze(['รถ','ยานพาหนะ']) }),
+    Object.freeze({ id: 'building', when: Object.freeze(['อาคาร','สิ่งปลูกสร้าง']), expansion: 'อาคาร สิ่งปลูกสร้าง งานก่อสร้างอาคาร', evidence: Object.freeze(['อาคาร','สิ่งปลูกสร้าง']) }),
+    Object.freeze({ id: 'information-technology', when: Object.freeze(['คอมพิวเตอร์','ระบบสารสนเทศ','ซอฟต์แวร์','เครือข่าย','ดิจิทัล']), expansion: 'คอมพิวเตอร์ ระบบสารสนเทศ ซอฟต์แวร์ เครือข่าย ดิจิทัล', evidence: Object.freeze(['คอมพิวเตอร์','ระบบสารสนเทศ','ซอฟต์แวร์','เครือข่าย','ดิจิทัล']) })
   ]);
 
   function normalize(value) { return String(value ?? '').normalize('NFC').replace(/\s+/g, ' ').trim(); }
@@ -53,9 +92,17 @@
     return Object.freeze([...new Set(terms)]);
   }
 
-  function activeIntentProfiles(query) {
-    const q = lower(query);
-    return Object.freeze(INTENT_PROFILES.filter(profile => profile.triggers.some(term => q.includes(lower(term)))));
+  function includesAny(text, terms = []) { return terms.some(term => text.includes(lower(term))); }
+
+  function detectSearchIntent(query) {
+    const text = lower(query);
+    return INTENT_PROFILES.find(profile => profile.when.every(group => includesAny(text, group))) || null;
+  }
+
+  function detectSearchSubject(query, intentProfile) {
+    if (intentProfile?.id !== 'procurement-tor') return null;
+    const text = lower(query);
+    return SUBJECT_PROFILES.find(subject => includesAny(text, subject.when)) || null;
   }
 
   function rewriteQuery(query) {
@@ -64,11 +111,13 @@
       ? window.GovPromptCore.routeRequest(original, { multiModule: true })
       : null;
     const moduleIds = route?.modules?.length ? route.modules.slice(0, 2) : [route?.primaryModule].filter(Boolean);
-    const hints = moduleIds.map(id => DOMAIN_HINTS[id]).filter(Boolean);
-    const profiles = activeIntentProfiles(original);
-    const intentHints = profiles.flatMap(profile => profile.boosts.slice(0, 3));
-    const rewritten = [original, ...hints, ...intentHints].filter(Boolean).join(' ');
-    return Object.freeze({ original, rewritten, moduleIds: Object.freeze(moduleIds), route, terms: queryTerms(original), intentProfiles: profiles });
+    const intentProfile = detectSearchIntent(original);
+    const subjectProfile = detectSearchSubject(original, intentProfile);
+    const hints = subjectProfile
+      ? [subjectProfile.expansion, 'TOR ขอบเขตงาน ราคากลาง จัดซื้อจัดจ้าง พัสดุภาครัฐ ระเบียบ']
+      : (intentProfile ? [intentProfile.expansion] : moduleIds.map(id => DOMAIN_HINTS[id]).filter(Boolean));
+    const rewritten = [original, ...hints].filter(Boolean).join(' ');
+    return Object.freeze({ original, rewritten, moduleIds: Object.freeze(moduleIds), route, terms: queryTerms(original), intentProfile, subjectProfile });
   }
 
   function createSearchPlan(query, { limitSources = 6 } = {}) {
@@ -87,7 +136,9 @@
       query: rewritten.rewritten,
       originalQuery: rewritten.original,
       queryTerms: rewritten.terms,
-      intentProfiles: rewritten.intentProfiles,
+      intentProfile: rewritten.intentProfile,
+      subjectProfile: rewritten.subjectProfile,
+      fallbackQuery: rewritten.subjectProfile?.fallback || rewritten.intentProfile?.fallback || '',
       routedModules: rewritten.moduleIds,
       route: rewritten.route,
       sources: Object.freeze(sources), plans: Object.freeze(plans),
@@ -155,10 +206,33 @@
     const titleCoverage = titleMatched.length / Math.max(1, terms.length);
     const exactPhrase = plan.originalQuery && (title.includes(lower(plan.originalQuery)) || snippet.includes(lower(plan.originalQuery))) ? 1 : 0;
     const metadata = [result.documentNumber, result.documentDate || result.effectiveDate, result.title].filter(Boolean).length / 3;
-    const baseRelevance = Math.min(1, coverage * 0.52 + titleCoverage * 0.23 + exactPhrase * 0.15 + metadata * 0.10);
-    const intent = intentFeatures(result, plan);
-    const relevance = Math.max(0, Math.min(1, baseRelevance + intent.intentBoost - intent.intentPenalty));
-    return Object.freeze({ coverage, titleCoverage, exactPhrase, metadataCompleteness: metadata, baseRelevance, ...intent, relevance });
+    const profile = plan.intentProfile;
+    const subjectProfile = plan.subjectProfile;
+    const requiredMatches = profile?.required?.map(group => includesAny(full, group)) || [];
+    const intentCompatibility = requiredMatches.length === 0 || requiredMatches.every(Boolean);
+    const preferredMatches = profile?.preferred?.filter(term => full.includes(lower(term))).length || 0;
+    const preferredCoverage = preferredMatches / Math.max(1, profile?.preferred?.length || 0);
+    const negativeMatches = profile?.negative?.filter(term => full.includes(lower(term))).length || 0;
+    const anchoredNegative = negativeMatches > 0 && !intentCompatibility;
+    const subjectTitleMatch = !subjectProfile || includesAny(title, subjectProfile.evidence);
+    const subjectSnippetMatches = subjectProfile?.evidence?.filter(term => snippet.includes(lower(term))).length || 0;
+    const subjectCompatibility = !subjectProfile || subjectTitleMatch || subjectSnippetMatches >= 2;
+    const primaryDocument = includesAny(title, PRIMARY_DOCUMENT_TERMS);
+    const secondaryDocument = includesAny(title, SECONDARY_DOCUMENT_TERMS);
+    let pathname = '';
+    let queryString = '';
+    try { const parsed = new URL(result.sourceUrl); pathname = lower(parsed.pathname); queryString = lower(parsed.search); } catch {}
+    const navigationTitle = NAVIGATION_TITLE_PATTERNS.some(pattern => pattern.test(title));
+    const navigationUrl = /(?:listnews|list_layout|\/search|\/ค้นหา|page=\d+)/i.test(`${pathname}${queryString}`);
+    const navigational = navigationTitle && navigationUrl;
+    const baseRelevance = coverage * 0.46 + titleCoverage * 0.20 + exactPhrase * 0.12 + metadata * 0.08;
+    const intentBoost = profile ? preferredCoverage * 0.24 + (intentCompatibility ? 0.12 : 0) : 0.14 * coverage;
+    const intentPenalty = anchoredNegative ? Math.min(0.45, 0.18 + negativeMatches * 0.09) : 0;
+    const documentTypeAdjustment = primaryDocument ? 0.16 : (profile && secondaryDocument ? -0.14 : 0);
+    const subjectAdjustment = subjectProfile ? (subjectCompatibility ? 0.18 : -0.30) : 0;
+    const navigationPenalty = navigational ? 0.55 : 0;
+    const relevance = Math.max(0, Math.min(1, baseRelevance + intentBoost + documentTypeAdjustment + subjectAdjustment - intentPenalty - navigationPenalty));
+    return Object.freeze({ coverage, titleCoverage, exactPhrase, metadataCompleteness: metadata, preferredCoverage, intentCompatibility, subjectCompatibility, subjectTitleMatch, subjectSnippetMatches, negativeMatches, primaryDocument, secondaryDocument, navigational, intentBoost, intentPenalty, intentScore: intentBoost - intentPenalty, relevance });
   }
 
   function canonicalKey(result) {
@@ -209,8 +283,8 @@
   }
 
   function createEvidence(results, freshness, { verificationRequired = true } = {}) {
-    const primaryResults = Object.freeze(results.filter(result => result.official && result.queryRelevance >= 0.24));
-    const secondaryResults = Object.freeze(results.filter(result => !result.official || result.queryRelevance < 0.24));
+    const primaryResults = Object.freeze(results.filter(result => result.official && result.evidenceFeatures?.intentCompatibility !== false && result.evidenceFeatures?.subjectCompatibility !== false && result.evidenceFeatures?.navigational !== true && result.queryRelevance >= 0.24));
+    const secondaryResults = Object.freeze(results.filter(result => !result.official || result.evidenceFeatures?.intentCompatibility === false || result.evidenceFeatures?.subjectCompatibility === false || result.evidenceFeatures?.navigational === true || result.queryRelevance < 0.24));
     const citations = createSearchCitations(primaryResults);
     const verifiedCurrent = Boolean(freshness?.verifiedCurrent && freshness?.best?.official);
     const hasPrimaryEvidence = primaryResults.length > 0;
@@ -243,15 +317,30 @@
       let payload;
       try { payload = await response.json(); }
       catch { return planOnly(plan, 'บริการค้นเว็บราชการสดส่งข้อมูลกลับมาไม่ถูกต้อง — ระบบจะใช้แผนค้นจาก Primary Source ก่อน', 'INVALID_SEARCH_RESPONSE'); }
-      const providerResults = Array.isArray(payload?.results)
+      let providerResults = Array.isArray(payload?.results)
         ? payload.results
         : (Array.isArray(payload?.data?.results) ? payload.data.results : []);
-      const results = rankResults(providerResults, plan);
-      const freshness = typeof window.GovPromptCore.selectBestCurrent === 'function' ? window.GovPromptCore.selectBestCurrent(results, options) : null;
-      const evidence = createEvidence(results, freshness, { verificationRequired });
+      let results = rankResults(providerResults, plan);
+      let freshness = typeof window.GovPromptCore.selectBestCurrent === 'function' ? window.GovPromptCore.selectBestCurrent(results, options) : null;
+      let evidence = createEvidence(results, freshness, { verificationRequired });
+      if (plan.fallbackQuery && evidence.primaryResults.length === 0) {
+        try {
+          const fallbackResponse = await doFetch(searchEndpoint, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ query: plan.fallbackQuery, originalQuery: plan.originalQuery, routedModules: plan.routedModules, sites: plan.sources.map(source => source.host), count: Math.min(20, Math.max(5, Number(options.count) || 10)) }) });
+          if (fallbackResponse.ok) {
+            const fallbackPayload = await fallbackResponse.json();
+            const fallbackResults = Array.isArray(fallbackPayload?.results)
+              ? fallbackPayload.results
+              : (Array.isArray(fallbackPayload?.data?.results) ? fallbackPayload.data.results : []);
+            providerResults = providerResults.concat(fallbackResults);
+            results = rankResults(providerResults, plan);
+            freshness = typeof window.GovPromptCore.selectBestCurrent === 'function' ? window.GovPromptCore.selectBestCurrent(results, options) : null;
+            evidence = createEvidence(results, freshness, { verificationRequired });
+          }
+        } catch {}
+      }
       return Object.freeze({ mode: 'live', plan, results, freshness, evidence, verificationRequired, searchedAt: normalize(payload.searchedAt), provider: normalize(payload.provider), warning: evidence.warning });
     }
-    return Object.freeze({ search, createSearchPlan, rewriteQuery, rankResults, createEvidence, requiresFreshnessVerification, queryTerms, citationConfidence, activeIntentProfiles });
+    return Object.freeze({ search, createSearchPlan, rewriteQuery, rankResults, createEvidence, requiresFreshnessVerification, queryTerms, citationConfidence });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
@@ -262,8 +351,9 @@
   window.GovPromptCore.rankOfficialSearchResults = rankResults;
   window.GovPromptCore.createOfficialSearchEvidence = createEvidence;
   window.GovPromptCore.officialSearchQueryTerms = queryTerms;
+  window.GovPromptCore.detectOfficialSearchIntent = detectSearchIntent;
+  window.GovPromptCore.detectOfficialSearchSubject = detectSearchSubject;
   window.GovPromptCore.officialSearchCitationConfidence = citationConfidence;
-  window.GovPromptCore.officialSearchIntentProfiles = activeIntentProfiles;
   window.GovPromptCore.createOfficialSearchConnector = createOfficialSearchConnector;
   window.GovPromptCore.officialSearchConnector = createOfficialSearchConnector();
 })();

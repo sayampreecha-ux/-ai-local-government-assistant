@@ -52,37 +52,6 @@ button:disabled{opacity:.55;cursor:not-allowed}.row{display:flex;justify-content
 </section>
 </main>
 <footer>© 2026 GovPrompt Thailand Professional</footer>
-<script>
-const SECRET='GPTH-SIMPLE-2569-SAYAM';
-const KEY='gp_simple_access';
-const CODE_KEY='gp_simple_code';
-const enc=new TextEncoder();
-async function sign(serial){
-  const key=await crypto.subtle.importKey('raw',enc.encode(SECRET),{name:'HMAC',hash:'SHA-256'},false,['sign']);
-  const sig=await crypto.subtle.sign('HMAC',key,enc.encode(serial));
-  return [...new Uint8Array(sig)].map(x=>x.toString(16).padStart(2,'0')).join('').slice(0,8).toUpperCase();
-}
-async function validate(raw){
-  const value=raw.trim().toUpperCase();
-  const match=value.match(/^GP69-(\d{4})-([A-F0-9]{8})$/);
-  if(!match)return false;
-  return await sign(match[1])===match[2];
-}
-function showApp(){document.getElementById('gate').classList.add('hidden');document.getElementById('app').classList.remove('hidden')}
-if(localStorage.getItem(KEY)==='ok')showApp();
-document.getElementById('login').onclick=async()=>{
-  const btn=document.getElementById('login');
-  const msg=document.getElementById('msg');
-  btn.disabled=true;msg.className='msg';msg.textContent='กำลังตรวจสอบ...';
-  const value=document.getElementById('code').value.trim().toUpperCase();
-  if(await validate(value)){
-    localStorage.setItem(KEY,'ok');localStorage.setItem(CODE_KEY,value);
-    msg.className='msg ok';msg.textContent='ยืนยันสำเร็จ';setTimeout(showApp,250);
-  }else{msg.className='msg bad';msg.textContent='รหัสไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง';btn.disabled=false;}
-};
-document.getElementById('code').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase().replace(/\s+/g,'')});
-document.getElementById('code').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('login').click()});
-document.getElementById('logout').onclick=()=>{localStorage.removeItem(KEY);localStorage.removeItem(CODE_KEY);location.reload()};
-</script>
+<script src="access-client.js"></script>
 </body>
 </html>
