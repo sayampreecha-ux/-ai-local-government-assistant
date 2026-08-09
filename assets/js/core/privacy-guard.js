@@ -3,6 +3,7 @@
 
   const REDACTION_RULES = Object.freeze([
     { id: 'thai-id', label: 'เลขประจำตัว 13 หลัก', pattern: /\b\d(?:[\s-]*\d){12}\b/g, replacement: ' ' },
+    { id: 'thai-id-context', label: 'เลขบัตรประชาชน/เลขประจำตัว', pattern: /(?:เลข(?:ประจำตัว(?:ประชาชน)?|บัตรประชาชน)|บัตรประชาชน)\s*[:：#-]?\s*\d(?:[\s-]*\d){5,19}/gi, replacement: ' เลขบัตรประชาชน [ปกปิด] ' },
     { id: 'email', label: 'อีเมล', pattern: /[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, replacement: ' ' },
     { id: 'phone', label: 'หมายเลขโทรศัพท์', pattern: /(?:\+66|0)\s*\d(?:[\s-]*\d){7,8}\b/g, replacement: ' ' },
     { id: 'bank-account', label: 'เลขบัญชี/พร้อมเพย์', pattern: /(?:เลขบัญชี|บัญชีธนาคาร|พร้อมเพย์)\s*[:：-]?\s*[0-9\s-]{6,20}/gi, replacement: ' ' },
@@ -195,6 +196,61 @@
     return core.officialSearchConnector === guardedConnector;
   }
 
+  function installInputPrivacyGate() {
+    const form = document.getElementById('chatForm');
+    const input = document.getElementById('promptInput');
+    if (!form || !input || form.dataset.privacyGateInstalled === '1') return false;
+    form.dataset.privacyGateInstalled = '1';
+
+    form.addEventListener('submit', event => {
+      if (form.dataset.privacyBypass === '1') return;
+      const privacy = sanitizeExternalContent(input.value);
+      if (!privacy.changed && !privacy.blocked) return;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+
+      if (privacy.blocked) {
+        const reasons = [...new Set([...privacy.blockingRisks, ...privacy.residualRisks])];
+        const detail = reasons.length ? `\nตรวจพบ: ${reasons.join(', ')}` : '';
+        window.alert(`🔒 GovPrompt หยุดส่งข้อความนี้เพื่อความปลอดภัย${detail}\n\nกรุณาลบข้อมูลลับ/รหัสผ่าน/ข้อมูลที่ระบุตัวบุคคลได้ก่อนส่งใหม่`);
+        input.focus();
+        return;
+      }
+
+      const labels = privacy.redactions.length ? privacy.redactions.join(', ') : 'ข้อมูลส่วนบุคคล';
+      const approved = window.confirm(`🔐 พบข้อมูลที่ควรปกปิด: ${labels}\n\nGovPrompt จะปกปิดข้อมูลดังกล่าวก่อนค้น วิเคราะห์ และสร้าง Prompt\n\nกด OK เพื่อใช้ข้อความที่ปกปิดแล้ว หรือ Cancel เพื่อกลับไปแก้เอง`);
+      if (!approved) {
+        input.focus();
+        return;
+      }
+
+      if (!privacy.safeText.trim()) {
+        window.alert('ข้อความหลังปกปิดข้อมูลไม่เหลือสาระเพียงพอ กรุณาพิมพ์คำถามใหม่โดยไม่ใส่ข้อมูลส่วนบุคคล');
+        input.focus();
+        return;
+      }
+
+      input.value = privacy.safeText;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      form.dataset.privacyBypass = '1';
+      try {
+        form.requestSubmit();
+      } finally {
+        delete form.dataset.privacyBypass;
+      }
+    }, true);
+
+    return true;
+  }
+
+  function simplifyPrimaryNavigation() {
+    const toolsButton = document.querySelector('.bottom-nav [data-panel="tools"]');
+    if (toolsButton) toolsButton.hidden = true;
+    const nav = document.querySelector('.bottom-nav');
+    if (nav) nav.style.gridTemplateColumns = 'repeat(4, minmax(0, 1fr))';
+  }
+
   window.GovPromptCore = window.GovPromptCore || {};
   window.GovPromptCore.sanitizeExternalQuery = sanitizeExternalQuery;
   window.GovPromptCore.sanitizeExternalContent = sanitizeExternalContent;
@@ -202,8 +258,17 @@
   window.GovPromptCore.detectBlockingRisk = detectBlockingRisk;
   window.GovPromptCore.detectResidualRisk = detectResidualRisk;
   window.GovPromptCore.installPrivacyGuard = installPrivacyGuard;
+  window.GovPromptCore.installInputPrivacyGate = installInputPrivacyGate;
 
-  if (!installPrivacyGuard()) {
-    document.addEventListener('DOMContentLoaded', installPrivacyGuard, { once: true });
+  function installAll() {
+    installPrivacyGuard();
+    installInputPrivacyGate();
+    simplifyPrimaryNavigation();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', installAll, { once: true });
+  } else {
+    installAll();
   }
 })();
