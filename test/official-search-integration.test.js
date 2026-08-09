@@ -198,7 +198,7 @@ test('worker POST, CORS, request validation and Tavily mapping contract', async 
     assert.equal(preflight.status, 204);
     assert.equal(preflight.headers.get('access-control-allow-origin'), 'https://sayampreecha-ux.github.io');
     assert.equal(preflight.headers.get('access-control-allow-methods'), 'POST, OPTIONS');
-    assert.equal(preflight.headers.get('access-control-allow-headers'), 'content-type');
+    assert.equal(preflight.headers.get('access-control-allow-headers'), 'authorization, content-type');
 
     const response = await worker.fetch(new Request('https://worker.test/api/official-search', {
       method: 'POST', headers: { 'content-type': 'application/json' },

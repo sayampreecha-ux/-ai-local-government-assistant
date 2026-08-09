@@ -30,7 +30,50 @@ const preflight = await worker.fetch(new Request('https://example.test/api/offic
 assert.equal(preflight.status, 204);
 assert.equal(preflight.headers.get('access-control-allow-origin'), 'https://sayampreecha-ux.github.io');
 assert.equal(preflight.headers.get('access-control-allow-methods'), 'POST, OPTIONS');
-assert.equal(preflight.headers.get('access-control-allow-headers'), 'content-type');
+assert.equal(preflight.headers.get('access-control-allow-headers'), 'authorization, content-type');
+
+const accessEnv = {
+  ASSETS: assets,
+  ACCESS_CODE_SECRET: 'local-test-code-key',
+  ACCESS_ADMIN_PASSWORD_HASH: '',
+  ACCESS_ADMIN_SESSION_SECRET: 'local-test-session-key'
+};
+const testPassword = 'local-test-password';
+const passwordDigest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(testPassword));
+accessEnv.ACCESS_ADMIN_PASSWORD_HASH = [...new Uint8Array(passwordDigest)].map(value => value.toString(16).padStart(2, '0')).join('');
+
+const missingAccessBindings = await worker.fetch(new Request('https://example.test/api/access/validate', {
+  method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: 'invalid' })
+}), { ASSETS: assets });
+assert.equal(missingAccessBindings.status, 503);
+
+const loginResponse = await worker.fetch(new Request('https://example.test/api/access/admin/login', {
+  method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: testPassword })
+}), accessEnv);
+assert.equal(loginResponse.status, 200);
+const loginBody = await loginResponse.json();
+assert.equal(typeof loginBody.token, 'string');
+assert.equal(JSON.stringify(loginBody).includes(testPassword), false);
+
+const issueResponse = await worker.fetch(new Request('https://example.test/api/access/admin/issue', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', authorization: `Bearer ${loginBody.token}` },
+  body: JSON.stringify({ serial: '0001' })
+}), accessEnv);
+assert.equal(issueResponse.status, 200);
+const issueBody = await issueResponse.json();
+assert.match(issueBody.code, /^GP69-0001-[A-F0-9]{8}$/);
+
+const validAccess = await worker.fetch(new Request('https://example.test/api/access/validate', {
+  method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code: issueBody.code })
+}), accessEnv);
+assert.equal(validAccess.status, 200);
+assert.deepEqual(await validAccess.json(), { ok: true });
+
+const unauthorizedIssue = await worker.fetch(new Request('https://example.test/api/access/admin/issue', {
+  method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ serial: '0002' })
+}), accessEnv);
+assert.equal(unauthorizedIssue.status, 401);
 
 const originalFetch = globalThis.fetch;
 let providerRequest;

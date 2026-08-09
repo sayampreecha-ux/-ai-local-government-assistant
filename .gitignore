@@ -4,5 +4,7 @@ coverage/
 .pnpm-store/
 .env
 .env.local
+.dev.vars
+.dev.vars.*
 .vercel/
 dist/
