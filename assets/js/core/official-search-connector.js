@@ -20,6 +20,15 @@
     GP012: 'ประชาสัมพันธ์ภาครัฐ การสื่อสารราชการ ข่าวประชาสัมพันธ์',
     GP013: 'สภาท้องถิ่น ญัตติ มติสภา สมัยประชุม ข้อบัญญัติ'
   });
+  const INTENT_PROFILES = Object.freeze([
+    Object.freeze({ id: 'travel', triggers: ['เดินทาง','ไปราชการ','ค่าเดินทาง','ค่าโดยสาร','เครื่องบิน','แท็กซี่','เบี้ยเลี้ยง'], boosts: ['ค่าใช้จ่ายในการเดินทาง','เดินทางไปราชการ','ค่าโดยสาร','พาหนะ','เบี้ยเลี้ยง','ค่าเช่าที่พัก'], conflicts: ['tor','term of reference','ประกาศจัดซื้อ','ประกาศจัดจ้าง','งานก่อสร้าง','ความผิดวินัย'] }),
+    Object.freeze({ id: 'vehicle-repair', triggers: ['รถเสีย','ซ่อมรถ','ค่าซ่อม','บำรุงรักษารถ'], boosts: ['ซ่อมรถ','รถราชการ','บำรุงรักษา','ค่าซ่อม','ค่าใช้จ่ายซ่อม'], conflicts: ['tor','term of reference','ประกาศจัดซื้อ','ประกาศจัดจ้าง','งานก่อสร้าง'] }),
+    Object.freeze({ id: 'tor', triggers: ['tor','ขอบเขตของงาน','ตรวจ tor'], boosts: ['tor','term of reference','ขอบเขตของงาน','คุณลักษณะเฉพาะ','ราคากลาง'], conflicts: ['ค่าใช้จ่ายในการเดินทาง','เบี้ยเลี้ยง','เงินบำรุง'] }),
+    Object.freeze({ id: 'procurement', triggers: ['จัดซื้อ','จัดจ้าง','พัสดุ','ราคากลาง','เฉพาะเจาะจง','e-bidding'], boosts: ['จัดซื้อจัดจ้าง','พัสดุ','ราคากลาง','วิธีเฉพาะเจาะจง','ประกวดราคา','e-bidding'], conflicts: ['ค่าใช้จ่ายในการเดินทาง','เบี้ยเลี้ยง'] }),
+    Object.freeze({ id: 'health-fund', triggers: ['เงินบำรุง'], boosts: ['เงินบำรุง','หน่วยบริการ','รพ.สต.','สาธารณสุข','ค่าใช้จ่ายเงินบำรุง'], conflicts: ['tor','term of reference','ค่าเดินทาง'] }),
+    Object.freeze({ id: 'personnel', triggers: ['เลื่อนเงินเดือน','โอนย้าย','สอบแข่งขัน','แต่งตั้ง','วินัย'], boosts: ['บริหารงานบุคคล','เลื่อนเงินเดือน','โอนย้าย','สอบแข่งขัน','แต่งตั้ง','วินัย'], conflicts: ['tor','จัดซื้อจัดจ้าง','ค่าเดินทาง'] }),
+    Object.freeze({ id: 'council', triggers: ['สภาท้องถิ่น','สมัยประชุม','ญัตติ','มติสภา','ข้อบัญญัติ'], boosts: ['สภาท้องถิ่น','สมัยประชุม','ญัตติ','มติสภา','ข้อบัญญัติ'], conflicts: ['tor','ค่าเดินทาง','จัดซื้อจัดจ้าง'] })
+  ]);
 
   function normalize(value) { return String(value ?? '').normalize('NFC').replace(/\s+/g, ' ').trim(); }
   function quote(value) { const text = normalize(value).replace(/"/g, ''); return text ? `"${text}"` : ''; }
@@ -44,6 +53,11 @@
     return Object.freeze([...new Set(terms)]);
   }
 
+  function activeIntentProfiles(query) {
+    const q = lower(query);
+    return Object.freeze(INTENT_PROFILES.filter(profile => profile.triggers.some(term => q.includes(lower(term)))));
+  }
+
   function rewriteQuery(query) {
     const original = normalize(query);
     const route = typeof window.GovPromptCore.routeRequest === 'function'
@@ -51,8 +65,10 @@
       : null;
     const moduleIds = route?.modules?.length ? route.modules.slice(0, 2) : [route?.primaryModule].filter(Boolean);
     const hints = moduleIds.map(id => DOMAIN_HINTS[id]).filter(Boolean);
-    const rewritten = [original, ...hints].filter(Boolean).join(' ');
-    return Object.freeze({ original, rewritten, moduleIds: Object.freeze(moduleIds), route, terms: queryTerms(original) });
+    const profiles = activeIntentProfiles(original);
+    const intentHints = profiles.flatMap(profile => profile.boosts.slice(0, 3));
+    const rewritten = [original, ...hints, ...intentHints].filter(Boolean).join(' ');
+    return Object.freeze({ original, rewritten, moduleIds: Object.freeze(moduleIds), route, terms: queryTerms(original), intentProfiles: profiles });
   }
 
   function createSearchPlan(query, { limitSources = 6 } = {}) {
@@ -71,10 +87,11 @@
       query: rewritten.rewritten,
       originalQuery: rewritten.original,
       queryTerms: rewritten.terms,
+      intentProfiles: rewritten.intentProfiles,
       routedModules: rewritten.moduleIds,
       route: rewritten.route,
       sources: Object.freeze(sources), plans: Object.freeze(plans),
-      policy: Object.freeze({ primaryFirst: true, verifyCurrentStatus: true, rejectUnsupportedSecondaryOnlyConclusion: true, intentAwareRewrite: true, evidenceWeightedRanking: true, deduplicateResults: true })
+      policy: Object.freeze({ primaryFirst: true, verifyCurrentStatus: true, rejectUnsupportedSecondaryOnlyConclusion: true, intentAwareRewrite: true, intentAwareRanking: true, evidenceWeightedRanking: true, deduplicateResults: true })
     });
   }
 
@@ -97,6 +114,35 @@
     });
   }
 
+  function intentFeatures(result, plan) {
+    const profiles = plan.intentProfiles?.length ? plan.intentProfiles : activeIntentProfiles(plan.originalQuery);
+    if (!profiles.length) return Object.freeze({ intentBoost: 0, intentPenalty: 0, intentScore: 0, matchedProfiles: Object.freeze([]) });
+    const title = lower(result.title);
+    const snippet = lower(result.snippet);
+    const full = `${title} ${snippet}`;
+    let boost = 0;
+    let penalty = 0;
+    const matchedProfiles = [];
+    profiles.forEach(profile => {
+      const titleBoostHits = profile.boosts.filter(term => title.includes(lower(term))).length;
+      const fullBoostHits = profile.boosts.filter(term => full.includes(lower(term))).length;
+      const titleConflictHits = profile.conflicts.filter(term => title.includes(lower(term))).length;
+      const fullConflictHits = profile.conflicts.filter(term => full.includes(lower(term))).length;
+      if (titleBoostHits || fullBoostHits) matchedProfiles.push(profile.id);
+      boost += Math.min(0.26, titleBoostHits * 0.10 + fullBoostHits * 0.045);
+      penalty += Math.min(0.42, titleConflictHits * 0.20 + fullConflictHits * 0.08);
+    });
+    const query = lower(plan.originalQuery);
+    const titleLooksTor = /\btor\b|term of reference|ขอบเขตของงาน/i.test(title);
+    const wantsTor = /\btor\b|ขอบเขตของงาน/i.test(query);
+    const titleLooksNews = /ข่าว|ประชาสัมพันธ์|กิจกรรม|ประกาศรับสมัคร/.test(title);
+    if (titleLooksTor && !wantsTor) penalty += 0.28;
+    if (titleLooksNews && profiles.some(profile => ['travel','vehicle-repair','procurement','health-fund','personnel','council'].includes(profile.id))) penalty += 0.12;
+    boost = Math.min(0.36, boost);
+    penalty = Math.min(0.55, penalty);
+    return Object.freeze({ intentBoost: boost, intentPenalty: penalty, intentScore: boost - penalty, matchedProfiles: Object.freeze([...new Set(matchedProfiles)]) });
+  }
+
   function evidenceFeatures(result, plan) {
     const terms = plan.queryTerms?.length ? plan.queryTerms : queryTerms(plan.originalQuery);
     const title = lower(result.title);
@@ -109,8 +155,10 @@
     const titleCoverage = titleMatched.length / Math.max(1, terms.length);
     const exactPhrase = plan.originalQuery && (title.includes(lower(plan.originalQuery)) || snippet.includes(lower(plan.originalQuery))) ? 1 : 0;
     const metadata = [result.documentNumber, result.documentDate || result.effectiveDate, result.title].filter(Boolean).length / 3;
-    const relevance = Math.min(1, coverage * 0.52 + titleCoverage * 0.23 + exactPhrase * 0.15 + metadata * 0.10);
-    return Object.freeze({ coverage, titleCoverage, exactPhrase, metadataCompleteness: metadata, relevance });
+    const baseRelevance = Math.min(1, coverage * 0.52 + titleCoverage * 0.23 + exactPhrase * 0.15 + metadata * 0.10);
+    const intent = intentFeatures(result, plan);
+    const relevance = Math.max(0, Math.min(1, baseRelevance + intent.intentBoost - intent.intentPenalty));
+    return Object.freeze({ coverage, titleCoverage, exactPhrase, metadataCompleteness: metadata, baseRelevance, ...intent, relevance });
   }
 
   function canonicalKey(result) {
@@ -136,6 +184,7 @@
     return Object.freeze([...deduped.values()].sort((a, b) =>
       Number(b.official) - Number(a.official)
       || b.queryRelevance - a.queryRelevance
+      || (b.evidenceFeatures?.intentScore ?? 0) - (a.evidenceFeatures?.intentScore ?? 0)
       || b.sourcePriority - a.sourcePriority
       || String(b.documentDate || b.effectiveDate).localeCompare(String(a.documentDate || a.effectiveDate))
       || a.title.localeCompare(b.title, 'th')
@@ -202,7 +251,7 @@
       const evidence = createEvidence(results, freshness, { verificationRequired });
       return Object.freeze({ mode: 'live', plan, results, freshness, evidence, verificationRequired, searchedAt: normalize(payload.searchedAt), provider: normalize(payload.provider), warning: evidence.warning });
     }
-    return Object.freeze({ search, createSearchPlan, rewriteQuery, rankResults, createEvidence, requiresFreshnessVerification, queryTerms, citationConfidence });
+    return Object.freeze({ search, createSearchPlan, rewriteQuery, rankResults, createEvidence, requiresFreshnessVerification, queryTerms, citationConfidence, activeIntentProfiles });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
@@ -214,6 +263,7 @@
   window.GovPromptCore.createOfficialSearchEvidence = createEvidence;
   window.GovPromptCore.officialSearchQueryTerms = queryTerms;
   window.GovPromptCore.officialSearchCitationConfidence = citationConfidence;
+  window.GovPromptCore.officialSearchIntentProfiles = activeIntentProfiles;
   window.GovPromptCore.createOfficialSearchConnector = createOfficialSearchConnector;
   window.GovPromptCore.officialSearchConnector = createOfficialSearchConnector();
 })();
