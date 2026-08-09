@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import worker from '../src/search-worker.js';
 
 const FRONTEND_ORIGIN = 'https://sayampreecha-ux.github.io';
+const SECURITY_POLICY_VERSION = '2026-08-09.1';
 let lastAssetUrl = '';
 const assets = {
   fetch: async request => {
@@ -9,16 +10,15 @@ const assets = {
     return new Response('asset', { status: 200 });
   }
 };
-const allowLimiter = { limit: async () => ({ success: true }) };
-const denyLimiter = { limit: async () => ({ success: false }) };
 
 const noKeyRequest = new Request('https://example.test/api/official-search', {
   method: 'POST',
   headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
   body: JSON.stringify({ query: 'ระเบียบค่าเดินทางล่าสุด', sites: ['cgd.go.th', 'example.com'] })
 });
-const noKeyResponse = await worker.fetch(noKeyRequest, { ASSETS: assets, OFFICIAL_SEARCH_RATE_LIMITER: allowLimiter });
+const noKeyResponse = await worker.fetch(noKeyRequest, { ASSETS: assets });
 assert.equal(noKeyResponse.status, 503);
+assert.equal(noKeyResponse.headers.get('x-govprompt-security'), SECURITY_POLICY_VERSION);
 const noKeyBody = await noKeyResponse.json();
 assert.equal(noKeyBody.error, 'SEARCH_PROVIDER_NOT_CONFIGURED');
 
@@ -34,30 +34,53 @@ assert.equal(preflight.status, 204);
 assert.equal(preflight.headers.get('access-control-allow-origin'), FRONTEND_ORIGIN);
 assert.equal(preflight.headers.get('access-control-allow-methods'), 'POST, OPTIONS');
 assert.equal(preflight.headers.get('access-control-allow-headers'), 'content-type');
+assert.equal(preflight.headers.get('access-control-expose-headers'), 'x-govprompt-security');
 assert.equal(preflight.headers.get('cache-control'), 'no-store');
+assert.equal(preflight.headers.get('x-govprompt-security'), SECURITY_POLICY_VERSION);
+assert.equal(preflight.headers.get('content-security-policy'), "default-src 'none'; frame-ancestors 'none'");
+
+const noOrigin = await worker.fetch(new Request('https://example.test/api/official-search', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ query: 'ระเบียบค่าเดินทาง', sites: ['cgd.go.th'] })
+}), { ASSETS: assets });
+assert.equal(noOrigin.status, 403);
+assert.equal((await noOrigin.json()).error, 'ORIGIN_NOT_ALLOWED');
 
 const rejectedOrigin = await worker.fetch(new Request('https://example.test/api/official-search', {
   method: 'POST',
   headers: { 'content-type': 'application/json', origin: 'https://evil.example' },
   body: JSON.stringify({ query: 'ระเบียบค่าเดินทาง', sites: ['cgd.go.th'] })
-}), { ASSETS: assets, OFFICIAL_SEARCH_RATE_LIMITER: allowLimiter });
+}), { ASSETS: assets });
 assert.equal(rejectedOrigin.status, 403);
 assert.equal((await rejectedOrigin.json()).error, 'ORIGIN_NOT_ALLOWED');
 
-const rateLimitedRequest = await worker.fetch(new Request('https://example.test/api/official-search', {
+const oversizedBody = JSON.stringify({ query: 'ก'.repeat(17 * 1024), sites: ['dla.go.th'] });
+const oversizedRequest = await worker.fetch(new Request('https://example.test/api/official-search', {
   method: 'POST',
   headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
-  body: JSON.stringify({ query: 'ระเบียบค่าเดินทางล่าสุด', sites: ['cgd.go.th'] })
-}), { ASSETS: assets, OFFICIAL_SEARCH_RATE_LIMITER: denyLimiter, TAVILY_API_KEY: 'unused-secret' });
-assert.equal(rateLimitedRequest.status, 429);
-assert.equal(rateLimitedRequest.headers.get('retry-after'), '60');
-assert.equal((await rateLimitedRequest.json()).error, 'RATE_LIMITED');
+  body: oversizedBody
+}), { ASSETS: assets });
+assert.equal(oversizedRequest.status, 413);
+assert.equal((await oversizedRequest.json()).error, 'REQUEST_TOO_LARGE');
+
+const rateLimited = await worker.fetch(new Request('https://example.test/api/official-search', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
+  body: JSON.stringify({ query: 'ระเบียบค่าเดินทาง', sites: ['cgd.go.th'] })
+}), {
+  ASSETS: assets,
+  OFFICIAL_SEARCH_RATE_LIMITER: { limit: async () => ({ success: false }) }
+});
+assert.equal(rateLimited.status, 429);
+assert.equal(rateLimited.headers.get('retry-after'), '60');
+assert.equal((await rateLimited.json()).error, 'RATE_LIMITED');
 
 const sensitiveRequest = await worker.fetch(new Request('https://example.test/api/official-search', {
   method: 'POST',
   headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
   body: JSON.stringify({ query: 'ตรวจสิทธิของนาย ก เลขบัตร 1234567890123', sites: ['dla.go.th'] })
-}), { ASSETS: assets, OFFICIAL_SEARCH_RATE_LIMITER: allowLimiter, TAVILY_API_KEY: 'unused-secret' });
+}), { ASSETS: assets, TAVILY_API_KEY: 'unused-secret' });
 assert.equal(sensitiveRequest.status, 422);
 const sensitiveBody = await sensitiveRequest.json();
 assert.equal(sensitiveBody.error, 'SENSITIVE_QUERY_BLOCKED');
@@ -67,7 +90,7 @@ const secretRequest = await worker.fetch(new Request('https://example.test/api/o
   method: 'POST',
   headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
   body: JSON.stringify({ query: 'api key: super-secret-value ระเบียบราชการ', sites: ['dla.go.th'] })
-}), { ASSETS: assets, OFFICIAL_SEARCH_RATE_LIMITER: allowLimiter, TAVILY_API_KEY: 'unused-secret' });
+}), { ASSETS: assets, TAVILY_API_KEY: 'unused-secret' });
 assert.equal(secretRequest.status, 422);
 assert.equal((await secretRequest.json()).error, 'SENSITIVE_QUERY_BLOCKED');
 
@@ -100,10 +123,11 @@ try {
   });
   const liveResponse = await worker.fetch(liveRequest, {
     ASSETS: assets,
-    OFFICIAL_SEARCH_RATE_LIMITER: allowLimiter,
-    TAVILY_API_KEY: 'test-secret-never-return'
+    TAVILY_API_KEY: 'test-secret-never-return',
+    OFFICIAL_SEARCH_RATE_LIMITER: { limit: async () => ({ success: true }) }
   });
   assert.equal(liveResponse.status, 200);
+  assert.equal(liveResponse.headers.get('x-govprompt-security'), SECURITY_POLICY_VERSION);
   const liveBody = await liveResponse.json();
   assert.equal(liveBody.provider, 'tavily');
   assert.equal('query' in liveBody, false);
@@ -135,4 +159,4 @@ assert.equal(await assetResponse.text(), 'asset');
 const previewFallback = await worker.fetch(new Request('https://example.test/'), {});
 assert.equal(previewFallback.status, 404);
 
-console.log('GovPrompt v7 Live Search Backend verification passed with privacy, origin, rate limiting and Tavily minimization controls.');
+console.log('GovPrompt v7 Live Search Backend verification passed with strict origin, body-size, rate-limit, privacy and security-policy controls.');
