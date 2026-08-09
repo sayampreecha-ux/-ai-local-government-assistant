@@ -42,34 +42,34 @@
   }
 
   function installPrivacyGuard() {
-    const connector = window.GovPromptCore?.officialSearchConnector;
-    if (!connector || typeof connector.search !== 'function' || connector.__privacyGuardInstalled) return false;
+    const core = window.GovPromptCore;
+    const connector = core?.officialSearchConnector;
+    if (!core || !connector || typeof connector.search !== 'function') return false;
+    if (connector.__privacyGuardInstalled) return true;
 
-    const originalSearch = connector.search.bind(connector);
-    const guardedSearch = async (query, options = {}) => {
-      const privacy = sanitizeExternalQuery(query);
-      if (privacy.changed) {
-        window.GovPrompt?.toast?.('🔐 Privacy Guard ปกปิดข้อมูลเสี่ยงก่อนค้นภายนอกแล้ว');
+    const guardedConnector = Object.freeze({
+      ...connector,
+      __privacyGuardInstalled: true,
+      search: async (query, options = {}) => {
+        const privacy = sanitizeExternalQuery(query);
+        if (privacy.changed) {
+          window.GovPrompt?.toast?.('🔐 Privacy Guard ปกปิดข้อมูลเสี่ยงก่อนค้นภายนอกแล้ว');
+        }
+        const result = await connector.search(privacy.safeQuery, options);
+        if (!result || typeof result !== 'object') return result;
+        return Object.freeze({
+          ...result,
+          privacyGuard: Object.freeze({
+            applied: privacy.changed,
+            redactions: privacy.redactions,
+            externalQueryWasSanitized: privacy.changed
+          })
+        });
       }
-      const result = await originalSearch(privacy.safeQuery, options);
-      if (!result || typeof result !== 'object') return result;
-      return Object.freeze({
-        ...result,
-        privacyGuard: Object.freeze({
-          applied: privacy.changed,
-          redactions: privacy.redactions,
-          externalQueryWasSanitized: privacy.changed
-        })
-      });
-    };
+    });
 
-    try {
-      connector.search = guardedSearch;
-      Object.defineProperty(connector, '__privacyGuardInstalled', { value: true, configurable: false });
-    } catch {
-      return false;
-    }
-    return true;
+    core.officialSearchConnector = guardedConnector;
+    return core.officialSearchConnector === guardedConnector;
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
