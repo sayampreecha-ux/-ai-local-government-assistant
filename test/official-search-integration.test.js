@@ -51,6 +51,55 @@ test('frontend connector retains official evidence for unspaced Thai acceptance 
   }
 });
 
+test('intent-aware ranking promotes travel evidence above unrelated TOR results', async () => {
+  const fetcher = async () => Response.json({
+    ok: true,
+    provider: 'tavily',
+    results: [
+      { title: 'ขอบเขตของงาน (Term of Reference : TOR) โครงการเช่ารถ', url: 'https://www.cgd.go.th/tor-car', snippet: 'TOR โครงการเช่ารถราชการ' },
+      { title: 'ระเบียบค่าใช้จ่ายในการเดินทางไปราชการ', url: 'https://www.cgd.go.th/travel-rule', snippet: 'หลักเกณฑ์ค่าใช้จ่ายในการเดินทางไปราชการ ค่าโดยสาร พาหนะ เบี้ยเลี้ยง' },
+      { title: 'ประเด็นคำถาม - คำตอบ ค่าใช้จ่ายในการเดินทางไปราชการ', url: 'https://www.cgd.go.th/travel-faq', snippet: 'คำถามคำตอบเกี่ยวกับค่าโดยสารและการเดินทางไปราชการ' }
+    ]
+  });
+  const core = await loadConnector(fetcher);
+  const result = await core.createOfficialSearchConnector({ fetcher }).search('เบิกค่าเดินทางไปราชการได้อะไรบ้าง');
+  assert.match(result.results[0].title, /เดินทางไปราชการ/);
+  assert.match(result.results[1].title, /เดินทางไปราชการ/);
+  assert.match(result.results.at(-1).title, /TOR/i);
+  assert.ok(result.results[0].queryRelevance > result.results.at(-1).queryRelevance);
+});
+
+test('vehicle repair intent promotes repair guidance above generic travel documents', async () => {
+  const fetcher = async () => Response.json({
+    ok: true,
+    provider: 'tavily',
+    results: [
+      { title: 'ระเบียบค่าใช้จ่ายในการเดินทางไปราชการ', url: 'https://www.cgd.go.th/travel', snippet: 'การเดินทางไปราชการและค่าโดยสาร' },
+      { title: 'แนวทางค่าใช้จ่ายซ่อมรถราชการและการบำรุงรักษา', url: 'https://www.cgd.go.th/repair', snippet: 'รถราชการ รถเสีย ค่าซ่อม และการบำรุงรักษา' },
+      { title: 'TOR งานก่อสร้างอาคาร', url: 'https://www.cgd.go.th/tor-building', snippet: 'ขอบเขตของงานก่อสร้าง' }
+    ]
+  });
+  const core = await loadConnector(fetcher);
+  const result = await core.createOfficialSearchConnector({ fetcher }).search('รถเสียระหว่างไปราชการ ต้องดำเนินการอย่างไร');
+  assert.match(result.results[0].title, /ซ่อมรถราชการ|บำรุงรักษา/);
+  assert.match(result.results.at(-1).title, /TOR/i);
+});
+
+test('TOR intent does not penalize TOR documents', async () => {
+  const fetcher = async () => Response.json({
+    ok: true,
+    provider: 'tavily',
+    results: [
+      { title: 'ขอบเขตของงาน TOR งานก่อสร้างถนน', url: 'https://www.cgd.go.th/tor-road', snippet: 'TOR ราคากลาง คุณลักษณะเฉพาะ งานก่อสร้างถนน' },
+      { title: 'ระเบียบค่าใช้จ่ายในการเดินทางไปราชการ', url: 'https://www.cgd.go.th/travel-2', snippet: 'ค่าเดินทางและเบี้ยเลี้ยง' }
+    ]
+  });
+  const core = await loadConnector(fetcher);
+  const result = await core.createOfficialSearchConnector({ fetcher }).search('ตรวจ TOR ถนน');
+  assert.match(result.results[0].title, /TOR/i);
+  assert.ok(result.results[0].evidenceFeatures.intentScore > 0);
+});
+
 test('connector accepts both direct and wrapped provider result envelopes', async () => {
   const core = await loadConnector(async () => Response.json({
     ok: true,
