@@ -16,18 +16,42 @@ const OFFICIAL_HOSTS = new Set([
 const FRONTEND_ORIGIN = 'https://sayampreecha-ux.github.io';
 const ACCESS_CODE_PATTERN = /^GP69-(\d{4})-([A-F0-9]{8})$/;
 const ADMIN_SESSION_TTL_SECONDS = 15 * 60;
+const MAX_REQUEST_BYTES = 16 * 1024;
+const SECURITY_POLICY_VERSION = '2026-08-09.1';
 const JSON_HEADERS = Object.freeze({
   'content-type': 'application/json; charset=utf-8',
   'cache-control': 'no-store',
+  'pragma': 'no-cache',
   'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY',
+  'referrer-policy': 'no-referrer',
+  'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
+  'permissions-policy': 'camera=(), microphone=(), geolocation=()',
+  'x-govprompt-security': SECURITY_POLICY_VERSION,
   'access-control-allow-origin': FRONTEND_ORIGIN,
   'access-control-allow-methods': 'POST, OPTIONS',
   'access-control-allow-headers': 'authorization, content-type',
+  'access-control-expose-headers': 'x-govprompt-security',
+  'access-control-max-age': '600',
   'vary': 'Origin'
 });
 
-function json(body, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
+const HIGH_CONFIDENCE_SENSITIVE_PATTERNS = Object.freeze([
+  /\b\d(?:[ -]?\d){12}\b/g,
+  /[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g,
+  /(?:\+66|0)\s*\d(?:[\s-]*\d){7,8}\b/g,
+  /(?:เลขบัญชี|บัญชีธนาคาร|พร้อมเพย์)\s*[:：-]?\s*[0-9\s-]{6,20}/gi,
+  /(?:password|passwd|api\s*key|secret|token|รหัสผ่าน|กุญแจ\s*api)\s*[:=：-]?\s*[^\s,;]+/gi,
+  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g,
+  /(?:ข้อมูลลับของราชการ|ชั้นความลับ|ลับมาก|ลับที่สุด)\s*[:：-]?\s*[^,;\n]{1,120}/gi,
+  /(?:HN|AN|เลขผู้ป่วย|รหัสผู้ป่วย)\s*[:：-]?\s*[A-Za-z0-9/-]{3,30}/gi
+]);
+
+function json(body, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...JSON_HEADERS, ...extraHeaders }
+  });
 }
 
 const encoder = new TextEncoder();
@@ -170,6 +194,58 @@ function parseRequestBody(body) {
   return { query, sites, count };
 }
 
+function containsHighConfidenceSensitiveData(query) {
+  return HIGH_CONFIDENCE_SENSITIVE_PATTERNS.some(pattern => {
+    pattern.lastIndex = 0;
+    return pattern.test(query);
+  });
+}
+
+function isAllowedOrigin(request) {
+  return request.headers.get('origin') === FRONTEND_ORIGIN;
+}
+
+function requestTooLargeByHeader(request) {
+  const header = request.headers.get('content-length');
+  if (!header) return false;
+  const bytes = Number(header);
+  return Number.isFinite(bytes) && bytes > MAX_REQUEST_BYTES;
+}
+
+async function readJsonBody(request) {
+  const raw = await request.arrayBuffer();
+  if (raw.byteLength > MAX_REQUEST_BYTES) return { ok: false, error: 'REQUEST_TOO_LARGE' };
+  try {
+    const text = new TextDecoder().decode(raw);
+    return { ok: true, body: JSON.parse(text) };
+  } catch {
+    return { ok: false, error: 'INVALID_JSON' };
+  }
+}
+
+async function checkRateLimit(request, env, url, requestId) {
+  const limiter = env?.OFFICIAL_SEARCH_RATE_LIMITER;
+  if (!limiter || typeof limiter.limit !== 'function') {
+    logSearch('warn', {
+      event: 'rate_limit_unavailable', requestId,
+      reason: 'RATE_LIMIT_BINDING_MISSING'
+    });
+    return { allowed: true, configured: false };
+  }
+
+  const key = `public-web:${url.pathname}`;
+  try {
+    const result = await limiter.limit({ key });
+    return { allowed: Boolean(result?.success), configured: true };
+  } catch {
+    logSearch('error', {
+      event: 'rate_limit_error', requestId,
+      reason: 'RATE_LIMIT_CHECK_FAILED'
+    });
+    return { allowed: false, configured: true };
+  }
+}
+
 function normalizeResult(item) {
   const url = cleanText(item?.url, 1200);
   let parsed;
@@ -246,47 +322,79 @@ export default {
     if (url.pathname !== '/api/official-search') return fetchAsset(request, env, url);
     const requestId = request.headers.get('cf-ray') || crypto.randomUUID();
     const startedAt = Date.now();
-    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
+
+    if (request.method === 'OPTIONS') {
+      if (!isAllowedOrigin(request)) return json({ ok: false, error: 'ORIGIN_NOT_ALLOWED', requestId }, 403);
+      return new Response(null, { status: 204, headers: JSON_HEADERS });
+    }
     if (request.method !== 'POST') {
       logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'METHOD_NOT_ALLOWED' });
       return json({ ok: false, error: 'METHOD_NOT_ALLOWED', requestId }, 405);
     }
-
-    let body;
-    try { body = await readJson(request, 8192); } catch {
-      logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'INVALID_JSON' });
-      return json({ ok: false, error: 'INVALID_JSON', requestId }, 400);
+    if (!isAllowedOrigin(request)) {
+      logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'ORIGIN_NOT_ALLOWED' });
+      return json({ ok: false, error: 'ORIGIN_NOT_ALLOWED', requestId }, 403);
     }
-    const payload = parseRequestBody(body);
+    if (requestTooLargeByHeader(request)) {
+      logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'REQUEST_TOO_LARGE' });
+      return json({ ok: false, error: 'REQUEST_TOO_LARGE', requestId }, 413);
+    }
+
+    const rateLimit = await checkRateLimit(request, env, url, requestId);
+    if (!rateLimit.allowed) {
+      logSearch('warn', {
+        event: 'request_rejected', requestId, method: request.method,
+        reason: 'RATE_LIMITED'
+      });
+      return json({ ok: false, error: 'RATE_LIMITED', requestId }, 429, { 'retry-after': '60' });
+    }
+
+    const parsedBody = await readJsonBody(request);
+    if (!parsedBody.ok) {
+      const status = parsedBody.error === 'REQUEST_TOO_LARGE' ? 413 : 400;
+      logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: parsedBody.error });
+      return json({ ok: false, error: parsedBody.error, requestId }, status);
+    }
+
+    const payload = parseRequestBody(parsedBody.body);
     if (!payload.query) {
       logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'QUERY_REQUIRED' });
       return json({ ok: false, error: 'QUERY_REQUIRED', requestId }, 400);
+    }
+    if (containsHighConfidenceSensitiveData(payload.query)) {
+      logSearch('warn', {
+        event: 'request_rejected', requestId, method: request.method,
+        reason: 'SENSITIVE_QUERY_BLOCKED', queryLength: payload.query.length
+      });
+      return json({ ok: false, error: 'SENSITIVE_QUERY_BLOCKED', requestId }, 422);
     }
 
     logSearch('info', {
       event: 'search_started', requestId, method: request.method,
       queryLength: payload.query.length, siteCount: payload.sites.length,
-      requestedCount: payload.count, providerConfigured: Boolean(env.TAVILY_API_KEY)
+      requestedCount: payload.count, providerConfigured: Boolean(env.TAVILY_API_KEY),
+      rateLimitConfigured: rateLimit.configured, securityPolicyVersion: SECURITY_POLICY_VERSION
     });
 
     const search = await searchTavily(env, payload);
     if (!search.ok) {
       logSearch('error', {
         event: 'search_failed', requestId, error: search.error,
-        providerStatus: search.providerStatus ?? null, durationMs: Date.now() - startedAt
+        providerStatus: search.providerStatus ?? null, durationMs: Date.now() - startedAt,
+        securityPolicyVersion: SECURITY_POLICY_VERSION
       });
       return json({ ok: false, error: search.error, providerStatus: search.providerStatus ?? null, requestId }, search.status);
     }
 
     logSearch('info', {
       event: 'search_completed', requestId, provider: search.provider,
-      resultCount: search.results.length, durationMs: Date.now() - startedAt
+      resultCount: search.results.length, durationMs: Date.now() - startedAt,
+      securityPolicyVersion: SECURITY_POLICY_VERSION
     });
 
     return json({
       ok: true,
       requestId,
-      query: payload.query,
       sites: payload.sites,
       provider: search.provider,
       searchedAt: new Date().toISOString(),

@@ -85,6 +85,36 @@
     return core;
   }
 
+  function sanitizedAttachmentMetadata(core) {
+    return Object.freeze(attachments.map((file, index) => {
+      const privacy = typeof core.sanitizeAttachmentName === 'function'
+        ? core.sanitizeAttachmentName(file.name, index + 1)
+        : { safeName: `เอกสารแนบ-${index + 1}`, changed: true, blocked: false };
+      return Object.freeze({
+        name: privacy.safeName,
+        type: String(file.type || ''),
+        size: Number(file.size || 0),
+        lastModified: Number(file.lastModified || 0),
+        privacyChanged: Boolean(privacy.changed),
+        privacyBlocked: Boolean(privacy.blocked)
+      });
+    }));
+  }
+
+  function prepareExternalPrompt(prompt) {
+    const core = requireCore();
+    if (typeof core.sanitizeExternalContent !== 'function') {
+      return Object.freeze({ blocked: true, safeText: '', changed: false, reason: 'PRIVACY_GUARD_UNAVAILABLE' });
+    }
+    const privacy = core.sanitizeExternalContent(prompt);
+    return Object.freeze({
+      blocked: privacy.blocked,
+      safeText: privacy.safeText,
+      changed: privacy.changed,
+      reason: privacy.blocked ? 'SENSITIVE_EXTERNAL_HANDOFF_BLOCKED' : ''
+    });
+  }
+
   function enrichPromptWithSearch(promptBundle, searchResult) {
     const results = searchResult?.evidence?.primaryResults || [];
     const evidenceLines = results.slice(0, 8).map((item, index) => [
@@ -118,13 +148,14 @@
 
   async function preparePrompt(text) {
     const core = requireCore();
+    const safeAttachments = sanitizedAttachmentMetadata(core);
     const context = core.createSharedContext({
       facts: text,
       desiredOutput: text,
-      documents: attachments.map(file => file.name).join(', ')
+      documents: safeAttachments.map(file => file.name).join(', ')
     });
     const route = core.routeTransaction(context);
-    const promptBundle = core.createGovernmentPrompt({ question: text, route, context, attachments });
+    const promptBundle = core.createGovernmentPrompt({ question: text, route, context, attachments: safeAttachments });
     const searchResult = await core.officialSearchConnector.search(text, { limitSources: 6, count: 10 });
     return Object.freeze({
       route,
@@ -158,8 +189,6 @@
   function appendSearchDetails(section, searchResult) {
     const details = document.createElement('details');
     const summary = document.createElement('summary');
-    // Show every normalized official provider hit. Evidence thresholds still
-    // control which results may be used to support a conclusion or prompt.
     const results = (searchResult?.results || []).filter(result => result.official);
     summary.textContent = searchResult?.mode === 'live'
       ? `แหล่งราชการที่ค้นสด (${results.length})`
@@ -237,18 +266,34 @@
     openChatGPT.type = 'button';
     openChatGPT.textContent = 'เปิดใน ChatGPT';
     openChatGPT.addEventListener('click', async () => {
-      const chatWindow = window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
-      const copied = await copyText(promptBundle.prompt);
-      if (copied) window.GovPrompt?.toast('คัดลอก Prompt พร้อมแหล่งค้นแล้ว — วางใน ChatGPT ได้เลย');
-      else window.GovPrompt?.toast('เปิด ChatGPT แล้ว แต่คัดลอกอัตโนมัติไม่สำเร็จ');
-      if (!chatWindow) window.GovPrompt?.toast('เบราว์เซอร์บล็อกหน้าต่างใหม่ กรุณาอนุญาต pop-up');
+      const external = prepareExternalPrompt(promptBundle.prompt);
+      if (external.blocked) {
+        window.GovPrompt?.toast('🔒 หยุดส่งต่อ: Prompt ยังมีข้อมูลเสี่ยง กรุณาปกปิดข้อมูลก่อนเปิดใน ChatGPT');
+        return;
+      }
+      const copied = await copyText(external.safeText);
+      if (!copied) {
+        window.GovPrompt?.toast('ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
+        return;
+      }
+      window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
+      window.GovPrompt?.toast(external.changed
+        ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว และคัดลอก Prompt สำหรับ ChatGPT แล้ว'
+        : 'คัดลอก Prompt พร้อมแหล่งค้นแล้ว — วางใน ChatGPT ได้เลย');
     });
 
     copyButton.type = 'button';
     copyButton.textContent = 'คัดลอก Prompt';
     copyButton.addEventListener('click', async () => {
-      const copied = await copyText(promptBundle.prompt);
-      window.GovPrompt?.toast(copied ? 'คัดลอก Prompt พร้อมแหล่งค้นแล้ว' : 'ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
+      const external = prepareExternalPrompt(promptBundle.prompt);
+      if (external.blocked) {
+        window.GovPrompt?.toast('🔒 หยุดคัดลอก: Prompt ยังมีข้อมูลเสี่ยง กรุณาปกปิดข้อมูลก่อน');
+        return;
+      }
+      const copied = await copyText(external.safeText);
+      window.GovPrompt?.toast(copied
+        ? (external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงก่อนคัดลอกแล้ว' : 'คัดลอก Prompt พร้อมแหล่งค้นแล้ว')
+        : 'ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
     });
 
     specialistLink.href = route.assistant.path;
@@ -280,6 +325,13 @@
     history.length = Math.min(history.length, 20);
   }
 
+  function clearAttachments() {
+    attachments = [];
+    attachmentStatus.textContent = '';
+    attachmentInput.value = '';
+    cameraInput.value = '';
+  }
+
   async function submitPrompt(text) {
     document.querySelector('.chat-main').classList.add('has-messages');
     addUserMessage(text);
@@ -302,6 +354,7 @@
     document.getElementById('thinkingMessage')?.remove();
     addRouteResult(prepared);
     saveHistory(text, prepared.route);
+    clearAttachments();
     conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }
 
@@ -343,10 +396,12 @@
   }));
 
   function collectFiles(fileList) {
-    attachments = [...attachments, ...Array.from(fileList)].slice(0, 5);
+    const incoming = Array.from(fileList || []);
+    attachments = [...attachments, ...incoming].slice(0, 5);
     attachmentStatus.textContent = attachments.length
-      ? `แนบแล้ว ${attachments.length} ไฟล์: ${attachments.map(file => file.name).join(', ')}`
+      ? `แนบแล้ว ${attachments.length} ไฟล์ · ชื่อไฟล์จะถูกปกปิดก่อนนำไปสร้าง Prompt`
       : '';
+    if (incoming.length) window.GovPrompt?.toast('🔐 ไฟล์ยังอยู่ในเบราว์เซอร์ และระบบจะใช้เฉพาะ metadata ที่ปกปิดชื่อแล้วในการสร้าง Prompt');
   }
   attachmentInput.addEventListener('change', () => collectFiles(attachmentInput.files));
   cameraInput.addEventListener('change', () => collectFiles(cameraInput.files));
@@ -408,8 +463,7 @@
 
   document.getElementById('newChat').addEventListener('click', () => {
     conversation.replaceChildren();
-    attachments = [];
-    attachmentStatus.textContent = '';
+    clearAttachments();
     document.querySelector('.chat-main').classList.remove('has-messages');
     input.focus();
   });

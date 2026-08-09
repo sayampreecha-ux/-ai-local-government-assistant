@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import worker from '../src/search-worker.js';
 
+const FRONTEND_ORIGIN = 'https://sayampreecha-ux.github.io';
+const SECURITY_POLICY_VERSION = '2026-08-09.1';
 let lastAssetUrl = '';
 const assets = {
   fetch: async request => {
@@ -11,11 +13,12 @@ const assets = {
 
 const noKeyRequest = new Request('https://example.test/api/official-search', {
   method: 'POST',
-  headers: { 'content-type': 'application/json' },
+  headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
   body: JSON.stringify({ query: 'ระเบียบค่าเดินทางล่าสุด', sites: ['cgd.go.th', 'example.com'] })
 });
 const noKeyResponse = await worker.fetch(noKeyRequest, { ASSETS: assets });
 assert.equal(noKeyResponse.status, 503);
+assert.equal(noKeyResponse.headers.get('x-govprompt-security'), SECURITY_POLICY_VERSION);
 const noKeyBody = await noKeyResponse.json();
 assert.equal(noKeyBody.error, 'SEARCH_PROVIDER_NOT_CONFIGURED');
 
@@ -25,10 +28,10 @@ assert.equal(typeof (await invalidMethod.json()).requestId, 'string');
 
 const preflight = await worker.fetch(new Request('https://example.test/api/official-search', {
   method: 'OPTIONS',
-  headers: { origin: 'https://sayampreecha-ux.github.io' }
+  headers: { origin: FRONTEND_ORIGIN }
 }), { ASSETS: assets });
 assert.equal(preflight.status, 204);
-assert.equal(preflight.headers.get('access-control-allow-origin'), 'https://sayampreecha-ux.github.io');
+assert.equal(preflight.headers.get('access-control-allow-origin'), FRONTEND_ORIGIN);
 assert.equal(preflight.headers.get('access-control-allow-methods'), 'POST, OPTIONS');
 assert.equal(preflight.headers.get('access-control-allow-headers'), 'authorization, content-type');
 
@@ -74,6 +77,65 @@ const unauthorizedIssue = await worker.fetch(new Request('https://example.test/a
   method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ serial: '0002' })
 }), accessEnv);
 assert.equal(unauthorizedIssue.status, 401);
+assert.equal(preflight.headers.get('access-control-expose-headers'), 'x-govprompt-security');
+assert.equal(preflight.headers.get('cache-control'), 'no-store');
+assert.equal(preflight.headers.get('x-govprompt-security'), SECURITY_POLICY_VERSION);
+assert.equal(preflight.headers.get('content-security-policy'), "default-src 'none'; frame-ancestors 'none'");
+
+const noOrigin = await worker.fetch(new Request('https://example.test/api/official-search', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({ query: 'ระเบียบค่าเดินทาง', sites: ['cgd.go.th'] })
+}), { ASSETS: assets });
+assert.equal(noOrigin.status, 403);
+assert.equal((await noOrigin.json()).error, 'ORIGIN_NOT_ALLOWED');
+
+const rejectedOrigin = await worker.fetch(new Request('https://example.test/api/official-search', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', origin: 'https://evil.example' },
+  body: JSON.stringify({ query: 'ระเบียบค่าเดินทาง', sites: ['cgd.go.th'] })
+}), { ASSETS: assets });
+assert.equal(rejectedOrigin.status, 403);
+assert.equal((await rejectedOrigin.json()).error, 'ORIGIN_NOT_ALLOWED');
+
+const oversizedBody = JSON.stringify({ query: 'ก'.repeat(17 * 1024), sites: ['dla.go.th'] });
+const oversizedRequest = await worker.fetch(new Request('https://example.test/api/official-search', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
+  body: oversizedBody
+}), { ASSETS: assets });
+assert.equal(oversizedRequest.status, 413);
+assert.equal((await oversizedRequest.json()).error, 'REQUEST_TOO_LARGE');
+
+const rateLimited = await worker.fetch(new Request('https://example.test/api/official-search', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
+  body: JSON.stringify({ query: 'ระเบียบค่าเดินทาง', sites: ['cgd.go.th'] })
+}), {
+  ASSETS: assets,
+  OFFICIAL_SEARCH_RATE_LIMITER: { limit: async () => ({ success: false }) }
+});
+assert.equal(rateLimited.status, 429);
+assert.equal(rateLimited.headers.get('retry-after'), '60');
+assert.equal((await rateLimited.json()).error, 'RATE_LIMITED');
+
+const sensitiveRequest = await worker.fetch(new Request('https://example.test/api/official-search', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
+  body: JSON.stringify({ query: 'ตรวจสิทธิของนาย ก เลขบัตร 1234567890123', sites: ['dla.go.th'] })
+}), { ASSETS: assets, TAVILY_API_KEY: 'unused-secret' });
+assert.equal(sensitiveRequest.status, 422);
+const sensitiveBody = await sensitiveRequest.json();
+assert.equal(sensitiveBody.error, 'SENSITIVE_QUERY_BLOCKED');
+assert.equal(JSON.stringify(sensitiveBody).includes('1234567890123'), false);
+
+const secretRequest = await worker.fetch(new Request('https://example.test/api/official-search', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
+  body: JSON.stringify({ query: 'api key: super-secret-value ระเบียบราชการ', sites: ['dla.go.th'] })
+}), { ASSETS: assets, TAVILY_API_KEY: 'unused-secret' });
+assert.equal(secretRequest.status, 422);
+assert.equal((await secretRequest.json()).error, 'SENSITIVE_QUERY_BLOCKED');
 
 const originalFetch = globalThis.fetch;
 let providerRequest;
@@ -99,13 +161,19 @@ globalThis.fetch = async (url, options) => {
 try {
   const liveRequest = new Request('https://example.test/api/official-search', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
     body: JSON.stringify({ query: 'หนังสือเวียนกรมบัญชีกลางล่าสุด', sites: ['cgd.go.th', 'example.com'], count: 10 })
   });
-  const liveResponse = await worker.fetch(liveRequest, { ASSETS: assets, TAVILY_API_KEY: 'test-secret-never-return' });
+  const liveResponse = await worker.fetch(liveRequest, {
+    ASSETS: assets,
+    TAVILY_API_KEY: 'test-secret-never-return',
+    OFFICIAL_SEARCH_RATE_LIMITER: { limit: async () => ({ success: true }) }
+  });
   assert.equal(liveResponse.status, 200);
+  assert.equal(liveResponse.headers.get('x-govprompt-security'), SECURITY_POLICY_VERSION);
   const liveBody = await liveResponse.json();
   assert.equal(liveBody.provider, 'tavily');
+  assert.equal('query' in liveBody, false);
   assert.deepEqual(liveBody.sites, ['cgd.go.th']);
   assert.equal(liveBody.results.length, 1);
   assert.equal(liveBody.results[0].host, 'cgd.go.th');
@@ -116,6 +184,8 @@ try {
   assert.equal(providerRequest.options.headers.authorization, 'Bearer test-secret-never-return');
   const providerBody = JSON.parse(providerRequest.options.body);
   assert.deepEqual(providerBody.include_domains, ['cgd.go.th']);
+  assert.equal(providerBody.include_answer, false);
+  assert.equal(providerBody.include_raw_content, false);
 } finally {
   globalThis.fetch = originalFetch;
 }
@@ -132,4 +202,4 @@ assert.equal(await assetResponse.text(), 'asset');
 const previewFallback = await worker.fetch(new Request('https://example.test/'), {});
 assert.equal(previewFallback.status, 404);
 
-console.log('GovPrompt v7 Live Search Backend verification passed for Sprint 2.3 Tavily + root asset routing.');
+console.log('GovPrompt v7 Live Search Backend verification passed with strict origin, body-size, rate-limit, privacy and security-policy controls.');

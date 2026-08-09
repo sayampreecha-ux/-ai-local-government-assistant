@@ -26,7 +26,6 @@
     GP012: 'ประชาสัมพันธ์ภาครัฐ การสื่อสารราชการ ข่าวประชาสัมพันธ์',
     GP013: 'สภาท้องถิ่น ญัตติ มติสภา สมัยประชุม ข้อบัญญัติ'
   });
-
   const INTENT_PROFILES = Object.freeze([
     Object.freeze({
       id: 'vehicle-maintenance',
@@ -143,7 +142,7 @@
       routedModules: rewritten.moduleIds,
       route: rewritten.route,
       sources: Object.freeze(sources), plans: Object.freeze(plans),
-      policy: Object.freeze({ primaryFirst: true, verifyCurrentStatus: true, rejectUnsupportedSecondaryOnlyConclusion: true, intentAwareRewrite: true, evidenceWeightedRanking: true, deduplicateResults: true })
+      policy: Object.freeze({ primaryFirst: true, verifyCurrentStatus: true, rejectUnsupportedSecondaryOnlyConclusion: true, intentAwareRewrite: true, intentAwareRanking: true, evidenceWeightedRanking: true, deduplicateResults: true })
     });
   }
 
@@ -164,6 +163,35 @@
       amendedBy: Object.freeze(Array.isArray(item.amendedBy) ? item.amendedBy.map(normalize).filter(Boolean) : []),
       repealedBy: Object.freeze(Array.isArray(item.repealedBy) ? item.repealedBy.map(normalize).filter(Boolean) : [])
     });
+  }
+
+  function intentFeatures(result, plan) {
+    const profiles = plan.intentProfiles?.length ? plan.intentProfiles : activeIntentProfiles(plan.originalQuery);
+    if (!profiles.length) return Object.freeze({ intentBoost: 0, intentPenalty: 0, intentScore: 0, matchedProfiles: Object.freeze([]) });
+    const title = lower(result.title);
+    const snippet = lower(result.snippet);
+    const full = `${title} ${snippet}`;
+    let boost = 0;
+    let penalty = 0;
+    const matchedProfiles = [];
+    profiles.forEach(profile => {
+      const titleBoostHits = profile.boosts.filter(term => title.includes(lower(term))).length;
+      const fullBoostHits = profile.boosts.filter(term => full.includes(lower(term))).length;
+      const titleConflictHits = profile.conflicts.filter(term => title.includes(lower(term))).length;
+      const fullConflictHits = profile.conflicts.filter(term => full.includes(lower(term))).length;
+      if (titleBoostHits || fullBoostHits) matchedProfiles.push(profile.id);
+      boost += Math.min(0.26, titleBoostHits * 0.10 + fullBoostHits * 0.045);
+      penalty += Math.min(0.42, titleConflictHits * 0.20 + fullConflictHits * 0.08);
+    });
+    const query = lower(plan.originalQuery);
+    const titleLooksTor = /\btor\b|term of reference|ขอบเขตของงาน/i.test(title);
+    const wantsTor = /\btor\b|ขอบเขตของงาน/i.test(query);
+    const titleLooksNews = /ข่าว|ประชาสัมพันธ์|กิจกรรม|ประกาศรับสมัคร/.test(title);
+    if (titleLooksTor && !wantsTor) penalty += 0.28;
+    if (titleLooksNews && profiles.some(profile => ['travel','vehicle-repair','procurement','health-fund','personnel','council'].includes(profile.id))) penalty += 0.12;
+    boost = Math.min(0.36, boost);
+    penalty = Math.min(0.55, penalty);
+    return Object.freeze({ intentBoost: boost, intentPenalty: penalty, intentScore: boost - penalty, matchedProfiles: Object.freeze([...new Set(matchedProfiles)]) });
   }
 
   function evidenceFeatures(result, plan) {
@@ -204,7 +232,7 @@
     const subjectAdjustment = subjectProfile ? (subjectCompatibility ? 0.18 : -0.30) : 0;
     const navigationPenalty = navigational ? 0.55 : 0;
     const relevance = Math.max(0, Math.min(1, baseRelevance + intentBoost + documentTypeAdjustment + subjectAdjustment - intentPenalty - navigationPenalty));
-    return Object.freeze({ coverage, titleCoverage, exactPhrase, metadataCompleteness: metadata, preferredCoverage, intentCompatibility, subjectCompatibility, subjectTitleMatch, subjectSnippetMatches, negativeMatches, primaryDocument, secondaryDocument, navigational, relevance });
+    return Object.freeze({ coverage, titleCoverage, exactPhrase, metadataCompleteness: metadata, preferredCoverage, intentCompatibility, subjectCompatibility, subjectTitleMatch, subjectSnippetMatches, negativeMatches, primaryDocument, secondaryDocument, navigational, intentBoost, intentPenalty, intentScore: intentBoost - intentPenalty, relevance });
   }
 
   function canonicalKey(result) {
@@ -230,6 +258,7 @@
     return Object.freeze([...deduped.values()].sort((a, b) =>
       Number(b.official) - Number(a.official)
       || b.queryRelevance - a.queryRelevance
+      || (b.evidenceFeatures?.intentScore ?? 0) - (a.evidenceFeatures?.intentScore ?? 0)
       || b.sourcePriority - a.sourcePriority
       || String(b.documentDate || b.effectiveDate).localeCompare(String(a.documentDate || a.effectiveDate))
       || a.title.localeCompare(b.title, 'th')

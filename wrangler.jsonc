@@ -9,7 +9,29 @@
     "html_handling": "none",
     "not_found_handling": "404-page"
   },
+  "secrets": {
+    "required": ["TAVILY_API_KEY"]
+  },
+  "ratelimits": [
+    {
+      "name": "OFFICIAL_SEARCH_RATE_LIMITER",
+      "namespace_id": "7001",
+      "simple": {
+        "limit": 60,
+        "period": 60
+      }
+    }
+  ],
   "observability": {
-    "enabled": true
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "invocation_logs": false,
+      "head_sampling_rate": 0.05,
+      "persist": true
+    },
+    "traces": {
+      "enabled": false
+    }
   }
 }
