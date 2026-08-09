@@ -15,6 +15,7 @@ const OFFICIAL_HOSTS = new Set([
 
 const FRONTEND_ORIGIN = 'https://sayampreecha-ux.github.io';
 const MAX_REQUEST_BYTES = 16 * 1024;
+const SECURITY_POLICY_VERSION = '2026-08-09.1';
 const JSON_HEADERS = Object.freeze({
   'content-type': 'application/json; charset=utf-8',
   'cache-control': 'no-store',
@@ -22,9 +23,13 @@ const JSON_HEADERS = Object.freeze({
   'x-content-type-options': 'nosniff',
   'x-frame-options': 'DENY',
   'referrer-policy': 'no-referrer',
+  'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
+  'permissions-policy': 'camera=(), microphone=(), geolocation=()',
+  'x-govprompt-security': SECURITY_POLICY_VERSION,
   'access-control-allow-origin': FRONTEND_ORIGIN,
   'access-control-allow-methods': 'POST, OPTIONS',
   'access-control-allow-headers': 'content-type',
+  'access-control-expose-headers': 'x-govprompt-security',
   'access-control-max-age': '600',
   'vary': 'Origin'
 });
@@ -90,15 +95,25 @@ function containsHighConfidenceSensitiveData(query) {
 }
 
 function isAllowedOrigin(request) {
-  const origin = request.headers.get('origin');
-  return !origin || origin === FRONTEND_ORIGIN;
+  return request.headers.get('origin') === FRONTEND_ORIGIN;
 }
 
-function requestTooLarge(request) {
+function requestTooLargeByHeader(request) {
   const header = request.headers.get('content-length');
   if (!header) return false;
   const bytes = Number(header);
   return Number.isFinite(bytes) && bytes > MAX_REQUEST_BYTES;
+}
+
+async function readJsonBody(request) {
+  const raw = await request.arrayBuffer();
+  if (raw.byteLength > MAX_REQUEST_BYTES) return { ok: false, error: 'REQUEST_TOO_LARGE' };
+  try {
+    const text = new TextDecoder().decode(raw);
+    return { ok: true, body: JSON.parse(text) };
+  } catch {
+    return { ok: false, error: 'INVALID_JSON' };
+  }
 }
 
 async function checkRateLimit(request, env, url, requestId) {
@@ -111,8 +126,7 @@ async function checkRateLimit(request, env, url, requestId) {
     return { allowed: true, configured: false };
   }
 
-  const origin = request.headers.get('origin') || 'direct';
-  const key = `${origin}:${url.pathname}`;
+  const key = `public-web:${url.pathname}`;
   try {
     const result = await limiter.limit({ key });
     return { allowed: Boolean(result?.success), configured: true };
@@ -213,7 +227,7 @@ export default {
       logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'ORIGIN_NOT_ALLOWED' });
       return json({ ok: false, error: 'ORIGIN_NOT_ALLOWED', requestId }, 403);
     }
-    if (requestTooLarge(request)) {
+    if (requestTooLargeByHeader(request)) {
       logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'REQUEST_TOO_LARGE' });
       return json({ ok: false, error: 'REQUEST_TOO_LARGE', requestId }, 413);
     }
@@ -227,12 +241,14 @@ export default {
       return json({ ok: false, error: 'RATE_LIMITED', requestId }, 429, { 'retry-after': '60' });
     }
 
-    let body;
-    try { body = await request.json(); } catch {
-      logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'INVALID_JSON' });
-      return json({ ok: false, error: 'INVALID_JSON', requestId }, 400);
+    const parsedBody = await readJsonBody(request);
+    if (!parsedBody.ok) {
+      const status = parsedBody.error === 'REQUEST_TOO_LARGE' ? 413 : 400;
+      logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: parsedBody.error });
+      return json({ ok: false, error: parsedBody.error, requestId }, status);
     }
-    const payload = parseRequestBody(body);
+
+    const payload = parseRequestBody(parsedBody.body);
     if (!payload.query) {
       logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'QUERY_REQUIRED' });
       return json({ ok: false, error: 'QUERY_REQUIRED', requestId }, 400);
@@ -249,21 +265,23 @@ export default {
       event: 'search_started', requestId, method: request.method,
       queryLength: payload.query.length, siteCount: payload.sites.length,
       requestedCount: payload.count, providerConfigured: Boolean(env.TAVILY_API_KEY),
-      rateLimitConfigured: rateLimit.configured
+      rateLimitConfigured: rateLimit.configured, securityPolicyVersion: SECURITY_POLICY_VERSION
     });
 
     const search = await searchTavily(env, payload);
     if (!search.ok) {
       logSearch('error', {
         event: 'search_failed', requestId, error: search.error,
-        providerStatus: search.providerStatus ?? null, durationMs: Date.now() - startedAt
+        providerStatus: search.providerStatus ?? null, durationMs: Date.now() - startedAt,
+        securityPolicyVersion: SECURITY_POLICY_VERSION
       });
       return json({ ok: false, error: search.error, providerStatus: search.providerStatus ?? null, requestId }, search.status);
     }
 
     logSearch('info', {
       event: 'search_completed', requestId, provider: search.provider,
-      resultCount: search.results.length, durationMs: Date.now() - startedAt
+      resultCount: search.results.length, durationMs: Date.now() - startedAt,
+      securityPolicyVersion: SECURITY_POLICY_VERSION
     });
 
     return json({
