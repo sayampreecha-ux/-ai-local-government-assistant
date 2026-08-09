@@ -49,24 +49,71 @@
     return Object.freeze(matches.map(rule => rule.label));
   }
 
+  function applyRedactions(input, { preserveWhitespace = false } = {}) {
+    const original = String(input ?? '');
+    let safeText = original;
+    const redactions = [];
+    REDACTION_RULES.forEach(rule => {
+      rule.pattern.lastIndex = 0;
+      if (!rule.pattern.test(safeText)) return;
+      redactions.push(rule.label);
+      rule.pattern.lastIndex = 0;
+      safeText = safeText.replace(rule.pattern, rule.replacement);
+    });
+    safeText = safeText.replace(/\b\d{16,}\b/g, ' ');
+    safeText = preserveWhitespace
+      ? safeText.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim()
+      : collapseWhitespace(safeText);
+    return { safeText, redactions: Object.freeze([...new Set(redactions)]) };
+  }
+
+  function sanitizeExternalContent(input) {
+    const original = String(input ?? '');
+    const blockingRisks = detectBlockingRisk(original);
+    const redacted = applyRedactions(original, { preserveWhitespace: true });
+    const residualRisks = detectResidualRisk(redacted.safeText);
+    return Object.freeze({
+      original,
+      safeText: redacted.safeText,
+      changed: redacted.safeText !== original,
+      blocked: blockingRisks.length > 0 || residualRisks.length > 0,
+      redactions: redacted.redactions,
+      blockingRisks,
+      residualRisks
+    });
+  }
+
+  function sanitizeAttachmentName(name, index = 1) {
+    const original = String(name ?? '').trim();
+    const dot = original.lastIndexOf('.');
+    const extension = dot > 0 && dot < original.length - 1
+      ? original.slice(dot + 1).replace(/[^A-Za-z0-9]/g, '').slice(0, 8).toLowerCase()
+      : '';
+    const base = dot > 0 ? original.slice(0, dot) : original;
+    const privacy = sanitizeExternalContent(base);
+    let safeBase = privacy.safeText
+      .replace(/[\\/:*?"<>|]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 60);
+    if (!safeBase || privacy.blocked || privacy.residualRisks.length) safeBase = `เอกสารแนบ-${index}`;
+    const safeName = `${safeBase}${extension ? `.${extension}` : ''}`;
+    return Object.freeze({
+      original,
+      safeName,
+      changed: safeName !== original,
+      blocked: privacy.blocked,
+      redactions: privacy.redactions,
+      blockingRisks: privacy.blockingRisks,
+      residualRisks: privacy.residualRisks
+    });
+  }
+
   function sanitizeExternalQuery(input) {
     const original = collapseWhitespace(input);
     const blockingRisks = detectBlockingRisk(original);
-    let safeQuery = original;
-    const redactions = [];
-
-    REDACTION_RULES.forEach(rule => {
-      rule.pattern.lastIndex = 0;
-      if (!rule.pattern.test(safeQuery)) return;
-      redactions.push(rule.label);
-      rule.pattern.lastIndex = 0;
-      safeQuery = safeQuery.replace(rule.pattern, rule.replacement);
-    });
-
-    safeQuery = collapseWhitespace(safeQuery)
-      .replace(/\b\d{16,}\b/g, ' ');
-    safeQuery = collapseWhitespace(safeQuery);
-
+    const redacted = applyRedactions(original);
+    let safeQuery = redacted.safeText;
     const residualRisks = detectResidualRisk(safeQuery);
     const blocked = blockingRisks.length > 0 || residualRisks.length > 0;
     const fallbackApplied = safeQuery.length < 3;
@@ -78,7 +125,7 @@
       changed: safeQuery !== original,
       blocked,
       fallbackApplied,
-      redactions: Object.freeze([...new Set(redactions)]),
+      redactions: redacted.redactions,
       blockingRisks,
       residualRisks
     });
@@ -150,6 +197,8 @@
 
   window.GovPromptCore = window.GovPromptCore || {};
   window.GovPromptCore.sanitizeExternalQuery = sanitizeExternalQuery;
+  window.GovPromptCore.sanitizeExternalContent = sanitizeExternalContent;
+  window.GovPromptCore.sanitizeAttachmentName = sanitizeAttachmentName;
   window.GovPromptCore.detectBlockingRisk = detectBlockingRisk;
   window.GovPromptCore.detectResidualRisk = detectResidualRisk;
   window.GovPromptCore.installPrivacyGuard = installPrivacyGuard;
