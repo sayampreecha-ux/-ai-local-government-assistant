@@ -14,15 +14,31 @@ const OFFICIAL_HOSTS = new Set([
 ]);
 
 const FRONTEND_ORIGIN = 'https://sayampreecha-ux.github.io';
+const MAX_REQUEST_BYTES = 16 * 1024;
 const JSON_HEADERS = Object.freeze({
   'content-type': 'application/json; charset=utf-8',
   'cache-control': 'no-store',
+  'pragma': 'no-cache',
   'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY',
+  'referrer-policy': 'no-referrer',
   'access-control-allow-origin': FRONTEND_ORIGIN,
   'access-control-allow-methods': 'POST, OPTIONS',
   'access-control-allow-headers': 'content-type',
+  'access-control-max-age': '600',
   'vary': 'Origin'
 });
+
+const HIGH_CONFIDENCE_SENSITIVE_PATTERNS = Object.freeze([
+  /\b\d(?:[ -]?\d){12}\b/g,
+  /[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g,
+  /(?:\+66|0)\s*\d(?:[\s-]*\d){7,8}\b/g,
+  /(?:เลขบัญชี|บัญชีธนาคาร|พร้อมเพย์)\s*[:：-]?\s*[0-9\s-]{6,20}/gi,
+  /(?:password|passwd|api\s*key|secret|token|รหัสผ่าน|กุญแจ\s*api)\s*[:=：-]?\s*[^\s,;]+/gi,
+  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g,
+  /(?:ข้อมูลลับของราชการ|ชั้นความลับ|ลับมาก|ลับที่สุด)\s*[:：-]?\s*[^,;\n]{1,120}/gi,
+  /(?:HN|AN|เลขผู้ป่วย|รหัสผู้ป่วย)\s*[:：-]?\s*[A-Za-z0-9/-]{3,30}/gi
+]);
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
@@ -61,6 +77,25 @@ function parseRequestBody(body) {
     : [];
   const count = Math.min(Math.max(Number(body?.count) || 10, 1), 20);
   return { query, sites, count };
+}
+
+function containsHighConfidenceSensitiveData(query) {
+  return HIGH_CONFIDENCE_SENSITIVE_PATTERNS.some(pattern => {
+    pattern.lastIndex = 0;
+    return pattern.test(query);
+  });
+}
+
+function isAllowedOrigin(request) {
+  const origin = request.headers.get('origin');
+  return !origin || origin === FRONTEND_ORIGIN;
+}
+
+function requestTooLarge(request) {
+  const header = request.headers.get('content-length');
+  if (!header) return false;
+  const bytes = Number(header);
+  return Number.isFinite(bytes) && bytes > MAX_REQUEST_BYTES;
 }
 
 function normalizeResult(item) {
@@ -138,10 +173,22 @@ export default {
     if (url.pathname !== '/api/official-search') return fetchAsset(request, env, url);
     const requestId = request.headers.get('cf-ray') || crypto.randomUUID();
     const startedAt = Date.now();
-    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
+
+    if (request.method === 'OPTIONS') {
+      if (!isAllowedOrigin(request)) return json({ ok: false, error: 'ORIGIN_NOT_ALLOWED', requestId }, 403);
+      return new Response(null, { status: 204, headers: JSON_HEADERS });
+    }
     if (request.method !== 'POST') {
       logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'METHOD_NOT_ALLOWED' });
       return json({ ok: false, error: 'METHOD_NOT_ALLOWED', requestId }, 405);
+    }
+    if (!isAllowedOrigin(request)) {
+      logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'ORIGIN_NOT_ALLOWED' });
+      return json({ ok: false, error: 'ORIGIN_NOT_ALLOWED', requestId }, 403);
+    }
+    if (requestTooLarge(request)) {
+      logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'REQUEST_TOO_LARGE' });
+      return json({ ok: false, error: 'REQUEST_TOO_LARGE', requestId }, 413);
     }
 
     let body;
@@ -153,6 +200,13 @@ export default {
     if (!payload.query) {
       logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'QUERY_REQUIRED' });
       return json({ ok: false, error: 'QUERY_REQUIRED', requestId }, 400);
+    }
+    if (containsHighConfidenceSensitiveData(payload.query)) {
+      logSearch('warn', {
+        event: 'request_rejected', requestId, method: request.method,
+        reason: 'SENSITIVE_QUERY_BLOCKED', queryLength: payload.query.length
+      });
+      return json({ ok: false, error: 'SENSITIVE_QUERY_BLOCKED', requestId }, 422);
     }
 
     logSearch('info', {
@@ -178,7 +232,6 @@ export default {
     return json({
       ok: true,
       requestId,
-      query: payload.query,
       sites: payload.sites,
       provider: search.provider,
       searchedAt: new Date().toISOString(),
