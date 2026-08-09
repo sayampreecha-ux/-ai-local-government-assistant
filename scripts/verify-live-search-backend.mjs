@@ -9,13 +9,15 @@ const assets = {
     return new Response('asset', { status: 200 });
   }
 };
+const allowLimiter = { limit: async () => ({ success: true }) };
+const denyLimiter = { limit: async () => ({ success: false }) };
 
 const noKeyRequest = new Request('https://example.test/api/official-search', {
   method: 'POST',
   headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
   body: JSON.stringify({ query: 'ระเบียบค่าเดินทางล่าสุด', sites: ['cgd.go.th', 'example.com'] })
 });
-const noKeyResponse = await worker.fetch(noKeyRequest, { ASSETS: assets });
+const noKeyResponse = await worker.fetch(noKeyRequest, { ASSETS: assets, OFFICIAL_SEARCH_RATE_LIMITER: allowLimiter });
 assert.equal(noKeyResponse.status, 503);
 const noKeyBody = await noKeyResponse.json();
 assert.equal(noKeyBody.error, 'SEARCH_PROVIDER_NOT_CONFIGURED');
@@ -38,15 +40,24 @@ const rejectedOrigin = await worker.fetch(new Request('https://example.test/api/
   method: 'POST',
   headers: { 'content-type': 'application/json', origin: 'https://evil.example' },
   body: JSON.stringify({ query: 'ระเบียบค่าเดินทาง', sites: ['cgd.go.th'] })
-}), { ASSETS: assets });
+}), { ASSETS: assets, OFFICIAL_SEARCH_RATE_LIMITER: allowLimiter });
 assert.equal(rejectedOrigin.status, 403);
 assert.equal((await rejectedOrigin.json()).error, 'ORIGIN_NOT_ALLOWED');
+
+const rateLimitedRequest = await worker.fetch(new Request('https://example.test/api/official-search', {
+  method: 'POST',
+  headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
+  body: JSON.stringify({ query: 'ระเบียบค่าเดินทางล่าสุด', sites: ['cgd.go.th'] })
+}), { ASSETS: assets, OFFICIAL_SEARCH_RATE_LIMITER: denyLimiter, TAVILY_API_KEY: 'unused-secret' });
+assert.equal(rateLimitedRequest.status, 429);
+assert.equal(rateLimitedRequest.headers.get('retry-after'), '60');
+assert.equal((await rateLimitedRequest.json()).error, 'RATE_LIMITED');
 
 const sensitiveRequest = await worker.fetch(new Request('https://example.test/api/official-search', {
   method: 'POST',
   headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
   body: JSON.stringify({ query: 'ตรวจสิทธิของนาย ก เลขบัตร 1234567890123', sites: ['dla.go.th'] })
-}), { ASSETS: assets, TAVILY_API_KEY: 'unused-secret' });
+}), { ASSETS: assets, OFFICIAL_SEARCH_RATE_LIMITER: allowLimiter, TAVILY_API_KEY: 'unused-secret' });
 assert.equal(sensitiveRequest.status, 422);
 const sensitiveBody = await sensitiveRequest.json();
 assert.equal(sensitiveBody.error, 'SENSITIVE_QUERY_BLOCKED');
@@ -56,7 +67,7 @@ const secretRequest = await worker.fetch(new Request('https://example.test/api/o
   method: 'POST',
   headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
   body: JSON.stringify({ query: 'api key: super-secret-value ระเบียบราชการ', sites: ['dla.go.th'] })
-}), { ASSETS: assets, TAVILY_API_KEY: 'unused-secret' });
+}), { ASSETS: assets, OFFICIAL_SEARCH_RATE_LIMITER: allowLimiter, TAVILY_API_KEY: 'unused-secret' });
 assert.equal(secretRequest.status, 422);
 assert.equal((await secretRequest.json()).error, 'SENSITIVE_QUERY_BLOCKED');
 
@@ -87,7 +98,11 @@ try {
     headers: { 'content-type': 'application/json', origin: FRONTEND_ORIGIN },
     body: JSON.stringify({ query: 'หนังสือเวียนกรมบัญชีกลางล่าสุด', sites: ['cgd.go.th', 'example.com'], count: 10 })
   });
-  const liveResponse = await worker.fetch(liveRequest, { ASSETS: assets, TAVILY_API_KEY: 'test-secret-never-return' });
+  const liveResponse = await worker.fetch(liveRequest, {
+    ASSETS: assets,
+    OFFICIAL_SEARCH_RATE_LIMITER: allowLimiter,
+    TAVILY_API_KEY: 'test-secret-never-return'
+  });
   assert.equal(liveResponse.status, 200);
   const liveBody = await liveResponse.json();
   assert.equal(liveBody.provider, 'tavily');
@@ -120,4 +135,4 @@ assert.equal(await assetResponse.text(), 'asset');
 const previewFallback = await worker.fetch(new Request('https://example.test/'), {});
 assert.equal(previewFallback.status, 404);
 
-console.log('GovPrompt v7 Live Search Backend verification passed with privacy, origin and Tavily minimization controls.');
+console.log('GovPrompt v7 Live Search Backend verification passed with privacy, origin, rate limiting and Tavily minimization controls.');
