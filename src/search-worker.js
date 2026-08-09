@@ -40,8 +40,11 @@ const HIGH_CONFIDENCE_SENSITIVE_PATTERNS = Object.freeze([
   /(?:HN|AN|เลขผู้ป่วย|รหัสผู้ป่วย)\s*[:：-]?\s*[A-Za-z0-9/-]{3,30}/gi
 ]);
 
-function json(body, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
+function json(body, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...JSON_HEADERS, ...extraHeaders }
+  });
 }
 
 function logSearch(level, fields) {
@@ -96,6 +99,30 @@ function requestTooLarge(request) {
   if (!header) return false;
   const bytes = Number(header);
   return Number.isFinite(bytes) && bytes > MAX_REQUEST_BYTES;
+}
+
+async function checkRateLimit(request, env, url, requestId) {
+  const limiter = env?.OFFICIAL_SEARCH_RATE_LIMITER;
+  if (!limiter || typeof limiter.limit !== 'function') {
+    logSearch('warn', {
+      event: 'rate_limit_unavailable', requestId,
+      reason: 'RATE_LIMIT_BINDING_MISSING'
+    });
+    return { allowed: true, configured: false };
+  }
+
+  const origin = request.headers.get('origin') || 'direct';
+  const key = `${origin}:${url.pathname}`;
+  try {
+    const result = await limiter.limit({ key });
+    return { allowed: Boolean(result?.success), configured: true };
+  } catch {
+    logSearch('error', {
+      event: 'rate_limit_error', requestId,
+      reason: 'RATE_LIMIT_CHECK_FAILED'
+    });
+    return { allowed: false, configured: true };
+  }
 }
 
 function normalizeResult(item) {
@@ -191,6 +218,15 @@ export default {
       return json({ ok: false, error: 'REQUEST_TOO_LARGE', requestId }, 413);
     }
 
+    const rateLimit = await checkRateLimit(request, env, url, requestId);
+    if (!rateLimit.allowed) {
+      logSearch('warn', {
+        event: 'request_rejected', requestId, method: request.method,
+        reason: 'RATE_LIMITED'
+      });
+      return json({ ok: false, error: 'RATE_LIMITED', requestId }, 429, { 'retry-after': '60' });
+    }
+
     let body;
     try { body = await request.json(); } catch {
       logSearch('warn', { event: 'request_rejected', requestId, method: request.method, reason: 'INVALID_JSON' });
@@ -212,7 +248,8 @@ export default {
     logSearch('info', {
       event: 'search_started', requestId, method: request.method,
       queryLength: payload.query.length, siteCount: payload.sites.length,
-      requestedCount: payload.count, providerConfigured: Boolean(env.TAVILY_API_KEY)
+      requestedCount: payload.count, providerConfigured: Boolean(env.TAVILY_API_KEY),
+      rateLimitConfigured: rateLimit.configured
     });
 
     const search = await searchTavily(env, payload);
