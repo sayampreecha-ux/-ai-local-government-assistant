@@ -24,6 +24,14 @@
   ],
   "observability": {
     "enabled": true,
-    "head_sampling_rate": 0.05
+    "logs": {
+      "enabled": true,
+      "invocation_logs": false,
+      "head_sampling_rate": 0.05,
+      "persist": true
+    },
+    "traces": {
+      "enabled": false
+    }
   }
 }
