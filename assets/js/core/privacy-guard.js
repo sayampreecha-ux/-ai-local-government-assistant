@@ -10,11 +10,20 @@
     { id: 'bank-account', label: 'เลขบัญชี/พร้อมเพย์', pattern: /(?:เลขบัญชี|บัญชีธนาคาร|พร้อมเพย์)\s*[:：-]?\s*[0-9\s-]{6,20}/gi, replacement: ' เลขบัญชี [ปกปิด] ' },
     { id: 'named-person', label: 'ชื่อบุคคล', pattern: /(?:นาย|นาง|นางสาว|ด\.ช\.|ด\.ญ\.|เด็กชาย|เด็กหญิง)\s*[ก-๙A-Za-z.'’-]+(?:\s+[ก-๙A-Za-z.'’-]+){0,2}/g, replacement: ' [ปกปิดชื่อบุคคล] ' },
     { id: 'explicit-name', label: 'ชื่อ-นามสกุล', pattern: /(?:ชื่อ(?:-?นามสกุล)?|ชื่อผู้ป่วย|ชื่อเจ้าของบัญชี)\s*[:：-]?\s*[ก-๙A-Za-z.'’-]+(?:\s+[ก-๙A-Za-z.'’-]+){0,3}/gi, replacement: ' ชื่อ [ปกปิด] ' },
-    { id: 'health-detail', label: 'รายละเอียดสุขภาพเฉพาะบุคคล', pattern: /(?:ผลตรวจ|ผลเลือด|การวินิจฉัย|ประวัติการรักษา|ข้อมูลสุขภาพ|โรคประจำตัว)\s*[:：-]?\s*[^,;\n]{1,100}/gi, replacement: ' ข้อมูลสุขภาพ [ปกปิด] ' },
     { id: 'patient-id', label: 'รหัสผู้ป่วย/HN/AN', pattern: /(?:HN|AN|เลขผู้ป่วย|รหัสผู้ป่วย)\s*[:：#-]?\s*[A-Za-z0-9/-]{3,30}/gi, replacement: ' รหัสผู้ป่วย [ปกปิด] ' },
-    { id: 'birth-date', label: 'วันเดือนปีเกิด', pattern: /(?:วันเกิด|วันเดือนปีเกิด|เกิดวันที่)\s*[:：-]?\s*.*?(?=\s+(?:อายุ|เบอร์(?:โทร(?:ศัพท์)?)?|โทรศัพท์|มือถือ|ที่อยู่|บ้านเลขที่|เลขบัตร|เลขประจำตัว|HN|AN)\b|[,;\n]|$)/gi, replacement: ' วันเกิด [ปกปิด] ' },
-    { id: 'address', label: 'ที่อยู่', pattern: /(?:ที่อยู่|บ้านเลขที่)\s*[:：-]?\s*.*?(?=\s+(?:อายุ|วันเกิด|วันเดือนปีเกิด|เกิดวันที่|เบอร์(?:โทร(?:ศัพท์)?)?|โทรศัพท์|มือถือ|เลขบัตร|เลขประจำตัว|HN|AN)\b|[,;\n]|$)/gi, replacement: ' ที่อยู่ [ปกปิด] ' },
+    { id: 'birth-date', label: 'วันเดือนปีเกิด', pattern: /(?:วันเกิด|วันเดือนปีเกิด|เกิดวันที่)\s*[:：-]?\s*.*?(?=\s+(?:อายุ|เพศ|หมู่เลือด|กรุ๊ปเลือด|เบอร์(?:โทร(?:ศัพท์)?)?|โทรศัพท์|มือถือ|ที่อยู่|บ้านเลขที่|เลขบัตร|เลขประจำตัว|HN|AN)\b|[,;\n]|$)/gi, replacement: ' วันเกิด [ปกปิด] ' },
+    { id: 'address', label: 'ที่อยู่', pattern: /(?:ที่อยู่|บ้านเลขที่)\s*[:：-]?\s*.*?(?=\s+(?:อายุ|เพศ|หมู่เลือด|กรุ๊ปเลือด|วันเกิด|วันเดือนปีเกิด|เกิดวันที่|เบอร์(?:โทร(?:ศัพท์)?)?|โทรศัพท์|มือถือ|เลขบัตร|เลขประจำตัว|HN|AN)\b|[,;\n]|$)/gi, replacement: ' ที่อยู่ [ปกปิด] ' },
     { id: 'vehicle-plate', label: 'ทะเบียนรถ', pattern: /(?:ทะเบียนรถ|เลขทะเบียน)\s*[:：-]?\s*[ก-๙A-Za-z0-9 -]{2,20}/gi, replacement: ' ทะเบียนรถ [ปกปิด] ' }
+  ]);
+
+  const SENSITIVE_CONTEXT_RULES = Object.freeze([
+    { id: 'health', label: 'ข้อมูลสุขภาพ', pattern: /(?:หมู่เลือด|กรุ๊ปเลือด|ผลตรวจ|ผลเลือด|การวินิจฉัย|ประวัติการรักษา|ข้อมูลสุขภาพ|โรคประจำตัว|ความพิการ|ผู้พิการ|พันธุกรรม|genetic|biometric|ชีวมิติ)/i },
+    { id: 'belief', label: 'ความเชื่อ/ศาสนา', pattern: /(?:ศาสนา|ความเชื่อ|ลัทธิ|ปรัชญาความเชื่อ)/i },
+    { id: 'politics', label: 'ความคิดเห็นทางการเมือง', pattern: /(?:ความคิดเห็นทางการเมือง|พรรคการเมือง|แนวคิดทางการเมือง)/i },
+    { id: 'sexual', label: 'พฤติกรรมทางเพศ', pattern: /(?:พฤติกรรมทางเพศ|รสนิยมทางเพศ|อัตลักษณ์ทางเพศ)/i },
+    { id: 'race-ethnicity', label: 'เชื้อชาติ/เผ่าพันธุ์', pattern: /(?:เชื้อชาติ|เผ่าพันธุ์|ชาติพันธุ์)/i },
+    { id: 'criminal', label: 'ประวัติอาชญากรรม', pattern: /(?:ประวัติอาชญากรรม|ประวัติอาญา|คดีอาญา)/i },
+    { id: 'union', label: 'ข้อมูลสหภาพแรงงาน', pattern: /(?:สหภาพแรงงาน|สมาชิกสหภาพ)/i }
   ]);
 
   const BLOCK_RULES = Object.freeze([
@@ -33,15 +42,14 @@
 
   const collapseWhitespace = value => String(value ?? '').replace(/\s+/g, ' ').trim();
 
-  function detectBlockingRisk(input) {
+  function detectByRules(input, rules) {
     const text = String(input ?? '');
-    return Object.freeze(BLOCK_RULES.filter(rule => { rule.pattern.lastIndex = 0; return rule.pattern.test(text); }).map(rule => rule.label));
+    return Object.freeze(rules.filter(rule => { rule.pattern.lastIndex = 0; return rule.pattern.test(text); }).map(rule => rule.label));
   }
 
-  function detectResidualRisk(input) {
-    const text = String(input ?? '');
-    return Object.freeze(RESIDUAL_RISK_RULES.filter(rule => { rule.pattern.lastIndex = 0; return rule.pattern.test(text); }).map(rule => rule.label));
-  }
+  const detectBlockingRisk = input => detectByRules(input, BLOCK_RULES);
+  const detectResidualRisk = input => detectByRules(input, RESIDUAL_RISK_RULES);
+  const detectSensitiveContext = input => detectByRules(input, SENSITIVE_CONTEXT_RULES);
 
   function applyRedactions(input, { preserveWhitespace = false } = {}) {
     const original = String(input ?? '');
@@ -62,9 +70,10 @@
   function sanitizeExternalContent(input) {
     const original = String(input ?? '');
     const blockingRisks = detectBlockingRisk(original);
+    const sensitiveContext = detectSensitiveContext(original);
     const redacted = applyRedactions(original, { preserveWhitespace: true });
     const residualRisks = detectResidualRisk(redacted.safeText);
-    return Object.freeze({ original, safeText: redacted.safeText, changed: redacted.safeText !== original, blocked: blockingRisks.length > 0 || residualRisks.length > 0, redactions: redacted.redactions, blockingRisks, residualRisks });
+    return Object.freeze({ original, safeText: redacted.safeText, changed: redacted.safeText !== original, blocked: blockingRisks.length > 0 || residualRisks.length > 0, redactions: redacted.redactions, blockingRisks, residualRisks, sensitiveContext });
   }
 
   function sanitizeAttachmentName(name, index = 1) {
@@ -76,25 +85,26 @@
     let safeBase = privacy.safeText.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
     if (!safeBase || privacy.blocked || privacy.residualRisks.length) safeBase = `เอกสารแนบ-${index}`;
     const safeName = `${safeBase}${extension ? `.${extension}` : ''}`;
-    return Object.freeze({ original, safeName, changed: safeName !== original, blocked: privacy.blocked, redactions: privacy.redactions, blockingRisks: privacy.blockingRisks, residualRisks: privacy.residualRisks });
+    return Object.freeze({ original, safeName, changed: safeName !== original, blocked: privacy.blocked, redactions: privacy.redactions, blockingRisks: privacy.blockingRisks, residualRisks: privacy.residualRisks, sensitiveContext: privacy.sensitiveContext });
   }
 
   function sanitizeExternalQuery(input) {
     const original = collapseWhitespace(input);
     const blockingRisks = detectBlockingRisk(original);
+    const sensitiveContext = detectSensitiveContext(original);
     const redacted = applyRedactions(original);
     let safeQuery = redacted.safeText;
     const residualRisks = detectResidualRisk(safeQuery);
     const blocked = blockingRisks.length > 0 || residualRisks.length > 0;
     const fallbackApplied = safeQuery.length < 3;
     if (fallbackApplied) safeQuery = 'กฎหมาย ระเบียบ หนังสือสั่งการ งานราชการ';
-    return Object.freeze({ original, safeQuery, changed: safeQuery !== original, blocked, fallbackApplied, redactions: redacted.redactions, blockingRisks, residualRisks });
+    return Object.freeze({ original, safeQuery, changed: safeQuery !== original, blocked, fallbackApplied, redactions: redacted.redactions, blockingRisks, residualRisks, sensitiveContext });
   }
 
   function blockedSearchResult(privacy) {
     const reasons = [...privacy.blockingRisks, ...privacy.residualRisks];
     const reasonText = reasons.length ? ` (${[...new Set(reasons)].join(', ')})` : '';
-    return Object.freeze({ mode: 'blocked', provider: 'privacy-guard', searchedAt: new Date().toISOString(), results: Object.freeze([]), evidence: Object.freeze({ primaryResults: Object.freeze([]), conclusionEligible: false }), warning: `Privacy Guard หยุดการค้นภายนอก เพราะตรวจพบข้อมูลเสี่ยง${reasonText} กรุณาปกปิดข้อมูลก่อนค้นใหม่`, privacyGuard: Object.freeze({ applied: true, blocked: true, redactions: privacy.redactions, blockingRisks: privacy.blockingRisks, residualRisks: privacy.residualRisks, externalQueryWasSanitized: privacy.changed, externalRequestSent: false }) });
+    return Object.freeze({ mode: 'blocked', provider: 'privacy-guard', searchedAt: new Date().toISOString(), results: Object.freeze([]), evidence: Object.freeze({ primaryResults: Object.freeze([]), conclusionEligible: false }), warning: `Privacy Guard หยุดการค้นภายนอก เพราะตรวจพบข้อมูลเสี่ยง${reasonText} กรุณาปกปิดข้อมูลก่อนค้นใหม่`, privacyGuard: Object.freeze({ applied: true, blocked: true, redactions: privacy.redactions, blockingRisks: privacy.blockingRisks, residualRisks: privacy.residualRisks, sensitiveContext: privacy.sensitiveContext, externalQueryWasSanitized: privacy.changed, externalRequestSent: false }) });
   }
 
   function installPrivacyGuard() {
@@ -105,10 +115,10 @@
     const guardedConnector = Object.freeze({ ...connector, __privacyGuardInstalled: true, search: async (query, options = {}) => {
       const privacy = sanitizeExternalQuery(query);
       if (privacy.blocked) { window.GovPrompt?.toast?.('🔒 Privacy Guard หยุดการค้นภายนอก: พบข้อมูลลับหรือข้อมูลเสี่ยงที่ปกปิดไม่ได้'); return blockedSearchResult(privacy); }
-      if (privacy.changed) window.GovPrompt?.toast?.('🔐 ปกปิดข้อมูลส่วนบุคคลอัตโนมัติก่อนค้นภายนอกแล้ว');
+      if (privacy.changed) window.GovPrompt?.toast?.('🔐 ปกปิดตัวระบุบุคคลอัตโนมัติก่อนค้นภายนอกแล้ว');
       const result = await connector.search(privacy.safeQuery, options);
       if (!result || typeof result !== 'object') return result;
-      return Object.freeze({ ...result, privacyGuard: Object.freeze({ applied: privacy.changed, blocked: false, redactions: privacy.redactions, blockingRisks: privacy.blockingRisks, residualRisks: privacy.residualRisks, externalQueryWasSanitized: privacy.changed, externalRequestSent: true }) });
+      return Object.freeze({ ...result, privacyGuard: Object.freeze({ applied: privacy.changed, blocked: false, redactions: privacy.redactions, blockingRisks: privacy.blockingRisks, residualRisks: privacy.residualRisks, sensitiveContext: privacy.sensitiveContext, externalQueryWasSanitized: privacy.changed, externalRequestSent: true }) });
     }});
     core.officialSearchConnector = guardedConnector;
     return core.officialSearchConnector === guardedConnector;
@@ -140,7 +150,11 @@
       input.value = privacy.safeText;
       input.dispatchEvent(new Event('input', { bubbles: true }));
       const labels = privacy.redactions.length ? privacy.redactions.join(', ') : 'ข้อมูลส่วนบุคคล';
-      window.GovPrompt?.toast?.(`🔐 ปกปิดอัตโนมัติแล้ว: ${labels}`);
+      if (privacy.sensitiveContext.length) {
+        window.GovPrompt?.toast?.(`🔐 ปกปิดตัวระบุบุคคลแล้ว และคงข้อมูลอ่อนไหวที่จำเป็นแบบไม่ระบุตัวบุคคล: ${privacy.sensitiveContext.join(', ')}`);
+      } else {
+        window.GovPrompt?.toast?.(`🔐 ปกปิดอัตโนมัติแล้ว: ${labels}`);
+      }
       form.dataset.privacyBypass = '1';
       try { form.requestSubmit(); } finally { delete form.dataset.privacyBypass; }
     }, true);
@@ -160,6 +174,7 @@
   window.GovPromptCore.sanitizeAttachmentName = sanitizeAttachmentName;
   window.GovPromptCore.detectBlockingRisk = detectBlockingRisk;
   window.GovPromptCore.detectResidualRisk = detectResidualRisk;
+  window.GovPromptCore.detectSensitiveContext = detectSensitiveContext;
   window.GovPromptCore.installPrivacyGuard = installPrivacyGuard;
   window.GovPromptCore.installInputPrivacyGate = installInputPrivacyGate;
 
