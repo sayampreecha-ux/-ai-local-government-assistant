@@ -3,6 +3,9 @@
   "name": "ai-local-government-assistant",
   "main": "src/search-worker.js",
   "compatibility_date": "2026-08-10",
+  "build": {
+    "command": "pnpm build"
+  },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
