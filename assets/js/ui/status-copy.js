@@ -3,7 +3,6 @@
 
   const CURRENT_TEXT = '✅ ค้นสดและยืนยันหลักฐานปัจจุบันได้ตาม metadata ที่มี';
   const SAFER_TEXT = '✅ พบแหล่งราชการที่มีข้อมูลวันที่/การปรับปรุงล่าสุด — โปรดตรวจสอบสถานะการใช้บังคับของเอกสารก่อนนำไปอ้างอิง';
-  const REMOVE_ACTION_PATTERN = /^(?:เปิดใน\s*)?(?:ChatGPT|Gemini)$|^เปิดแบบฟอร์ม\b/i;
 
   function softenFreshnessCopy(root = document) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -16,23 +15,142 @@
     });
   }
 
+  function findQuestion(card) {
+    const article = card.closest('.message.assistant');
+    let cursor = article?.previousElementSibling || null;
+    while (cursor) {
+      if (cursor.matches('.message.user')) {
+        return String(cursor.querySelector('.message-body')?.textContent || '').trim();
+      }
+      cursor = cursor.previousElementSibling;
+    }
+    return '';
+  }
+
+  function findDomain(card) {
+    const raw = String(card.parentElement?.querySelector('.route-label')?.textContent || '').trim();
+    return raw.split('·')[0].trim() || 'งานราชการไทย';
+  }
+
+  function collectOfficialSources(card) {
+    const seen = new Set();
+    return [...card.querySelectorAll('.answer-section details a[href]')]
+      .map(link => ({ title: String(link.textContent || '').trim(), url: String(link.href || '').trim() }))
+      .filter(item => item.url && !seen.has(item.url) && seen.add(item.url))
+      .slice(0, 8);
+  }
+
+  function buildHandoffPrompt(card) {
+    const question = findQuestion(card) || '[คำถามของผู้ใช้]';
+    const domain = findDomain(card);
+    const sources = collectOfficialSources(card);
+    const sourceBlock = sources.length
+      ? sources.map((source, index) => `${index + 1}. ${source.title || 'แหล่งราชการ'}\n${source.url}`).join('\n\n')
+      : 'ยังไม่มีแหล่งราชการที่ยืนยันได้จาก GovPrompt';
+
+    return [
+      'บทบาท',
+      `คุณเป็นผู้ช่วยงานราชการไทยด้าน${domain}`,
+      '',
+      'คำถามจากผู้ใช้',
+      question,
+      '',
+      'แนวทางตอบ',
+      '- ตอบจากข้อเท็จจริงและหลักฐานที่มี ไม่สมมติเลขมาตรา เลขหนังสือ วันที่ ชื่อบุคคล หรือข้อเท็จจริงที่ไม่ได้ให้มา',
+      '- หากข้อมูลสำคัญไม่ครบ ให้ตอบเบื้องต้นเท่าที่ทำได้ แล้วถามเพิ่มเฉพาะข้อมูลที่มีผลต่อคำตอบ',
+      '- ใช้แหล่งราชการ/ต้นฉบับเป็นหลัก และตรวจสถานะความเป็นปัจจุบันก่อนฟันธง',
+      '- แยกข้อเท็จจริง ประเด็นวิเคราะห์ ความเสี่ยง และข้อเสนอแนะเมื่อเหมาะสม',
+      '- คำนึงถึง PDPA และหลีกเลี่ยงการขอหรือแสดงข้อมูลส่วนบุคคลที่ไม่จำเป็น',
+      '- หากยังยืนยันฉบับล่าสุดไม่ได้ ให้ระบุชัดว่า ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง',
+      '',
+      'แหล่งราชการที่ GovPrompt ค้นให้',
+      sourceBlock,
+      '',
+      'หมายเหตุ',
+      'Prompt นี้เป็นผลลัพธ์สำหรับนำไปวิเคราะห์ต่อ ไม่รวมกฎภายใน ระบบจัดอันดับ หรือกลไกความปลอดภัยภายในของ GovPrompt'
+    ].join('\n');
+  }
+
+  function safeHandoff(card) {
+    const raw = buildHandoffPrompt(card);
+    const sanitizer = window.GovPromptCore?.sanitizeExternalContent;
+    if (typeof sanitizer !== 'function') return { blocked: true, safeText: '' };
+    const result = sanitizer(raw);
+    return { blocked: Boolean(result.blocked), safeText: String(result.safeText || ''), changed: Boolean(result.changed) };
+  }
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand('copy');
+      textarea.remove();
+      return copied;
+    }
+  }
+
+  async function handoffTo(card, destination) {
+    const handoff = safeHandoff(card);
+    if (handoff.blocked || !handoff.safeText) {
+      window.GovPrompt?.toast?.('🔒 หยุดส่งต่อ: ยังพบข้อมูลเสี่ยง กรุณาปกปิดข้อมูลก่อน');
+      return;
+    }
+    const copied = await copyText(handoff.safeText);
+    if (!copied) {
+      window.GovPrompt?.toast?.('ไม่สามารถคัดลอก Prompt ได้ กรุณาลองใหม่');
+      return;
+    }
+    if (destination === 'chatgpt') window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
+    if (destination === 'gemini') window.open('https://gemini.google.com/', '_blank', 'noopener,noreferrer');
+    window.GovPrompt?.toast?.(handoff.changed ? '🔐 ปกปิดข้อมูลเสี่ยงและคัดลอก Prompt แล้ว' : 'คัดลอก Prompt พร้อมใช้แล้ว');
+  }
+
   function simplifyAnswerCard(card) {
-    if (!card || card.dataset.leanModeReady === 'true') return;
+    if (!card) return;
 
     const actions = card.querySelector('.answer-actions');
     if (actions) {
       [...actions.children].forEach(control => {
         const label = String(control.textContent || '').trim();
-        if (REMOVE_ACTION_PATTERN.test(label)) control.remove();
+        if (/^เปิดแบบฟอร์ม\b/i.test(label)) control.remove();
       });
 
-      const copyButton = [...actions.querySelectorAll('button')]
-        .find(button => button.textContent.includes('คัดลอก Prompt'));
+      let chatGPT = [...actions.querySelectorAll('button')].find(button => /ChatGPT/i.test(button.textContent));
+      let gemini = [...actions.querySelectorAll('button')].find(button => /Gemini/i.test(button.textContent));
+      let copyButton = [...actions.querySelectorAll('button')].find(button => button.textContent.includes('คัดลอก Prompt'));
+
+      if (!chatGPT) {
+        chatGPT = document.createElement('button');
+        chatGPT.type = 'button';
+        chatGPT.textContent = 'ChatGPT';
+        actions.prepend(chatGPT);
+      } else {
+        chatGPT.textContent = 'ChatGPT';
+      }
+
+      if (!gemini) {
+        gemini = document.createElement('button');
+        gemini.type = 'button';
+        gemini.textContent = 'Gemini';
+        chatGPT.after(gemini);
+      } else {
+        gemini.textContent = 'Gemini';
+      }
+
       if (copyButton) {
         copyButton.textContent = 'คัดลอก Prompt';
-        copyButton.title = 'คัดลอก Prompt ที่ผ่าน Privacy Guard แล้ว';
+        copyButton.title = 'คัดลอกเฉพาะ Prompt พร้อมใช้ที่ผ่าน Privacy Guard';
       }
-      actions.setAttribute('aria-label', 'คัดลอก Prompt พร้อมใช้');
+
+      actions.setAttribute('aria-label', 'นำ Prompt พร้อมใช้ไปวิเคราะห์ต่อ');
     }
 
     const heading = card.querySelector('.answer-section > h3');
@@ -42,12 +160,17 @@
     const description = paragraphs.find(paragraph => paragraph.textContent.includes('ระบบจัดคำถามไปที่'));
     description?.remove();
 
+    const routeLabel = card.parentElement?.querySelector('.route-label');
+    if (routeLabel) routeLabel.textContent = findDomain(card);
+
     const detailsBlocks = [...card.querySelectorAll('.answer-section > details')];
     const promptDetails = detailsBlocks.find(details => details.querySelector('pre'));
     if (promptDetails) {
       promptDetails.open = true;
       const summary = promptDetails.querySelector('summary');
-      if (summary) summary.textContent = 'Prompt ที่ GovPrompt จัดให้';
+      const preview = promptDetails.querySelector('pre');
+      if (summary) summary.textContent = 'Prompt พร้อมใช้สำหรับ ChatGPT / Gemini';
+      if (preview) preview.textContent = buildHandoffPrompt(card);
     }
 
     card.dataset.leanModeReady = 'true';
@@ -55,17 +178,23 @@
 
   function enforceLeanMode(root = document) {
     root.querySelectorAll?.('.answer-card').forEach(simplifyAnswerCard);
-
-    const toolsButton = document.querySelector('.bottom-nav [data-panel="tools"]');
-    toolsButton?.remove();
-
-    document.querySelectorAll('.answer-actions').forEach(actions => {
-      [...actions.children].forEach(control => {
-        const label = String(control.textContent || '').trim();
-        if (REMOVE_ACTION_PATTERN.test(label)) control.remove();
-      });
-    });
+    document.querySelector('.bottom-nav [data-panel="tools"]')?.remove();
   }
+
+  document.addEventListener('click', event => {
+    const control = event.target.closest?.('.answer-actions button');
+    if (!control) return;
+    const card = control.closest('.answer-card');
+    if (!card) return;
+    const label = String(control.textContent || '').trim();
+    if (!/^(?:ChatGPT|Gemini|คัดลอก Prompt)$/i.test(label)) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (/ChatGPT/i.test(label)) void handoffTo(card, 'chatgpt');
+    else if (/Gemini/i.test(label)) void handoffTo(card, 'gemini');
+    else void handoffTo(card, 'copy');
+  }, true);
 
   softenFreshnessCopy();
   enforceLeanMode();
