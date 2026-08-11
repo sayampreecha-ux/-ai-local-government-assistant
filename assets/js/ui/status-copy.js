@@ -139,6 +139,20 @@
     window.GovPrompt?.toast?.(handoff.changed ? '🔐 ปกปิดข้อมูลเสี่ยงและคัดลอก Prompt แล้ว' : 'คัดลอก Prompt พร้อมใช้แล้ว');
   }
 
+  function styleSecondaryCopyButton(button) {
+    if (!button) return;
+    button.style.gridColumn = '1 / -1';
+    button.style.justifySelf = 'center';
+    button.style.width = 'auto';
+    button.style.minHeight = '36px';
+    button.style.padding = '4px 8px';
+    button.style.border = '0';
+    button.style.background = 'transparent';
+    button.style.color = '#005fcc';
+    button.style.textDecoration = 'underline';
+    button.style.textUnderlineOffset = '3px';
+  }
+
   function simplifyAnswerCard(card) {
     if (!card) return;
 
@@ -176,6 +190,7 @@
         copyButton.textContent = 'คัดลอก Prompt';
         copyButton.title = 'คัดลอกเฉพาะ Prompt พร้อมใช้ที่ผ่าน Privacy Guard';
         copyButton.classList.add('prompt-copy-secondary');
+        styleSecondaryCopyButton(copyButton);
       }
 
       actions.setAttribute('aria-label', 'นำ Prompt พร้อมใช้ไปวิเคราะห์ต่อ');
