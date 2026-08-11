@@ -139,11 +139,26 @@
     window.GovPrompt?.toast?.(handoff.changed ? '🔐 ปกปิดข้อมูลเสี่ยงและคัดลอก Prompt แล้ว' : 'คัดลอก Prompt พร้อมใช้แล้ว');
   }
 
+  function styleSecondaryCopyButton(button) {
+    if (!button) return;
+    button.style.gridColumn = '1 / -1';
+    button.style.justifySelf = 'center';
+    button.style.width = 'auto';
+    button.style.minHeight = '36px';
+    button.style.padding = '4px 8px';
+    button.style.border = '0';
+    button.style.background = 'transparent';
+    button.style.color = '#005fcc';
+    button.style.textDecoration = 'underline';
+    button.style.textUnderlineOffset = '3px';
+  }
+
   function simplifyAnswerCard(card) {
     if (!card) return;
 
     const actions = card.querySelector('.answer-actions');
     if (actions) {
+      actions.classList.add('handoff-actions');
       [...actions.children].forEach(control => {
         const label = String(control.textContent || '').trim();
         if (/^เปิดแบบฟอร์ม\b/i.test(label)) control.remove();
@@ -160,6 +175,7 @@
       }
       chatGPT.textContent = 'เปิดใน ChatGPT';
       chatGPT.title = 'คัดลอก Prompt แล้วเปิด ChatGPT เพื่อให้ผู้ใช้วาง Prompt เอง';
+      chatGPT.classList.add('handoff-primary');
 
       if (!gemini) {
         gemini = document.createElement('button');
@@ -168,17 +184,20 @@
       }
       gemini.textContent = 'เปิดใน Gemini';
       gemini.title = 'คัดลอก Prompt แล้วเปิด Gemini เพื่อให้ผู้ใช้วาง Prompt เอง';
+      gemini.classList.add('handoff-primary');
 
       if (copyButton) {
         copyButton.textContent = 'คัดลอก Prompt';
         copyButton.title = 'คัดลอกเฉพาะ Prompt พร้อมใช้ที่ผ่าน Privacy Guard';
+        copyButton.classList.add('prompt-copy-secondary');
+        styleSecondaryCopyButton(copyButton);
       }
 
       actions.setAttribute('aria-label', 'นำ Prompt พร้อมใช้ไปวิเคราะห์ต่อ');
     }
 
     const heading = card.querySelector('.answer-section > h3');
-    if (heading) heading.textContent = 'Prompt พร้อมใช้';
+    if (heading) heading.textContent = 'นำไปใช้ต่อ';
 
     const paragraphs = [...card.querySelectorAll('.answer-section > p')];
     const description = paragraphs.find(paragraph => paragraph.textContent.includes('ระบบจัดคำถามไปที่'));
@@ -190,10 +209,10 @@
     const detailsBlocks = [...card.querySelectorAll('.answer-section > details')];
     const promptDetails = detailsBlocks.find(details => details.querySelector('pre'));
     if (promptDetails) {
-      promptDetails.open = true;
+      promptDetails.open = false;
       const summary = promptDetails.querySelector('summary');
       const preview = promptDetails.querySelector('pre');
-      if (summary) summary.textContent = 'Prompt พร้อมใช้สำหรับ ChatGPT / Gemini';
+      if (summary) summary.textContent = 'ดู Prompt ที่ GovPrompt เตรียมไว้';
       if (preview) preview.textContent = buildHandoffPrompt(card);
     }
 
