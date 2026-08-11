@@ -123,6 +123,19 @@
     }
     if (destination === 'chatgpt') window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
     if (destination === 'gemini') window.open('https://gemini.google.com/', '_blank', 'noopener,noreferrer');
+
+    if (destination === 'chatgpt') {
+      window.GovPrompt?.toast?.(handoff.changed
+        ? '🔐 ปกปิดข้อมูลเสี่ยงและคัดลอก Prompt แล้ว — กรุณาวางใน ChatGPT'
+        : 'คัดลอก Prompt แล้ว — กรุณาวางใน ChatGPT');
+      return;
+    }
+    if (destination === 'gemini') {
+      window.GovPrompt?.toast?.(handoff.changed
+        ? '🔐 ปกปิดข้อมูลเสี่ยงและคัดลอก Prompt แล้ว — กรุณาวางใน Gemini'
+        : 'คัดลอก Prompt แล้ว — กรุณาวางใน Gemini');
+      return;
+    }
     window.GovPrompt?.toast?.(handoff.changed ? '🔐 ปกปิดข้อมูลเสี่ยงและคัดลอก Prompt แล้ว' : 'คัดลอก Prompt พร้อมใช้แล้ว');
   }
 
@@ -143,20 +156,18 @@
       if (!chatGPT) {
         chatGPT = document.createElement('button');
         chatGPT.type = 'button';
-        chatGPT.textContent = 'ChatGPT';
         actions.prepend(chatGPT);
-      } else {
-        chatGPT.textContent = 'ChatGPT';
       }
+      chatGPT.textContent = 'เปิดใน ChatGPT';
+      chatGPT.title = 'คัดลอก Prompt แล้วเปิด ChatGPT เพื่อให้ผู้ใช้วาง Prompt เอง';
 
       if (!gemini) {
         gemini = document.createElement('button');
         gemini.type = 'button';
-        gemini.textContent = 'Gemini';
         chatGPT.after(gemini);
-      } else {
-        gemini.textContent = 'Gemini';
       }
+      gemini.textContent = 'เปิดใน Gemini';
+      gemini.title = 'คัดลอก Prompt แล้วเปิด Gemini เพื่อให้ผู้ใช้วาง Prompt เอง';
 
       if (copyButton) {
         copyButton.textContent = 'คัดลอก Prompt';
@@ -200,7 +211,7 @@
     const card = control.closest('.answer-card');
     if (!card) return;
     const label = String(control.textContent || '').trim();
-    if (!/^(?:ChatGPT|Gemini|คัดลอก Prompt)$/i.test(label)) return;
+    if (!/^(?:เปิดใน\s+)?(?:ChatGPT|Gemini)$|^คัดลอก Prompt$/i.test(label)) return;
 
     event.preventDefault();
     event.stopImmediatePropagation();
