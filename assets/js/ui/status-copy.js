@@ -40,6 +40,15 @@
       .slice(0, 8);
   }
 
+  function buildToolRoutingBlock(question) {
+    const createPlan = window.GovPromptCore?.createToolRoutingPlan;
+    const formatPlan = window.GovPromptCore?.formatToolRoutingInstructions;
+    if (typeof createPlan !== 'function' || typeof formatPlan !== 'function') {
+      return '- ใช้ข้อมูลที่ผู้ใช้ให้ก่อน และค้นข้อมูลภายนอกเฉพาะเมื่อจำเป็นต่อความถูกต้องหรือความเป็นปัจจุบัน';
+    }
+    return formatPlan(createPlan({ question })) || '- ใช้ AI วิเคราะห์จากข้อมูลที่ผู้ใช้ให้ก่อน';
+  }
+
   function buildHandoffPrompt(card) {
     const question = findQuestion(card) || '[คำถามของผู้ใช้]';
     const domain = findDomain(card);
@@ -47,6 +56,7 @@
     const sourceBlock = sources.length
       ? sources.map((source, index) => `${index + 1}. ${source.title || 'แหล่งราชการ'}\n${source.url}`).join('\n\n')
       : 'ยังไม่มีแหล่งราชการที่ยืนยันได้จาก GovPrompt';
+    const toolRoutingBlock = buildToolRoutingBlock(question);
 
     return [
       'บทบาท',
@@ -54,6 +64,9 @@
       '',
       'คำถามจากผู้ใช้',
       question,
+      '',
+      'แนวทางเลือกเครื่องมือ',
+      toolRoutingBlock,
       '',
       'แนวทางตอบ',
       '- ตอบจากข้อเท็จจริงและหลักฐานที่มี ไม่สมมติเลขมาตรา เลขหนังสือ วันที่ ชื่อบุคคล หรือข้อเท็จจริงที่ไม่ได้ให้มา',
