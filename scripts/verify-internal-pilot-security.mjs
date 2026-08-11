@@ -25,9 +25,11 @@ assert.match(worker, /SENSITIVE_QUERY_BLOCKED/);
 assert.match(worker, /ORIGIN_NOT_ALLOWED/);
 assert.match(worker, /RATE_LIMITED/);
 assert.match(worker, /REQUEST_TOO_LARGE/);
+assert.match(worker, /OFFICIAL_SEARCH_RATE_LIMITER/);
+assert.match(worker, /RATE_LIMIT_BINDING_MISSING/);
+assert.match(worker, /RATE_LIMIT_CHECK_FAILED/);
 assert.match(worker, /include_answer: false/);
 assert.match(worker, /include_raw_content: false/);
-assert.match(wrangler, /OFFICIAL_SEARCH_RATE_LIMITER/);
 assert.match(wrangler, /TAVILY_API_KEY/);
 assert.match(wrangler, /head_sampling_rate/);
 
