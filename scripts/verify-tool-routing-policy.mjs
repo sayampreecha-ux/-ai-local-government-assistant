@@ -32,13 +32,10 @@ const cases = [
 for (const testCase of cases) {
   const plan = core.createToolRoutingPlan({ question: testCase.q, attachments: testCase.attachments || [] });
   assert.equal(plan.mode, testCase.mode, `${testCase.q}: wrong mode`);
-  for (const tool of testCase.tools) {
-    assert.equal(plan.tools.includes(tool), true, `${testCase.q}: missing ${tool}`);
-  }
-  for (const tool of testCase.excludes || []) {
-    assert.equal(plan.tools.includes(tool), false, `${testCase.q}: should not use ${tool}`);
-  }
+  for (const tool of testCase.tools) assert.equal(plan.tools.includes(tool), true, `${testCase.q}: missing ${tool}`);
+  for (const tool of testCase.excludes || []) assert.equal(plan.tools.includes(tool), false, `${testCase.q}: should not use ${tool}`);
   assert.equal(plan.tools.at(-1), 'ai-reasoning', `${testCase.q}: AI reasoning must finish the workflow`);
+  assert.equal(plan.instructions.some(item => item.includes('Answer First')), true, `${testCase.q}: missing answer-first quality guidance`);
 }
 
 const draftingEmail = core.createToolRoutingPlan({ question: 'ช่วยร่างอีเมลแจ้งประชุมให้สุภาพ' });
@@ -46,6 +43,22 @@ assert.equal(draftingEmail.flags.wantsGmail, false, 'drafting an email must not 
 
 const airfare = core.createToolRoutingPlan({ question: 'ค่าแท็กซี่ไปราชการเบิกได้ไหม' });
 assert.equal(airfare.flags.needsPrimarySource, true, 'financial eligibility must require primary-source verification');
+assert.equal(airfare.instructions.some(item => item.includes('เบิกได้ / เบิกไม่ได้ / มีเงื่อนไข')), true, 'finance guidance must lead with eligibility');
+
+const draftingLetter = core.createToolRoutingPlan({ question: 'ช่วยร่างหนังสือราชการแจ้งกำหนดการประชุม' });
+assert.equal(draftingLetter.instructions.some(item => item.includes('ร่างฉบับพร้อมใช้ก่อน')), true, 'official-letter guidance must draft first');
+
+const tor = core.createToolRoutingPlan({ question: 'ช่วยตรวจ TOR โครงการถนนว่ามีความเสี่ยงล็อกสเปกไหม' });
+assert.equal(tor.instructions.some(item => item.includes('เกณฑ์ตรวจรับ')), true, 'TOR guidance must include acceptance criteria');
+assert.equal(tor.instructions.some(item => item.includes('ล็อกสเปก')), true, 'TOR guidance must surface lock-spec risk');
+
+const legal = core.createToolRoutingPlan({ question: 'ช่วยวิเคราะห์ข้อกฎหมายล่าสุดเรื่องอำนาจขององค์กรปกครองส่วนท้องถิ่น' });
+assert.equal(legal.instructions.some(item => item.includes('ประเด็นกฎหมาย')), true, 'legal guidance must structure legal analysis');
+assert.equal(legal.instructions.some(item => item.includes('ห้ามใส่เลขมาตรา')), true, 'legal guidance must prevent fabricated citations');
+
+const procurement = core.createToolRoutingPlan({ question: 'ช่วยตรวจขั้นตอน วิธีการ และเงื่อนไขการจัดซื้อจัดจ้างภาครัฐ' });
+assert.equal(procurement.instructions.some(item => item.includes('ลำดับขั้นปฏิบัติ')), true, 'procurement guidance must be procedural');
+assert.equal(procurement.instructions.some(item => item.includes('การแข่งขันอย่างเป็นธรรม')), true, 'procurement guidance must include competition risk');
 
 const attachedTor = core.createToolRoutingPlan({ question: 'ช่วยตรวจ TOR ที่แนบ', attachments: [{ name: 'TOR.pdf' }] });
 assert.equal(attachedTor.tools[0], 'attached-files', 'attachments must be read before external search');
@@ -54,6 +67,7 @@ const formatted = core.formatToolRoutingInstructions(attachedTor);
 assert.match(formatted, /ลำดับเครื่องมือ/);
 assert.match(formatted, /attached-files/);
 assert.match(formatted, /web-search/);
+assert.match(formatted, /Answer First/);
 assert.match(formatted, /ห้ามอ้างว่าได้ค้นหรือเปิดข้อมูลแล้ว/);
 
-console.log(`GovPrompt v7 Tool Routing Policy verification passed: ${cases.length} routing cases.`);
+console.log(`GovPrompt v7 Tool Routing Policy verification passed: ${cases.length} routing cases + 5 prompt-quality workflows.`);
