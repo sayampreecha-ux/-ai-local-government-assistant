@@ -49,6 +49,36 @@
     return includesAny(text, PRIMARY_SOURCE_TERMS) || GOVERNMENT_DECISION_PATTERNS.some(pattern => pattern.test(text));
   }
 
+  function createQualityGuidance(text) {
+    const guidance = [
+      'ตอบแบบ Answer First: สรุปคำตอบที่ใช้ตัดสินใจได้ก่อน แล้วจึงให้เหตุผลที่จำเป็น',
+      'ใช้ภาษาไทยกระชับ อ่านง่าย แต่คงถ้อยคำราชการเมื่อเป็นเอกสารพร้อมใช้',
+      'ถามข้อมูลเพิ่มเฉพาะกรณีที่ข้อมูลนั้นเปลี่ยนคำตอบหรือจำเป็นต่อการจัดทำเอกสารจริง'
+    ];
+
+    if (/(?:ร่าง|ทำ|เขียน).{0,12}(?:หนังสือราชการ|บันทึกข้อความ|หนังสือภายนอก|หนังสือภายใน|คำสั่ง|หนังสือเชิญ)/i.test(text)) {
+      guidance.push('ถ้าเป็นงานร่างหนังสือ ให้ร่างฉบับพร้อมใช้ก่อน โดยใช้ [ระบุ...] เฉพาะช่องข้อมูลสำคัญที่ผู้ใช้ยังไม่ได้ให้ และไม่ถามข้อมูลจุกจิกก่อนร่าง');
+    }
+
+    if (/(?:tor|ขอบเขตของงาน|คุณลักษณะเฉพาะ|ล็อกสเปก)/i.test(text)) {
+      guidance.push('ถ้าเป็น TOR ให้แยกอย่างน้อย: วัตถุประสงค์ ขอบเขต/คุณลักษณะ เกณฑ์ตรวจรับ เงื่อนไขส่งมอบ และความเสี่ยงต่อการแข่งขัน/ล็อกสเปก พร้อมเสนอถ้อยคำแก้เมื่อพบจุดเสี่ยง');
+    }
+
+    if (/(?:เบิก|เบิกจ่าย|ค่าเดินทาง|ค่าแท็กซี่|เงินบำรุง|เงินสะสม|ใช้เงิน|งบประมาณ)/i.test(text)) {
+      guidance.push('ถ้าเป็นการเงิน/เบิกจ่าย ให้ตอบให้ชัดก่อนว่า “เบิกได้ / เบิกไม่ได้ / มีเงื่อนไข” แล้วสรุปฐานอำนาจ เงื่อนไข เอกสารประกอบ และจุดที่ต้องอนุมัติหรือใช้ดุลพินิจ');
+    }
+
+    if (/(?:กฎหมาย|ระเบียบ|ข้อกฎหมาย|อำนาจ|ชอบด้วยกฎหมาย|ผิดกฎหมาย|คำพิพากษา)/i.test(text)) {
+      guidance.push('ถ้าเป็นกฎหมาย ให้แยก “ข้อเท็จจริงที่ยืนยันแล้ว / ประเด็นกฎหมาย / ฐานอำนาจ / การวิเคราะห์ / ความเสี่ยง / ข้อเสนอแนะ” และห้ามใส่เลขมาตราหรือเลขหนังสือที่ยังตรวจไม่พบต้นฉบับ');
+    }
+
+    if (/(?:จัดซื้อ|จัดจ้าง|พัสดุ|วิธีเฉพาะเจาะจง|e-bidding|คัดเลือก|ราคากลาง)/i.test(text)) {
+      guidance.push('ถ้าเป็นจัดซื้อจัดจ้าง ให้ตอบเป็นลำดับขั้นปฏิบัติ ระบุวิธี/เงื่อนไขที่เป็นไปได้ เอกสารสำคัญ จุดควบคุม และความเสี่ยงต่อการร้องเรียนหรือไม่เป็นการแข่งขันอย่างเป็นธรรม');
+    }
+
+    return Object.freeze(guidance);
+  }
+
   function createToolRoutingPlan({ question, attachments = [] } = {}) {
     const text = normalize(question);
     const files = Array.isArray(attachments) ? attachments.filter(Boolean) : [];
@@ -90,6 +120,8 @@
       instructions.push('หลังรวบรวมข้อมูลจากเครื่องมือที่จำเป็นแล้ว ให้ AI วิเคราะห์ สรุป หรือจัดทำผลลัพธ์พร้อมใช้ตามคำขอ');
     }
 
+    instructions.push(...createQualityGuidance(text));
+
     const uniqueTools = Object.freeze([...new Set(tools)]);
     const mode = hasAttachments
       ? 'attachment-first'
@@ -125,6 +157,7 @@
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
+  window.GovPromptCore.createPromptQualityGuidance = createQualityGuidance;
   window.GovPromptCore.createToolRoutingPlan = createToolRoutingPlan;
   window.GovPromptCore.formatToolRoutingInstructions = formatToolRoutingInstructions;
 })();
