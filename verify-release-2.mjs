@@ -5,5 +5,6 @@ for(const file of [...pages,...assets])await access(file);
 for(const file of pages){const html=await readFile(file,'utf8');if(!/<html[^>]+lang="th"/i.test(html))throw new Error(`${file}: missing Thai language`);if(!/<meta[^>]+viewport/i.test(html))throw new Error(`${file}: missing viewport`)}
 for(const file of pages){const html=await readFile(file,'utf8');const links=[...html.matchAll(/(?:href|src)="([^"#?]+)"/g)].map(x=>x[1]).filter(x=>!/^https?:|^mailto:|^tel:|^data:/.test(x));for(const link of links){if(link==='/'||link.startsWith('../'))continue;await access(link).catch(()=>{throw new Error(`${file}: broken local reference ${link}`)})}}
 for(let i=1;i<=13;i++){const file=`gp${String(i).padStart(3,'0')}.html`;const html=await readFile(file,'utf8');for(const asset of assets){const rel=asset.replace('assets/','assets/');if(!html.includes(rel))throw new Error(`${file}: missing ${rel}`)}if(!html.includes('สร้าง Prompt'))throw new Error(`${file}: missing generator`)}
-const index=await readFile('index.html','utf8');for(let i=1;i<=13;i++){const page=`gp${String(i).padStart(3,'0')}.html`;if(!index.includes(page))throw new Error(`index: missing ${page}`)}
-console.log(`GovPrompt Thailand Release 2.0 validated: ${pages.length} pages, 13 assistants, ${assets.length} shared assets`);
+const index=await readFile('index.html','utf8');
+for(const required of ['id="chatForm"','transaction-router.js','prompt-orchestrator.js','tool-routing-policy.js','official-search-connector.js','privacy-guard.js']){if(!index.includes(required))throw new Error(`index: missing V7 core ${required}`)}
+console.log(`GovPrompt Thailand V7 validated: single-input home, 13 retained assistants, Tool Routing Policy, official search and Privacy Guard`);
