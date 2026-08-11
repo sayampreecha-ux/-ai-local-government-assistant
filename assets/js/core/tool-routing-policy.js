@@ -9,17 +9,28 @@
   const PRIMARY_SOURCE_TERMS = Object.freeze([
     'กฎหมาย', 'ระเบียบ', 'หนังสือเวียน', 'หนังสือสั่งการ', 'ข้อหารือ', 'ซักซ้อม',
     'คำพิพากษา', 'ประกาศ', 'กฎกระทรวง', 'พระราชบัญญัติ', 'พัสดุ', 'จัดซื้อ',
-    'จัดจ้าง', 'tor', 'ราคากลาง', 'เบิกจ่าย', 'งบประมาณ', 'วินัย'
+    'จัดจ้าง', 'tor', 'ราคากลาง', 'เบิกจ่าย', 'งบประมาณ', 'เงินสะสม', 'เงินบำรุง',
+    'เดินทางไปราชการ', 'ค่าเดินทาง', 'วินัย', 'ขาดราชการ', 'โอนย้าย', 'เลื่อนเงินเดือน',
+    'สอบแข่งขัน', 'บรรจุ', 'สภาท้องถิ่น', 'ญัตติ', 'ข้อบัญญัติ', 'รพ.สต.', 'รพสต'
   ]);
 
-  const GMAIL_TERMS = Object.freeze([
-    'gmail', 'อีเมล', 'email', 'กล่องจดหมาย', 'inbox', 'เมลที่ส่ง', 'เมลที่ได้รับ',
-    'จดหมายที่เคยส่ง', 'อีเมลที่เคยส่ง', 'อีเมลเดิม'
+  const GMAIL_SOURCE_TERMS = Object.freeze([
+    'gmail', 'อีเมล', 'email', 'กล่องจดหมาย', 'inbox', 'เมล'
   ]);
 
-  const DRIVE_FILE_TERMS = Object.freeze([
-    'google drive', 'drive', 'ไดรฟ์', 'ไฟล์ของฉัน', 'เอกสารของฉัน', 'ไฟล์ที่เคยทำ',
-    'เอกสารที่เคยทำ', 'เอกสารเดิม', 'ไฟล์เดิม', 'หาไฟล์', 'หาเอกสาร'
+  const DRIVE_SOURCE_TERMS = Object.freeze([
+    'google drive', 'drive', 'ไดรฟ์', 'ไฟล์', 'เอกสาร'
+  ]);
+
+  const USER_DATA_LOOKUP_TERMS = Object.freeze([
+    'หา', 'ค้น', 'เปิด', 'ดู', 'เคยส่ง', 'เคยได้รับ', 'ที่ส่ง', 'ที่ได้รับ',
+    'ส่งไปแล้ว', 'ได้รับมา', 'ย้อนหลัง', 'เดิม', 'ของฉัน', 'ของผม', 'ของเรา'
+  ]);
+
+  const GOVERNMENT_DECISION_PATTERNS = Object.freeze([
+    /(?:เบิก|จ่าย|ใช้เงิน|เงินสะสม|เงินบำรุง|งบประมาณ|จัดซื้อ|จัดจ้าง|พัสดุ|มีอำนาจ|อำนาจหน้าที่|ผิดกฎหมาย|ถูกกฎหมาย|ชอบด้วยกฎหมาย).{0,28}(?:ได้ไหม|ได้หรือไม่|หรือไม่|ทำอย่างไร|ทำไง)/i,
+    /(?:ได้ไหม|ได้หรือไม่).{0,20}(?:เบิก|จ่าย|ใช้เงิน|เงินสะสม|เงินบำรุง|จัดซื้อ|จัดจ้าง|พัสดุ)/i,
+    /(?:ทำ|จัดทำ|ลงนาม).{0,12}(?:mou|บันทึกข้อตกลง).{0,18}(?:ได้ไหม|ได้หรือไม่|หรือไม่)/i
   ]);
 
   function normalize(value) {
@@ -30,14 +41,23 @@
     return terms.some(term => text.includes(String(term).toLocaleLowerCase()));
   }
 
+  function isUserDataLookup(text, sourceTerms) {
+    return includesAny(text, sourceTerms) && includesAny(text, USER_DATA_LOOKUP_TERMS);
+  }
+
+  function needsGovernmentVerification(text) {
+    return includesAny(text, PRIMARY_SOURCE_TERMS) || GOVERNMENT_DECISION_PATTERNS.some(pattern => pattern.test(text));
+  }
+
   function createToolRoutingPlan({ question, attachments = [] } = {}) {
     const text = normalize(question);
     const files = Array.isArray(attachments) ? attachments.filter(Boolean) : [];
     const hasAttachments = files.length > 0;
-    const wantsGmail = includesAny(text, GMAIL_TERMS);
-    const wantsDriveFiles = includesAny(text, DRIVE_FILE_TERMS);
-    const needsCurrentWeb = includesAny(text, FRESHNESS_TERMS);
-    const needsPrimarySource = includesAny(text, PRIMARY_SOURCE_TERMS);
+    const wantsGmail = isUserDataLookup(text, GMAIL_SOURCE_TERMS);
+    const wantsDriveFiles = isUserDataLookup(text, DRIVE_SOURCE_TERMS);
+    const needsPrimarySource = needsGovernmentVerification(text);
+    const freshnessRequested = includesAny(text, FRESHNESS_TERMS);
+    const needsCurrentWeb = freshnessRequested && !wantsGmail && !wantsDriveFiles;
 
     const tools = [];
     const instructions = [];
@@ -71,16 +91,18 @@
     }
 
     const uniqueTools = Object.freeze([...new Set(tools)]);
-    const mode = wantsGmail || wantsDriveFiles
-      ? 'user-data-first'
-      : (hasAttachments ? 'attachment-first' : (needsCurrentWeb || needsPrimarySource ? 'web-when-needed' : 'ai-only'));
+    const mode = hasAttachments
+      ? 'attachment-first'
+      : (wantsGmail || wantsDriveFiles
+        ? 'user-data-first'
+        : (needsCurrentWeb || needsPrimarySource ? 'web-when-needed' : 'ai-only'));
 
     const reasons = [];
     if (hasAttachments) reasons.push('มีเอกสารแนบ');
-    if (wantsGmail) reasons.push('คำถามอ้างถึงอีเมลของผู้ใช้');
-    if (wantsDriveFiles) reasons.push('คำถามอ้างถึงไฟล์/เอกสารของผู้ใช้');
-    if (needsCurrentWeb) reasons.push('ต้องตรวจข้อมูลปัจจุบัน');
-    if (needsPrimarySource) reasons.push('เป็นงานที่ควรตรวจแหล่งปฐมภูมิ');
+    if (wantsGmail) reasons.push('คำถามต้องการค้นอีเมลของผู้ใช้');
+    if (wantsDriveFiles) reasons.push('คำถามต้องการค้นไฟล์/เอกสารของผู้ใช้');
+    if (needsCurrentWeb) reasons.push('ต้องตรวจข้อมูลปัจจุบันจากภายนอก');
+    if (needsPrimarySource) reasons.push('เป็นงานราชการที่ควรตรวจแหล่งปฐมภูมิ');
     if (!reasons.length) reasons.push('ตอบได้จากข้อมูลที่ผู้ใช้ให้และการวิเคราะห์ทั่วไป');
 
     return Object.freeze({
