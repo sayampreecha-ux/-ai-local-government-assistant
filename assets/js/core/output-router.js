@@ -69,10 +69,17 @@
     ]) })
   });
 
+  const EXPLICIT_DOCUMENT_PREFIXES = Object.freeze([
+    'ทำหนังสือ', 'ร่างหนังสือ', 'เขียนหนังสือ', 'จัดทำหนังสือ',
+    'ช่วยทำหนังสือ', 'ช่วยร่างหนังสือ', 'ช่วยเขียนหนังสือ', 'ช่วยจัดทำหนังสือ'
+  ]);
+  const EXPLICIT_PROJECT_PREFIXES = Object.freeze([
+    'ทำโครงการ', 'ร่างโครงการ', 'เขียนโครงการ', 'จัดทำโครงการ',
+    'ช่วยทำโครงการ', 'ช่วยร่างโครงการ', 'ช่วยเขียนโครงการ', 'ช่วยจัดทำโครงการ'
+  ]);
+
   const RULES = Object.freeze([
     { id: 'table', score: 108, patterns: [/เป็นตาราง/, /ทำตาราง/, /จัดตาราง/, /สกัด.{0,18}ตาราง/] },
-    { id: 'official_document', score: 107, patterns: [/^.{0,10}หนังสือ/, /^(?:ช่วย)?\s*(?:ร่าง|ทำ|เขียน|จัดทำ)\s*(?:หนังสือ|บันทึกข้อความ|บันทึก|คำสั่ง|ประกาศ)/] },
-    { id: 'project', score: 106, patterns: [/^.{0,10}โครงการ/, /^(?:ช่วย)?\s*(?:ร่าง|เขียน|ทำ|จัดทำ)\s*โครงการ/] },
     { id: 'executive_summary', score: 105, patterns: [/สรุป.{0,70}(?:รายงาน|ข้อเสนอ).{0,30}เสนอผู้บริหาร/, /สรุปปัญหา.{0,70}เสนอผู้บริหาร/] },
     { id: 'analysis', score: 101, patterns: [/(?:มีอำนาจ|ชอบด้วยกฎหมาย|ฐานอำนาจ).{0,55}(?:ได้ไหม|ได้หรือไม่|หรือไม่)/, /(?:ได้ไหม|ได้หรือไม่|หรือไม่).{0,35}(?:มีอำนาจ|ชอบด้วยกฎหมาย|ฐานอำนาจ)/] },
     { id: 'csv', score: 100, patterns: [/\bcsv\b/i, /ไฟล์\s*csv/i] },
@@ -93,6 +100,13 @@
     return String(value ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim();
   }
 
+  function inferExplicitPrefix(source) {
+    const compact = source.replace(/\s+/g, '');
+    if (EXPLICIT_DOCUMENT_PREFIXES.some(prefix => compact.startsWith(prefix))) return 'official_document';
+    if (EXPLICIT_PROJECT_PREFIXES.some(prefix => compact.startsWith(prefix))) return 'project';
+    return '';
+  }
+
   function inferFromModule(moduleId) {
     if (moduleId === 'GP001') return 'official_document';
     if (moduleId === 'GP011') return 'executive_summary';
@@ -107,6 +121,20 @@
       context?.desiredOutput,
       context?.facts
     ].filter(Boolean).join(' '));
+
+    const explicitPrefix = inferExplicitPrefix(source);
+    if (explicitPrefix) {
+      const definition = OUTPUTS[explicitPrefix] || OUTPUTS.default;
+      return Object.freeze({
+        id: explicitPrefix,
+        label: definition.label,
+        format: definition.format,
+        confidence: 0.99,
+        reason: 'explicit-prefix-intent',
+        instructions: definition.instructions,
+        matched: Object.freeze([])
+      });
+    }
 
     let best = null;
     for (const rule of RULES) {
