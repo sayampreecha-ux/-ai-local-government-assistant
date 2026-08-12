@@ -8,7 +8,8 @@ for (const file of [
   'assets/js/core/prompt-registry.js',
   'assets/js/core/transaction-router.js',
   'assets/js/core/router-regression-overrides.js',
-  'assets/js/core/hybrid-intent-classifier.js'
+  'assets/js/core/hybrid-intent-classifier.js',
+  'assets/js/core/hybrid-real-world-overrides.js'
 ]) {
   vm.runInNewContext(await readFile(file, 'utf8'), sandbox);
 }
