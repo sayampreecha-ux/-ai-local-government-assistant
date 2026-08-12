@@ -10,7 +10,8 @@ async function loadRouter() {
     'assets/js/core/prompt-registry.js',
     'assets/js/core/transaction-router.js',
     'assets/js/core/router-regression-overrides.js',
-    'assets/js/core/hybrid-intent-classifier.js'
+    'assets/js/core/hybrid-intent-classifier.js',
+    'assets/js/core/router-real-query-hotfix.js'
   ]) {
     vm.runInNewContext(await readFile(file, 'utf8'), sandbox);
   }
