@@ -10,6 +10,7 @@ for (const file of [
   'assets/js/core/router-regression-overrides.js',
   'assets/js/core/hybrid-intent-classifier.js',
   'assets/js/core/hybrid-real-world-overrides.js',
+  'assets/js/core/education-event-routing-overrides.js',
   'assets/js/core/media-routing-overrides.js'
 ]) {
   vm.runInNewContext(await readFile(file, 'utf8'), sandbox);
@@ -27,7 +28,13 @@ const educationCases = [
   'จัดงานวันเด็ก',
   'จัดกิจกรรมวันเด็กแห่งชาติ',
   'งานวันเด็ก',
-  'กีฬาเยาวชน'
+  'กีฬาเยาวชน',
+  'โครงการวันสัปดาห์วิทยาศาสตร์',
+  'โครงการสัปดาห์วิทยาศาสตร์',
+  'จัดงานสัปดาห์วิทยาศาสตร์',
+  'จัดกิจกรรมวันวิทยาศาสตร์แห่งชาติ',
+  'ดำเนินโครงการค่ายวิทยาศาสตร์',
+  'มหกรรมวิทยาศาสตร์'
 ];
 
 for (const query of educationCases) {
@@ -38,9 +45,12 @@ for (const query of educationCases) {
 const controls = [
   ['ร่างคำกล่าวเปิดการแข่งขันกีฬาเยาวชน', 'GP011'],
   ['ร่างคำกล่าวเปิดงานวันเด็ก', 'GP011'],
+  ['ร่างคำกล่าวเปิดงานสัปดาห์วิทยาศาสตร์', 'GP011'],
   ['ทำโปสเตอร์งานวันเด็ก', 'GP012'],
   ['ทำโพสต์ประชาสัมพันธ์การแข่งขันกีฬาเยาวชน', 'GP012'],
-  ['จัดซื้ออุปกรณ์กีฬา', 'GP003']
+  ['ทำโปสเตอร์สัปดาห์วิทยาศาสตร์', 'GP012'],
+  ['จัดซื้ออุปกรณ์กีฬา', 'GP003'],
+  ['จัดซื้ออุปกรณ์วิทยาศาสตร์', 'GP003']
 ];
 
 for (const [query, expected] of controls) {
@@ -48,4 +58,4 @@ for (const [query, expected] of controls) {
   assert.equal(routed.primaryModule, expected, `${query} should remain ${expected}`);
 }
 
-console.log(`GovPrompt youth/sports routing regression passed: ${educationCases.length} GP009 cases + ${controls.length} cross-domain controls.`);
+console.log(`GovPrompt youth/sports/science routing regression passed: ${educationCases.length} GP009 cases + ${controls.length} cross-domain controls.`);
