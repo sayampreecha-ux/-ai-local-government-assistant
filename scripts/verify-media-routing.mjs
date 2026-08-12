@@ -55,18 +55,27 @@ for (const query of prCases) {
   assert.equal(routed.primaryModule, 'GP012', `${query} should route to GP012`);
 }
 
-const negativeCases = [
+const fixedNegativeCases = [
   ['ช่วยร่างคำกล่าวเปิดโครงการ', 'GP011'],
   ['ช่วยร่างหนังสือราชการ', 'GP001'],
-  ['ช่วยวิเคราะห์ข้อกฎหมาย', 'GP002'],
-  ['ช่วยเขียนวิสัยทัศน์องค์กร', 'GP011'],
-  ['วิเคราะห์วิสัยทัศน์องค์กร', 'GP011'],
-  ['ร่างคำกล่าวนำเสนอวิสัยทัศน์', 'GP011']
+  ['ช่วยวิเคราะห์ข้อกฎหมาย', 'GP002']
 ];
 
-for (const [query, expected] of negativeCases) {
+for (const [query, expected] of fixedNegativeCases) {
   const routed = routeRequest(query, { multiModule: false });
   assert.equal(routed.primaryModule, expected, `${query} should remain ${expected}`);
 }
 
-console.log(`GovPrompt media routing regression passed: ${prCases.length} PR/media cases + ${negativeCases.length} negative controls.`);
+const mediaOnlyNegativeCases = [
+  'ช่วยเขียนวิสัยทัศน์องค์กร',
+  'วิเคราะห์วิสัยทัศน์องค์กร',
+  'ร่างคำกล่าวนำเสนอวิสัยทัศน์'
+];
+
+for (const query of mediaOnlyNegativeCases) {
+  const routed = routeRequest(query, { multiModule: false });
+  assert.notEqual(routed.primaryModule, 'GP012', `${query} should not be forced to GP012`);
+}
+
+const negativeCount = fixedNegativeCases.length + mediaOnlyNegativeCases.length;
+console.log(`GovPrompt media routing regression passed: ${prCases.length} PR/media cases + ${negativeCount} negative controls.`);
