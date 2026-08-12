@@ -18,6 +18,10 @@
     'ส่งข้อมูลหรือเรียก API ที่มีผลผูกพันภายนอกโดยไม่มีการอนุมัติที่ตรวจสอบได้'
   ]);
 
+  const ACTION_INTENT = /(ส่ง(?:หนังสือ|ข้อมูล|ผล|จริง)|ยืนยันการส่ง|ยืนยันผล|อนุมัติ|สั่งจ่าย|ลงนาม|ออก(?:หนังสือ)?คำสั่ง|บันทึก(?:ข้อมูล)?เข้าระบบ|แก้ไขข้อมูล(?:ทะเบียน)?(?:ในระบบ)?จริง|เรียก\s*api|ดำเนินการแทน|เผยแพร่(?:ข่าว|รายชื่อ|ผล)?(?:ทันที|จริง)|ตัดสิน(?:ผล|ผู้ชนะ)|เลือกผู้ชนะ|ลงโทษ|แต่งตั้ง|โอนย้าย|เลิกจ้าง|ลงมติ|เปิดเผยข้อมูล|ข้ามขั้นอนุมัติ)/i;
+
+  const RESERVED_AUTHORITY = /(อนุมัติ(?:และ)?สั่งจ่าย|สั่งจ่ายเงิน.*แทนผู้มีอำนาจ|ลงนาม.*แทน|ออกคำสั่งทางปกครอง.*แทน|ตัดสินผลการจัดซื้อจัดจ้าง|เลือกผู้ชนะ(?:\s*e-bidding)?|ลงโทษทางวินัย|แต่งตั้งบุคคล.*เข้าตำแหน่ง|โอนย้ายข้าราชการ|เลิกจ้างพนักงาน|เลิกจ้างบุคคล|ลงมติแทน|เปิดเผยข้อมูลสุขภาพ|ส่งข้อมูลส่วนบุคคล.*ภายนอก|ส่งข้อมูลลับ.*ภายนอก|เผยแพร่รายชื่อ.*เลขบัตรประชาชน)/i;
+
   function normalize(value) {
     return String(value ?? '').normalize('NFC').trim().toLocaleLowerCase();
   }
@@ -25,7 +29,7 @@
   function classifyAutonomy(request) {
     const text = normalize(request);
     if (!text) return Object.freeze({ level: 'L1', confidence: 0.4, reason: 'empty-or-unknown' });
-    if (/(ส่งจริง|ยืนยันการส่ง|อนุมัติ|สั่งจ่าย|ลงนาม|ออกคำสั่ง|บันทึกเข้าระบบ|แก้ไขข้อมูลจริง|เรียก api|ดำเนินการแทน|เผยแพร่ทันที)/i.test(text)) {
+    if (ACTION_INTENT.test(text)) {
       return Object.freeze({ level: 'L4', confidence: 0.95, reason: 'action-intent' });
     }
     if (/(ร่าง|เขียน|จัดทำ|ทำหนังสือ|ทำบันทึก|ทำ tor|ทำโครงการ|สร้าง checklist|ทำตาราง|ทำ csv|ทำ json|ทำโพสต์|ทำข่าว)/i.test(text)) {
@@ -38,18 +42,23 @@
   }
 
   function evaluateAgentGovernance(request, options = {}) {
-    const classified = classifyAutonomy(request);
+    const text = normalize(request);
+    const classified = classifyAutonomy(text);
     const requestedLevel = classified.level;
     const approved = options.humanApproved === true;
     const bounded = options.boundedAction === true;
     const reversible = options.reversible === true;
     const auditReady = options.auditReady === true;
     const legalAuthorityVerified = options.legalAuthorityVerified === true;
+    const reservedAuthority = RESERVED_AUTHORITY.test(text);
 
-    const allowed = requestedLevel !== 'L4' || (approved && bounded && reversible && auditReady && legalAuthorityVerified);
+    const governanceReady = approved && bounded && reversible && auditReady && legalAuthorityVerified;
+    const allowed = requestedLevel !== 'L4' || (!reservedAuthority && governanceReady);
     const effectiveLevel = allowed ? requestedLevel : 'L3';
     const blockers = [];
+
     if (requestedLevel === 'L4') {
+      if (reservedAuthority) blockers.push('เป็นการใช้อำนาจที่สงวนไว้สำหรับมนุษย์/ผู้มีอำนาจ — AI ทำได้เพียงช่วยร่างหรือเตรียมข้อมูล');
       if (!approved) blockers.push('ต้องมี Human Approval ที่ตรวจสอบได้');
       if (!bounded) blockers.push('ต้องกำหนดขอบเขตการกระทำอย่างชัดเจน');
       if (!reversible) blockers.push('ต้องมีวิธี Pause/Reject/Revoke/Rollback');
@@ -63,6 +72,7 @@
       allowed,
       requiresHumanApproval: requestedLevel === 'L4',
       technicalPermissionIsLegalAuthority: false,
+      reservedAuthority,
       blockers: Object.freeze(blockers),
       reason: classified.reason,
       confidence: classified.confidence
