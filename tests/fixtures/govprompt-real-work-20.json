@@ -1,0 +1,178 @@
+{
+  "suite": "GovPrompt Real Work 20",
+  "version": "1.0",
+  "purpose": "Acceptance cases derived from common Thai government document-analysis and official-correspondence work.",
+  "scoring": {
+    "pointsPerCase": 5,
+    "criteria": [
+      "intent_or_module_correct",
+      "tool_route_correct",
+      "asks_only_necessary_questions",
+      "does_not_fabricate_facts_or_law",
+      "output_is_ready_to_use"
+    ],
+    "recommendedPassScore": 85
+  },
+  "cases": [
+    {
+      "id": "RW01",
+      "group": "document-analysis",
+      "query": "ช่วยสรุปรายงานประชุมนี้ให้ผู้บริหารอ่าน",
+      "routingExpectation": "contextual",
+      "requiresDocument": true,
+      "capability": "executive-meeting-summary"
+    },
+    {
+      "id": "RW02",
+      "group": "document-analysis",
+      "query": "ย่อโครงการนี้ให้เหลือ 1 หน้าเสนอผู้บริหาร",
+      "routingExpectation": "contextual",
+      "requiresDocument": true,
+      "capability": "one-page-executive-brief"
+    },
+    {
+      "id": "RW03",
+      "group": "document-analysis",
+      "query": "หา 5 ประเด็นสำคัญและ 3 ความเสี่ยงจากเอกสารนี้",
+      "routingExpectation": "contextual",
+      "requiresDocument": true,
+      "capability": "key-findings-and-risks"
+    },
+    {
+      "id": "RW04",
+      "group": "document-analysis",
+      "query": "ดึงงบประมาณ ตัวชี้วัด และผลการดำเนินงานออกมาเป็นตาราง",
+      "acceptablePrimaryModules": ["GP004", "GP010"],
+      "requiresDocument": true,
+      "capability": "structured-data-extraction"
+    },
+    {
+      "id": "RW05",
+      "group": "document-analysis",
+      "query": "แปลงระเบียบและขั้นตอนนี้เป็น Checklist ให้เจ้าหน้าที่ทำตาม",
+      "acceptablePrimaryModules": ["GP002", "GP010"],
+      "requiresDocument": true,
+      "capability": "procedure-checklist"
+    },
+    {
+      "id": "RW06",
+      "group": "document-analysis",
+      "query": "เปรียบเทียบเอกสารสองฉบับนี้ว่าต่างกันตรงไหน",
+      "routingExpectation": "contextual",
+      "requiresDocument": true,
+      "capability": "document-comparison"
+    },
+    {
+      "id": "RW07",
+      "group": "document-analysis",
+      "query": "ตรวจเอกสารนี้ว่ามีจุดขัดแย้งหรือเสี่ยงผิดระเบียบตรงไหน",
+      "acceptablePrimaryModules": ["GP002", "GP010"],
+      "requiresDocument": true,
+      "capability": "compliance-review"
+    },
+    {
+      "id": "RW08",
+      "group": "document-analysis",
+      "query": "วิเคราะห์ว่าเรื่องนี้กระทบผู้บริหาร เจ้าหน้าที่ และประชาชนอย่างไร",
+      "routingExpectation": "contextual",
+      "requiresDocument": true,
+      "capability": "stakeholder-analysis"
+    },
+    {
+      "id": "RW09",
+      "group": "document-analysis",
+      "query": "ปรับข้อความนี้ให้เป็นภาษาราชการพร้อมใช้",
+      "acceptablePrimaryModules": ["GP001", "GP011"],
+      "requiresDocument": true,
+      "capability": "professional-polishing"
+    },
+    {
+      "id": "RW10",
+      "group": "document-analysis",
+      "query": "ทำโครงสไลด์ 6 หน้าเสนอผู้บริหารจากรายงานนี้",
+      "acceptablePrimaryModules": ["GP011", "GP012"],
+      "requiresDocument": true,
+      "capability": "presentation-outline"
+    },
+    {
+      "id": "RW11",
+      "group": "official-correspondence",
+      "query": "ร่างหนังสือขอความอนุเคราะห์ใช้ห้องประชุม",
+      "expectedPrimaryModule": "GP001",
+      "requiresDocument": false,
+      "capability": "request-letter"
+    },
+    {
+      "id": "RW12",
+      "group": "official-correspondence",
+      "query": "ร่างหนังสือขอวิทยากรมาบรรยายเรื่อง AI",
+      "expectedPrimaryModule": "GP001",
+      "requiresDocument": false,
+      "capability": "request-speaker-letter"
+    },
+    {
+      "id": "RW13",
+      "group": "official-correspondence",
+      "query": "ร่างหนังสือขอสนับสนุนอุปกรณ์จัดกิจกรรม",
+      "expectedPrimaryModule": "GP001",
+      "requiresDocument": false,
+      "capability": "support-request-letter"
+    },
+    {
+      "id": "RW14",
+      "group": "official-correspondence",
+      "query": "ร่างบันทึกข้อความเชิญคณะทำงานประชุม",
+      "expectedPrimaryModule": "GP001",
+      "requiresDocument": false,
+      "capability": "internal-meeting-invitation"
+    },
+    {
+      "id": "RW15",
+      "group": "official-correspondence",
+      "query": "ทำหนังสือเชิญหน่วยงานภายนอกมาร่วมพิธีเปิด",
+      "expectedPrimaryModule": "GP001",
+      "requiresDocument": false,
+      "capability": "external-invitation-letter"
+    },
+    {
+      "id": "RW16",
+      "group": "official-correspondence",
+      "query": "ร่างหนังสือแจ้งเวียนแนวปฏิบัติใหม่ให้ทุกกองทราบ",
+      "expectedPrimaryModule": "GP001",
+      "requiresDocument": false,
+      "capability": "circular-letter"
+    },
+    {
+      "id": "RW17",
+      "group": "official-correspondence",
+      "query": "ร่างหนังสือเร่งรัดให้ส่งรายงานภายในวันศุกร์",
+      "expectedPrimaryModule": "GP001",
+      "requiresDocument": false,
+      "capability": "reminder-letter"
+    },
+    {
+      "id": "RW18",
+      "group": "official-correspondence",
+      "query": "ร่างหนังสือขอบคุณหน่วยงานที่สนับสนุนโครงการ",
+      "expectedPrimaryModule": "GP001",
+      "requiresDocument": false,
+      "capability": "thank-you-letter"
+    },
+    {
+      "id": "RW19",
+      "group": "official-correspondence",
+      "query": "ร่างหนังสือตอบรับเข้าร่วมประชุม",
+      "expectedPrimaryModule": "GP001",
+      "requiresDocument": false,
+      "capability": "acceptance-letter"
+    },
+    {
+      "id": "RW20",
+      "group": "official-correspondence",
+      "query": "ร่างหนังสือขอเลื่อนกิจกรรมเนื่องจากฝนตกหนัก",
+      "expectedPrimaryModule": "GP001",
+      "requiresDocument": false,
+      "capability": "postponement-letter"
+    }
+  ]
+}
