@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 import { scenarios, scenarioSummary } from '../tests/fixtures/govprompt-simulated-work-200.mjs';
+import { SIMULATED_OUTPUT_ADJUDICATIONS } from '../tests/fixtures/govprompt-simulated-work-200-adjudications.mjs';
 
 const sandbox = { window: {}, location: { pathname: '/index.html' } };
 for (const file of [
@@ -40,12 +41,13 @@ for (const scenario of scenarios) {
   const routeOk = scenario.expectedModules.includes(actualModule);
   if (routeOk) routePass += 1;
 
+  const expectedOutput = SIMULATED_OUTPUT_ADJUDICATIONS[scenario.id] || scenario.expectedOutput;
   let outputOk = true;
   let actualOutput = null;
-  if (scenario.expectedOutput) {
+  if (expectedOutput) {
     outputChecked += 1;
     actualOutput = routeOutput(scenario.userRequest, { moduleId: actualModule }).id;
-    outputOk = actualOutput === scenario.expectedOutput;
+    outputOk = actualOutput === expectedOutput;
     if (outputOk) outputPass += 1;
   }
 
@@ -55,7 +57,7 @@ for (const scenario of scenarios) {
       query: scenario.userRequest,
       expectedModules: scenario.expectedModules,
       actualModule,
-      expectedOutput: scenario.expectedOutput,
+      expectedOutput,
       actualOutput,
       confidence: routed.confidence
     });
