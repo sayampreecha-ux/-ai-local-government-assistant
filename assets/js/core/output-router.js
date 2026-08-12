@@ -97,7 +97,7 @@
   ]);
 
   function normalize(value) {
-    return String(value ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim();
+    return String(value ?? '').normalize('NFC').replace(/\s+/g, ' ').trim();
   }
 
   function inferExplicitPrefix(source) {
