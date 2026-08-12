@@ -33,6 +33,9 @@
       .filter(Boolean);
     const riskFlags = detectRiskFlags([userQuestion, ...attachmentNames].join(' '));
     const relatedModules = Array.isArray(route.modules) && route.modules.length ? route.modules.join(', ') : route.moduleId;
+    const outputPlan = typeof window.GovPromptCore.routeOutput === 'function'
+      ? window.GovPromptCore.routeOutput(userQuestion, route, normalizedContext)
+      : Object.freeze({ id: 'default', label: 'คำตอบพร้อมใช้', format: 'answer-first', instructions: Object.freeze([]), confidence: 0.5, reason: 'fallback' });
 
     const prompt = [
       'บทบาท',
@@ -51,6 +54,12 @@
       `- เอกสารแนบ: ${attachmentNames.length ? attachmentNames.join(', ') : '[ไม่มี/ยังไม่ได้แนบ]'}`,
       `- ผลลัพธ์ที่ต้องการ: ${normalizedContext.desiredOutput || userQuestion}`,
       '',
+      'รูปแบบผลลัพธ์ที่ GovPrompt เลือกให้อัตโนมัติ',
+      `- ประเภท: ${outputPlan.label}`,
+      `- รูปแบบ: ${outputPlan.format}`,
+      `- เหตุผลการเลือก: ${outputPlan.reason}`,
+      ...(outputPlan.instructions || []).map((item, index) => `${index + 1}. ${item}`),
+      '',
       'หลักการวิเคราะห์ที่ต้องปฏิบัติ',
       '1. อ่านข้อเท็จจริงและเอกสารแนบทั้งหมดก่อนวิเคราะห์ และห้ามถามซ้ำในสิ่งที่มีอยู่แล้ว',
       '2. หากข้อมูลสำคัญไม่ครบ ให้ตอบเบื้องต้นเท่าที่หลักฐานรองรับ แล้วถามเพิ่มเฉพาะข้อมูลที่มีผลต่อคำตอบจริง',
@@ -63,19 +72,20 @@
       '9. ถ้ายังยืนยันความเป็นฉบับล่าสุดไม่ได้ ให้ระบุชัดว่า “ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง”',
       '10. ตรวจ PDPA ข้อมูลอ่อนไหว และข้อมูลลับก่อนแสดงหรือใช้ข้อมูลที่ไม่จำเป็น',
       '11. ให้คำตอบแบบ Answer First ก่อน แล้วตามด้วยเหตุผล ฐานอำนาจ ความเสี่ยง และขั้นตอนปฏิบัติ',
-      '12. หากงานสามารถต่อยอดได้ ให้จัดทำผลลัพธ์พร้อมใช้ เช่น หนังสือราชการ บันทึก Checklist หรือสรุปผู้บริหาร โดยไม่แต่งข้อเท็จจริงเพิ่ม',
+      '12. หากงานสามารถต่อยอดได้ ให้จัดทำผลลัพธ์พร้อมใช้ เช่น หนังสือราชการ บันทึก Checklist ตาราง CSV JSON หรือสรุปผู้บริหาร โดยไม่แต่งข้อเท็จจริงเพิ่ม',
       '',
       'สถานะความเสี่ยงเบื้องต้นจาก GovPrompt',
       riskFlags.length ? riskFlags.map(flag => `- ${flag}`).join('\n') : '- ไม่พบสัญญาณความเสี่ยงจากข้อความเบื้องต้น แต่ยังต้องตรวจทานก่อนใช้จริง',
       '',
       'ข้อกำหนดผลลัพธ์',
+      `- ส่งผลลัพธ์หลักในรูปแบบ “${outputPlan.label}” ตามที่ Output Router เลือก เว้นแต่ผู้ใช้สั่งรูปแบบอื่นชัดเจน`,
       '- ใช้ภาษาไทยชัดเจน เข้าใจง่าย และเหมาะกับการปฏิบัติราชการ',
       '- อ้างแหล่งที่มาต่อข้อความสำคัญเมื่อสามารถตรวจสอบต้นฉบับได้',
       '- แยกสิ่งที่ยืนยันแล้วออกจากข้อวิเคราะห์หรือสิ่งที่ยังต้องตรวจสอบ',
       '- AI ช่วยค้น ช่วยคิด ช่วยร่าง แต่ผู้ใช้เป็นผู้ตรวจสอบและตัดสินใจก่อนนำไปใช้จริง'
     ].join('\n');
 
-    return Object.freeze({ prompt, riskFlags, route, context: normalizedContext, attachmentNames: Object.freeze(attachmentNames) });
+    return Object.freeze({ prompt, riskFlags, route, outputPlan, context: normalizedContext, attachmentNames: Object.freeze(attachmentNames) });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
