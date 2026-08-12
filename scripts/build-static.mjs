@@ -1,4 +1,4 @@
-import { cp, mkdir, readdir, rm } from "node:fs/promises";
+import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 
 const output = "dist";
@@ -17,6 +17,15 @@ for (const entry of await readdir(".", { withFileTypes: true })) {
 
 for (const directory of publicDirectories) {
   await cp(directory, join(output, directory), { recursive: true });
+}
+
+const distIndexPath = join(output, "index.html");
+const distIndex = await readFile(distIndexPath, "utf8");
+const hybridScript = '<script src="assets/js/core/hybrid-intent-classifier.js?v=2.4.1" defer></script>';
+const hotfixScript = '<script src="assets/js/core/router-real-query-hotfix.js?v=2.4.5" defer></script>';
+if (!distIndex.includes(hotfixScript)) {
+  if (!distIndex.includes(hybridScript)) throw new Error("Hybrid intent router script marker not found in dist/index.html");
+  await writeFile(distIndexPath, distIndex.replace(hybridScript, `${hybridScript}${hotfixScript}`));
 }
 
 console.log("GovPrompt production assets built in dist/.");
