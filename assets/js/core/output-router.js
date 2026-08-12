@@ -72,16 +72,17 @@
   const RULES = Object.freeze([
     { id: 'csv', score: 100, patterns: [/\bcsv\b/i, /ไฟล์\s*csv/i] },
     { id: 'json', score: 100, patterns: [/\bjson\b/i, /โครงสร้างข้อมูล/i] },
+    { id: 'official_document', score: 99, patterns: [/(?:ร่าง|ทำ|เขียน|จัดทำ).{0,20}(?:หนังสือ|บันทึกข้อความ|บันทึก|คำสั่ง|ประกาศ).{0,45}ประชาสัมพันธ์/] },
     { id: 'comparison', score: 98, patterns: [/เปรียบเทียบ/, /เทียบ(?:เอกสาร|ข้อดี|ข้อเสีย|ก่อน|หลัง)/] },
     { id: 'checklist', score: 97, patterns: [/checklist/i, /เช็กลิสต์/i, /sop/i, /ขั้นตอนการทำงาน/, /ลำดับขั้นตอน/] },
-    { id: 'executive_summary', score: 96, patterns: [/สรุปผู้บริหาร/, /executive\s*(?:summary|brief)/i, /สรุป.{0,16}(?:เสนอ|ให้)ผู้บริหาร/, /ย่อ.{0,16}(?:1\s*หน้า|หนึ่งหน้า)/] },
+    { id: 'executive_summary', score: 96, patterns: [/สรุปผู้บริหาร/, /executive\s*(?:summary|brief)/i, /สรุป.{0,16}(?:เสนอ|ให้)ผู้บริหาร/, /ย่อ.{0,16}(?:1\s*หน้า|หนึ่งหน้า)/, /briefing.{0,25}(?:ผู้บริหาร|ประชุม)/i] },
     { id: 'table', score: 95, patterns: [/เป็นตาราง/, /ทำตาราง/, /จัดตาราง/, /สกัด.{0,18}ตาราง/] },
-    { id: 'tor', score: 94, patterns: [/\btor\b/i, /ขอบเขตของงาน/, /ร่าง.{0,12}ทีโออาร์/] },
+    { id: 'tor', score: 94, patterns: [/\btor\b/i, /ขอบเขต(?:ของ)?งาน/, /ร่าง.{0,12}ทีโออาร์/] },
     { id: 'project', score: 93, patterns: [/ร่างโครงการ/, /เขียนโครงการ/, /ทำโครงการ/, /จัดทำโครงการ/] },
     { id: 'official_document', score: 92, patterns: [/ร่าง.{0,18}(?:หนังสือ|บันทึกข้อความ|บันทึก|คำสั่ง|ประกาศ)/, /ทำหนังสือ/, /เขียนหนังสือ/, /หนังสือราชการ/] },
     { id: 'public_content', score: 91, patterns: [/โพสต์(?:facebook|เฟซบุ๊ก)?/i, /ข่าวประชาสัมพันธ์/, /ประชาสัมพันธ์/, /แคปชัน/, /อินโฟกราฟิก/] },
     { id: 'prompt', score: 90, patterns: [/\bprompt\b/i, /พรอมต์/, /คำสั่ง\s*ai/i, /สูตรคำสั่ง/] },
-    { id: 'analysis', score: 70, patterns: [/วิเคราะห์/, /ตรวจ(?:สอบ|ทาน|ความเสี่ยง)/, /ได้ไหม/, /ได้หรือไม่/, /ทำอย่างไร/, /ควรทำ/, /มีอำนาจ/] }
+    { id: 'analysis', score: 70, patterns: [/วิเคราะห์/, /ตรวจ(?:สอบ|ทาน|ความเสี่ยง)/, /ได้ไหม/, /ได้หรือไม่/, /ทำอย่างไร/, /ควรทำ/, /มีอำนาจ/, /ต้องพิจารณา/, /ต้องมี/, /ต้องใช้/, /ต้องดำเนิน/, /ต่างกันอย่างไร/, /มีผล/, /ความเสี่ยง/, /ควรตรวจ/, /ควรประเมิน/] }
   ]);
 
   function normalize(value) {
@@ -90,10 +91,9 @@
 
   function inferFromModule(moduleId) {
     if (moduleId === 'GP001') return 'official_document';
-    if (moduleId === 'GP003') return 'analysis';
-    if (moduleId === 'GP004') return 'project';
     if (moduleId === 'GP011') return 'executive_summary';
     if (moduleId === 'GP012') return 'public_content';
+    if (['GP002', 'GP003', 'GP004', 'GP005', 'GP006', 'GP007', 'GP008', 'GP009', 'GP010', 'GP013'].includes(moduleId)) return 'analysis';
     return 'default';
   }
 
