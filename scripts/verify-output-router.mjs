@@ -38,6 +38,6 @@ for (const [query, expected] of cases) {
 assert.equal(routeOutput('ช่วยตอบเรื่องนี้', { moduleId: 'GP001' }).id, 'official_document')
 assert.equal(routeOutput('ช่วยตอบเรื่องนี้', { moduleId: 'GP011' }).id, 'executive_summary')
 assert.equal(routeOutput('ช่วยตอบเรื่องนี้', { moduleId: 'GP012' }).id, 'public_content')
-assert.equal(routeOutput('ช่วยตอบเรื่องนี้', { moduleId: 'GP005' }).id, 'default')
+assert.equal(routeOutput('ช่วยตอบเรื่องนี้', { moduleId: 'GP005' }).id, 'analysis')
 
 console.log(`GovPrompt Output Router verification passed: ${cases.length + 4}/${cases.length + 4}`)
