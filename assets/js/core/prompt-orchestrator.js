@@ -8,7 +8,7 @@
   ]);
 
   function normalizeText(value) {
-    return String(value ?? '').normalize('NFKC').trim();
+    return String(value ?? '').normalize('NFC').trim();
   }
 
   function detectRiskFlags(text) {
@@ -36,6 +36,9 @@
     const outputPlan = typeof window.GovPromptCore.routeOutput === 'function'
       ? window.GovPromptCore.routeOutput(userQuestion, route, normalizedContext)
       : Object.freeze({ id: 'default', label: 'คำตอบพร้อมใช้', format: 'answer-first', instructions: Object.freeze([]), confidence: 0.5, reason: 'fallback' });
+    const governancePlan = typeof window.GovPromptCore.evaluateAgentGovernance === 'function'
+      ? window.GovPromptCore.evaluateAgentGovernance(userQuestion)
+      : Object.freeze({ requestedLevel: 'L3', effectiveLevel: 'L3', allowed: true, requiresHumanApproval: false, blockers: Object.freeze([]) });
 
     const prompt = [
       'บทบาท',
@@ -59,6 +62,14 @@
       `- รูปแบบ: ${outputPlan.format}`,
       `- เหตุผลการเลือก: ${outputPlan.reason}`,
       ...(outputPlan.instructions || []).map((item, index) => `${index + 1}. ${item}`),
+      '',
+      'ขอบเขต AI Agent Governance',
+      `- ระดับที่ผู้ใช้ร้องขอโดยพฤติกรรม: ${governancePlan.requestedLevel}`,
+      `- ระดับที่อนุญาตในรอบนี้: ${governancePlan.effectiveLevel}`,
+      '- Technical Permission ไม่เท่ากับ Legal Authority',
+      '- ห้าม AI อนุมัติ ลงนาม สั่งจ่าย ลงมติ หรือตัดสินแทนผู้มีอำนาจตามกฎหมาย',
+      '- หากคำขอมีผลต่อระบบจริง ให้หยุดที่ Draft/Recommendation เว้นแต่มี Human Approval, ขอบเขตชัด, rollback, audit trail และยืนยันฐานอำนาจครบ',
+      ...(governancePlan.blockers || []).map(item => `- Governance blocker: ${item}`),
       '',
       'หลักการวิเคราะห์ที่ต้องปฏิบัติ',
       '1. อ่านข้อเท็จจริงและเอกสารแนบทั้งหมดก่อนวิเคราะห์ และห้ามถามซ้ำในสิ่งที่มีอยู่แล้ว',
@@ -85,7 +96,7 @@
       '- AI ช่วยค้น ช่วยคิด ช่วยร่าง แต่ผู้ใช้เป็นผู้ตรวจสอบและตัดสินใจก่อนนำไปใช้จริง'
     ].join('\n');
 
-    return Object.freeze({ prompt, riskFlags, route, outputPlan, context: normalizedContext, attachmentNames: Object.freeze(attachmentNames) });
+    return Object.freeze({ prompt, riskFlags, route, outputPlan, governancePlan, context: normalizedContext, attachmentNames: Object.freeze(attachmentNames) });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
