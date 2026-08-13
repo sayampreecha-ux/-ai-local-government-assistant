@@ -11,6 +11,13 @@ Audience: เจ้าหน้าที่และผู้ปฏิบัต�
 AI/search crawlers may index and reference publicly published pages and public knowledge content on this static site.
 Do not treat user-entered prompts, uploaded files, transient chat content, private data, API traffic, logs, or authenticated content as public knowledge.
 
+## AI crawler usage policy
+
+- Search: Allowed for public static pages and public knowledge intended for discovery.
+- Agent: Allowed to retrieve and reference public informational pages when answering a user's request. This does not grant access to APIs, authenticated areas, logs, uploads, user prompts, or private data.
+- Training: This file does not grant blanket permission to use GovPrompt Thailand content for model training. Training access is governed by the site owner's final robots/network/Cloudflare policy and applicable terms.
+- Mixed-purpose crawlers: Apply the effective edge policy carefully because a crawler identity may serve more than one purpose. Preserve required Search discovery when changing Training controls.
+
 ## Core capabilities
 
 - ร่างหนังสือราชการ
@@ -33,3 +40,4 @@ Do not treat user-entered prompts, uploaded files, transient chat content, priva
 - Home: https://sayampreecha-ux.github.io/-ai-local-government-assistant/
 - Trust: https://sayampreecha-ux.github.io/-ai-local-government-assistant/trust.html
 - Privacy notice: https://sayampreecha-ux.github.io/-ai-local-government-assistant/privacy-notice.html
+- Sitemap: https://sayampreecha-ux.github.io/-ai-local-government-assistant/sitemap.xml
