@@ -9,6 +9,22 @@
     privacy: 'ข้อมูลส่วนบุคคล/ความเสี่ยง'
   });
 
+  const MODULE_LABELS = Object.freeze({
+    GP001: 'สารบรรณ/หนังสือราชการ',
+    GP002: 'กฎหมาย',
+    GP003: 'พัสดุ/TOR',
+    GP004: 'แผน/โครงการ/งบประมาณ',
+    GP005: 'การเงิน/เบิกจ่าย',
+    GP006: 'บุคคล',
+    GP007: 'งานช่าง',
+    GP008: 'สาธารณสุข',
+    GP009: 'การศึกษา/เด็ก/เยาวชน/กีฬา',
+    GP010: 'ตรวจสอบภายใน',
+    GP011: 'ผู้บริหาร/คำกล่าว/สรุปผู้บริหาร',
+    GP012: 'ประชาสัมพันธ์/สื่อ',
+    GP013: 'สภาท้องถิ่น'
+  });
+
   function parseModule(article) {
     const label = article.querySelector('.route-label')?.textContent || '';
     const match = label.match(/GP\d{3}/);
@@ -17,6 +33,35 @@
 
   function toast(message) {
     window.GovPrompt?.toast?.(message);
+  }
+
+  function makeExpectedModulePicker(panel, currentModuleId) {
+    let field = panel.querySelector('.pilot-feedback-route-correction');
+    if (field) return field;
+
+    field = document.createElement('label');
+    field.className = 'pilot-feedback-route-correction';
+    field.textContent = 'ควรเป็นหมวดใด? ';
+
+    const select = document.createElement('select');
+    select.setAttribute('aria-label', 'หมวดที่ควรเป็น');
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'เลือก GP001–GP013 (ถ้าทราบ)';
+    select.append(placeholder);
+
+    Object.entries(MODULE_LABELS).forEach(([moduleId, label]) => {
+      const option = document.createElement('option');
+      option.value = moduleId;
+      option.textContent = `${moduleId} — ${label}`;
+      if (moduleId === currentModuleId) option.disabled = true;
+      select.append(option);
+    });
+
+    field.append(select);
+    panel.append(field);
+    return field;
   }
 
   function makeIssuePicker(article, moduleId, transactionType, wrapper) {
@@ -36,6 +81,11 @@
         if (selected.has(code)) selected.delete(code);
         else selected.add(code);
         button.setAttribute('aria-pressed', selected.has(code) ? 'true' : 'false');
+
+        if (code === 'route') {
+          const field = makeExpectedModulePicker(panel, moduleId);
+          field.hidden = !selected.has('route');
+        }
       });
       panel.append(button);
     });
@@ -44,11 +94,15 @@
     save.type = 'button';
     save.textContent = 'บันทึก';
     save.addEventListener('click', () => {
+      const expectedModuleId = selected.has('route')
+        ? panel.querySelector('.pilot-feedback-route-correction select')?.value || undefined
+        : undefined;
       const result = window.GovPromptCore?.addPilotFeedback?.({
         moduleId,
         transactionType,
         verdict: 'down',
-        issueCodes: [...selected]
+        issueCodes: [...selected],
+        expectedModuleId
       });
       if (!result?.saved) {
         toast('ยังบันทึก Feedback ไม่ได้');
@@ -57,7 +111,9 @@
       panel.replaceChildren(document.createTextNode('ขอบคุณครับ — บันทึกจุดที่ต้องปรับแล้ว'));
       wrapper.querySelectorAll('button[data-verdict]').forEach(button => { button.disabled = true; });
       article.dataset.feedbackSaved = 'true';
-      toast('บันทึก Feedback แล้ว โดยไม่เก็บข้อความคำถามหรือข้อมูลส่วนบุคคล');
+      toast(expectedModuleId
+        ? `บันทึก Route ที่ควรเป็น ${expectedModuleId} แล้ว โดยไม่เก็บข้อความคำถาม`
+        : 'บันทึก Feedback แล้ว โดยไม่เก็บข้อความคำถามหรือข้อมูลส่วนบุคคล');
     });
     panel.append(save);
     wrapper.append(panel);
