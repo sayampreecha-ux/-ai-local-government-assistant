@@ -3,6 +3,8 @@
 
   const STORAGE_KEY = 'govprompt-pilot-feedback-v1';
   const MAX_RECORDS = 100;
+  const VALID_MODULES = Object.freeze(Array.from({ length: 13 }, (_, index) => `GP${String(index + 1).padStart(3, '0')}`));
+  const VALID_MODULE_SET = new Set(VALID_MODULES);
   const ISSUE_CODES = Object.freeze({
     ROUTE: 'route',
     ANSWER: 'answer',
@@ -29,19 +31,31 @@
     }
   }
 
-  function addFeedback({ moduleId, transactionType, verdict, issueCodes = [] } = {}) {
+  function validModuleId(value) {
+    const moduleId = String(value || '');
+    return VALID_MODULE_SET.has(moduleId) ? moduleId : '';
+  }
+
+  function addFeedback({ moduleId, transactionType, verdict, issueCodes = [], expectedModuleId } = {}) {
     const safeVerdict = verdict === 'up' ? 'up' : verdict === 'down' ? 'down' : '';
     if (!safeVerdict) return Object.freeze({ saved: false, reason: 'INVALID_VERDICT' });
 
     const allowedIssues = new Set(Object.values(ISSUE_CODES));
     const safeIssues = [...new Set((Array.isArray(issueCodes) ? issueCodes : []).filter(code => allowedIssues.has(code)))];
-    const record = Object.freeze({
+    const actualModuleId = validModuleId(moduleId) || 'UNKNOWN';
+    const routeCorrection = safeVerdict === 'down' && safeIssues.includes(ISSUE_CODES.ROUTE)
+      ? validModuleId(expectedModuleId)
+      : '';
+
+    const record = {
       at: new Date().toISOString(),
-      moduleId: /^GP\d{3}$/.test(String(moduleId || '')) ? String(moduleId) : 'UNKNOWN',
+      moduleId: actualModuleId,
       transactionType: String(transactionType || 'general').slice(0, 40),
       verdict: safeVerdict,
       issueCodes: Object.freeze(safeIssues)
-    });
+    };
+    if (routeCorrection) record.expectedModuleId = routeCorrection;
+    Object.freeze(record);
 
     const records = [record, ...readRecords()];
     return Object.freeze({ saved: writeRecords(records), record });
@@ -51,6 +65,7 @@
     const records = readRecords();
     const byModule = {};
     const issues = {};
+    const routeCorrections = {};
     let up = 0;
     let down = 0;
 
@@ -59,6 +74,10 @@
       if (record.verdict === 'down') down += 1;
       byModule[record.moduleId] = (byModule[record.moduleId] || 0) + 1;
       (record.issueCodes || []).forEach(code => { issues[code] = (issues[code] || 0) + 1; });
+      if (record.issueCodes?.includes(ISSUE_CODES.ROUTE) && validModuleId(record.expectedModuleId)) {
+        const pair = `${record.moduleId}→${record.expectedModuleId}`;
+        routeCorrections[pair] = (routeCorrections[pair] || 0) + 1;
+      }
     });
 
     return Object.freeze({
@@ -67,7 +86,8 @@
       down,
       satisfactionRate: records.length ? Number((up / records.length * 100).toFixed(1)) : 0,
       byModule: Object.freeze({ ...byModule }),
-      issues: Object.freeze({ ...issues })
+      issues: Object.freeze({ ...issues }),
+      routeCorrections: Object.freeze({ ...routeCorrections })
     });
   }
 
@@ -86,6 +106,7 @@
 
   window.GovPromptCore = window.GovPromptCore || {};
   window.GovPromptCore.PILOT_FEEDBACK_ISSUES = ISSUE_CODES;
+  window.GovPromptCore.PILOT_FEEDBACK_MODULES = VALID_MODULES;
   window.GovPromptCore.addPilotFeedback = addFeedback;
   window.GovPromptCore.getPilotFeedbackSummary = summary;
   window.GovPromptCore.exportPilotFeedbackReport = exportReport;
