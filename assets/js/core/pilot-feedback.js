@@ -93,15 +93,6 @@
     });
   }
 
-  function exportReport() {
-    return JSON.stringify({
-      generatedAt: new Date().toISOString(),
-      privacy: 'No raw prompt, document content, name, email, IP, or free-text feedback is stored.',
-      summary: summary(),
-      records: readRecords()
-    }, null, 2);
-  }
-
   function clear() {
     try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
   }
@@ -154,6 +145,16 @@
       scope: 'this-device-only',
       privacy: 'Stored only in this browser. No prompt text, file content, name, email, IP, cookie, fingerprint, or user identifier is recorded.'
     });
+  }
+
+  function exportReport() {
+    return JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      privacy: 'No raw prompt, document content, name, email, IP, or free-text feedback is stored.',
+      usage: localUsageSummary(),
+      summary: summary(),
+      records: readRecords()
+    }, null, 2);
   }
 
   function wrapRouteTransaction() {
