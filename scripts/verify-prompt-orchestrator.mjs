@@ -26,11 +26,14 @@ const result = core.createGovernmentPrompt({
 });
 
 assert.equal(typeof result.prompt, 'string');
-assert.equal(result.prompt.includes('ค้นหาเอกสารที่เกี่ยวข้องทั้งหมด'), true);
+assert.equal(result.prompt.includes('Universal Task Reasoning v7.1'), true);
+assert.equal(result.prompt.includes('ตรวจฉบับแก้ไข/ยกเลิก/ฉบับใหม่กว่า'), true);
 assert.equal(result.prompt.includes('ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง'), true);
 assert.equal(result.prompt.includes('ห้ามสมมติเลขมาตรา เลขหนังสือ วันที่ คำพิพากษา'), true);
 assert.equal(result.prompt.includes('TOR.pdf'), true);
-assert.equal(result.prompt.includes('หมวดดังกล่าวเป็นเพียงคำแนะนำ'), true);
+assert.equal(result.prompt.includes('Router เป็นเพียงคำแนะนำ'), true);
+assert.equal(result.taskPlan.routeIsAdvisory, true);
+assert.equal(result.taskPlan.evidenceMode, 'verify-current-primary-source');
 assert.equal(result.riskFlags.length > 0, true);
 
 const noRoute = core.createGovernmentPrompt({
@@ -38,15 +41,19 @@ const noRoute = core.createGovernmentPrompt({
   context: core.createSharedContext({ facts: 'ช่วยทำโครงการกิจกรรมชุมชนให้พร้อมใช้' })
 });
 assert.equal(noRoute.route.moduleId, 'GENERAL');
-assert.equal(noRoute.prompt.includes('ไม่จำกัดเฉพาะหมวดที่ระบบคาดการณ์'), true);
-assert.equal(noRoute.prompt.includes('ให้สร้างผลลัพธ์พร้อมใช้ก่อน'), true);
+assert.equal(noRoute.taskPlan.deliverable, 'project');
+assert.equal(noRoute.prompt.includes('หมวดดังกล่าวมีไว้ช่วยเลือกบริบท/เครื่องมือเท่านั้น'), true);
+assert.equal(noRoute.prompt.includes('ส่งชิ้นงานหรือข้อสรุปที่ใช้ต่อได้ก่อน'), true);
 
 const intentionallyWrongRoute = core.createGovernmentPrompt({
   question: 'ทำโปสเตอร์วันเด็ก',
   route,
   context: core.createSharedContext({ facts: 'ทำโปสเตอร์วันเด็ก' })
 });
-assert.equal(intentionallyWrongRoute.prompt.includes('หากหมวดที่ระบบคาดการณ์ไม่ตรงกับเจตนาของผู้ใช้'), true);
-assert.equal(intentionallyWrongRoute.prompt.includes('ตอบงานนั้นให้สำเร็จ'), true);
+assert.equal(intentionallyWrongRoute.taskPlan.deliverable, 'public-content');
+assert.equal(intentionallyWrongRoute.taskPlan.disciplines.includes('education'), true);
+assert.equal(intentionallyWrongRoute.taskPlan.disciplines.includes('public-relations'), true);
+assert.equal(intentionallyWrongRoute.prompt.includes('หาก Route ขัดกับเจตนาของผู้ใช้'), true);
+assert.equal(intentionallyWrongRoute.prompt.includes('ยึดเจตนา ชิ้นงาน และหลักฐานที่งานนั้นต้องใช้เป็นหลัก'), true);
 
-console.log('GovPrompt v7 Prompt Orchestrator verification passed with universal fallback.');
+console.log('GovPrompt v7 Prompt Orchestrator verification passed with Universal Task Reasoning v7.1.');
