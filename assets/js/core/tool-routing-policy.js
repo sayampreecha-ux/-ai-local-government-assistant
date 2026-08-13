@@ -35,7 +35,7 @@
   ]);
 
   function normalize(value) {
-    return String(value ?? '').normalize('NFKC').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
+    return String(value ?? '').normalize('NFC').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
   }
 
   function includesAny(text, terms) {
