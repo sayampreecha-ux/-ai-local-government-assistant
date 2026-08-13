@@ -13,13 +13,17 @@ const cases = [
   { q: 'ช่วยร่างอีเมลแจ้งประชุมให้สุภาพ', mode: 'ai-only', tools: ['ai-reasoning'], excludes: ['gmail'] },
   { q: 'ระเบียบล่าสุดเรื่องค่าเดินทางไปราชการยังใช้ฉบับไหน', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
   { q: 'ช่วยตรวจ TOR โครงการถนนว่ามีความเสี่ยงล็อกสเปกไหม', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
+  { q: 'ตรวจ ที โอ อาร์ ว่าล็อกสเปกหรือไม่', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
+  { q: 'จัดทำขอบเขตของงานจ้างปรับปรุงถนน', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
   { q: 'จัดซื้อคอมพิวเตอร์ควรใช้วิธีไหน', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
   { q: 'ค่าแท็กซี่ไปราชการเบิกได้ไหม', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
   { q: 'ถนนน้ำท่วมขาด จะใช้เงินสะสมซ่อม 5 แสนได้ไหม', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
+  { q: 'ขอใช้เงินสำรองจ่ายซ่อมถนนน้ำท่วมฉุกเฉิน', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
   { q: 'ขาดราชการ 16 วันต้องดำเนินการอย่างไร', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
   { q: 'โอนย้ายข้าราชการท้องถิ่นต้องทำอย่างไร', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
   { q: 'เงินบำรุง รพ.สต. ซื้อวัสดุได้ไหม', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
   { q: 'การเปิดประชุมสภาท้องถิ่นต้องทำอย่างไร', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
+  { q: 'สมาชิกสภามีส่วนได้เสียลงมติได้ไหม', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
   { q: 'หาอีเมลเดิมที่เคยส่งเรื่อง MOU ให้หน่อย', mode: 'user-data-first', tools: ['gmail', 'ai-reasoning'], excludes: ['web-search'] },
   { q: 'ช่วยสรุปอีเมลที่ได้รับจากเทศบาล', mode: 'user-data-first', tools: ['gmail', 'ai-reasoning'] },
   { q: 'หาไฟล์ TOR ที่เคยทำใน Google Drive', mode: 'user-data-first', tools: ['drive-files', 'web-search', 'ai-reasoning'] },
@@ -45,12 +49,20 @@ const airfare = core.createToolRoutingPlan({ question: 'ค่าแท็กซ
 assert.equal(airfare.flags.needsPrimarySource, true, 'financial eligibility must require primary-source verification');
 assert.equal(airfare.instructions.some(item => item.includes('เบิกได้ / เบิกไม่ได้ / มีเงื่อนไข')), true, 'finance guidance must lead with eligibility');
 
+const reserveFund = core.createToolRoutingPlan({ question: 'ขอใช้เงินสำรองจ่ายซ่อมถนนน้ำท่วมฉุกเฉิน' });
+assert.equal(reserveFund.flags.needsPrimarySource, true, 'reserve-fund use must require primary-source verification');
+assert.equal(reserveFund.tools.includes('web-search'), true, 'reserve-fund use must search official current sources');
+
 const draftingLetter = core.createToolRoutingPlan({ question: 'ช่วยร่างหนังสือราชการแจ้งกำหนดการประชุม' });
 assert.equal(draftingLetter.instructions.some(item => item.includes('ร่างฉบับพร้อมใช้ก่อน')), true, 'official-letter guidance must draft first');
 
 const tor = core.createToolRoutingPlan({ question: 'ช่วยตรวจ TOR โครงการถนนว่ามีความเสี่ยงล็อกสเปกไหม' });
 assert.equal(tor.instructions.some(item => item.includes('เกณฑ์ตรวจรับ')), true, 'TOR guidance must include acceptance criteria');
 assert.equal(tor.instructions.some(item => item.includes('ล็อกสเปก')), true, 'TOR guidance must surface lock-spec risk');
+
+const thaiTor = core.createToolRoutingPlan({ question: 'ตรวจ ที โอ อาร์ ว่าล็อกสเปกหรือไม่' });
+assert.equal(thaiTor.flags.needsPrimarySource, true, 'Thai TOR wording must require primary-source verification');
+assert.equal(thaiTor.tools.includes('web-search'), true, 'Thai TOR wording must search official current sources');
 
 const legal = core.createToolRoutingPlan({ question: 'ช่วยวิเคราะห์ข้อกฎหมายล่าสุดเรื่องอำนาจขององค์กรปกครองส่วนท้องถิ่น' });
 assert.equal(legal.instructions.some(item => item.includes('ประเด็นกฎหมาย')), true, 'legal guidance must structure legal analysis');
@@ -70,4 +82,4 @@ assert.match(formatted, /web-search/);
 assert.match(formatted, /Answer First/);
 assert.match(formatted, /ห้ามอ้างว่าได้ค้นหรือเปิดข้อมูลแล้ว/);
 
-console.log(`GovPrompt v7 Tool Routing Policy verification passed: ${cases.length} routing cases + 5 prompt-quality workflows.`);
+console.log(`GovPrompt v7 Tool Routing Policy verification passed: ${cases.length} routing cases + Thai primary-source regressions.`);
