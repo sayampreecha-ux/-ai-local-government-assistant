@@ -1,0 +1,35 @@
+# GovPrompt Thailand
+
+> Government AI Copilot สำหรับงานราชการไทย ช่วยจำแนกงาน วิเคราะห์ ค้นแหล่งราชการ และสร้าง Prompt พร้อมใช้ โดยผู้ใช้ต้องตรวจสอบก่อนนำผลลัพธ์ไปใช้จริง
+
+Canonical site: https://sayampreecha-ux.github.io/-ai-local-government-assistant/
+Language: th-TH
+Audience: เจ้าหน้าที่และผู้ปฏิบัติงานภาครัฐ/องค์กรปกครองส่วนท้องถิ่น
+
+## Public content policy
+
+AI/search crawlers may index and reference publicly published pages and public knowledge content on this static site.
+Do not treat user-entered prompts, uploaded files, transient chat content, private data, API traffic, logs, or authenticated content as public knowledge.
+
+## Core capabilities
+
+- ร่างหนังสือราชการ
+- ร่างและตรวจ TOR / ขอบเขตของงาน
+- วิเคราะห์การจัดซื้อจัดจ้างและพัสดุ
+- วิเคราะห์การเบิกจ่าย การเงิน และการคลัง
+- วิเคราะห์ข้อกฎหมายและฐานอำนาจ
+- ช่วยค้นและจัดโครงสร้างแหล่งราชการ
+- Privacy Guard สำหรับลดความเสี่ยงข้อมูลส่วนบุคคลก่อนส่งต่อ
+
+## Trust and safety
+
+- AI เป็นผู้ช่วย ไม่ใช่ผู้มีอำนาจอนุมัติหรือตัดสินใจแทนเจ้าหน้าที่
+- ตรวจสอบกฎหมาย ระเบียบ หนังสือสั่งการ และข้อมูลปัจจุบันจากแหล่งราชการต้นฉบับก่อนใช้จริง
+- ห้ามป้อนข้อมูลลับหรือข้อมูลส่วนบุคคลที่ไม่จำเป็น
+- Public pages are intended for discovery and citation; private/user data is not.
+
+## Important pages
+
+- Home: https://sayampreecha-ux.github.io/-ai-local-government-assistant/
+- Trust: https://sayampreecha-ux.github.io/-ai-local-government-assistant/trust.html
+- Privacy notice: https://sayampreecha-ux.github.io/-ai-local-government-assistant/privacy-notice.html
