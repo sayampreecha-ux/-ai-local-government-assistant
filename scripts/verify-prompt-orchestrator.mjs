@@ -30,6 +30,23 @@ assert.equal(result.prompt.includes('ค้นหาเอกสารที่�
 assert.equal(result.prompt.includes('ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง'), true);
 assert.equal(result.prompt.includes('ห้ามสมมติเลขมาตรา เลขหนังสือ วันที่ คำพิพากษา'), true);
 assert.equal(result.prompt.includes('TOR.pdf'), true);
+assert.equal(result.prompt.includes('หมวดดังกล่าวเป็นเพียงคำแนะนำ'), true);
 assert.equal(result.riskFlags.length > 0, true);
 
-console.log('GovPrompt v7 Prompt Orchestrator verification passed.');
+const noRoute = core.createGovernmentPrompt({
+  question: 'ช่วยทำโครงการกิจกรรมชุมชนให้พร้อมใช้',
+  context: core.createSharedContext({ facts: 'ช่วยทำโครงการกิจกรรมชุมชนให้พร้อมใช้' })
+});
+assert.equal(noRoute.route.moduleId, 'GENERAL');
+assert.equal(noRoute.prompt.includes('ไม่จำกัดเฉพาะหมวดที่ระบบคาดการณ์'), true);
+assert.equal(noRoute.prompt.includes('ให้สร้างผลลัพธ์พร้อมใช้ก่อน'), true);
+
+const intentionallyWrongRoute = core.createGovernmentPrompt({
+  question: 'ทำโปสเตอร์วันเด็ก',
+  route,
+  context: core.createSharedContext({ facts: 'ทำโปสเตอร์วันเด็ก' })
+});
+assert.equal(intentionallyWrongRoute.prompt.includes('หากหมวดที่ระบบคาดการณ์ไม่ตรงกับเจตนาของผู้ใช้'), true);
+assert.equal(intentionallyWrongRoute.prompt.includes('ตอบงานนั้นให้สำเร็จ'), true);
+
+console.log('GovPrompt v7 Prompt Orchestrator verification passed with universal fallback.');
