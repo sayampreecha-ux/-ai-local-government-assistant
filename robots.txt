@@ -1,5 +1,17 @@
+# GovPrompt Thailand crawler policy
+# Public static content may be indexed. Sensitive/user data must never be exposed as public URLs.
+
 User-agent: *
 Allow: /
+
+# Existing protected/admin surfaces
 Disallow: /admin.html
 Disallow: /admin.js
 Disallow: /api/
+
+# Defensive exclusions for future private routes. Access control remains mandatory.
+Disallow: /private/
+Disallow: /logs/
+Disallow: /uploads/
+
+Sitemap: https://sayampreecha-ux.github.io/-ai-local-government-assistant/sitemap.xml
