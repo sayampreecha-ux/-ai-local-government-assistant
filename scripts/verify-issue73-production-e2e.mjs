@@ -6,26 +6,34 @@ const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({ serviceWorkers: 'allow' });
 const page = await context.newPage();
 let dialogs = [];
+let pageErrors = [];
 
 page.on('dialog', async dialog => {
   dialogs.push(dialog.message());
   await dialog.accept();
 });
+page.on('pageerror', error => pageErrors.push(String(error?.stack || error?.message || error)));
 
 async function loadFresh(caseName) {
   dialogs = [];
+  pageErrors = [];
   const url = new URL(frontend);
   url.searchParams.set('issue', '73');
   url.searchParams.set('case', caseName);
   url.searchParams.set('nonce', `${Date.now()}-${Math.random().toString(16).slice(2)}`);
   await page.goto(url.toString(), { waitUntil: 'domcontentloaded', timeout: 30_000 });
   await page.waitForFunction(
-    () => document.getElementById('chatForm')?.dataset?.privacySubmitGuard === '2',
+    () => document.readyState === 'complete'
+      && document.getElementById('chatForm')?.dataset?.privacySubmitGuard === '2'
+      && typeof window.GovPromptCore?.sanitizeExternalContent === 'function'
+      && typeof window.GovPrompt?.toast === 'function',
     undefined,
     { timeout: 15_000 }
   );
   return page.evaluate(async () => ({
+    readyState: document.readyState,
     submitGuardVersion: document.getElementById('chatForm')?.dataset?.privacySubmitGuard || '',
+    scriptSources: [...document.scripts].map(script => script.src).filter(Boolean),
     serviceWorkers: 'serviceWorker' in navigator
       ? (await navigator.serviceWorker.getRegistrations()).map(registration => ({
           scope: registration.scope,
@@ -42,24 +50,42 @@ async function userMessages() {
   return page.locator('.message.user .message-body').allInnerTexts();
 }
 
+async function warningMessages() {
+  const toast = await page.locator('.gp-toast').allInnerTexts();
+  return [...dialogs, ...toast.filter(Boolean)];
+}
+
+async function diagnosticState() {
+  return page.evaluate(() => ({
+    href: location.href,
+    readyState: document.readyState,
+    inputValue: document.getElementById('promptInput')?.value || '',
+    submitGuardVersion: document.getElementById('chatForm')?.dataset?.privacySubmitGuard || '',
+    userMessages: [...document.querySelectorAll('.message.user .message-body')].map(node => node.textContent || ''),
+    toast: document.querySelector('.gp-toast')?.textContent || '',
+    bodyText: document.body.innerText
+  }));
+}
+
 async function submitRedactable({ name, sample, forbidden, expectedMask }) {
   const runtime = await loadFresh(name);
   const before = (await userMessages()).length;
   await page.locator('#promptInput').fill(sample);
   await page.locator('#chatForm .send-button').click();
-  await page.waitForFunction(
-    previous => document.querySelectorAll('.message.user .message-body').length > previous,
-    before,
-    { timeout: 10_000 }
-  );
+  await page.waitForTimeout(300);
 
   const messages = await userMessages();
+  const state = await diagnosticState();
+  const warnings = await warningMessages();
+  assert.ok(messages.length > before, `${name}: sanitized submit did not reach Home/UI; state=${JSON.stringify({ ...state, bodyText: state.bodyText.slice(0, 500), pageErrors })}`);
   const rendered = messages.at(-1) || '';
   assert.equal(rendered.includes(forbidden), false, `${name}: raw sensitive marker leaked into user UI: ${rendered}`);
   assert.match(rendered, expectedMask, `${name}: masked marker missing from user UI: ${rendered}`);
-  assert.ok(dialogs.some(message => /ปกปิดให้อัตโนมัติ/.test(message)), `${name}: automatic masking warning was not shown`);
+  assert.equal(state.bodyText.includes(forbidden), false, `${name}: raw sensitive marker remained anywhere in visible UI`);
+  assert.ok(warnings.some(message => /ปกปิดให้อัตโนมัติ/.test(message)), `${name}: automatic masking warning was not shown; warnings=${JSON.stringify(warnings)}`);
   assert.equal(runtime.submitGuardVersion, '2', `${name}: production submit guard v2 was not active`);
-  return { name, rendered, dialogs: [...dialogs], runtime };
+  assert.ok(runtime.scriptSources.some(src => /privacy-submit-guard\.js\?v=1\.0\.2(?:$|&)/.test(src)), `${name}: production browser did not load submit guard cache key v1.0.2`);
+  return { name, rendered, warnings, runtime };
 }
 
 async function submitBlocked({ name, sample }) {
@@ -67,15 +93,18 @@ async function submitBlocked({ name, sample }) {
   const before = (await userMessages()).length;
   await page.locator('#promptInput').fill(sample);
   await page.locator('#chatForm .send-button').click();
-  await page.waitForTimeout(500);
+  await page.waitForTimeout(300);
 
   const after = (await userMessages()).length;
   const inputValue = await page.locator('#promptInput').inputValue();
-  assert.equal(after, before, `${name}: blocked sensitive content created a user bubble`);
+  const state = await diagnosticState();
+  const warnings = await warningMessages();
+  assert.equal(after, before, `${name}: blocked sensitive content created a user bubble; state=${JSON.stringify({ ...state, bodyText: state.bodyText.slice(0, 500), pageErrors })}`);
   assert.equal(inputValue, '', `${name}: blocked sensitive content remained in composer`);
-  assert.ok(dialogs.some(message => /บล็อกข้อมูลอ่อนไหว|ยกเลิกการส่ง|หยุดการส่ง/.test(message)), `${name}: blocking warning was not shown`);
+  assert.equal(state.bodyText.includes(sample), false, `${name}: blocked raw sensitive content remained anywhere in visible UI`);
+  assert.ok(warnings.some(message => /บล็อกข้อมูลอ่อนไหว|ยกเลิกการส่ง|หยุดการส่ง/.test(message)), `${name}: blocking warning was not shown; warnings=${JSON.stringify(warnings)}`);
   assert.equal(runtime.submitGuardVersion, '2', `${name}: production submit guard v2 was not active`);
-  return { name, dialogs: [...dialogs], runtime };
+  return { name, warnings, runtime };
 }
 
 const redactableCases = [
@@ -107,12 +136,12 @@ for (const testCase of redactableCases) redactableResults.push(await submitRedac
 const blockedResults = [];
 for (const testCase of blockedCases) blockedResults.push(await submitBlocked(testCase));
 
-// Exercise a reload in the same browser context so an installed service worker or
-// browser cache participates. HN must still never appear in the user bubble.
 const cacheRuntimeBefore = await loadFresh('cache-reload-before');
 await page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 });
 await page.waitForFunction(
-  () => document.getElementById('chatForm')?.dataset?.privacySubmitGuard === '2',
+  () => document.readyState === 'complete'
+    && document.getElementById('chatForm')?.dataset?.privacySubmitGuard === '2'
+    && typeof window.GovPrompt?.toast === 'function',
   undefined,
   { timeout: 15_000 }
 );
@@ -120,12 +149,10 @@ dialogs = [];
 const beforeReloadSubmit = (await userMessages()).length;
 await page.locator('#promptInput').fill('ตรวจซ้ำ HN123456');
 await page.locator('#chatForm .send-button').click();
-await page.waitForFunction(
-  previous => document.querySelectorAll('.message.user .message-body').length > previous,
-  beforeReloadSubmit,
-  { timeout: 10_000 }
-);
-const reloadRendered = (await userMessages()).at(-1) || '';
+await page.waitForTimeout(300);
+const reloadMessages = await userMessages();
+assert.ok(reloadMessages.length > beforeReloadSubmit, `cache/service-worker reload did not create sanitized user bubble; state=${JSON.stringify(await diagnosticState())}`);
+const reloadRendered = reloadMessages.at(-1) || '';
 assert.equal(/HN123456|123456/.test(reloadRendered), false, `cache/service-worker reload leaked HN: ${reloadRendered}`);
 assert.match(reloadRendered, /รหัสผู้ป่วย \[ปกปิด\]/);
 const cacheRuntimeAfter = await page.evaluate(async () => ({
@@ -143,6 +170,7 @@ console.log(JSON.stringify({
     redactablePiiCases: `${redactableResults.length} PASS`,
     blockedSensitiveCases: `${blockedResults.length} PASS`,
     rawHnAbsentFromUi: 'PASS',
+    rawPiiAbsentFromVisibleUi: 'PASS',
     automaticMaskingWarning: 'PASS',
     blockedDataCreatesNoUserBubble: 'PASS',
     cacheServiceWorkerReload: 'PASS'
@@ -152,7 +180,7 @@ console.log(JSON.stringify({
     afterReload: cacheRuntimeAfter
   },
   renderedSamples: redactableResults.map(result => ({ name: result.name, rendered: result.rendered })),
-  blockedSamples: blockedResults.map(result => ({ name: result.name, warningCount: result.dialogs.length }))
+  blockedSamples: blockedResults.map(result => ({ name: result.name, warningCount: result.warnings.length }))
 }, null, 2));
 
 await browser.close();

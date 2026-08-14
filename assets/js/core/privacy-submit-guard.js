@@ -37,11 +37,19 @@
     event.stopImmediatePropagation();
   }
 
+  function notify(message) {
+    if (typeof window.GovPrompt?.toast === 'function') {
+      window.GovPrompt.toast(message);
+      return;
+    }
+    window.alert(message);
+  }
+
   function clearAndBlock(event, input, message) {
     stopSubmit(event);
     input.value = '';
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    window.alert(message);
+    notify(message);
     input.focus();
   }
 
@@ -95,8 +103,8 @@
 
       // Do not cancel/re-submit redactable PII. Rewrite the textarea before the
       // event reaches Home's submit listener, then let the same event continue.
-      // This avoids native form re-entrancy while ensuring raw PII never reaches
-      // render/router/search/prompt/history.
+      // The warning is deliberately non-blocking so it cannot interfere with the
+      // native submit event that now contains only sanitized text.
       input.value = safeText;
       input.dispatchEvent(new Event('input', { bubbles: true }));
 
@@ -107,7 +115,7 @@
       }
 
       const labels = reasons.length ? `\nตรวจพบ: ${reasons.join(', ')}` : '';
-      window.alert(`🔐 GovPrompt ตรวจพบข้อมูลส่วนบุคคลและปกปิดให้อัตโนมัติแล้ว${labels}\n\nข้อมูลดิบถูกปกปิดก่อนถึงหน้าจอ การค้นหา ประวัติ และระบบภายนอก`);
+      notify(`🔐 GovPrompt ตรวจพบข้อมูลส่วนบุคคลและปกปิดให้อัตโนมัติแล้ว${labels}\n\nข้อมูลดิบถูกปกปิดก่อนถึงหน้าจอ การค้นหา ประวัติ และระบบภายนอก`);
     }, true);
   }
 
