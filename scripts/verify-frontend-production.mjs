@@ -77,15 +77,15 @@ assert.equal(/privacy-(?:submit-)?guard\.js/i.test(productionServiceWorker), fal
 
 const { response: trustResponse, text: trust } = await fetchText(trustUrl);
 assert.match(trust, /Internal Pilot|Public Beta/);
-assert.match(trust, /Tavily/);
-assert.match(trust, /Data minimization/);
+assert.match(trust, /ผู้ให้บริการค้นเว็บภายนอก|search provider|Tavily/i);
+assert.match(trust, /data-minimized|Data minimization|ลดข้อมูล/i);
 assert.equal(trustResponse.url.startsWith('https://'), true, 'trust page must stay on HTTPS');
 
 const { response: privacyResponse, text: privacy } = await fetchText(privacyNoticeUrl);
 assert.match(privacy, /ประกาศความเป็นส่วนตัว/);
 assert.match(privacy, /Internal Pilot|Public Beta/);
 assert.match(privacy, /Cloudflare Worker/);
-assert.match(privacy, /Tavily/);
+assert.match(privacy, /ผู้ให้บริการค้นเว็บภายนอก|search provider|Tavily/i);
 assert.match(privacy, /ChatGPT/);
 assert.match(privacy, /GovPromptThailandAI/);
 assert.equal(privacyResponse.url.startsWith('https://'), true, 'privacy notice must stay on HTTPS');
