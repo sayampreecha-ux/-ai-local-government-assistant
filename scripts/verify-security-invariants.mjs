@@ -25,11 +25,11 @@ assert.ok(privacyPos >= 0 && submitPos > privacyPos && homePos > submitPos, 'Pri
 assert.match(submitGuard, /stopImmediatePropagation/);
 assert.match(submitGuard, /sanitizeExternalContent/);
 assert.match(submitGuard, /normalizeCompactPatientIds/);
-assert.match(submitGuard, /applyFailSafeRedactions/);
-assert.match(submitGuard, /replaced synchronously in capture phase/);
-assert.match(submitGuard, /before Home\/UI\/router\/search\/history can observe the submit/);
+assert.match(submitGuard, /detectFailSafeRisks/);
+assert.match(submitGuard, /EVERY detected PII\/sensitive signal fails closed in capture phase/);
+assert.match(submitGuard, /Home\/UI\/history\/router\/search\/Worker\/API/);
 assert.match(submitGuard, /\(HN\|AN\)/, 'Submit gate must explicitly normalize compact HN/AN identifiers');
-assert.doesNotMatch(submitGuard, /requestSubmit\s*\(/, 'Redactable PII must not depend on native form re-submit');
+assert.doesNotMatch(submitGuard, /requestSubmit\s*\(/, 'Privacy gate must not depend on form re-submit');
 assert.match(privacyGuard, /externalRequestSent: false/);
 assert.match(privacyGuard, /protectMaskMarkers/);
 assert.doesNotMatch(privacyGuard, /addEventListener\(\s*['"]submit['"]/, 'privacy-guard.js must never install a second submit boundary');
@@ -62,50 +62,8 @@ const piiCases = [
 ];
 for (const [sample, rawPattern] of piiCases) {
   const result = core.sanitizeExternalContent(sample);
-  assert.equal(result.changed, true, `PII must be changed before processing: ${sample}`);
-  assert.doesNotMatch(result.safeText, rawPattern, `Raw PII must not survive sanitization: ${sample}`);
-}
-
-// Issue #73: masking must be idempotent. The submit guard deliberately runs
-// post-check/final-check passes, so canonical mask markers must survive byte-for-
-// byte and never be interpreted as fresh PII on a later pass.
-const idempotentPiiCases = [
-  ['ตรวจข้อมูล HN 123456', /รหัสผู้ป่วย \[ปกปิด\]/],
-  ['เลขบัตรประชาชน 3560039645712', /\[ปกปิดเลขประจำตัว\]/],
-  ['อีเมล test.person@example.com', /\[ปกปิดอีเมล\]/],
-  ['มือถือ 0812345678', /\[ปกปิดเบอร์โทร\]/],
-  ['เลขบัญชี 1234567890', /เลขบัญชี \[ปกปิด\]/],
-  ['passport AB1234567', /หนังสือเดินทาง \[ปกปิด\]/],
-  ['เลขประจำตัวผู้เสียภาษี 1234567890123', /\[ปกปิด/],
-  ['นายสมชาย ใจดี ขอข้อมูล', /\[ปกปิดชื่อบุคคล\]/],
-  ['วันเกิด 1 มกราคม 2530', /วันเกิด \[ปกปิด\]/],
-  ['ที่อยู่ 99 หมู่ 1 ตำบลตัวอย่าง', /ที่อยู่ \[ปกปิด\]/],
-  ['ทะเบียนรถ กข 1234', /ทะเบียนรถ \[ปกปิด\]/],
-  ['เลข 4111111111111111', /\[ปกปิดชุดตัวเลข\]/]
-];
-for (const [sample, expectedMask] of idempotentPiiCases) {
-  const first = core.sanitizeExternalContent(sample);
-  assert.equal(first.changed, true, `first pass must mask PII: ${sample}`);
-  assert.equal(first.blocked, false, `redactable PII must remain processable after masking: ${sample}`);
-  assert.match(first.safeText, expectedMask, `canonical mask missing after first pass: ${sample}`);
-  const second = core.sanitizeExternalContent(first.safeText);
-  assert.equal(second.safeText, first.safeText, `mask must be byte-stable on second pass: ${sample}`);
-  assert.equal(second.changed, false, `mask must not be re-redacted on second pass: ${sample}`);
-  assert.equal(second.blocked, false, `masked text must stay unblocked on second pass: ${sample}`);
-}
-
-const personName = core.sanitizeExternalContent('นายสมชาย ใจดี ขอข้อมูล');
-assert.match(personName.safeText, /\[ปกปิดชื่อบุคคล\]/, 'person name must use canonical marker');
-assert.doesNotMatch(personName.safeText, /สมชาย|ใจดี/, 'raw person name must not survive');
-assert.doesNotMatch(personName.safeText, /\[ปกปิด\s+ชื่อ\s+\[ปกปิด\]/, 'mask marker must never redact itself');
-
-const compactPatientIdPattern = /\b(HN|AN)\s*[:：#-]?\s*([A-Za-z0-9/-]{3,30})\b/gi;
-for (const sample of ['HN123456', 'ANABC123', 'HN:123456', 'AN-ABC123']) {
-  const normalized = sample.replace(compactPatientIdPattern, '$1 $2');
-  const result = core.sanitizeExternalContent(normalized);
-  assert.equal(result.changed, true, `Compact patient ID must be normalized then redacted: ${sample}`);
-  assert.doesNotMatch(result.safeText, /123456|ABC123/, `Raw compact patient ID must not survive submit gate: ${sample}`);
-  assert.match(result.safeText, /รหัสผู้ป่วย \[ปกปิด\]/);
+  assert.equal(result.changed, true, `PII must be detected and sanitized by core: ${sample}`);
+  assert.doesNotMatch(result.safeText, rawPattern, `Raw PII must not survive core sanitization: ${sample}`);
 }
 
 const sensitiveCases = [
@@ -122,12 +80,9 @@ const sensitiveCases = [
 ];
 for (const sample of sensitiveCases) {
   const result = core.sanitizeExternalContent(sample);
-  assert.equal(result.blocked, true, `Sensitive data must fail closed: ${sample}`);
+  assert.equal(result.blocked, true, `Sensitive data must fail closed in core: ${sample}`);
 }
 
-// Issue #73 regression lock: the capture-phase submit gate must rewrite
-// redactable PII before downstream Home/UI can read the input. Special-category
-// sensitive data must cancel the event and never reach downstream at all.
 function runSubmitGateScenario(rawValue) {
   let captureHandler;
   const downstream = [];
@@ -181,39 +136,51 @@ function runSubmitGateScenario(rawValue) {
   vm.runInNewContext(submitGuard, submitSandbox);
   assert.equal(typeof captureHandler, 'function', 'submit privacy gate must install in capture phase');
   const firstEvent = dispatch();
-  return { firstEvent, downstream, alerts, finalInput: input.value };
+  return { firstEvent, downstream, alerts, finalInput: input.value, guardVersion: form.dataset.privacySubmitGuard };
 }
 
-const hnScenario = runSubmitGateScenario('ตรวจข้อมูล HN123456');
-assert.equal(hnScenario.firstEvent.immediateStopped, false, 'sanitized HN event may continue only after DOM value is rewritten');
-assert.equal(hnScenario.firstEvent.defaultPrevented, false, 'sanitized HN event should continue to Home');
-assert.equal(hnScenario.downstream.length, 1, 'exactly one sanitized submit may reach downstream');
-assert.doesNotMatch(hnScenario.downstream[0], /HN123456|123456/, 'raw HN must never reach downstream/UI');
-assert.match(hnScenario.downstream[0], /\[ปกปิด\]/, 'sanitized HN marker must reach downstream instead');
-assert.ok(hnScenario.alerts.some(message => /ปกปิดให้อัตโนมัติ/.test(message)), 'PII masking warning must be shown');
-
-for (const rawValue of [
+const blockedInputCases = [
+  'ตรวจข้อมูล HN123456',
+  'ANABC123',
   'เลขบัตรประชาชน 3560039645712',
+  'เลขบัตรประชาชน12345678900',
   'อีเมล test.person@example.com',
   'มือถือ 0812345678',
   'เลขบัญชี 1234567890',
-  'นายสมชาย ใจดี ขอข้อมูล'
-]) {
-  const scenario = runSubmitGateScenario(rawValue);
-  assert.equal(scenario.firstEvent.immediateStopped, false, `redactable PII may continue only after rewrite: ${rawValue}`);
-  assert.equal(scenario.downstream.length, 1, `one sanitized submit expected: ${rawValue}`);
-  assert.equal(scenario.downstream[0].includes(rawValue.replace(/^.*?\s/, '')), false, `raw value must not reach downstream: ${rawValue}`);
-  assert.ok(scenario.alerts.some(message => /ปกปิดให้อัตโนมัติ/.test(message)), `mask warning required: ${rawValue}`);
-}
-assert.match(runSubmitGateScenario('นายสมชาย ใจดี ขอข้อมูล').downstream[0], /\[ปกปิดชื่อบุคคล\]/, 'submit boundary must preserve canonical person-name marker');
+  'passport AB1234567',
+  'เลขประจำตัวผู้เสียภาษี 1234567890123',
+  'นายสมชาย ใจดี ขอข้อมูล',
+  'วันเกิด 1 มกราคม 2530',
+  'ที่อยู่ 99 หมู่ 1 ตำบลตัวอย่าง',
+  'ทะเบียนรถ กข 1234',
+  'ผู้ป่วยมีผลเลือดผิดปกติ',
+  'ข้อมูลพันธุกรรม DNA',
+  'ข้อมูลชีวมิติ ลายนิ้วมือ',
+  'ความคิดเห็นทางการเมืองของบุคคล',
+  'ข้อมูลศาสนา พุทธ',
+  'รสนิยมทางเพศของบุคคล',
+  'ประวัติอาชญากรรมของบุคคล',
+  'สมาชิกสหภาพแรงงาน',
+  'password=SuperSecret123',
+  'ข้อมูลลับของราชการ: เอกสารทดสอบ'
+];
 
-const sensitiveScenario = runSubmitGateScenario('ผู้ป่วยมีผลเลือดผิดปกติ');
-assert.equal(sensitiveScenario.firstEvent.immediateStopped, true, 'special-category data must be stopped');
-assert.equal(sensitiveScenario.firstEvent.defaultPrevented, true, 'special-category data submit must be cancelled');
-assert.equal(sensitiveScenario.downstream.length, 0, 'blocked sensitive context must never reach downstream');
-assert.equal(sensitiveScenario.finalInput, '', 'blocked sensitive context must be removed from composer');
-assert.ok(sensitiveScenario.alerts.some(message => /บล็อกข้อมูลอ่อนไหว/.test(message)), 'blocking warning must be shown');
+for (const rawValue of blockedInputCases) {
+  const scenario = runSubmitGateScenario(rawValue);
+  assert.equal(scenario.guardVersion, '3', `privacy gate v3 must be active: ${rawValue}`);
+  assert.equal(scenario.firstEvent.immediateStopped, true, `detected sensitive input must stop propagation: ${rawValue}`);
+  assert.equal(scenario.firstEvent.defaultPrevented, true, `detected sensitive input must cancel submit: ${rawValue}`);
+  assert.equal(scenario.downstream.length, 0, `detected sensitive input must never reach downstream: ${rawValue}`);
+  assert.equal(scenario.finalInput, '', `detected sensitive input must be cleared from composer: ${rawValue}`);
+  assert.ok(scenario.alerts.some(message => /บล็อกข้อมูลส่วนบุคคล\/ข้อมูลอ่อนไหวก่อนประมวลผล/.test(message)), `blocking warning required: ${rawValue}`);
+}
+
+const safeScenario = runSubmitGateScenario('ช่วยร่างหนังสือราชการเรื่องการประชุมประจำเดือน');
+assert.equal(safeScenario.guardVersion, '3');
+assert.equal(safeScenario.firstEvent.immediateStopped, false, 'safe input may continue');
+assert.equal(safeScenario.firstEvent.defaultPrevented, false, 'safe input should not be cancelled');
+assert.equal(safeScenario.downstream.length, 1, 'safe input should reach downstream exactly once');
 
 assert.doesNotMatch(home, /localStorage\.setItem\([^)]*(?:prompt|history|question)/i, 'Home must not persist raw prompt/history to localStorage');
 
-console.log('GovPrompt Security Invariants: PASS');
+console.log('GovPrompt Security Invariants v3: PASS');
