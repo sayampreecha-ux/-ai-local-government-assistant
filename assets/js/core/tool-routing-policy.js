@@ -32,8 +32,9 @@
   ]);
 
   const STABLE_CREATION_PATTERNS = Object.freeze([
-    /(?:ร่าง|ทำ|เขียน|จัดทำ).{0,28}(?:หนังสือราชการ|หนังสือ|บันทึกข้อความ|คำสั่ง|ประกาศ|คำกล่าว|โพสต์|ข้อความประชาสัมพันธ์)/i,
-    /(?:ทำ|ร่าง).{0,20}(?:executive summary|สรุปผู้บริหาร)/i
+    /(?:ร่าง|ทำ|เขียน|จัดทำ).{0,28}(?:หนังสือราชการ|หนังสือ|บันทึกข้อความ|บันทึก|คำสั่ง|ประกาศ|คำกล่าว|โพสต์|ข้อความประชาสัมพันธ์)/i,
+    /(?:ทำ|ร่าง).{0,20}(?:executive summary|สรุปผู้บริหาร)/i,
+    /(?:สรุป|ย่อ|เรียบเรียง|ปรับข้อความ).{0,80}(?:ญัตติ|รายงาน|เอกสาร|คำพิพากษา|ผลการดำเนินงาน|สาระสำคัญ|เสนอผู้บริหาร)/i
   ]);
 
   const GOVERNMENT_DECISION_PATTERNS = Object.freeze([
@@ -166,7 +167,7 @@
     if (needsCurrentWeb) reasons.push('ต้องตรวจข้อมูลปัจจุบันจากภายนอก');
     if (needsPrimarySource) reasons.push('เป็นงานราชการที่ควรตรวจแหล่งปฐมภูมิ');
     if (sourceFirstTask && rawNeedsPrimarySource && !externalVerificationRequested) reasons.push('ใช้ข้อมูลจากเอกสาร/บัญชีผู้ใช้ก่อน และไม่ค้นเว็บเกินความจำเป็น');
-    if (stableCreation && rawNeedsPrimarySource && !externalVerificationRequested) reasons.push('เป็นงานร่าง/สร้างเนื้อหาที่ตอบจากข้อมูลผู้ใช้ได้โดยไม่ค้นเว็บอัตโนมัติ');
+    if (stableCreation && rawNeedsPrimarySource && !externalVerificationRequested) reasons.push('เป็นงานร่าง/สรุป/สร้างเนื้อหาที่ตอบจากข้อมูลผู้ใช้ได้โดยไม่ค้นเว็บอัตโนมัติ');
     if (!reasons.length) reasons.push('ตอบได้จากข้อมูลที่ผู้ใช้ให้และการวิเคราะห์ทั่วไป');
 
     return Object.freeze({
