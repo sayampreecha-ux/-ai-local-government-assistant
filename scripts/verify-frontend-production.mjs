@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 const frontend = process.env.GOVPROMPT_FRONTEND_URL || 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/index.html';
 const trustUrl = new URL('trust.html', frontend).toString();
@@ -8,6 +9,9 @@ const sitemapUrl = new URL('sitemap.xml', frontend).toString();
 const llmsUrl = new URL('llms.txt', frontend).toString();
 const adminUrl = new URL('admin.html', frontend).toString();
 const canonicalHome = 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/';
+const localIndex = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+const expectedPrivacyGuard = localIndex.match(/assets\/js\/core\/privacy-guard\.js\?v=[^"'\s<]+/)?.[0];
+assert.ok(expectedPrivacyGuard, 'local index: privacy guard asset reference missing');
 
 async function fetchText(url) {
   const response = await fetch(url, { redirect: 'follow' });
@@ -17,7 +21,7 @@ async function fetchText(url) {
 
 const { response: indexResponse, text: index } = await fetchText(frontend);
 assert.match(index, /Internal Pilot/);
-assert.match(index, /privacy-guard\.js\?v=1\.2\.0/);
+assert.equal(index.includes(expectedPrivacyGuard), true, `production privacy guard does not match committed asset: ${expectedPrivacyGuard}`);
 assert.match(index, /https:\/\/www\.facebook\.com\/GovPromptThailandAI/);
 assert.match(index, /ความโปร่งใสและความปลอดภัย/);
 assert.match(index, /privacy-notice\.html/);
