@@ -37,19 +37,58 @@
     event.stopImmediatePropagation();
   }
 
-  function notify(message) {
+  function showPrivacyWarning(message, kind = 'mask') {
+    const form = document.getElementById('chatForm');
+    if (!form || typeof document.createElement !== 'function' || typeof form.insertAdjacentElement !== 'function') return false;
+
+    let warning = document.getElementById('privacySubmitWarning');
+    if (!warning) {
+      warning = document.createElement('div');
+      warning.id = 'privacySubmitWarning';
+      warning.className = 'privacy-submit-warning';
+      warning.setAttribute('role', 'status');
+      warning.setAttribute('aria-live', 'assertive');
+      warning.style.margin = '8px 0 0';
+      warning.style.padding = '9px 12px';
+      warning.style.borderRadius = '12px';
+      warning.style.fontSize = '.86rem';
+      warning.style.fontWeight = '700';
+      warning.style.lineHeight = '1.45';
+      warning.style.whiteSpace = 'pre-line';
+      form.insertAdjacentElement('afterend', warning);
+    }
+
+    warning.dataset.kind = kind;
+    warning.style.background = kind === 'block' ? '#fff1f0' : '#eef8f2';
+    warning.style.border = kind === 'block' ? '1px solid #d92d20' : '1px solid #7bb99a';
+    warning.style.color = kind === 'block' ? '#8a1c13' : '#12372a';
+    warning.textContent = message;
+    warning.hidden = false;
+
+    if (window.__govPromptPrivacyWarningTimer) window.clearTimeout?.(window.__govPromptPrivacyWarningTimer);
+    if (typeof window.setTimeout === 'function') {
+      window.__govPromptPrivacyWarningTimer = window.setTimeout(() => {
+        const current = document.getElementById('privacySubmitWarning');
+        if (current) current.hidden = true;
+      }, 10_000);
+    }
+    return true;
+  }
+
+  function notify(message, kind = 'mask') {
+    const surfaceShown = showPrivacyWarning(message, kind);
     if (typeof window.GovPrompt?.toast === 'function') {
       window.GovPrompt.toast(message);
       return;
     }
-    window.alert(message);
+    if (!surfaceShown) window.alert(message);
   }
 
   function clearAndBlock(event, input, message) {
     stopSubmit(event);
     input.value = '';
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    notify(message);
+    notify(message, 'block');
     input.focus();
   }
 
@@ -103,8 +142,6 @@
 
       // Do not cancel/re-submit redactable PII. Rewrite the textarea before the
       // event reaches Home's submit listener, then let the same event continue.
-      // The warning is deliberately non-blocking so it cannot interfere with the
-      // native submit event that now contains only sanitized text.
       input.value = safeText;
       input.dispatchEvent(new Event('input', { bubbles: true }));
 
@@ -115,7 +152,9 @@
       }
 
       const labels = reasons.length ? `\nตรวจพบ: ${reasons.join(', ')}` : '';
-      notify(`🔐 GovPrompt ตรวจพบข้อมูลส่วนบุคคลและปกปิดให้อัตโนมัติแล้ว${labels}\n\nข้อมูลดิบถูกปกปิดก่อนถึงหน้าจอ การค้นหา ประวัติ และระบบภายนอก`);
+      // Keep a dedicated warning surface visible even if later router/search
+      // toasts replace the generic toast. The warning never includes raw PII.
+      notify(`🔐 GovPrompt ตรวจพบข้อมูลส่วนบุคคลและปกปิดให้อัตโนมัติแล้ว${labels}\n\nข้อมูลดิบถูกปกปิดก่อนถึงหน้าจอ การค้นหา ประวัติ และระบบภายนอก`, 'mask');
     }, true);
   }
 
