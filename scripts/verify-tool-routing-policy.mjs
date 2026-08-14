@@ -31,7 +31,9 @@ const cases = [
   { q: 'ช่วยสรุปเอกสารนี้', attachments: [{ name: 'report.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'ai-reasoning'] },
   { q: 'ช่วยสรุป TOR ที่แนบ', attachments: [{ name: 'TOR.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'ai-reasoning'], excludes: ['web-search'] },
   { q: 'ช่วยตรวจ TOR ที่แนบและระบุความเสี่ยง', attachments: [{ name: 'TOR.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'web-search', 'ai-reasoning'] },
-  { q: 'หาอีเมลล่าสุดที่ได้รับเรื่องระเบียบการเบิกจ่าย', mode: 'user-data-first', tools: ['gmail', 'ai-reasoning'], excludes: ['web-search'] }
+  { q: 'หาอีเมลล่าสุดที่ได้รับเรื่องระเบียบการเบิกจ่าย', mode: 'user-data-first', tools: ['gmail', 'ai-reasoning'], excludes: ['web-search'] },
+  { q: 'เปิดไฟล์แนบเรื่องค่าเดินทางไปราชการก่อน แล้วค่อยเทียบกับกฎหมายหรือระเบียบปัจจุบันและเสนอทางแก้', attachments: [{ name: 'travel.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'web-search', 'ai-reasoning'], excludes: ['drive-files'] },
+  { q: 'เปิดเอกสารแนบเรื่อง TOR ก่อน แล้วค่อยเทียบกับระเบียบปัจจุบัน', attachments: [{ name: 'TOR.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'web-search', 'ai-reasoning'], excludes: ['drive-files'] }
 ];
 
 for (const testCase of cases) {
@@ -86,6 +88,14 @@ assert.equal(findDriveTor.tools.includes('web-search'), false, 'finding a user D
 
 const findLatestEmail = core.createToolRoutingPlan({ question: 'หาอีเมลล่าสุดที่ได้รับเรื่องระเบียบการเบิกจ่าย' });
 assert.equal(findLatestEmail.tools.includes('web-search'), false, 'latest email means latest user data, not latest external law');
+
+const attachedCurrentCheck = core.createToolRoutingPlan({
+  question: 'เปิดไฟล์แนบเรื่องค่าเดินทางไปราชการก่อน แล้วค่อยเทียบกับกฎหมายหรือระเบียบปัจจุบันและเสนอทางแก้',
+  attachments: [{ name: 'travel.pdf' }]
+});
+assert.equal(attachedCurrentCheck.flags.wantsDriveFiles, false, 'attachment reference must not imply Drive retrieval');
+assert.equal(attachedCurrentCheck.flags.externalVerificationRequested, true, 'compare-with-current-law attachment task must request external verification');
+assert.deepEqual([...attachedCurrentCheck.tools], ['attached-files', 'web-search', 'ai-reasoning'], 'attachment verification must read file, verify web, then reason');
 
 const formatted = core.formatToolRoutingInstructions(attachedTor);
 assert.match(formatted, /ลำดับเครื่องมือ/);
