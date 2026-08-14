@@ -42,7 +42,26 @@
     { label: 'ข้อมูลรับรองสิทธิ์/รหัสลับ', pattern: /(?:password|passwd|api\s*key|secret|token|bearer|รหัสผ่าน|กุญแจ\s*api)\s*[:=：-]?\s*\S+/i }
   ]);
 
+  const MASKED_SEGMENT_PATTERN = /(?:(?:หนังสือเดินทาง|เลขผู้เสียภาษี|เลขบัญชี|ชื่อ|รหัสผู้ป่วย|วันเกิด|ที่อยู่|ทะเบียนรถ)\s*)?\[ปกปิด[^\]\n]{0,80}\]/g;
   const collapseWhitespace = value => String(value ?? '').replace(/\s+/g, ' ').trim();
+
+  function protectMaskMarkers(input) {
+    const markers = [];
+    const protectedText = String(input ?? '').replace(MASKED_SEGMENT_PATTERN, marker => {
+      const token = `\uE000${String.fromCharCode(0xE100 + markers.length)}\uE001`;
+      markers.push(Object.freeze({ token, marker }));
+      return token;
+    });
+    return Object.freeze({ protectedText, markers: Object.freeze(markers) });
+  }
+
+  function restoreMaskMarkers(input, markers) {
+    let restored = String(input ?? '');
+    markers.forEach(({ token, marker }) => {
+      restored = restored.split(token).join(marker);
+    });
+    return restored;
+  }
 
   function detectByRules(input, rules) {
     const text = String(input ?? '');
@@ -60,14 +79,25 @@
     const original = String(input ?? '');
     let safeText = original;
     const redactions = [];
+
+    // Protect every canonical mask before EACH rule, not only once at the start.
+    // A rule may create a new mask that a later overlapping rule would otherwise
+    // interpret as fresh PII (for example [ปกปิดชื่อบุคคล] contains "ชื่อ").
     REDACTION_RULES.forEach(rule => {
+      const protectedStep = protectMaskMarkers(safeText);
+      let working = protectedStep.protectedText;
       rule.pattern.lastIndex = 0;
-      if (!rule.pattern.test(safeText)) return;
-      redactions.push(rule.label);
-      rule.pattern.lastIndex = 0;
-      safeText = safeText.replace(rule.pattern, rule.replacement);
+      if (rule.pattern.test(working)) {
+        redactions.push(rule.label);
+        rule.pattern.lastIndex = 0;
+        working = working.replace(rule.pattern, rule.replacement);
+      }
+      safeText = restoreMaskMarkers(working, protectedStep.markers);
     });
-    safeText = safeText.replace(/\b\d{16,}\b/g, ' [ปกปิดชุดตัวเลข] ');
+
+    const protectedNumbers = protectMaskMarkers(safeText);
+    safeText = protectedNumbers.protectedText.replace(/\b\d{16,}\b/g, ' [ปกปิดชุดตัวเลข] ');
+    safeText = restoreMaskMarkers(safeText, protectedNumbers.markers);
     safeText = preserveWhitespace
       ? safeText.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim()
       : collapseWhitespace(safeText);
