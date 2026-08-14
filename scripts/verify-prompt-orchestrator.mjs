@@ -7,6 +7,7 @@ for (const file of [
   'assets/js/core/shared-context.js',
   'assets/js/core/prompt-registry.js',
   'assets/js/core/transaction-router.js',
+  'assets/js/core/output-router.js',
   'assets/js/core/prompt-orchestrator.js'
 ]) {
   vm.runInNewContext(await readFile(file, 'utf8'), sandbox);
@@ -32,9 +33,37 @@ assert.equal(result.prompt.includes('ยังไม่ยืนยันว่�
 assert.equal(result.prompt.includes('ห้ามสมมติเลขมาตรา เลขหนังสือ วันที่ คำพิพากษา'), true);
 assert.equal(result.prompt.includes('TOR.pdf'), true);
 assert.equal(result.prompt.includes('Router เป็นเพียงคำแนะนำ'), true);
+assert.equal(result.outputPlan.id, 'tor');
+assert.equal(result.prompt.includes('เกณฑ์ตรวจรับวัดได้จริง'), true);
+assert.equal(result.prompt.includes('จำกัดการแข่งขัน'), true);
 assert.equal(result.taskPlan.routeIsAdvisory, true);
 assert.equal(result.taskPlan.evidenceMode, 'verify-current-primary-source');
 assert.equal(result.riskFlags.length > 0, true);
+
+const financeQuestion = 'วิเคราะห์ว่าเบิกค่าทำปกได้ไหม';
+const financeContext = core.createSharedContext({ facts: financeQuestion, desiredOutput: financeQuestion });
+const financeRoute = Object.freeze({
+  moduleId: 'GP005',
+  assistant: core.PROMPT_REGISTRY_BY_ID.GP005,
+  modules: Object.freeze(['GP005']),
+  transactionType: 'finance'
+});
+const financePrompt = core.createGovernmentPrompt({ question: financeQuestion, route: financeRoute, context: financeContext });
+assert.equal(financePrompt.outputPlan.id, 'analysis');
+assert.equal(financePrompt.prompt.includes('เบิกได้ / เบิกไม่ได้ / มีเงื่อนไข'), true);
+assert.equal(financePrompt.prompt.includes('ฐานอำนาจ เงื่อนไข เอกสารประกอบ'), true);
+
+const legalQuestion = 'วิเคราะห์ข้อกฎหมายว่า อบจ. มีอำนาจทำเรื่องนี้หรือไม่';
+const legalContext = core.createSharedContext({ facts: legalQuestion, desiredOutput: legalQuestion });
+const legalRoute = Object.freeze({
+  moduleId: 'GP002',
+  assistant: core.PROMPT_REGISTRY_BY_ID.GP002,
+  modules: Object.freeze(['GP002']),
+  transactionType: 'legal'
+});
+const legalPrompt = core.createGovernmentPrompt({ question: legalQuestion, route: legalRoute, context: legalContext });
+assert.equal(legalPrompt.prompt.includes('ทำได้ / ทำไม่ได้ / ยังฟันธงไม่ได้'), true);
+assert.equal(legalPrompt.prompt.includes('สถานะฉบับล่าสุด'), true);
 
 const noRoute = core.createGovernmentPrompt({
   question: 'ช่วยทำโครงการกิจกรรมชุมชนให้พร้อมใช้',
@@ -56,4 +85,4 @@ assert.equal(intentionallyWrongRoute.taskPlan.disciplines.includes('public-relat
 assert.equal(intentionallyWrongRoute.prompt.includes('หาก Route ขัดกับเจตนาของผู้ใช้'), true);
 assert.equal(intentionallyWrongRoute.prompt.includes('ยึดเจตนา ชิ้นงาน และหลักฐานที่งานนั้นต้องใช้เป็นหลัก'), true);
 
-console.log('GovPrompt v7 Prompt Orchestrator verification passed with Universal Task Reasoning v7.1.');
+console.log('GovPrompt v7 Prompt Orchestrator verification passed with Universal Task Reasoning v7.1 + decision frames.');
