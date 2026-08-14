@@ -12,6 +12,7 @@
     GP003: 'procurement',
     GP004: 'planning-budget',
     GP005: 'finance',
+    GP006: 'human-resources',
     GP008: 'public-health',
     GP010: 'internal-audit',
     GP012: 'public-relations'
@@ -35,6 +36,10 @@
 
     if (/(?:ทำ|เขียน|จัดทำ).{0,14}(?:โครงการ).{0,32}(?:ส่งเสริมสุขภาพ|สุขภาพ|ป้องกันโรค|ฟื้นฟูสุขภาพ)/.test(text)
       || /(?:โครงการ).{0,32}(?:ส่งเสริมสุขภาพ|สุขภาพ|ป้องกันโรค|ฟื้นฟูสุขภาพ)/.test(text)) return 'GP008';
+
+    const localExecutiveCareer = /(?:รองปลัด|ปลัด).{0,16}(?:ต้น|กลาง|สูง).{0,55}(?:กี่ปี|กี่ปีถึง|ครองตำแหน่ง|ดำรงตำแหน่ง|สอบคัดเลือก|สอบได้|เลื่อน|ขึ้น|เป็น).{0,30}(?:ปลัด)?(?:ต้น|กลาง|สูง)?/;
+    const professionalCareer = /(?:\bชก\b|ชำนาญการ).{0,35}(?:กี่ปี|ครองตำแหน่ง|ดำรงตำแหน่ง|เลื่อน|ขึ้น|เป็น).{0,25}(?:\bชพ\b|ชำนาญการพิเศษ)/;
+    if (localExecutiveCareer.test(text) || professionalCareer.test(text)) return 'GP006';
 
     if (/\btor\b/i.test(text)
       && (/(?:ตรวจ|เช็ก|เช็ค|ไฟล์).{0,24}\btor\b/i.test(text)
