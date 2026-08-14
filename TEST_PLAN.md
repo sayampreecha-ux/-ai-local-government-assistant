@@ -48,3 +48,17 @@
 - ปิด Env แล้ว Order ยังสำเร็จ
 - เปิด Resend แล้วอีเมลส่งสำเร็จ/ความล้มเหลวถูก log
 - เปิด LINE แล้วแจ้งเตือน Admin
+
+## 9. AI Crawler & GEO Readiness — V7 Merge Gate
+- `robots.txt` ต้องอนุญาต public pages และต้องกัน `/admin.html`, `/admin.js`, `/api/`, `/private/`, `/logs/`, `/uploads/`
+- `robots.txt` ต้องชี้ canonical sitemap ของ GitHub Pages
+- `sitemap.xml` ต้องมี homepage, `trust.html`, `privacy-notice.html`, และ `llms.txt`
+- `llms.txt` ต้องระบุ GovPrompt Thailand, public-content boundary, และนโยบาย Search / Agent / Training แยกจากกัน
+- `llms.txt` ต้องระบุชัดว่าข้อมูลผู้ใช้ ไฟล์อัปโหลด API traffic logs และ authenticated content ไม่ใช่ public knowledge
+- `index.html` ต้องมี canonical URL, robots metadata, Open Graph metadata, structured data และ discovery link ไป `llms.txt`
+- `admin.html` ที่เป็น public login shell ต้องมี `noindex,nofollow` และข้อมูล/คำสั่ง privileged ต้องถูกบังคับสิทธิ์ฝั่ง Server; ห้ามถือ `robots.txt` เป็น access control
+- การแก้ GEO ห้ามเปลี่ยน Intent Router, Prompt Engine, Tool Routing, Privacy Guard หรือพฤติกรรมแชต
+- Worker `ai-local-government-assistant` ต้องคงการป้องกันข้อมูลเสี่ยง CORS และ official-source filtering เดิม
+- ก่อน merge ต้องยืนยัน branch ไม่ behind `main` และ diff ไม่มีไฟล์นอกขอบเขต GEO โดยไม่ตั้งใจ
+- ก่อน production rollout ต้องตรวจ Cloudflare Dashboard จริงแยกอีกครั้ง โดยยืนยัน Search Bots, AI/Agent crawler policy, Training crawler policy และ robots behavior ไม่ขัดกัน
+- ห้าม merge เข้า `main` จนกว่ารายการข้างต้นผ่านการ review ครบ

@@ -29,11 +29,20 @@ assert.doesNotMatch(pages, /workflow_dispatch:/);
 assert.doesNotMatch(pages, /pull_request:/);
 assert.match(deploy, /verify-production-security\.mjs/);
 
-assert.deepEqual(wrangler?.secrets?.required, ['TAVILY_API_KEY']);
+assert.deepEqual(wrangler?.secrets?.required, [
+  'TAVILY_API_KEY',
+  'ACCESS_CODE_SECRET',
+  'ACCESS_ADMIN_PASSWORD_HASH',
+  'ACCESS_ADMIN_SESSION_SECRET'
+]);
 const worker = await readFile('src/search-worker.js', 'utf8');
 assert.match(worker, /OFFICIAL_SEARCH_RATE_LIMITER/);
 assert.match(worker, /RATE_LIMIT_BINDING_MISSING/);
 assert.match(worker, /RATE_LIMIT_CHECK_FAILED/);
+assert.match(worker, /ACCESS_CODE_SECRET/);
+assert.match(worker, /ACCESS_ADMIN_PASSWORD_HASH/);
+assert.match(worker, /ACCESS_ADMIN_SESSION_SECRET/);
+assert.match(worker, /ACCESS_SERVICE_NOT_CONFIGURED/);
 
 assert.equal(wrangler?.observability?.enabled, true);
 assert.equal(wrangler?.observability?.logs?.enabled, true);
@@ -42,4 +51,4 @@ assert.equal(wrangler?.observability?.logs?.head_sampling_rate, 0.05);
 assert.equal(wrangler?.observability?.logs?.persist, true);
 assert.equal(wrangler?.observability?.traces?.enabled, false);
 
-console.log('Cloudflare deploy/privacy contract verified: guarded main deploys, required secret, rate-limit handling, minimized logs, no invocation logs, traces disabled.');
+console.log('Cloudflare deploy/privacy contract verified: guarded main deploys, complete required secret manifest, rate-limit handling, minimized logs, no invocation logs, traces disabled.');

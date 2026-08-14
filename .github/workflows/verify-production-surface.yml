@@ -6,6 +6,11 @@ on:
     paths:
       - 'index.html'
       - 'trust.html'
+      - 'privacy-notice.html'
+      - 'robots.txt'
+      - 'sitemap.xml'
+      - 'llms.txt'
+      - 'admin.html'
       - 'assets/js/home-v3.js'
       - 'assets/js/core/privacy-guard.js'
       - 'src/search-worker.js'
