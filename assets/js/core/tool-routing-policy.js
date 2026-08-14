@@ -37,6 +37,11 @@
     /(?:สรุป|ย่อ|เรียบเรียง|ปรับข้อความ).{0,80}(?:ญัตติ|รายงาน|เอกสาร|คำพิพากษา|ผลการดำเนินงาน|สาระสำคัญ|เสนอผู้บริหาร)/i
   ]);
 
+  const NO_WEB_PATTERNS = Object.freeze([
+    /(?:ไม่ต้อง|ไม่จำเป็นต้อง|ยังไม่ต้อง|ห้าม).{0,20}(?:ค้นเว็บ|ค้นข้อมูลเพิ่ม|ค้นข้อมูลภายนอก|ค้นภายนอก|web)/i,
+    /(?:ใช้|จาก).{0,24}(?:ข้อมูลที่ให้|ข้อมูลนี้|เอกสารแนบ).{0,40}(?:เท่านั้น|อย่างเดียว).{0,40}(?:ไม่ต้องค้น|ห้ามค้น)?/i
+  ]);
+
   const GOVERNMENT_DECISION_PATTERNS = Object.freeze([
     /(?:เบิก|จ่าย|ใช้เงิน|เงินสะสม|เงินสำรองจ่าย|เงินบำรุง|งบประมาณ|จัดซื้อ|จัดจ้าง|พัสดุ|มีอำนาจ|อำนาจหน้าที่|ผิดกฎหมาย|ถูกกฎหมาย|ชอบด้วยกฎหมาย).{0,60}(?:ได้ไหม|ได้หรือไม่|หรือไม่|ทำอย่างไร|ทำไง|ควร)/i,
     /(?:ได้ไหม|ได้หรือไม่).{0,40}(?:เบิก|จ่าย|ใช้เงิน|เงินสะสม|เงินสำรองจ่าย|เงินบำรุง|จัดซื้อ|จัดจ้าง|พัสดุ)/i,
@@ -64,6 +69,10 @@
 
   function isStableCreation(text) {
     return STABLE_CREATION_PATTERNS.some(pattern => pattern.test(text));
+  }
+
+  function explicitlyDisablesWeb(text) {
+    return NO_WEB_PATTERNS.some(pattern => pattern.test(text));
   }
 
   function needsGovernmentVerification(text) {
@@ -112,13 +121,19 @@
     const wantsDriveFiles = isUserDataLookup(text, DRIVE_SOURCE_TERMS);
     const sourceFirstTask = hasAttachments || wantsGmail || wantsDriveFiles;
     const stableCreation = isStableCreation(text);
+    const explicitNoWeb = explicitlyDisablesWeb(text);
     const rawNeedsPrimarySource = needsGovernmentVerification(text);
-    const externalVerificationRequested = explicitlyRequestsExternalVerification(text);
-    const needsPrimarySource = (rawNeedsPrimarySource || externalVerificationRequested)
+    const rawExternalVerificationRequested = explicitlyRequestsExternalVerification(text);
+    const externalVerificationRequested = rawExternalVerificationRequested && !explicitNoWeb;
+    const needsPrimarySource = !explicitNoWeb
+      && (rawNeedsPrimarySource || externalVerificationRequested)
       && (!sourceFirstTask || externalVerificationRequested)
       && (!stableCreation || externalVerificationRequested);
     const freshnessRequested = includesAny(text, FRESHNESS_TERMS);
-    const needsCurrentWeb = freshnessRequested && !sourceFirstTask && (!stableCreation || externalVerificationRequested);
+    const needsCurrentWeb = !explicitNoWeb
+      && freshnessRequested
+      && !sourceFirstTask
+      && (!stableCreation || externalVerificationRequested);
 
     const tools = [];
     const instructions = [];
@@ -164,6 +179,7 @@
     if (hasAttachments) reasons.push('มีเอกสารแนบ');
     if (wantsGmail) reasons.push('คำถามต้องการค้นอีเมลของผู้ใช้');
     if (wantsDriveFiles) reasons.push('คำถามต้องการค้นไฟล์/เอกสารของผู้ใช้');
+    if (explicitNoWeb) reasons.push('ผู้ใช้ระบุชัดว่าไม่ต้องค้นเว็บหรือข้อมูลภายนอกเพิ่ม');
     if (needsCurrentWeb) reasons.push('ต้องตรวจข้อมูลปัจจุบันจากภายนอก');
     if (needsPrimarySource) reasons.push('เป็นงานราชการที่ควรตรวจแหล่งปฐมภูมิ');
     if (sourceFirstTask && rawNeedsPrimarySource && !externalVerificationRequested) reasons.push('ใช้ข้อมูลจากเอกสาร/บัญชีผู้ใช้ก่อน และไม่ค้นเว็บเกินความจำเป็น');
@@ -175,7 +191,7 @@
       tools: uniqueTools,
       instructions: Object.freeze(instructions),
       reasons: Object.freeze(reasons),
-      flags: Object.freeze({ hasAttachments, wantsGmail, wantsDriveFiles, needsCurrentWeb, needsPrimarySource, externalVerificationRequested, stableCreation })
+      flags: Object.freeze({ hasAttachments, wantsGmail, wantsDriveFiles, needsCurrentWeb, needsPrimarySource, externalVerificationRequested, explicitNoWeb, stableCreation })
     });
   }
 
