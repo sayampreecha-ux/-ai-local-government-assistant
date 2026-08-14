@@ -32,6 +32,10 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Security invariant release gate
+        run: node scripts/verify-security-invariants.mjs
+      - name: Public Beta privacy/security regression gate
+        run: node scripts/verify-internal-pilot-security.mjs
       - run: pnpm test
       - run: pnpm build
       - uses: actions/configure-pages@v5
