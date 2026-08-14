@@ -47,7 +47,13 @@
     /(?:เบิก|จ่าย|ใช้เงิน|เงินสะสม|เงินสำรองจ่าย|เงินบำรุง|งบประมาณ|จัดซื้อ|จัดจ้าง|พัสดุ|มีอำนาจ|อำนาจหน้าที่|ผิดกฎหมาย|ถูกกฎหมาย|ชอบด้วยกฎหมาย).{0,60}(?:ได้ไหม|ได้หรือไม่|หรือไม่|ทำอย่างไร|ทำไง|ควร)/i,
     /(?:ได้ไหม|ได้หรือไม่).{0,40}(?:เบิก|จ่าย|ใช้เงิน|เงินสะสม|เงินสำรองจ่าย|เงินบำรุง|จัดซื้อ|จัดจ้าง|พัสดุ)/i,
     /(?:ทำ|จัดทำ|ลงนาม).{0,20}(?:mou|บันทึกข้อตกลง).{0,40}(?:ได้ไหม|ได้หรือไม่|หรือไม่)/i,
-    /(?:คำสั่งทางปกครอง|เปิดเผย|ผู้ร้องเรียน|ลาป่วย|ใบรับรองแพทย์|e-bidding|แบ่งซื้อแบ่งจ้าง|ผู้รับจ้าง|ตรวจรับ|ประกัน|เปลี่ยนวัสดุ|pdpa|ข้อมูลผู้ป่วย|ภารกิจ).{0,60}(?:ได้ไหม|ได้หรือไม่|หรือไม่|ต้อง|ควร|เสี่ยง|ทำอย่างไร|ทำไง|พิจารณาอะไร)/i
+    /(?:คำสั่งทางปกครอง|เปิดเผย|ผู้ร้องเรียน|ลาป่วย|ใบรับรองแพทย์|e-bidding|แบ่งซื้อแบ่งจ้าง|ผู้รับจ้าง|ตรวจรับ|ประกัน|เปลี่ยนวัสดุ|pdpa|ข้อมูลผู้ป่วย|ภารกิจ).{0,60}(?:ได้ไหม|ได้หรือไม่|หรือไม่|ต้อง|ควร|เสี่ยง|ทำอย่างไร|ทำไง|พิจารณาอะไร|ใครรับผิดชอบ|รับผิดชอบ)/i
+  ]);
+
+  const CAREER_VERIFICATION_PATTERNS = Object.freeze([
+    /(?:ปลัดต้น|ระดับต้น).{0,50}(?:ปลัดกลาง|ระดับกลาง|กี่ปี|ได้ไหม|ได้ยัง|ขึ้น|เลื่อน)/i,
+    /(?:ชก|ชำนาญการ).{0,50}(?:ชพ|ชำนาญการพิเศษ|กี่ปี|ได้ไหม|ได้ยัง|ขึ้น|เลื่อน)/i,
+    /(?:ครองตำแหน่ง|ดำรงตำแหน่ง|เลื่อนระดับ|เลื่อนตำแหน่ง|สอบคัดเลือก).{0,60}(?:กี่ปี|คุณสมบัติ|เกณฑ์|ได้ไหม|ได้ยัง|ขึ้น)/i
   ]);
 
   const EXTERNAL_VERIFICATION_PATTERNS = Object.freeze([
@@ -62,7 +68,15 @@
   ]);
 
   function normalize(value) {
-    return String(value ?? '').normalize('NFC').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
+    return String(value ?? '')
+      .normalize('NFC')
+      .toLocaleLowerCase()
+      .replace(/มั้ย|มั๊ย/g, 'ไหม')
+      .replace(/เท่าไหร่/g, 'เท่าไร')
+      .replace(/ไช้/g, 'ใช้')
+      .replace(/อยุ่|อยุ/g, 'อยู่')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   function includesAny(text, terms) {
@@ -98,7 +112,9 @@
   }
 
   function needsGovernmentVerification(text) {
-    return includesAny(text, PRIMARY_SOURCE_TERMS) || GOVERNMENT_DECISION_PATTERNS.some(pattern => pattern.test(text));
+    return includesAny(text, PRIMARY_SOURCE_TERMS)
+      || GOVERNMENT_DECISION_PATTERNS.some(pattern => pattern.test(text))
+      || CAREER_VERIFICATION_PATTERNS.some(pattern => pattern.test(text));
   }
 
   function explicitlyRequestsExternalVerification(text) {
