@@ -38,7 +38,10 @@ const cases = [
   { q: 'ผู้บริหารถามว่า หาไฟล์โครงการเดิมใน Google Drive', mode: 'user-data-first', tools: ['drive-files', 'ai-reasoning'], excludes: ['web-search'] },
   { q: 'รบกวนหาอีเมลล่าสุดที่ได้รับเรื่องประชุมหน่อยครับ', mode: 'user-data-first', tools: ['gmail', 'ai-reasoning'], excludes: ['web-search'] },
   { q: 'ดึงประเด็นสำคัญจากเอกสารแนบเรื่องกรรมการตรวจรับพัสดุ 5 ข้อ ใช้เอกสารนี้อย่างเดียว', attachments: [{ name: 'procurement.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'ai-reasoning'], excludes: ['web-search', 'drive-files'] },
-  { q: 'จากเอกสารแนบเรื่องกรรมการตรวจรับพัสดุ ทำสรุปเสนอผู้บริหาร 5 ข้อ ไม่ค้นภายนอก', attachments: [{ name: 'procurement.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'ai-reasoning'], excludes: ['web-search', 'drive-files'] }
+  { q: 'จากเอกสารแนบเรื่องกรรมการตรวจรับพัสดุ ทำสรุปเสนอผู้บริหาร 5 ข้อ ไม่ค้นภายนอก', attachments: [{ name: 'procurement.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'ai-reasoning'], excludes: ['web-search', 'drive-files'] },
+  { q: 'เจ้าหน้าที่จะทำต่อจากคำตอบนี้ เรื่องอุทธรณ์คำสั่งทางปกครอง ได้เท่าไร อัตราปัจจุบันเท่าไหร่ ตรวจแหล่งราชการ', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
+  { q: 'เจ้าหน้าที่จะทำต่อจากคำตอบนี้ เรื่องส่งหนังสือนัดประชุมสภา ต้องทำภายในกี่วัน ใช้หลักเกณฑ์ล่าสุด', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
+  { q: 'เจ้าหน้าที่จะทำต่อจากคำตอบนี้ ร่างหนังสือแจ้งประชุม ไม่ต้องค้นเว็บ', mode: 'ai-only', tools: ['ai-reasoning'], excludes: ['web-search'] }
 ];
 
 for (const testCase of cases) {
