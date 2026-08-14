@@ -40,4 +40,21 @@ assert.equal(routeOutput('ช่วยตอบเรื่องนี้', { m
 assert.equal(routeOutput('ช่วยตอบเรื่องนี้', { moduleId: 'GP012' }).id, 'public_content')
 assert.equal(routeOutput('ช่วยตอบเรื่องนี้', { moduleId: 'GP005' }).id, 'analysis')
 
-console.log(`GovPrompt Output Router verification passed: ${cases.length + 4}/${cases.length + 4}`)
+const analysisInstructions = routeOutput('วิเคราะห์ว่าเบิกค่าทำปกได้ไหม', { moduleId: 'GP005' }).instructions.join('\n')
+assert.match(analysisInstructions, /เบิกได้ \/ เบิกไม่ได้ \/ มีเงื่อนไข/)
+assert.match(analysisInstructions, /ฐานอำนาจ เงื่อนไข เอกสารประกอบ/)
+assert.match(analysisInstructions, /ทำได้ \/ ทำไม่ได้ \/ ยังฟันธงไม่ได้/)
+assert.match(analysisInstructions, /ดำเนินการได้ \/ มีเงื่อนไข \/ มีความเสี่ยง/)
+
+const torInstructions = routeOutput('ช่วยร่าง TOR ซื้อคอมพิวเตอร์').instructions.join('\n')
+assert.match(torInstructions, /เกณฑ์ตรวจรับวัดได้จริง/)
+assert.match(torInstructions, /จำกัดการแข่งขัน/)
+assert.match(torInstructions, /ต้องตรวจเพิ่มก่อนนำ TOR ไปใช้จริง/)
+
+const documentInstructions = routeOutput('ช่วยร่างหนังสือขออนุเคราะห์').instructions.join('\n')
+assert.match(documentInstructions, /ส่งร่างฉบับใช้งานได้ก่อน/)
+
+const projectInstructions = routeOutput('ช่วยเขียนโครงการส่งเสริมสุขภาพ').instructions.join('\n')
+assert.match(projectInstructions, /ตรวจฐานอำนาจ แหล่งเงิน กลุ่มเป้าหมาย/)
+
+console.log(`GovPrompt Output Router verification passed: ${cases.length + 4}/${cases.length + 4} + decision-frame assertions`)
