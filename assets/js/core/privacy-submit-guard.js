@@ -12,7 +12,8 @@
       if (!core || typeof core.sanitizeExternalContent !== 'function') {
         event.preventDefault();
         event.stopImmediatePropagation();
-        window.GovPrompt?.toast('🔒 Privacy Guard ยังไม่พร้อม ระบบหยุดส่งข้อมูลไว้ก่อน');
+        input.value = '';
+        window.alert('🔒 Privacy Guard ยังไม่พร้อม ระบบไม่รับส่งข้อความเพื่อความปลอดภัย');
         return;
       }
 
@@ -23,9 +24,10 @@
       if (privacy.blocked) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        input.value = privacy.safeText;
+        const reasons = [...new Set([...(privacy.blockingRisks || []), ...(privacy.sensitiveContext || []), ...(privacy.residualRisks || [])])];
+        input.value = privacy.changed && !(privacy.sensitiveContext || []).length && !(privacy.blockingRisks || []).length ? privacy.safeText : '';
         input.dispatchEvent(new Event('input', { bubbles: true }));
-        window.GovPrompt?.toast('🔒 พบข้อมูลเสี่ยงที่ยังปกปิดไม่สมบูรณ์ ระบบหยุดส่งไว้ก่อน กรุณาตรวจข้อความแล้วส่งใหม่');
+        window.alert(`🔒 GovPrompt บล็อกข้อมูลอ่อนไหว/ข้อมูลเสี่ยง ไม่ส่งต่อและไม่ประมวลผล${reasons.length ? `\nตรวจพบ: ${reasons.join(', ')}` : ''}\n\nกรุณาใช้ข้อมูลสมมติหรือข้อมูลที่ไม่สามารถระบุตัวบุคคลได้`);
         input.focus();
         return;
       }
@@ -34,7 +36,7 @@
         input.value = privacy.safeText;
         input.dispatchEvent(new Event('input', { bubbles: true }));
         const labels = privacy.redactions?.length ? ` (${privacy.redactions.join(', ')})` : '';
-        window.GovPrompt?.toast(`🔐 พบข้อมูลส่วนบุคคลและปกปิดก่อนประมวลผลแล้ว${labels}`);
+        window.GovPrompt?.toast(`🔐 ปกปิดข้อมูลส่วนบุคคลก่อนประมวลผลแล้ว${labels}`);
       }
     }, true);
   }
