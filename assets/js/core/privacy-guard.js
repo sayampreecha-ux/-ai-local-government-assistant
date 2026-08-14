@@ -43,10 +43,15 @@
   ]);
 
   const collapseWhitespace = value => String(value ?? '').replace(/\s+/g, ' ').trim();
+
   function detectByRules(input, rules) {
     const text = String(input ?? '');
-    return Object.freeze(rules.filter(rule => { rule.pattern.lastIndex = 0; return rule.pattern.test(text); }).map(rule => rule.label));
+    return Object.freeze(rules.filter(rule => {
+      rule.pattern.lastIndex = 0;
+      return rule.pattern.test(text);
+    }).map(rule => rule.label));
   }
+
   const detectBlockingRisk = input => detectByRules(input, BLOCK_RULES);
   const detectResidualRisk = input => detectByRules(input, RESIDUAL_RISK_RULES);
   const detectSensitiveContext = input => detectByRules(input, SENSITIVE_CONTEXT_RULES);
@@ -63,7 +68,9 @@
       safeText = safeText.replace(rule.pattern, rule.replacement);
     });
     safeText = safeText.replace(/\b\d{16,}\b/g, ' [ปกปิดชุดตัวเลข] ');
-    safeText = preserveWhitespace ? safeText.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim() : collapseWhitespace(safeText);
+    safeText = preserveWhitespace
+      ? safeText.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim()
+      : collapseWhitespace(safeText);
     return { safeText, redactions: Object.freeze([...new Set(redactions)]) };
   }
 
@@ -74,18 +81,38 @@
     const redacted = applyRedactions(original, { preserveWhitespace: true });
     const residualRisks = detectResidualRisk(redacted.safeText);
     const blocked = blockingRisks.length > 0 || sensitiveContext.length > 0 || residualRisks.length > 0;
-    return Object.freeze({ original, safeText: redacted.safeText, changed: redacted.safeText !== original, blocked, redactions: redacted.redactions, blockingRisks, residualRisks, sensitiveContext });
+    return Object.freeze({
+      original,
+      safeText: redacted.safeText,
+      changed: redacted.safeText !== original,
+      blocked,
+      redactions: redacted.redactions,
+      blockingRisks,
+      residualRisks,
+      sensitiveContext
+    });
   }
 
   function sanitizeAttachmentName(name, index = 1) {
     const original = String(name ?? '').trim();
     const dot = original.lastIndexOf('.');
-    const extension = dot > 0 && dot < original.length - 1 ? original.slice(dot + 1).replace(/[^A-Za-z0-9]/g, '').slice(0, 8).toLowerCase() : '';
+    const extension = dot > 0 && dot < original.length - 1
+      ? original.slice(dot + 1).replace(/[^A-Za-z0-9]/g, '').slice(0, 8).toLowerCase()
+      : '';
     const base = dot > 0 ? original.slice(0, dot) : original;
     const privacy = sanitizeExternalContent(base);
     let safeBase = privacy.safeText.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
     if (!safeBase || privacy.blocked) safeBase = `เอกสารแนบ-${index}`;
-    return Object.freeze({ original, safeName: `${safeBase}${extension ? `.${extension}` : ''}`, changed: true, blocked: privacy.blocked, redactions: privacy.redactions, blockingRisks: privacy.blockingRisks, residualRisks: privacy.residualRisks, sensitiveContext: privacy.sensitiveContext });
+    return Object.freeze({
+      original,
+      safeName: `${safeBase}${extension ? `.${extension}` : ''}`,
+      changed: true,
+      blocked: privacy.blocked,
+      redactions: privacy.redactions,
+      blockingRisks: privacy.blockingRisks,
+      residualRisks: privacy.residualRisks,
+      sensitiveContext: privacy.sensitiveContext
+    });
   }
 
   function sanitizeExternalQuery(input) {
@@ -99,7 +126,24 @@
 
   function blockedSearchResult(privacy) {
     const reasons = [...new Set([...privacy.blockingRisks, ...privacy.sensitiveContext, ...privacy.residualRisks])];
-    return Object.freeze({ mode: 'blocked', provider: 'privacy-guard', searchedAt: new Date().toISOString(), results: Object.freeze([]), evidence: Object.freeze({ primaryResults: Object.freeze([]), conclusionEligible: false }), warning: `Privacy Guard หยุดการค้นภายนอก เพราะตรวจพบข้อมูลที่ห้ามส่ง${reasons.length ? ` (${reasons.join(', ')})` : ''}`, privacyGuard: Object.freeze({ applied: true, blocked: true, redactions: privacy.redactions, blockingRisks: privacy.blockingRisks, residualRisks: privacy.residualRisks, sensitiveContext: privacy.sensitiveContext, externalQueryWasSanitized: privacy.changed, externalRequestSent: false }) });
+    return Object.freeze({
+      mode: 'blocked',
+      provider: 'privacy-guard',
+      searchedAt: new Date().toISOString(),
+      results: Object.freeze([]),
+      evidence: Object.freeze({ primaryResults: Object.freeze([]), conclusionEligible: false }),
+      warning: `Privacy Guard หยุดการค้นภายนอก เพราะตรวจพบข้อมูลที่ห้ามส่ง${reasons.length ? ` (${reasons.join(', ')})` : ''}`,
+      privacyGuard: Object.freeze({
+        applied: true,
+        blocked: true,
+        redactions: privacy.redactions,
+        blockingRisks: privacy.blockingRisks,
+        residualRisks: privacy.residualRisks,
+        sensitiveContext: privacy.sensitiveContext,
+        externalQueryWasSanitized: privacy.changed,
+        externalRequestSent: false
+      })
+    });
   }
 
   function installPrivacyGuard() {
@@ -107,53 +151,43 @@
     const connector = core?.officialSearchConnector;
     if (!core || !connector || typeof connector.search !== 'function') return false;
     if (connector.__privacyGuardInstalled) return true;
-    const guardedConnector = Object.freeze({ ...connector, __privacyGuardInstalled: true, search: async (query, options = {}) => {
-      const privacy = sanitizeExternalQuery(query);
-      if (privacy.blocked) { window.GovPrompt?.toast?.('🔒 Privacy Guard บล็อกข้อมูลอ่อนไหว/ข้อมูลเสี่ยง ไม่ส่งออกภายนอก'); return blockedSearchResult(privacy); }
-      if (privacy.changed) window.GovPrompt?.toast?.('🔐 ปกปิดข้อมูลส่วนบุคคลก่อนค้นภายนอกแล้ว');
-      const result = await connector.search(privacy.safeQuery, options);
-      return result && typeof result === 'object' ? Object.freeze({ ...result, privacyGuard: Object.freeze({ applied: privacy.changed, blocked: false, redactions: privacy.redactions, blockingRisks: privacy.blockingRisks, residualRisks: privacy.residualRisks, sensitiveContext: privacy.sensitiveContext, externalQueryWasSanitized: privacy.changed, externalRequestSent: true }) }) : result;
-    }});
+    const guardedConnector = Object.freeze({
+      ...connector,
+      __privacyGuardInstalled: true,
+      search: async (query, options = {}) => {
+        const privacy = sanitizeExternalQuery(query);
+        if (privacy.blocked) {
+          window.GovPrompt?.toast?.('🔒 Privacy Guard บล็อกข้อมูลอ่อนไหว/ข้อมูลเสี่ยง ไม่ส่งออกภายนอก');
+          return blockedSearchResult(privacy);
+        }
+        if (privacy.changed) window.GovPrompt?.toast?.('🔐 ปกปิดข้อมูลส่วนบุคคลก่อนค้นภายนอกแล้ว');
+        const result = await connector.search(privacy.safeQuery, options);
+        return result && typeof result === 'object'
+          ? Object.freeze({
+              ...result,
+              privacyGuard: Object.freeze({
+                applied: privacy.changed,
+                blocked: false,
+                redactions: privacy.redactions,
+                blockingRisks: privacy.blockingRisks,
+                residualRisks: privacy.residualRisks,
+                sensitiveContext: privacy.sensitiveContext,
+                externalQueryWasSanitized: privacy.changed,
+                externalRequestSent: true
+              })
+            })
+          : result;
+      }
+    });
     core.officialSearchConnector = guardedConnector;
     return true;
   }
 
-  function installInputPrivacyGate() {
-    const form = document.getElementById('chatForm');
-    const input = document.getElementById('promptInput');
-    if (!form || !input || form.dataset.privacyGateInstalled === '1') return false;
-    form.dataset.privacyGateInstalled = '1';
-    form.addEventListener('submit', event => {
-      if (form.dataset.privacyBypass === '1') return;
-      const privacy = sanitizeExternalContent(input.value);
-      if (!privacy.changed && !privacy.blocked) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-
-      if (privacy.blocked) {
-        const reasons = [...new Set([...privacy.blockingRisks, ...privacy.sensitiveContext, ...privacy.residualRisks])];
-        input.value = privacy.changed ? privacy.safeText : '';
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        window.alert(`🔒 GovPrompt ไม่รับส่งข้อมูลอ่อนไหวหรือข้อมูลเสี่ยง\n${reasons.length ? `ตรวจพบ: ${reasons.join(', ')}\n\n` : ''}ข้อมูลนี้จะไม่เข้า Router, Search, Prompt หรือ History กรุณาใช้ข้อมูลสมมติ/ข้อมูลที่ไม่ระบุตัวบุคคลแทน`);
-        input.focus();
-        return;
-      }
-
-      if (!privacy.safeText.trim()) {
-        input.value = '';
-        window.alert('🔒 ข้อความมีข้อมูลส่วนบุคคลมากเกินไป กรุณาพิมพ์ใหม่โดยใช้ข้อมูลสมมติ');
-        input.focus();
-        return;
-      }
-      input.value = privacy.safeText;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      window.GovPrompt?.toast?.(`🔐 ปกปิดอัตโนมัติแล้ว: ${privacy.redactions.join(', ') || 'ข้อมูลส่วนบุคคล'}`);
-      form.dataset.privacyBypass = '1';
-      try { form.requestSubmit(); } finally { delete form.dataset.privacyBypass; }
-    }, true);
-    return true;
-  }
-
+  // Issue #73: the submit boundary has exactly one owner:
+  // privacy-submit-guard.js. The former input gate in this module used its own
+  // stopImmediatePropagation/requestSubmit flow and could suppress the sanitized
+  // submit before Home/UI saw it. Keep this module responsible only for reusable
+  // sanitization and the external-search guard.
   function simplifyPrimaryNavigation() {
     const toolsButton = document.querySelector('.bottom-nav [data-panel="tools"]');
     if (toolsButton) toolsButton.hidden = true;
@@ -162,7 +196,21 @@
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
-  Object.assign(window.GovPromptCore, { sanitizeExternalQuery, sanitizeExternalContent, sanitizeAttachmentName, detectBlockingRisk, detectResidualRisk, detectSensitiveContext, installPrivacyGuard, installInputPrivacyGate });
-  function installAll() { installPrivacyGuard(); installInputPrivacyGate(); simplifyPrimaryNavigation(); }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installAll, { once: true }); else installAll();
+  Object.assign(window.GovPromptCore, {
+    sanitizeExternalQuery,
+    sanitizeExternalContent,
+    sanitizeAttachmentName,
+    detectBlockingRisk,
+    detectResidualRisk,
+    detectSensitiveContext,
+    installPrivacyGuard
+  });
+
+  function installAll() {
+    installPrivacyGuard();
+    simplifyPrimaryNavigation();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installAll, { once: true });
+  else installAll();
 })();
