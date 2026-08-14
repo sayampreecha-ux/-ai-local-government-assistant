@@ -13,6 +13,7 @@ for (const file of [
   'assets/js/core/education-event-routing-overrides.js',
   'assets/js/core/procurement-tor-routing-overrides.js',
   'assets/js/core/media-routing-overrides.js',
+  'assets/js/core/router-real-query-hotfix.js',
   'assets/js/core/tool-routing-policy.js',
   'assets/js/core/agent-governance-policy.js',
   'assets/js/core/output-router.js',
@@ -94,5 +95,6 @@ if (failures.length) {
 }
 
 assert.equal(cases.length, 30, 'pilot quality fixture must contain exactly 30 cases');
+assert.equal(routeWarnings.length, 0, `pilot quality routing should have no advisory warnings; got ${routeWarnings.length}`);
 assert.ok(passed >= 27, `pilot quality must be at least 90%; got ${passed}/30 (${score}%)`);
 console.log('GovPrompt real pilot quality benchmark accepted at >=90%: task completion + tool/evidence policy + output + Answer First integrity.');
