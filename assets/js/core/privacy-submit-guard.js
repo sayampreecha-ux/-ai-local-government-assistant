@@ -52,8 +52,8 @@
   function install() {
     const form = document.getElementById('chatForm');
     const input = document.getElementById('promptInput');
-    if (!form || !input || form.dataset.privacySubmitGuard === '3') return;
-    form.dataset.privacySubmitGuard = '3';
+    if (!form || !input || form.dataset.privacySubmitGuard === '2') return;
+    form.dataset.privacySubmitGuard = '2';
 
     form.addEventListener('submit', event => {
       const core = window.GovPromptCore;
