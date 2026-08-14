@@ -42,7 +42,26 @@
     { label: 'ข้อมูลรับรองสิทธิ์/รหัสลับ', pattern: /(?:password|passwd|api\s*key|secret|token|bearer|รหัสผ่าน|กุญแจ\s*api)\s*[:=：-]?\s*\S+/i }
   ]);
 
+  const MASKED_SEGMENT_PATTERN = /(?:(?:หนังสือเดินทาง|เลขผู้เสียภาษี|เลขบัญชี|ชื่อ|รหัสผู้ป่วย|วันเกิด|ที่อยู่|ทะเบียนรถ)\s*)?\[ปกปิด[^\]\n]{0,80}\]/g;
   const collapseWhitespace = value => String(value ?? '').replace(/\s+/g, ' ').trim();
+
+  function protectMaskMarkers(input) {
+    const markers = [];
+    const protectedText = String(input ?? '').replace(MASKED_SEGMENT_PATTERN, marker => {
+      const token = `\uE000${String.fromCharCode(0xE100 + markers.length)}\uE001`;
+      markers.push(Object.freeze({ token, marker }));
+      return token;
+    });
+    return Object.freeze({ protectedText, markers: Object.freeze(markers) });
+  }
+
+  function restoreMaskMarkers(input, markers) {
+    let restored = String(input ?? '');
+    markers.forEach(({ token, marker }) => {
+      restored = restored.split(token).join(marker);
+    });
+    return restored;
+  }
 
   function detectByRules(input, rules) {
     const text = String(input ?? '');
@@ -58,7 +77,8 @@
 
   function applyRedactions(input, { preserveWhitespace = false } = {}) {
     const original = String(input ?? '');
-    let safeText = original;
+    const protectedMasks = protectMaskMarkers(original);
+    let safeText = protectedMasks.protectedText;
     const redactions = [];
     REDACTION_RULES.forEach(rule => {
       rule.pattern.lastIndex = 0;
@@ -68,6 +88,7 @@
       safeText = safeText.replace(rule.pattern, rule.replacement);
     });
     safeText = safeText.replace(/\b\d{16,}\b/g, ' [ปกปิดชุดตัวเลข] ');
+    safeText = restoreMaskMarkers(safeText, protectedMasks.markers);
     safeText = preserveWhitespace
       ? safeText.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim()
       : collapseWhitespace(safeText);
