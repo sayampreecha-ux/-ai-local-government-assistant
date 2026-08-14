@@ -97,12 +97,12 @@ const distortions = [
 ].map(([id, apply]) => ({ id, apply }));
 assert.equal(distortions.length, 10);
 
-function expectedGoalFor(domain, behavior) {
+function expectedGoalFor(topic, behavior) {
   if (behavior === 'authority') return 'authority';
   if (behavior === 'deadline') return 'duration-deadline';
   if (behavior === 'rate') return 'amount-rate';
   if (behavior === 'risk') return 'compliance-risk';
-  if (behavior === 'career' && domain === 'hr') return 'career-progression';
+  if (behavior === 'career' && ['H01', 'H02'].includes(topic.id)) return 'career-progression';
   if (behavior === 'current') return 'current-status';
   if (behavior === 'decision') return 'eligibility-decision';
   return null;
@@ -186,7 +186,7 @@ for (const topic of topics) {
       if (behavior.noWeb && plan.flags?.explicitNoWeb !== true) errors.push('no-web-not-recognized');
       if (plan.tools.at(-1) !== 'ai-reasoning') errors.push('ai-not-final');
 
-      const expectedGoal = expectedGoalFor(topic.domain, behavior.goal);
+      const expectedGoal = expectedGoalFor(topic, behavior.goal);
       if (expectedGoal && !goalIds.includes(expectedGoal)) errors.push(`missing-goal:${expectedGoal}`);
 
       if (behavior.evidence) {
