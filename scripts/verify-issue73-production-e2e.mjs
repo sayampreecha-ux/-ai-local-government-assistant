@@ -52,7 +52,8 @@ async function userMessages() {
 
 async function warningMessages() {
   const toast = await page.locator('.gp-toast').allInnerTexts();
-  return [...dialogs, ...toast.filter(Boolean)];
+  const privacyWarning = await page.locator('.privacy-submit-warning:not([hidden])').allInnerTexts();
+  return [...dialogs, ...toast.filter(Boolean), ...privacyWarning.filter(Boolean)];
 }
 
 async function diagnosticState() {
@@ -63,6 +64,7 @@ async function diagnosticState() {
     submitGuardVersion: document.getElementById('chatForm')?.dataset?.privacySubmitGuard || '',
     userMessages: [...document.querySelectorAll('.message.user .message-body')].map(node => node.textContent || ''),
     toast: document.querySelector('.gp-toast')?.textContent || '',
+    privacyWarning: document.querySelector('.privacy-submit-warning:not([hidden])')?.textContent || '',
     bodyText: document.body.innerText
   }));
 }
@@ -83,8 +85,9 @@ async function submitRedactable({ name, sample, forbidden, expectedMask }) {
   assert.match(rendered, expectedMask, `${name}: masked marker missing from user UI: ${rendered}`);
   assert.equal(state.bodyText.includes(forbidden), false, `${name}: raw sensitive marker remained anywhere in visible UI`);
   assert.ok(warnings.some(message => /ปกปิดให้อัตโนมัติ/.test(message)), `${name}: automatic masking warning was not shown; warnings=${JSON.stringify(warnings)}`);
+  assert.match(state.privacyWarning, /ปกปิดให้อัตโนมัติ/, `${name}: dedicated privacy warning surface was not visible`);
   assert.equal(runtime.submitGuardVersion, '2', `${name}: production submit guard v2 was not active`);
-  assert.ok(runtime.scriptSources.some(src => /privacy-submit-guard\.js\?v=1\.0\.2(?:$|&)/.test(src)), `${name}: production browser did not load submit guard cache key v1.0.2`);
+  assert.ok(runtime.scriptSources.some(src => /privacy-submit-guard\.js\?v=1\.0\.3(?:$|&)/.test(src)), `${name}: production browser did not load submit guard cache key v1.0.3`);
   return { name, rendered, warnings, runtime };
 }
 
@@ -103,6 +106,7 @@ async function submitBlocked({ name, sample }) {
   assert.equal(inputValue, '', `${name}: blocked sensitive content remained in composer`);
   assert.equal(state.bodyText.includes(sample), false, `${name}: blocked raw sensitive content remained anywhere in visible UI`);
   assert.ok(warnings.some(message => /บล็อกข้อมูลอ่อนไหว|ยกเลิกการส่ง|หยุดการส่ง/.test(message)), `${name}: blocking warning was not shown; warnings=${JSON.stringify(warnings)}`);
+  assert.match(state.privacyWarning, /บล็อกข้อมูลอ่อนไหว|ยกเลิกการส่ง|หยุดการส่ง/, `${name}: dedicated blocking warning surface was not visible`);
   assert.equal(runtime.submitGuardVersion, '2', `${name}: production submit guard v2 was not active`);
   return { name, warnings, runtime };
 }
@@ -172,6 +176,7 @@ console.log(JSON.stringify({
     rawHnAbsentFromUi: 'PASS',
     rawPiiAbsentFromVisibleUi: 'PASS',
     automaticMaskingWarning: 'PASS',
+    persistentPrivacyWarningSurface: 'PASS',
     blockedDataCreatesNoUserBubble: 'PASS',
     cacheServiceWorkerReload: 'PASS'
   },
