@@ -8,11 +8,14 @@
 
   const PRIMARY_SOURCE_TERMS = Object.freeze([
     'กฎหมาย', 'ระเบียบ', 'หนังสือเวียน', 'หนังสือสั่งการ', 'ข้อหารือ', 'ซักซ้อม',
-    'คำพิพากษา', 'ประกาศ', 'กฎกระทรวง', 'พระราชบัญญัติ', 'พัสดุ', 'จัดซื้อ',
-    'จัดจ้าง', 'tor', 'ทีโออาร์', 'ที โอ อาร์', 'ขอบเขตของงาน', 'ราคากลาง', 'เบิกจ่าย',
-    'งบประมาณ', 'เงินสะสม', 'เงินสำรองจ่าย', 'เงินบำรุง', 'เดินทางไปราชการ', 'ค่าเดินทาง',
-    'วินัย', 'ขาดราชการ', 'โอนย้าย', 'เลื่อนเงินเดือน', 'สอบแข่งขัน', 'บรรจุ',
-    'สภาท้องถิ่น', 'สมาชิกสภา', 'องค์ประชุม', 'มีส่วนได้เสีย', 'ญัตติ', 'ข้อบัญญัติ', 'รพ.สต.', 'รพสต'
+    'คำพิพากษา', 'ประกาศ', 'กฎกระทรวง', 'พระราชบัญญัติ', 'คำสั่งทางปกครอง',
+    'พัสดุ', 'จัดซื้อ', 'จัดจ้าง', 'tor', 'ทีโออาร์', 'ที โอ อาร์', 'ขอบเขตของงาน',
+    'ราคากลาง', 'e-bidding', 'แบ่งซื้อแบ่งจ้าง', 'ผู้รับจ้าง', 'ตรวจรับ',
+    'เบิก', 'เบิกจ่าย', 'งบประมาณ', 'เงินสะสม', 'เงินสำรองจ่าย', 'เงินบำรุง',
+    'เดินทางไปราชการ', 'ค่าเดินทาง', 'ลาป่วย', 'ใบรับรองแพทย์', 'วินัย', 'ขาดราชการ',
+    'โอนย้าย', 'เลื่อนเงินเดือน', 'สอบแข่งขัน', 'บรรจุ', 'สภาท้องถิ่น', 'สมาชิกสภา',
+    'องค์ประชุม', 'มีส่วนได้เสีย', 'ญัตติ', 'ข้อบัญญัติ', 'pdpa', 'ข้อมูลผู้ป่วย',
+    'ผู้ร้องเรียน', 'รพ.สต.', 'รพสต'
   ]);
 
   const GMAIL_SOURCE_TERMS = Object.freeze([
@@ -28,16 +31,22 @@
     'ส่งไปแล้ว', 'ได้รับมา', 'ย้อนหลัง', 'เดิม', 'ของฉัน', 'ของผม', 'ของเรา'
   ]);
 
+  const STABLE_CREATION_PATTERNS = Object.freeze([
+    /(?:ร่าง|ทำ|เขียน|จัดทำ).{0,28}(?:หนังสือราชการ|หนังสือ|บันทึกข้อความ|คำสั่ง|ประกาศ|คำกล่าว|โพสต์|ข้อความประชาสัมพันธ์)/i,
+    /(?:ทำ|ร่าง).{0,20}(?:executive summary|สรุปผู้บริหาร)/i
+  ]);
+
   const GOVERNMENT_DECISION_PATTERNS = Object.freeze([
-    /(?:เบิก|จ่าย|ใช้เงิน|เงินสะสม|เงินสำรองจ่าย|เงินบำรุง|งบประมาณ|จัดซื้อ|จัดจ้าง|พัสดุ|มีอำนาจ|อำนาจหน้าที่|ผิดกฎหมาย|ถูกกฎหมาย|ชอบด้วยกฎหมาย).{0,28}(?:ได้ไหม|ได้หรือไม่|หรือไม่|ทำอย่างไร|ทำไง)/i,
-    /(?:ได้ไหม|ได้หรือไม่).{0,20}(?:เบิก|จ่าย|ใช้เงิน|เงินสะสม|เงินสำรองจ่าย|เงินบำรุง|จัดซื้อ|จัดจ้าง|พัสดุ)/i,
-    /(?:ทำ|จัดทำ|ลงนาม).{0,12}(?:mou|บันทึกข้อตกลง).{0,18}(?:ได้ไหม|ได้หรือไม่|หรือไม่)/i
+    /(?:เบิก|จ่าย|ใช้เงิน|เงินสะสม|เงินสำรองจ่าย|เงินบำรุง|งบประมาณ|จัดซื้อ|จัดจ้าง|พัสดุ|มีอำนาจ|อำนาจหน้าที่|ผิดกฎหมาย|ถูกกฎหมาย|ชอบด้วยกฎหมาย).{0,60}(?:ได้ไหม|ได้หรือไม่|หรือไม่|ทำอย่างไร|ทำไง|ควร)/i,
+    /(?:ได้ไหม|ได้หรือไม่).{0,40}(?:เบิก|จ่าย|ใช้เงิน|เงินสะสม|เงินสำรองจ่าย|เงินบำรุง|จัดซื้อ|จัดจ้าง|พัสดุ)/i,
+    /(?:ทำ|จัดทำ|ลงนาม).{0,20}(?:mou|บันทึกข้อตกลง).{0,40}(?:ได้ไหม|ได้หรือไม่|หรือไม่)/i,
+    /(?:คำสั่งทางปกครอง|เปิดเผย|ผู้ร้องเรียน|ลาป่วย|ใบรับรองแพทย์|e-bidding|แบ่งซื้อแบ่งจ้าง|ผู้รับจ้าง|ตรวจรับ|ประกัน|เปลี่ยนวัสดุ|pdpa|ข้อมูลผู้ป่วย|ภารกิจ).{0,60}(?:ได้ไหม|ได้หรือไม่|หรือไม่|ต้อง|ควร|เสี่ยง|ทำอย่างไร|ทำไง|พิจารณาอะไร)/i
   ]);
 
   const EXTERNAL_VERIFICATION_PATTERNS = Object.freeze([
-    /(?:ตรวจ|เช็ก|เช็ค|ทบทวน|วิเคราะห์|พิจารณา).{0,45}(?:ถูกต้อง|กฎหมาย|ระเบียบ|ฐานอำนาจ|ความเสี่ยง|ล็อกสเปก|การแข่งขัน|เบิก|จัดซื้อ|จัดจ้าง|พัสดุ|tor|ที\s*โอ\s*อาร์|ขอบเขตของงาน)/i,
-    /(?:ยังใช้|ยังมีผล|มีผลใช้บังคับ|ฉบับล่าสุด|ฉบับใหม่|แก้ไขล่าสุด|ยกเลิก).{0,45}(?:กฎหมาย|ระเบียบ|ประกาศ|หนังสือ|อัตรา|สิทธิ|หลักเกณฑ์|tor|ที\s*โอ\s*อาร์|เบิก|พัสดุ|จัดซื้อ|จัดจ้าง)/i,
-    /(?:กฎหมาย|ระเบียบ|ประกาศ|หนังสือ|อัตรา|สิทธิ|หลักเกณฑ์|tor|ที\s*โอ\s*อาร์|เบิก|พัสดุ|จัดซื้อ|จัดจ้าง).{0,45}(?:ยังใช้|ยังมีผล|ฉบับล่าสุด|ฉบับใหม่|แก้ไขล่าสุด|ยกเลิก)/i
+    /(?:ตรวจ|เช็ก|เช็ค|ทบทวน|วิเคราะห์|พิจารณา).{0,70}(?:ถูกต้อง|กฎหมาย|ระเบียบ|ฐานอำนาจ|ภารกิจ|แหล่งงบ|ความเสี่ยง|ล็อกสเปก|การแข่งขัน|เบิก|จัดซื้อ|จัดจ้าง|พัสดุ|tor|ที\s*โอ\s*อาร์|ขอบเขตของงาน)/i,
+    /(?:ยังใช้|ยังมีผล|มีผลใช้บังคับ|ฉบับล่าสุด|ฉบับใหม่|แก้ไขล่าสุด|ยกเลิก).{0,70}(?:กฎหมาย|ระเบียบ|ประกาศ|หนังสือ|อัตรา|สิทธิ|หลักเกณฑ์|tor|ที\s*โอ\s*อาร์|เบิก|พัสดุ|จัดซื้อ|จัดจ้าง)/i,
+    /(?:กฎหมาย|ระเบียบ|ประกาศ|หนังสือ|อัตรา|สิทธิ|หลักเกณฑ์|tor|ที\s*โอ\s*อาร์|เบิก|พัสดุ|จัดซื้อ|จัดจ้าง).{0,70}(?:ยังใช้|ยังมีผล|ฉบับล่าสุด|ฉบับใหม่|แก้ไขล่าสุด|ยกเลิก)/i
   ]);
 
   function normalize(value) {
@@ -50,6 +59,10 @@
 
   function isUserDataLookup(text, sourceTerms) {
     return includesAny(text, sourceTerms) && includesAny(text, USER_DATA_LOOKUP_TERMS);
+  }
+
+  function isStableCreation(text) {
+    return STABLE_CREATION_PATTERNS.some(pattern => pattern.test(text));
   }
 
   function needsGovernmentVerification(text) {
@@ -97,11 +110,14 @@
     const wantsGmail = isUserDataLookup(text, GMAIL_SOURCE_TERMS);
     const wantsDriveFiles = isUserDataLookup(text, DRIVE_SOURCE_TERMS);
     const sourceFirstTask = hasAttachments || wantsGmail || wantsDriveFiles;
+    const stableCreation = isStableCreation(text);
     const rawNeedsPrimarySource = needsGovernmentVerification(text);
     const externalVerificationRequested = explicitlyRequestsExternalVerification(text);
-    const needsPrimarySource = rawNeedsPrimarySource && (!sourceFirstTask || externalVerificationRequested);
+    const needsPrimarySource = (rawNeedsPrimarySource || externalVerificationRequested)
+      && (!sourceFirstTask || externalVerificationRequested)
+      && (!stableCreation || externalVerificationRequested);
     const freshnessRequested = includesAny(text, FRESHNESS_TERMS);
-    const needsCurrentWeb = freshnessRequested && !sourceFirstTask;
+    const needsCurrentWeb = freshnessRequested && !sourceFirstTask && (!stableCreation || externalVerificationRequested);
 
     const tools = [];
     const instructions = [];
@@ -150,6 +166,7 @@
     if (needsCurrentWeb) reasons.push('ต้องตรวจข้อมูลปัจจุบันจากภายนอก');
     if (needsPrimarySource) reasons.push('เป็นงานราชการที่ควรตรวจแหล่งปฐมภูมิ');
     if (sourceFirstTask && rawNeedsPrimarySource && !externalVerificationRequested) reasons.push('ใช้ข้อมูลจากเอกสาร/บัญชีผู้ใช้ก่อน และไม่ค้นเว็บเกินความจำเป็น');
+    if (stableCreation && rawNeedsPrimarySource && !externalVerificationRequested) reasons.push('เป็นงานร่าง/สร้างเนื้อหาที่ตอบจากข้อมูลผู้ใช้ได้โดยไม่ค้นเว็บอัตโนมัติ');
     if (!reasons.length) reasons.push('ตอบได้จากข้อมูลที่ผู้ใช้ให้และการวิเคราะห์ทั่วไป');
 
     return Object.freeze({
@@ -157,7 +174,7 @@
       tools: uniqueTools,
       instructions: Object.freeze(instructions),
       reasons: Object.freeze(reasons),
-      flags: Object.freeze({ hasAttachments, wantsGmail, wantsDriveFiles, needsCurrentWeb, needsPrimarySource, externalVerificationRequested })
+      flags: Object.freeze({ hasAttachments, wantsGmail, wantsDriveFiles, needsCurrentWeb, needsPrimarySource, externalVerificationRequested, stableCreation })
     });
   }
 
