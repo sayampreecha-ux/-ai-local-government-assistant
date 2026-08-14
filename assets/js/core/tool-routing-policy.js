@@ -27,14 +27,19 @@
   ]);
 
   const USER_DATA_LOOKUP_TERMS = Object.freeze([
-    'หา', 'ค้น', 'เปิด', 'ดู', 'เคยส่ง', 'เคยได้รับ', 'ที่ส่ง', 'ที่ได้รับ',
-    'ส่งไปแล้ว', 'ได้รับมา', 'ย้อนหลัง', 'เดิม', 'ของฉัน', 'ของผม', 'ของเรา'
+    'เคยส่ง', 'เคยได้รับ', 'ที่ส่ง', 'ที่ได้รับ', 'ส่งไปแล้ว', 'ได้รับมา',
+    'ย้อนหลัง', 'เดิม', 'ของฉัน', 'ของผม', 'ของเรา'
   ]);
 
   const STABLE_CREATION_PATTERNS = Object.freeze([
     /(?:ร่าง|ทำ|เขียน|จัดทำ).{0,28}(?:หนังสือราชการ|หนังสือ|บันทึกข้อความ|บันทึก|คำสั่ง|ประกาศ|คำกล่าว|โพสต์|ข้อความประชาสัมพันธ์)/i,
     /(?:ทำ|ร่าง).{0,20}(?:executive summary|สรุปผู้บริหาร)/i,
     /(?:สรุป|ย่อ|เรียบเรียง|ปรับข้อความ).{0,80}(?:ญัตติ|รายงาน|เอกสาร|คำพิพากษา|ผลการดำเนินงาน|สาระสำคัญ|เสนอผู้บริหาร)/i
+  ]);
+
+  const NO_WEB_PATTERNS = Object.freeze([
+    /(?:ไม่ต้อง|ไม่จำเป็นต้อง|ยังไม่ต้อง|ห้าม).{0,20}(?:ค้นเว็บ|ค้นข้อมูลเพิ่ม|ค้นข้อมูลภายนอก|ค้นภายนอก|web)/i,
+    /(?:ใช้|จาก).{0,24}(?:ข้อมูลที่ให้|ข้อมูลนี้|เอกสารแนบ).{0,40}(?:เท่านั้น|อย่างเดียว).{0,40}(?:ไม่ต้องค้น|ห้ามค้น)?/i
   ]);
 
   const GOVERNMENT_DECISION_PATTERNS = Object.freeze([
@@ -50,6 +55,11 @@
     /(?:กฎหมาย|ระเบียบ|ประกาศ|หนังสือ|อัตรา|สิทธิ|หลักเกณฑ์|tor|ที\s*โอ\s*อาร์|เบิก|พัสดุ|จัดซื้อ|จัดจ้าง).{0,70}(?:ยังใช้|ยังมีผล|ฉบับล่าสุด|ฉบับใหม่|แก้ไขล่าสุด|ยกเลิก)/i
   ]);
 
+  const USER_DATA_VERIFICATION_PATTERNS = Object.freeze([
+    /(?:แล้ว|จากนั้น|พร้อมทั้ง|พร้อม|และ).{0,24}(?:ตรวจ|เช็ก|เช็ค|ทบทวน|วิเคราะห์|เทียบ).{0,70}(?:กฎหมาย|ระเบียบ|ปัจจุบัน|ล่าสุด|ถูกต้อง|ความเสี่ยง|ล็อกสเปก|เบิกได้|ทำได้)/i,
+    /(?:หา|ค้น|เปิด|ดู).{0,80}(?:gmail|อีเมล|email|drive|ไดรฟ์|ไฟล์|เอกสาร).{0,80}(?:แล้ว|จากนั้น|พร้อมทั้ง|พร้อม|และ).{0,24}(?:ตรวจ|เช็ก|เช็ค|ทบทวน|วิเคราะห์|เทียบ)/i
+  ]);
+
   function normalize(value) {
     return String(value ?? '').normalize('NFC').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
   }
@@ -59,11 +69,18 @@
   }
 
   function isUserDataLookup(text, sourceTerms) {
-    return includesAny(text, sourceTerms) && includesAny(text, USER_DATA_LOOKUP_TERMS);
+    if (!includesAny(text, sourceTerms)) return false;
+    if (includesAny(text, USER_DATA_LOOKUP_TERMS)) return true;
+    return /^(?:ช่วย|กรุณา)?\s*(?:หา|ค้น|เปิด|ดู)/i.test(text)
+      || /(?:^|\s)(?:ช่วย|กรุณา)\s*(?:หา|ค้น|เปิด|ดู)/i.test(text);
   }
 
   function isStableCreation(text) {
     return STABLE_CREATION_PATTERNS.some(pattern => pattern.test(text));
+  }
+
+  function explicitlyDisablesWeb(text) {
+    return NO_WEB_PATTERNS.some(pattern => pattern.test(text));
   }
 
   function needsGovernmentVerification(text) {
@@ -72,6 +89,10 @@
 
   function explicitlyRequestsExternalVerification(text) {
     return GOVERNMENT_DECISION_PATTERNS.some(pattern => pattern.test(text)) || EXTERNAL_VERIFICATION_PATTERNS.some(pattern => pattern.test(text));
+  }
+
+  function userDataRequestsVerification(text) {
+    return USER_DATA_VERIFICATION_PATTERNS.some(pattern => pattern.test(text));
   }
 
   function createQualityGuidance(text) {
@@ -110,15 +131,26 @@
     const hasAttachments = files.length > 0;
     const wantsGmail = isUserDataLookup(text, GMAIL_SOURCE_TERMS);
     const wantsDriveFiles = isUserDataLookup(text, DRIVE_SOURCE_TERMS);
-    const sourceFirstTask = hasAttachments || wantsGmail || wantsDriveFiles;
+    const userDataFirst = wantsGmail || wantsDriveFiles;
+    const sourceFirstTask = hasAttachments || userDataFirst;
     const stableCreation = isStableCreation(text);
+    const explicitNoWeb = explicitlyDisablesWeb(text);
     const rawNeedsPrimarySource = needsGovernmentVerification(text);
-    const externalVerificationRequested = explicitlyRequestsExternalVerification(text);
-    const needsPrimarySource = (rawNeedsPrimarySource || externalVerificationRequested)
+    const rawExternalVerificationRequested = explicitlyRequestsExternalVerification(text);
+    const userDataVerificationRequested = userDataRequestsVerification(text);
+    const externalVerificationRequested = rawExternalVerificationRequested
+      && !explicitNoWeb
+      && (!userDataFirst || userDataVerificationRequested);
+    const needsPrimarySource = !explicitNoWeb
+      && (rawNeedsPrimarySource || externalVerificationRequested)
       && (!sourceFirstTask || externalVerificationRequested)
       && (!stableCreation || externalVerificationRequested);
     const freshnessRequested = includesAny(text, FRESHNESS_TERMS);
-    const needsCurrentWeb = freshnessRequested && !sourceFirstTask && (!stableCreation || externalVerificationRequested);
+    const needsCurrentWeb = !explicitNoWeb
+      && freshnessRequested
+      && !userDataFirst
+      && !hasAttachments
+      && (!stableCreation || externalVerificationRequested);
 
     const tools = [];
     const instructions = [];
@@ -156,7 +188,7 @@
     const uniqueTools = Object.freeze([...new Set(tools)]);
     const mode = hasAttachments
       ? 'attachment-first'
-      : (wantsGmail || wantsDriveFiles
+      : (userDataFirst
         ? 'user-data-first'
         : (needsCurrentWeb || needsPrimarySource ? 'web-when-needed' : 'ai-only'));
 
@@ -164,6 +196,7 @@
     if (hasAttachments) reasons.push('มีเอกสารแนบ');
     if (wantsGmail) reasons.push('คำถามต้องการค้นอีเมลของผู้ใช้');
     if (wantsDriveFiles) reasons.push('คำถามต้องการค้นไฟล์/เอกสารของผู้ใช้');
+    if (explicitNoWeb) reasons.push('ผู้ใช้ระบุชัดว่าไม่ต้องค้นเว็บหรือข้อมูลภายนอกเพิ่ม');
     if (needsCurrentWeb) reasons.push('ต้องตรวจข้อมูลปัจจุบันจากภายนอก');
     if (needsPrimarySource) reasons.push('เป็นงานราชการที่ควรตรวจแหล่งปฐมภูมิ');
     if (sourceFirstTask && rawNeedsPrimarySource && !externalVerificationRequested) reasons.push('ใช้ข้อมูลจากเอกสาร/บัญชีผู้ใช้ก่อน และไม่ค้นเว็บเกินความจำเป็น');
@@ -175,7 +208,7 @@
       tools: uniqueTools,
       instructions: Object.freeze(instructions),
       reasons: Object.freeze(reasons),
-      flags: Object.freeze({ hasAttachments, wantsGmail, wantsDriveFiles, needsCurrentWeb, needsPrimarySource, externalVerificationRequested, stableCreation })
+      flags: Object.freeze({ hasAttachments, wantsGmail, wantsDriveFiles, needsCurrentWeb, needsPrimarySource, externalVerificationRequested, userDataVerificationRequested, explicitNoWeb, stableCreation })
     });
   }
 
