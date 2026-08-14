@@ -50,7 +50,7 @@
   ]);
 
   const EXTERNAL_VERIFICATION_PATTERNS = Object.freeze([
-    /(?:ตรวจ|เช็ก|เช็ค|ทบทวน|วิเคราะห์|พิจารณา).{0,70}(?:ถูกต้อง|กฎหมาย|ระเบียบ|ฐานอำนาจ|ภารกิจ|แหล่งงบ|ความเสี่ยง|ล็อกสเปก|การแข่งขัน|เบิก|จัดซื้อ|จัดจ้าง|พัสดุ|tor|ที\s*โอ\s*อาร์|ขอบเขตของงาน)/i,
+    /(?:ตรวจ|เช็ก|เช็ค|ทบทวน|วิเคราะห์|พิจารณา|เทียบ).{0,70}(?:ถูกต้อง|กฎหมาย|ระเบียบ|ฐานอำนาจ|ภารกิจ|แหล่งงบ|ความเสี่ยง|ล็อกสเปก|การแข่งขัน|เบิก|จัดซื้อ|จัดจ้าง|พัสดุ|tor|ที\s*โอ\s*อาร์|ขอบเขตของงาน)/i,
     /(?:ยังใช้|ยังมีผล|มีผลใช้บังคับ|ฉบับล่าสุด|ฉบับใหม่|แก้ไขล่าสุด|ยกเลิก).{0,70}(?:กฎหมาย|ระเบียบ|ประกาศ|หนังสือ|อัตรา|สิทธิ|หลักเกณฑ์|tor|ที\s*โอ\s*อาร์|เบิก|พัสดุ|จัดซื้อ|จัดจ้าง)/i,
     /(?:กฎหมาย|ระเบียบ|ประกาศ|หนังสือ|อัตรา|สิทธิ|หลักเกณฑ์|tor|ที\s*โอ\s*อาร์|เบิก|พัสดุ|จัดซื้อ|จัดจ้าง).{0,70}(?:ยังใช้|ยังมีผล|ฉบับล่าสุด|ฉบับใหม่|แก้ไขล่าสุด|ยกเลิก)/i
   ]);
@@ -70,6 +70,10 @@
 
   function isUserDataLookup(text, sourceTerms) {
     if (!includesAny(text, sourceTerms)) return false;
+    const isDriveSource = sourceTerms === DRIVE_SOURCE_TERMS;
+    const explicitDrive = /(?:google\s*drive|\bdrive\b|ไดรฟ์)/i.test(text);
+    const attachmentReference = /(?:ไฟล์|เอกสาร)\s*แนบ|แนบ(?:ไฟล์|เอกสาร)/i.test(text);
+    if (isDriveSource && attachmentReference && !explicitDrive && !includesAny(text, USER_DATA_LOOKUP_TERMS)) return false;
     if (includesAny(text, USER_DATA_LOOKUP_TERMS)) return true;
     return /^(?:ช่วย|กรุณา)?\s*(?:หา|ค้น|เปิด|ดู)/i.test(text)
       || /(?:^|\s)(?:ช่วย|กรุณา)\s*(?:หา|ค้น|เปิด|ดู)/i.test(text);
