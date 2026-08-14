@@ -39,7 +39,7 @@
 
   function showPrivacyWarning(message, kind = 'mask') {
     const form = document.getElementById('chatForm');
-    if (!form) return false;
+    if (!form || typeof document.createElement !== 'function' || typeof form.insertAdjacentElement !== 'function') return false;
 
     let warning = document.getElementById('privacySubmitWarning');
     if (!warning) {
