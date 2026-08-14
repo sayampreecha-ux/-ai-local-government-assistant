@@ -3,7 +3,7 @@ import { extname, join } from "node:path";
 
 const output = "dist";
 const publicExtensions = new Set([
-  ".html", ".htlm", ".css", ".js", ".json", ".webmanifest", ".txt"
+  ".html", ".htlm", ".css", ".js", ".json", ".webmanifest", ".txt", ".xml"
 ]);
 const publicDirectories = ["assets", "access-system", "Plain text", "knowledge"];
 
@@ -26,6 +26,11 @@ const hotfixScript = '<script src="assets/js/core/router-real-query-hotfix.js?v=
 if (!distIndex.includes(hotfixScript)) {
   if (!distIndex.includes(hybridScript)) throw new Error("Hybrid intent router script marker not found in dist/index.html");
   await writeFile(distIndexPath, distIndex.replace(hybridScript, `${hybridScript}${hotfixScript}`));
+}
+
+const distSitemap = await readFile(join(output, "sitemap.xml"), "utf8");
+if (!/<urlset\b/.test(distSitemap)) {
+  throw new Error("sitemap.xml was not copied into dist correctly");
 }
 
 console.log("GovPrompt production assets built in dist/.");
