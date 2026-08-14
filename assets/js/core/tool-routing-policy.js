@@ -118,7 +118,8 @@
   }
 
   function isStableCreation(text) {
-    return STABLE_CREATION_PATTERNS.some(pattern => pattern.test(text));
+    const intentText = text.replace(/(?:เจ้าหน้าที่|ผู้ใช้|ผม|เรา)?\s*(?:จะ)?\s*ทำต่อจาก(?:คำตอบ|ข้อมูล|เรื่อง|เอกสาร)(?:นี้)?/gi, ' ');
+    return STABLE_CREATION_PATTERNS.some(pattern => pattern.test(intentText));
   }
 
   function explicitlyDisablesWeb(text) {
