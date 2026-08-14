@@ -77,18 +77,27 @@
 
   function applyRedactions(input, { preserveWhitespace = false } = {}) {
     const original = String(input ?? '');
-    const protectedMasks = protectMaskMarkers(original);
-    let safeText = protectedMasks.protectedText;
+    let safeText = original;
     const redactions = [];
+
+    // Protect every canonical mask before EACH rule, not only once at the start.
+    // A rule may create a new mask that a later overlapping rule would otherwise
+    // interpret as fresh PII (for example [ปกปิดชื่อบุคคล] contains "ชื่อ").
     REDACTION_RULES.forEach(rule => {
+      const protectedStep = protectMaskMarkers(safeText);
+      let working = protectedStep.protectedText;
       rule.pattern.lastIndex = 0;
-      if (!rule.pattern.test(safeText)) return;
-      redactions.push(rule.label);
-      rule.pattern.lastIndex = 0;
-      safeText = safeText.replace(rule.pattern, rule.replacement);
+      if (rule.pattern.test(working)) {
+        redactions.push(rule.label);
+        rule.pattern.lastIndex = 0;
+        working = working.replace(rule.pattern, rule.replacement);
+      }
+      safeText = restoreMaskMarkers(working, protectedStep.markers);
     });
-    safeText = safeText.replace(/\b\d{16,}\b/g, ' [ปกปิดชุดตัวเลข] ');
-    safeText = restoreMaskMarkers(safeText, protectedMasks.markers);
+
+    const protectedNumbers = protectMaskMarkers(safeText);
+    safeText = protectedNumbers.protectedText.replace(/\b\d{16,}\b/g, ' [ปกปิดชุดตัวเลข] ');
+    safeText = restoreMaskMarkers(safeText, protectedNumbers.markers);
     safeText = preserveWhitespace
       ? safeText.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim()
       : collapseWhitespace(safeText);
