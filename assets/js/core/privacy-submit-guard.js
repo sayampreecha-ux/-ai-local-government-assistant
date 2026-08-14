@@ -2,6 +2,7 @@
   'use strict';
 
   const FAILSAFE_RULES = Object.freeze([
+    { label: 'เลขบัตรประชาชน/เลขประจำตัวตามบริบท', pattern: /(?:เลข(?:ประจำตัว(?:ประชาชน)?|บัตรประชาชน)|บัตรประชาชน)\s*[:：#-]?\s*\d(?:[\s-]*\d){3,19}\b/gi, replacement: ' [ปกปิดเลขประจำตัว] ' },
     { label: 'รหัสผู้ป่วย/HN/AN', pattern: /\b(HN|AN)\s*[:：#-]?\s*([A-Za-z0-9/-]{3,30})\b/gi, replacement: ' รหัสผู้ป่วย [ปกปิด] ' },
     { label: 'เลขบัตรประชาชน/เลขประจำตัว', pattern: /\b\d(?:[\s-]*\d){12}\b/g, replacement: ' [ปกปิดเลขประจำตัว] ' },
     { label: 'อีเมล', pattern: /[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, replacement: ' [ปกปิดอีเมล] ' },
@@ -126,9 +127,6 @@
       const changed = normalized !== raw || Boolean(privacy.changed) || failSafe.changed;
       const blocked = Boolean(privacy.blocked) || Boolean(postCheck.blocked);
 
-      // Security invariant: blocked/special-category data is terminated. For
-      // redactable PII, the DOM value is replaced synchronously in capture phase
-      // before Home/UI/router/search/history can observe the submit.
       if (blocked || !safeText) {
         clearAndBlock(
           event,
@@ -140,8 +138,6 @@
 
       if (!changed) return;
 
-      // Do not cancel/re-submit redactable PII. Rewrite the textarea before the
-      // event reaches Home's submit listener, then let the same event continue.
       input.value = safeText;
       input.dispatchEvent(new Event('input', { bubbles: true }));
 
@@ -152,8 +148,6 @@
       }
 
       const labels = reasons.length ? `\nตรวจพบ: ${reasons.join(', ')}` : '';
-      // Keep a dedicated warning surface visible even if later router/search
-      // toasts replace the generic toast. The warning never includes raw PII.
       notify(`🔐 GovPrompt ตรวจพบข้อมูลส่วนบุคคลและปกปิดให้อัตโนมัติแล้ว${labels}\n\nข้อมูลดิบถูกปกปิดก่อนถึงหน้าจอ การค้นหา ประวัติ และระบบภายนอก`, 'mask');
     }, true);
   }
