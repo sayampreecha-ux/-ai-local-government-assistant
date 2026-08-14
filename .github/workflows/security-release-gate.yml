@@ -1,0 +1,26 @@
+name: GovPrompt Security Release Gate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  security-invariants:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Verify mandatory security invariants
+        run: node scripts/verify-security-invariants.mjs
+      - name: Verify Public Beta privacy/security regression suite
+        run: node scripts/verify-internal-pilot-security.mjs
