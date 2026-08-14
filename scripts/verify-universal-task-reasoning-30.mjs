@@ -61,7 +61,8 @@ const context = core.createSharedContext({ facts: 'ทำโครงการ�
 const bundle = core.createGovernmentPrompt({ question: 'ทำโครงการบวชสามเณร', route: null, context });
 assert.equal(bundle.route.moduleId, 'GENERAL');
 assert.equal(bundle.taskPlan.deliverable, 'project');
-assert.ok(bundle.prompt.includes('Universal Task Reasoning v7.1'));
+assert.ok(bundle.prompt.includes('GovPrompt Prompt Standard v7.1'));
+assert.ok(bundle.prompt.includes('Universal Task Reasoning'));
 assert.ok(bundle.prompt.includes('Router เป็นเพียงคำแนะนำ'));
 assert.ok(bundle.prompt.includes('ส่งชิ้นงานหรือข้อสรุปที่ใช้ต่อได้ก่อน'));
 assert.ok(bundle.prompt.includes('ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง'));
