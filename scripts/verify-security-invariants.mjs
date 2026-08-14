@@ -31,6 +31,9 @@ assert.match(submitGuard, /before Home\/UI\/router\/search\/history can observe 
 assert.match(submitGuard, /\(HN\|AN\)/, 'Submit gate must explicitly normalize compact HN/AN identifiers');
 assert.doesNotMatch(submitGuard, /requestSubmit\s*\(/, 'Redactable PII must not depend on native form re-submit');
 assert.match(privacyGuard, /externalRequestSent: false/);
+assert.match(privacyGuard, /protectMaskMarkers/);
+assert.doesNotMatch(privacyGuard, /addEventListener\(\s*['"]submit['"]/, 'privacy-guard.js must never install a second submit boundary');
+assert.doesNotMatch(privacyGuard, /requestSubmit\s*\(/, 'privacy-guard.js must never own native form resubmission');
 assert.match(worker, /SENSITIVE_QUERY_BLOCKED/);
 assert.match(worker, /include_raw_content: false/);
 assert.match(worker, /include_answer: false/);
@@ -62,6 +65,39 @@ for (const [sample, rawPattern] of piiCases) {
   assert.equal(result.changed, true, `PII must be changed before processing: ${sample}`);
   assert.doesNotMatch(result.safeText, rawPattern, `Raw PII must not survive sanitization: ${sample}`);
 }
+
+// Issue #73: masking must be idempotent. The submit guard deliberately runs
+// post-check/final-check passes, so canonical mask markers must survive byte-for-
+// byte and never be interpreted as fresh PII on a later pass.
+const idempotentPiiCases = [
+  ['ตรวจข้อมูล HN 123456', /รหัสผู้ป่วย \[ปกปิด\]/],
+  ['เลขบัตรประชาชน 3560039645712', /\[ปกปิดเลขประจำตัว\]/],
+  ['อีเมล test.person@example.com', /\[ปกปิดอีเมล\]/],
+  ['มือถือ 0812345678', /\[ปกปิดเบอร์โทร\]/],
+  ['เลขบัญชี 1234567890', /เลขบัญชี \[ปกปิด\]/],
+  ['passport AB1234567', /หนังสือเดินทาง \[ปกปิด\]/],
+  ['เลขประจำตัวผู้เสียภาษี 1234567890123', /\[ปกปิด/],
+  ['นายสมชาย ใจดี ขอข้อมูล', /\[ปกปิดชื่อบุคคล\]/],
+  ['วันเกิด 1 มกราคม 2530', /วันเกิด \[ปกปิด\]/],
+  ['ที่อยู่ 99 หมู่ 1 ตำบลตัวอย่าง', /ที่อยู่ \[ปกปิด\]/],
+  ['ทะเบียนรถ กข 1234', /ทะเบียนรถ \[ปกปิด\]/],
+  ['เลข 4111111111111111', /\[ปกปิดชุดตัวเลข\]/]
+];
+for (const [sample, expectedMask] of idempotentPiiCases) {
+  const first = core.sanitizeExternalContent(sample);
+  assert.equal(first.changed, true, `first pass must mask PII: ${sample}`);
+  assert.equal(first.blocked, false, `redactable PII must remain processable after masking: ${sample}`);
+  assert.match(first.safeText, expectedMask, `canonical mask missing after first pass: ${sample}`);
+  const second = core.sanitizeExternalContent(first.safeText);
+  assert.equal(second.safeText, first.safeText, `mask must be byte-stable on second pass: ${sample}`);
+  assert.equal(second.changed, false, `mask must not be re-redacted on second pass: ${sample}`);
+  assert.equal(second.blocked, false, `masked text must stay unblocked on second pass: ${sample}`);
+}
+
+const personName = core.sanitizeExternalContent('นายสมชาย ใจดี ขอข้อมูล');
+assert.match(personName.safeText, /\[ปกปิดชื่อบุคคล\]/, 'person name must use canonical marker');
+assert.doesNotMatch(personName.safeText, /สมชาย|ใจดี/, 'raw person name must not survive');
+assert.doesNotMatch(personName.safeText, /\[ปกปิด\s+ชื่อ\s+\[ปกปิด\]/, 'mask marker must never redact itself');
 
 const compactPatientIdPattern = /\b(HN|AN)\s*[:：#-]?\s*([A-Za-z0-9/-]{3,30})\b/gi;
 for (const sample of ['HN123456', 'ANABC123', 'HN:123456', 'AN-ABC123']) {
@@ -160,7 +196,8 @@ for (const rawValue of [
   'เลขบัตรประชาชน 3560039645712',
   'อีเมล test.person@example.com',
   'มือถือ 0812345678',
-  'เลขบัญชี 1234567890'
+  'เลขบัญชี 1234567890',
+  'นายสมชาย ใจดี ขอข้อมูล'
 ]) {
   const scenario = runSubmitGateScenario(rawValue);
   assert.equal(scenario.firstEvent.immediateStopped, false, `redactable PII may continue only after rewrite: ${rawValue}`);
@@ -168,6 +205,7 @@ for (const rawValue of [
   assert.equal(scenario.downstream[0].includes(rawValue.replace(/^.*?\s/, '')), false, `raw value must not reach downstream: ${rawValue}`);
   assert.ok(scenario.alerts.some(message => /ปกปิดให้อัตโนมัติ/.test(message)), `mask warning required: ${rawValue}`);
 }
+assert.match(runSubmitGateScenario('นายสมชาย ใจดี ขอข้อมูล').downstream[0], /\[ปกปิดชื่อบุคคล\]/, 'submit boundary must preserve canonical person-name marker');
 
 const sensitiveScenario = runSubmitGateScenario('ผู้ป่วยมีผลเลือดผิดปกติ');
 assert.equal(sensitiveScenario.firstEvent.immediateStopped, true, 'special-category data must be stopped');
