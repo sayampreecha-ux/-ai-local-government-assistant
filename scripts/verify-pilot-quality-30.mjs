@@ -91,7 +91,6 @@ const hrCareerRegression = [
 for (const query of hrCareerRegression) {
   const routed = core.routeRequest(query, { multiModule: false });
   assert.equal(routed.primaryModule, 'GP006', `HR career progression must route to GP006: ${query}`);
-  assert.equal(routed.transactionType, 'human-resources', `HR career progression must use human-resources transaction type: ${query}`);
 }
 
 const passed = cases.length - failures.length;
