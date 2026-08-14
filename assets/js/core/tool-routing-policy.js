@@ -55,6 +55,11 @@
     /(?:กฎหมาย|ระเบียบ|ประกาศ|หนังสือ|อัตรา|สิทธิ|หลักเกณฑ์|tor|ที\s*โอ\s*อาร์|เบิก|พัสดุ|จัดซื้อ|จัดจ้าง).{0,70}(?:ยังใช้|ยังมีผล|ฉบับล่าสุด|ฉบับใหม่|แก้ไขล่าสุด|ยกเลิก)/i
   ]);
 
+  const USER_DATA_VERIFICATION_PATTERNS = Object.freeze([
+    /(?:แล้ว|จากนั้น|พร้อมทั้ง|พร้อม|และ).{0,24}(?:ตรวจ|เช็ก|เช็ค|ทบทวน|วิเคราะห์|เทียบ).{0,70}(?:กฎหมาย|ระเบียบ|ปัจจุบัน|ล่าสุด|ถูกต้อง|ความเสี่ยง|ล็อกสเปก|เบิกได้|ทำได้)/i,
+    /(?:หา|ค้น|เปิด|ดู).{0,80}(?:gmail|อีเมล|email|drive|ไดรฟ์|ไฟล์|เอกสาร).{0,80}(?:แล้ว|จากนั้น|พร้อมทั้ง|พร้อม|และ).{0,24}(?:ตรวจ|เช็ก|เช็ค|ทบทวน|วิเคราะห์|เทียบ)/i
+  ]);
+
   function normalize(value) {
     return String(value ?? '').normalize('NFC').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
   }
@@ -81,6 +86,10 @@
 
   function explicitlyRequestsExternalVerification(text) {
     return GOVERNMENT_DECISION_PATTERNS.some(pattern => pattern.test(text)) || EXTERNAL_VERIFICATION_PATTERNS.some(pattern => pattern.test(text));
+  }
+
+  function userDataRequestsVerification(text) {
+    return USER_DATA_VERIFICATION_PATTERNS.some(pattern => pattern.test(text));
   }
 
   function createQualityGuidance(text) {
@@ -119,12 +128,16 @@
     const hasAttachments = files.length > 0;
     const wantsGmail = isUserDataLookup(text, GMAIL_SOURCE_TERMS);
     const wantsDriveFiles = isUserDataLookup(text, DRIVE_SOURCE_TERMS);
-    const sourceFirstTask = hasAttachments || wantsGmail || wantsDriveFiles;
+    const userDataFirst = wantsGmail || wantsDriveFiles;
+    const sourceFirstTask = hasAttachments || userDataFirst;
     const stableCreation = isStableCreation(text);
     const explicitNoWeb = explicitlyDisablesWeb(text);
     const rawNeedsPrimarySource = needsGovernmentVerification(text);
     const rawExternalVerificationRequested = explicitlyRequestsExternalVerification(text);
-    const externalVerificationRequested = rawExternalVerificationRequested && !explicitNoWeb;
+    const userDataVerificationRequested = userDataRequestsVerification(text);
+    const externalVerificationRequested = rawExternalVerificationRequested
+      && !explicitNoWeb
+      && (!userDataFirst || userDataVerificationRequested);
     const needsPrimarySource = !explicitNoWeb
       && (rawNeedsPrimarySource || externalVerificationRequested)
       && (!sourceFirstTask || externalVerificationRequested)
@@ -132,7 +145,8 @@
     const freshnessRequested = includesAny(text, FRESHNESS_TERMS);
     const needsCurrentWeb = !explicitNoWeb
       && freshnessRequested
-      && !sourceFirstTask
+      && !userDataFirst
+      && !hasAttachments
       && (!stableCreation || externalVerificationRequested);
 
     const tools = [];
@@ -171,7 +185,7 @@
     const uniqueTools = Object.freeze([...new Set(tools)]);
     const mode = hasAttachments
       ? 'attachment-first'
-      : (wantsGmail || wantsDriveFiles
+      : (userDataFirst
         ? 'user-data-first'
         : (needsCurrentWeb || needsPrimarySource ? 'web-when-needed' : 'ai-only'));
 
@@ -191,7 +205,7 @@
       tools: uniqueTools,
       instructions: Object.freeze(instructions),
       reasons: Object.freeze(reasons),
-      flags: Object.freeze({ hasAttachments, wantsGmail, wantsDriveFiles, needsCurrentWeb, needsPrimarySource, externalVerificationRequested, explicitNoWeb, stableCreation })
+      flags: Object.freeze({ hasAttachments, wantsGmail, wantsDriveFiles, needsCurrentWeb, needsPrimarySource, externalVerificationRequested, userDataVerificationRequested, explicitNoWeb, stableCreation })
     });
   }
 
