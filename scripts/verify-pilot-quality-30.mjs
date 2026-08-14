@@ -82,6 +82,17 @@ for (const item of cases) {
   }
 }
 
+const hrCareerRegression = [
+  'เป็นรองปลัดต้นมา15ปีสอบคัดเลือกได้ ปลัดต้น จะต้องครองตำแหน่งกี่ปีถึงจะสอบปลัดกลางได้',
+  'ปลัดต้นกี่ปีถึงจะเป็นปลัดกลางได้',
+  'ชก กี่ปีถึงจะเป็นชพ ได้',
+  'ชำนาญการต้องดำรงตำแหน่งกี่ปีถึงจะเลื่อนเป็นชำนาญการพิเศษ'
+];
+for (const query of hrCareerRegression) {
+  const routed = core.routeRequest(query, { multiModule: false });
+  assert.equal(routed.primaryModule, 'GP006', `HR career progression must route to GP006: ${query}`);
+}
+
 const passed = cases.length - failures.length;
 const score = Math.round((passed / cases.length) * 100);
 console.log(`GovPrompt Pilot Quality 30: ${passed}/${cases.length} passed (${score}%)`);
@@ -97,4 +108,5 @@ if (failures.length) {
 assert.equal(cases.length, 30, 'pilot quality fixture must contain exactly 30 cases');
 assert.equal(routeWarnings.length, 0, `pilot quality routing should have no advisory warnings; got ${routeWarnings.length}`);
 assert.ok(passed >= 27, `pilot quality must be at least 90%; got ${passed}/30 (${score}%)`);
+console.log(`GovPrompt HR career progression regression passed: ${hrCareerRegression.length}/${hrCareerRegression.length} -> GP006.`);
 console.log('GovPrompt real pilot quality benchmark accepted at >=90%: task completion + tool/evidence policy + output + Answer First integrity.');
