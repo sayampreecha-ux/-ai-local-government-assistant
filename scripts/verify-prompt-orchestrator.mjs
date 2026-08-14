@@ -27,7 +27,9 @@ const result = core.createGovernmentPrompt({
 });
 
 assert.equal(typeof result.prompt, 'string');
-assert.equal(result.prompt.includes('Universal Task Reasoning v7.1'), true);
+assert.equal(result.prompt.includes('Universal Task Reasoning'), true);
+assert.equal(result.prompt.includes('GovPrompt Prompt Standard v7.1'), true);
+assert.equal(result.prompt.includes('Quality Gates — ต้องผ่านก่อนฟันธง'), true);
 assert.equal(result.prompt.includes('ตรวจฉบับแก้ไข/ยกเลิก/ฉบับใหม่กว่า'), true);
 assert.equal(result.prompt.includes('ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง'), true);
 assert.equal(result.prompt.includes('ห้ามสมมติเลขมาตรา เลขหนังสือ วันที่ คำพิพากษา'), true);
@@ -38,6 +40,9 @@ assert.equal(result.prompt.includes('เกณฑ์ตรวจรับวั�
 assert.equal(result.prompt.includes('จำกัดการแข่งขัน'), true);
 assert.equal(result.taskPlan.routeIsAdvisory, true);
 assert.equal(result.taskPlan.evidenceMode, 'verify-current-primary-source');
+assert.equal(result.taskPlan.riskLevel, 'HIGH');
+assert.equal(result.qualityGates.evidenceRequired, true);
+assert.equal(result.qualityGates.legalVersionRequired, true);
 assert.equal(result.riskFlags.length > 0, true);
 
 const financeQuestion = 'วิเคราะห์ว่าเบิกค่าทำปกได้ไหม';
@@ -52,6 +57,8 @@ const financePrompt = core.createGovernmentPrompt({ question: financeQuestion, r
 assert.equal(financePrompt.outputPlan.id, 'analysis');
 assert.equal(financePrompt.prompt.includes('เบิกได้ / เบิกไม่ได้ / มีเงื่อนไข'), true);
 assert.equal(financePrompt.prompt.includes('ฐานอำนาจ เงื่อนไข เอกสารประกอบ'), true);
+assert.equal(financePrompt.qualityGates.decisionRequired, true);
+assert.equal(financePrompt.qualityGates.multiConditionRequired, true);
 
 const legalQuestion = 'วิเคราะห์ข้อกฎหมายว่า อบจ. มีอำนาจทำเรื่องนี้หรือไม่';
 const legalContext = core.createSharedContext({ facts: legalQuestion, desiredOutput: legalQuestion });
@@ -64,6 +71,16 @@ const legalRoute = Object.freeze({
 const legalPrompt = core.createGovernmentPrompt({ question: legalQuestion, route: legalRoute, context: legalContext });
 assert.equal(legalPrompt.prompt.includes('ทำได้ / ทำไม่ได้ / ยังฟันธงไม่ได้'), true);
 assert.equal(legalPrompt.prompt.includes('สถานะฉบับล่าสุด'), true);
+assert.equal(legalPrompt.prompt.includes('Legal Version Gate: ตรวจวันมีผลใช้บังคับ'), true);
+
+const bonusQuestion = 'บรรจุ 1 ม.ค. 2569 ครบ 8 เดือน มีสิทธิโบนัสดไหม';
+const bonusContext = core.createSharedContext({ facts: bonusQuestion, desiredOutput: bonusQuestion });
+const bonusPrompt = core.createGovernmentPrompt({ question: bonusQuestion, context: bonusContext });
+assert.equal(bonusPrompt.taskPlan.riskLevel, 'HIGH');
+assert.equal(bonusPrompt.qualityGates.decisionRequired, true);
+assert.equal(bonusPrompt.qualityGates.multiConditionRequired, true);
+assert.equal(bonusPrompt.prompt.includes('ห้ามสรุปสิทธิ อำนาจ การเบิกจ่าย การจัดซื้อจัดจ้าง หรือผลทางบุคคลจากเงื่อนไขเพียงข้อเดียว'), true);
+assert.equal(bonusPrompt.prompt.includes('ต้องจับคู่ “วันที่ของข้อเท็จจริง” กับ “กฎที่มีผลในวันนั้น”'), true);
 
 const noRoute = core.createGovernmentPrompt({
   question: 'ช่วยทำโครงการกิจกรรมชุมชนให้พร้อมใช้',
@@ -85,4 +102,5 @@ assert.equal(intentionallyWrongRoute.taskPlan.disciplines.includes('public-relat
 assert.equal(intentionallyWrongRoute.prompt.includes('หาก Route ขัดกับเจตนาของผู้ใช้'), true);
 assert.equal(intentionallyWrongRoute.prompt.includes('ยึดเจตนา ชิ้นงาน และหลักฐานที่งานนั้นต้องใช้เป็นหลัก'), true);
 
-console.log('GovPrompt v7 Prompt Orchestrator verification passed with Universal Task Reasoning v7.1 + decision frames.');
+console.log('GovPrompt v7 Prompt Orchestrator verification passed with Prompt Standard v7.1 quality gates.');
+await import('./verify-prompt-standard-v7-1-50.mjs');
