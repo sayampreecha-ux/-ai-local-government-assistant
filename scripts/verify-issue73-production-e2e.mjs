@@ -24,7 +24,7 @@ async function loadFresh(caseName) {
   await page.goto(url.toString(), { waitUntil: 'domcontentloaded', timeout: 30_000 });
   await page.waitForFunction(
     () => document.readyState === 'complete'
-      && document.getElementById('chatForm')?.dataset?.privacySubmitGuard === '2'
+      && document.getElementById('chatForm')?.dataset?.privacySubmitGuard === '3'
       && typeof window.GovPromptCore?.sanitizeExternalContent === 'function'
       && typeof window.GovPrompt?.toast === 'function',
     undefined,
@@ -69,29 +69,7 @@ async function diagnosticState() {
   }));
 }
 
-async function submitRedactable({ name, sample, forbidden, expectedMask }) {
-  const runtime = await loadFresh(name);
-  const before = (await userMessages()).length;
-  await page.locator('#promptInput').fill(sample);
-  await page.locator('#chatForm .send-button').click();
-  await page.waitForTimeout(300);
-
-  const messages = await userMessages();
-  const state = await diagnosticState();
-  const warnings = await warningMessages();
-  assert.ok(messages.length > before, `${name}: sanitized submit did not reach Home/UI; state=${JSON.stringify({ ...state, bodyText: state.bodyText.slice(0, 500), pageErrors })}`);
-  const rendered = messages.at(-1) || '';
-  assert.equal(rendered.includes(forbidden), false, `${name}: raw sensitive marker leaked into user UI: ${rendered}`);
-  assert.match(rendered, expectedMask, `${name}: masked marker missing from user UI: ${rendered}`);
-  assert.equal(state.bodyText.includes(forbidden), false, `${name}: raw sensitive marker remained anywhere in visible UI`);
-  assert.ok(warnings.some(message => /ปกปิดให้อัตโนมัติ/.test(message)), `${name}: automatic masking warning was not shown; warnings=${JSON.stringify(warnings)}`);
-  assert.match(state.privacyWarning, /ปกปิดให้อัตโนมัติ/, `${name}: dedicated privacy warning surface was not visible`);
-  assert.equal(runtime.submitGuardVersion, '2', `${name}: production submit guard v2 was not active`);
-  assert.ok(runtime.scriptSources.some(src => /privacy-submit-guard\.js\?v=1\.0\.4(?:$|&)/.test(src)), `${name}: production browser did not load submit guard cache key v1.0.4`);
-  return { name, rendered, warnings, runtime };
-}
-
-async function submitBlocked({ name, sample }) {
+async function submitMustBlock({ name, sample, forbidden = sample }) {
   const runtime = await loadFresh(name);
   const before = (await userMessages()).length;
   await page.locator('#promptInput').fill(sample);
@@ -102,50 +80,51 @@ async function submitBlocked({ name, sample }) {
   const inputValue = await page.locator('#promptInput').inputValue();
   const state = await diagnosticState();
   const warnings = await warningMessages();
-  assert.equal(after, before, `${name}: blocked sensitive content created a user bubble; state=${JSON.stringify({ ...state, bodyText: state.bodyText.slice(0, 500), pageErrors })}`);
-  assert.equal(inputValue, '', `${name}: blocked sensitive content remained in composer`);
-  assert.equal(state.bodyText.includes(sample), false, `${name}: blocked raw sensitive content remained anywhere in visible UI`);
-  assert.ok(warnings.some(message => /บล็อกข้อมูลอ่อนไหว|ยกเลิกการส่ง|หยุดการส่ง/.test(message)), `${name}: blocking warning was not shown; warnings=${JSON.stringify(warnings)}`);
-  assert.match(state.privacyWarning, /บล็อกข้อมูลอ่อนไหว|ยกเลิกการส่ง|หยุดการส่ง/, `${name}: dedicated blocking warning surface was not visible`);
-  assert.equal(runtime.submitGuardVersion, '2', `${name}: production submit guard v2 was not active`);
+  assert.equal(after, before, `${name}: blocked content created a user bubble; state=${JSON.stringify({ ...state, bodyText: state.bodyText.slice(0, 500), pageErrors })}`);
+  assert.equal(inputValue, '', `${name}: blocked content remained in composer`);
+  assert.equal(state.bodyText.includes(forbidden), false, `${name}: raw sensitive content remained anywhere in visible UI`);
+  assert.ok(warnings.some(message => /บล็อกข้อมูลส่วนบุคคล\/ข้อมูลอ่อนไหวก่อนประมวลผล/.test(message)), `${name}: blocking warning was not shown; warnings=${JSON.stringify(warnings)}`);
+  assert.match(state.privacyWarning, /บล็อกข้อมูลส่วนบุคคล\/ข้อมูลอ่อนไหวก่อนประมวลผล/, `${name}: dedicated blocking warning surface was not visible`);
+  assert.equal(runtime.submitGuardVersion, '3', `${name}: production submit guard v3 was not active`);
   return { name, warnings, runtime };
 }
 
-const redactableCases = [
-  { name: 'compact-hn', sample: 'ตรวจข้อมูล HN123456', forbidden: 'HN123456', expectedMask: /รหัสผู้ป่วย \[ปกปิด\]/ },
-  { name: 'compact-an', sample: 'ตรวจข้อมูล ANABC123', forbidden: 'ANABC123', expectedMask: /รหัสผู้ป่วย \[ปกปิด\]/ },
-  { name: 'thai-id', sample: 'เลขบัตรประชาชน 3560039645712', forbidden: '3560039645712', expectedMask: /\[ปกปิดเลขประจำตัว\]/ },
-  { name: 'mobile-partial-thai-id-exact-regression', sample: 'เลขบัตรประชาชน12345678900', forbidden: '12345678900', expectedMask: /\[ปกปิดเลขประจำตัว\]/ },
-  { name: 'email', sample: 'อีเมล test.person@example.com', forbidden: 'test.person@example.com', expectedMask: /\[ปกปิดอีเมล\]/ },
-  { name: 'phone', sample: 'มือถือ 0812345678', forbidden: '0812345678', expectedMask: /\[ปกปิดเบอร์โทร\]/ },
-  { name: 'bank-account', sample: 'เลขบัญชี 1234567890', forbidden: '1234567890', expectedMask: /เลขบัญชี \[ปกปิด\]/ },
-  { name: 'passport', sample: 'passport AB1234567', forbidden: 'AB1234567', expectedMask: /หนังสือเดินทาง \[ปกปิด\]/ },
-  { name: 'tax-id', sample: 'เลขประจำตัวผู้เสียภาษี 1234567890123', forbidden: '1234567890123', expectedMask: /\[ปกปิด/ },
-  { name: 'person-name', sample: 'นายสมชาย ใจดี ขอข้อมูล', forbidden: 'สมชาย ใจดี', expectedMask: /\[ปกปิดชื่อบุคคล\]/ },
-  { name: 'birth-date', sample: 'วันเกิด 1 มกราคม 2530', forbidden: '1 มกราคม 2530', expectedMask: /วันเกิด \[ปกปิด\]/ },
-  { name: 'address', sample: 'ที่อยู่ 99 หมู่ 1 ตำบลตัวอย่าง', forbidden: '99 หมู่ 1', expectedMask: /ที่อยู่ \[ปกปิด\]/ },
-  { name: 'vehicle-registration', sample: 'ทะเบียนรถ กข 1234', forbidden: 'กข 1234', expectedMask: /ทะเบียนรถ \[ปกปิด\]/ },
-  { name: 'long-number', sample: 'เลข 4111111111111111', forbidden: '4111111111111111', expectedMask: /\[ปกปิดชุดตัวเลข\]/ }
-];
-
 const blockedCases = [
+  { name: 'compact-hn', sample: 'ตรวจข้อมูล HN123456', forbidden: 'HN123456' },
+  { name: 'compact-an', sample: 'ตรวจข้อมูล ANABC123', forbidden: 'ANABC123' },
+  { name: 'thai-id', sample: 'เลขบัตรประชาชน 3560039645712', forbidden: '3560039645712' },
+  { name: 'mobile-partial-thai-id-exact-regression', sample: 'เลขบัตรประชาชน12345678900', forbidden: '12345678900' },
+  { name: 'email', sample: 'อีเมล test.person@example.com', forbidden: 'test.person@example.com' },
+  { name: 'phone', sample: 'มือถือ 0812345678', forbidden: '0812345678' },
+  { name: 'bank-account', sample: 'เลขบัญชี 1234567890', forbidden: '1234567890' },
+  { name: 'passport', sample: 'passport AB1234567', forbidden: 'AB1234567' },
+  { name: 'tax-id', sample: 'เลขประจำตัวผู้เสียภาษี 1234567890123', forbidden: '1234567890123' },
+  { name: 'person-name', sample: 'นายสมชาย ใจดี ขอข้อมูล', forbidden: 'สมชาย ใจดี' },
+  { name: 'birth-date', sample: 'วันเกิด 1 มกราคม 2530', forbidden: '1 มกราคม 2530' },
+  { name: 'address', sample: 'ที่อยู่ 99 หมู่ 1 ตำบลตัวอย่าง', forbidden: '99 หมู่ 1' },
+  { name: 'vehicle-registration', sample: 'ทะเบียนรถ กข 1234', forbidden: 'กข 1234' },
   { name: 'health-sensitive-category', sample: 'ผู้ป่วยมีผลเลือดผิดปกติ' },
+  { name: 'genetic-sensitive-category', sample: 'ข้อมูลพันธุกรรม DNA' },
+  { name: 'biometric-sensitive-category', sample: 'ข้อมูลชีวมิติ ลายนิ้วมือ' },
+  { name: 'ethnicity-sensitive-category', sample: 'ข้อมูลชาติพันธุ์ของบุคคล' },
+  { name: 'political-sensitive-category', sample: 'ความคิดเห็นทางการเมืองของบุคคล' },
+  { name: 'religion-sensitive-category', sample: 'ข้อมูลศาสนา พุทธ' },
+  { name: 'sexual-sensitive-category', sample: 'รสนิยมทางเพศของบุคคล' },
+  { name: 'criminal-sensitive-category', sample: 'ประวัติอาชญากรรมของบุคคล' },
+  { name: 'union-sensitive-category', sample: 'สมาชิกสหภาพแรงงาน' },
   { name: 'credential', sample: 'password=SuperSecret123' },
   { name: 'government-secret', sample: 'ข้อมูลลับของราชการ: เอกสารทดสอบ' },
   { name: 'private-key', sample: '-----BEGIN PRIVATE KEY-----\nTESTSECRET\n-----END PRIVATE KEY-----' }
 ];
 
-const redactableResults = [];
-for (const testCase of redactableCases) redactableResults.push(await submitRedactable(testCase));
-
 const blockedResults = [];
-for (const testCase of blockedCases) blockedResults.push(await submitBlocked(testCase));
+for (const testCase of blockedCases) blockedResults.push(await submitMustBlock(testCase));
 
 const cacheRuntimeBefore = await loadFresh('cache-reload-before');
 await page.reload({ waitUntil: 'domcontentloaded', timeout: 30_000 });
 await page.waitForFunction(
   () => document.readyState === 'complete'
-    && document.getElementById('chatForm')?.dataset?.privacySubmitGuard === '2'
+    && document.getElementById('chatForm')?.dataset?.privacySubmitGuard === '3'
     && typeof window.GovPrompt?.toast === 'function',
   undefined,
   { timeout: 15_000 }
@@ -155,11 +134,11 @@ const beforeReloadSubmit = (await userMessages()).length;
 await page.locator('#promptInput').fill('เลขบัตรประชาชน12345678900');
 await page.locator('#chatForm .send-button').click();
 await page.waitForTimeout(300);
-const reloadMessages = await userMessages();
-assert.ok(reloadMessages.length > beforeReloadSubmit, `cache/service-worker reload did not create sanitized user bubble; state=${JSON.stringify(await diagnosticState())}`);
-const reloadRendered = reloadMessages.at(-1) || '';
-assert.equal(reloadRendered.includes('12345678900'), false, `cache/service-worker reload leaked partial Thai ID: ${reloadRendered}`);
-assert.match(reloadRendered, /\[ปกปิดเลขประจำตัว\]/);
+const afterReloadSubmit = (await userMessages()).length;
+const reloadState = await diagnosticState();
+assert.equal(afterReloadSubmit, beforeReloadSubmit, 'cache/service-worker reload allowed sensitive content to create a user bubble');
+assert.equal(reloadState.inputValue, '', 'cache/service-worker reload left sensitive content in composer');
+assert.equal(reloadState.bodyText.includes('12345678900'), false, 'cache/service-worker reload leaked partial Thai ID');
 const cacheRuntimeAfter = await page.evaluate(async () => ({
   submitGuardVersion: document.getElementById('chatForm')?.dataset?.privacySubmitGuard || '',
   serviceWorkers: 'serviceWorker' in navigator
@@ -167,26 +146,24 @@ const cacheRuntimeAfter = await page.evaluate(async () => ({
     : [],
   cacheKeys: 'caches' in globalThis ? await caches.keys() : []
 }));
-assert.equal(cacheRuntimeAfter.submitGuardVersion, '2', 'cache/service-worker reload activated a stale submit guard');
+assert.equal(cacheRuntimeAfter.submitGuardVersion, '3', 'cache/service-worker reload activated a stale submit guard');
 
 console.log(JSON.stringify({
   frontend,
   checks: {
-    redactablePiiCases: `${redactableResults.length} PASS`,
-    blockedSensitiveCases: `${blockedResults.length} PASS`,
+    allDetectedSensitiveInputsBlocked: `${blockedResults.length} PASS`,
     exactMobilePartialThaiIdRegression: 'PASS',
     rawHnAbsentFromUi: 'PASS',
     rawPiiAbsentFromVisibleUi: 'PASS',
-    automaticMaskingWarning: 'PASS',
-    persistentPrivacyWarningSurface: 'PASS',
-    blockedDataCreatesNoUserBubble: 'PASS',
+    noSensitiveUserBubble: 'PASS',
+    composerClearedOnBlock: 'PASS',
+    blockingWarning: 'PASS',
     cacheServiceWorkerReload: 'PASS'
   },
   cacheServiceWorkerEvidence: {
     beforeReload: cacheRuntimeBefore,
     afterReload: cacheRuntimeAfter
   },
-  renderedSamples: redactableResults.map(result => ({ name: result.name, rendered: result.rendered })),
   blockedSamples: blockedResults.map(result => ({ name: result.name, warningCount: result.warnings.length }))
 }, null, 2));
 
