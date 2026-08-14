@@ -3,7 +3,7 @@ import { chromium } from 'playwright';
 
 const frontend = process.env.GOVPROMPT_FRONTEND_URL || 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/index.html';
 const browser = await chromium.launch({ headless: true });
-const context = await browser.newContext({ serviceWorkers: 'allow' });
+const context = await browser.newContext({ serviceWorkers: 'allow', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 const page = await context.newPage();
 let dialogs = [];
 let pageErrors = [];
@@ -87,7 +87,7 @@ async function submitRedactable({ name, sample, forbidden, expectedMask }) {
   assert.ok(warnings.some(message => /ปกปิดให้อัตโนมัติ/.test(message)), `${name}: automatic masking warning was not shown; warnings=${JSON.stringify(warnings)}`);
   assert.match(state.privacyWarning, /ปกปิดให้อัตโนมัติ/, `${name}: dedicated privacy warning surface was not visible`);
   assert.equal(runtime.submitGuardVersion, '2', `${name}: production submit guard v2 was not active`);
-  assert.ok(runtime.scriptSources.some(src => /privacy-submit-guard\.js\?v=1\.0\.3(?:$|&)/.test(src)), `${name}: production browser did not load submit guard cache key v1.0.3`);
+  assert.ok(runtime.scriptSources.some(src => /privacy-submit-guard\.js\?v=1\.0\.4(?:$|&)/.test(src)), `${name}: production browser did not load submit guard cache key v1.0.4`);
   return { name, rendered, warnings, runtime };
 }
 
@@ -115,6 +115,7 @@ const redactableCases = [
   { name: 'compact-hn', sample: 'ตรวจข้อมูล HN123456', forbidden: 'HN123456', expectedMask: /รหัสผู้ป่วย \[ปกปิด\]/ },
   { name: 'compact-an', sample: 'ตรวจข้อมูล ANABC123', forbidden: 'ANABC123', expectedMask: /รหัสผู้ป่วย \[ปกปิด\]/ },
   { name: 'thai-id', sample: 'เลขบัตรประชาชน 3560039645712', forbidden: '3560039645712', expectedMask: /\[ปกปิดเลขประจำตัว\]/ },
+  { name: 'mobile-partial-thai-id-exact-regression', sample: 'เลขบัตรประชาชน12345678900', forbidden: '12345678900', expectedMask: /\[ปกปิดเลขประจำตัว\]/ },
   { name: 'email', sample: 'อีเมล test.person@example.com', forbidden: 'test.person@example.com', expectedMask: /\[ปกปิดอีเมล\]/ },
   { name: 'phone', sample: 'มือถือ 0812345678', forbidden: '0812345678', expectedMask: /\[ปกปิดเบอร์โทร\]/ },
   { name: 'bank-account', sample: 'เลขบัญชี 1234567890', forbidden: '1234567890', expectedMask: /เลขบัญชี \[ปกปิด\]/ },
@@ -151,14 +152,14 @@ await page.waitForFunction(
 );
 dialogs = [];
 const beforeReloadSubmit = (await userMessages()).length;
-await page.locator('#promptInput').fill('ตรวจซ้ำ HN123456');
+await page.locator('#promptInput').fill('เลขบัตรประชาชน12345678900');
 await page.locator('#chatForm .send-button').click();
 await page.waitForTimeout(300);
 const reloadMessages = await userMessages();
 assert.ok(reloadMessages.length > beforeReloadSubmit, `cache/service-worker reload did not create sanitized user bubble; state=${JSON.stringify(await diagnosticState())}`);
 const reloadRendered = reloadMessages.at(-1) || '';
-assert.equal(/HN123456|123456/.test(reloadRendered), false, `cache/service-worker reload leaked HN: ${reloadRendered}`);
-assert.match(reloadRendered, /รหัสผู้ป่วย \[ปกปิด\]/);
+assert.equal(reloadRendered.includes('12345678900'), false, `cache/service-worker reload leaked partial Thai ID: ${reloadRendered}`);
+assert.match(reloadRendered, /\[ปกปิดเลขประจำตัว\]/);
 const cacheRuntimeAfter = await page.evaluate(async () => ({
   submitGuardVersion: document.getElementById('chatForm')?.dataset?.privacySubmitGuard || '',
   serviceWorkers: 'serviceWorker' in navigator
@@ -173,6 +174,7 @@ console.log(JSON.stringify({
   checks: {
     redactablePiiCases: `${redactableResults.length} PASS`,
     blockedSensitiveCases: `${blockedResults.length} PASS`,
+    exactMobilePartialThaiIdRegression: 'PASS',
     rawHnAbsentFromUi: 'PASS',
     rawPiiAbsentFromVisibleUi: 'PASS',
     automaticMaskingWarning: 'PASS',
