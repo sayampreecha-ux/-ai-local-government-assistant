@@ -14,6 +14,7 @@ on:
       - 'assets/js/home-v3.js'
       - 'assets/js/core/privacy-guard.js'
       - 'src/search-worker.js'
+      - 'scripts/build-static.mjs'
       - 'scripts/verify-frontend-production.mjs'
       - 'scripts/verify-production-security.mjs'
       - '.github/workflows/verify-production-surface.yml'
