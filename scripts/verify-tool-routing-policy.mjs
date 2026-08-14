@@ -26,11 +26,12 @@ const cases = [
   { q: 'สมาชิกสภามีส่วนได้เสียลงมติได้ไหม', mode: 'web-when-needed', tools: ['web-search', 'ai-reasoning'] },
   { q: 'หาอีเมลเดิมที่เคยส่งเรื่อง MOU ให้หน่อย', mode: 'user-data-first', tools: ['gmail', 'ai-reasoning'], excludes: ['web-search'] },
   { q: 'ช่วยสรุปอีเมลที่ได้รับจากเทศบาล', mode: 'user-data-first', tools: ['gmail', 'ai-reasoning'] },
-  { q: 'หาไฟล์ TOR ที่เคยทำใน Google Drive', mode: 'user-data-first', tools: ['drive-files', 'web-search', 'ai-reasoning'] },
+  { q: 'หาไฟล์ TOR ที่เคยทำใน Google Drive', mode: 'user-data-first', tools: ['drive-files', 'ai-reasoning'], excludes: ['web-search'] },
   { q: 'เปิดเอกสารเดิมใน Drive เรื่องโครงการเศรษฐกิจพอเพียง', mode: 'user-data-first', tools: ['drive-files', 'ai-reasoning'] },
   { q: 'ช่วยสรุปเอกสารนี้', attachments: [{ name: 'report.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'ai-reasoning'] },
+  { q: 'ช่วยสรุป TOR ที่แนบ', attachments: [{ name: 'TOR.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'ai-reasoning'], excludes: ['web-search'] },
   { q: 'ช่วยตรวจ TOR ที่แนบและระบุความเสี่ยง', attachments: [{ name: 'TOR.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'web-search', 'ai-reasoning'] },
-  { q: 'หาอีเมลล่าสุดที่ได้รับเรื่องระเบียบการเบิกจ่าย', mode: 'user-data-first', tools: ['gmail', 'web-search', 'ai-reasoning'] }
+  { q: 'หาอีเมลล่าสุดที่ได้รับเรื่องระเบียบการเบิกจ่าย', mode: 'user-data-first', tools: ['gmail', 'ai-reasoning'], excludes: ['web-search'] }
 ];
 
 for (const testCase of cases) {
@@ -74,6 +75,17 @@ assert.equal(procurement.instructions.some(item => item.includes('การแ�
 
 const attachedTor = core.createToolRoutingPlan({ question: 'ช่วยตรวจ TOR ที่แนบ', attachments: [{ name: 'TOR.pdf' }] });
 assert.equal(attachedTor.tools[0], 'attached-files', 'attachments must be read before external search');
+assert.equal(attachedTor.tools.includes('web-search'), true, 'compliance review of attached TOR must verify current primary sources');
+
+const summarizeAttachedTor = core.createToolRoutingPlan({ question: 'ช่วยสรุป TOR ที่แนบ', attachments: [{ name: 'TOR.pdf' }] });
+assert.equal(summarizeAttachedTor.tools.includes('web-search'), false, 'summarizing attached TOR must not search web without verification intent');
+assert.equal(summarizeAttachedTor.flags.externalVerificationRequested, false, 'summary-only attachment task must not imply external verification');
+
+const findDriveTor = core.createToolRoutingPlan({ question: 'หาไฟล์ TOR ที่เคยทำใน Google Drive' });
+assert.equal(findDriveTor.tools.includes('web-search'), false, 'finding a user Drive file must not trigger unrelated web search');
+
+const findLatestEmail = core.createToolRoutingPlan({ question: 'หาอีเมลล่าสุดที่ได้รับเรื่องระเบียบการเบิกจ่าย' });
+assert.equal(findLatestEmail.tools.includes('web-search'), false, 'latest email means latest user data, not latest external law');
 
 const formatted = core.formatToolRoutingInstructions(attachedTor);
 assert.match(formatted, /ลำดับเครื่องมือ/);
@@ -82,4 +94,4 @@ assert.match(formatted, /web-search/);
 assert.match(formatted, /Answer First/);
 assert.match(formatted, /ห้ามอ้างว่าได้ค้นหรือเปิดข้อมูลแล้ว/);
 
-console.log(`GovPrompt v7 Tool Routing Policy verification passed: ${cases.length} routing cases + Thai primary-source regressions.`);
+console.log(`GovPrompt v7 Tool Routing Policy verification passed: ${cases.length} routing cases + source-first and Thai primary-source regressions.`);
