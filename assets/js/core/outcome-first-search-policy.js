@@ -11,13 +11,18 @@
 
   const normalize = value => String(value ?? '').replace(/\s+/g, ' ').trim();
   const lower = value => normalize(value).toLocaleLowerCase('th');
+  const normalizeIntentText = value => lower(value)
+    .replace(/มั้ย|มั๊ย/g, 'ไหม')
+    .replace(/เท่าไหร่/g, 'เท่าไร')
+    .replace(/ไช้/g, 'ใช้')
+    .replace(/อยุ่|อยุ/g, 'อยู่');
   const includesAny = (text, terms = []) => terms.some(term => text.includes(lower(term)));
 
   const GOAL_PROFILES = Object.freeze([
     Object.freeze({ id: 'career-progression', patterns: Object.freeze(['ครองตำแหน่ง','ดำรงตำแหน่ง','เลื่อนเป็น','เลื่อนระดับ','เลื่อนตำแหน่ง','ปลัดต้น','ปลัดกลาง','ชก','ชพ','ชำนาญการพิเศษ','สอบคัดเลือก']), expansion: 'คุณสมบัติ ระยะเวลาดำรงตำแหน่ง เลื่อนระดับ เลื่อนตำแหน่ง สอบคัดเลือก มาตรฐานกำหนดตำแหน่ง หลักเกณฑ์บริหารงานบุคคลท้องถิ่น', evidence: Object.freeze(['คุณสมบัติ','ดำรงตำแหน่ง','ระยะเวลา','เลื่อนระดับ','เลื่อนตำแหน่ง','สอบคัดเลือก','มาตรฐานกำหนดตำแหน่ง','บริหารงานบุคคล']) }),
-    Object.freeze({ id: 'eligibility-decision', patterns: Object.freeze(['ได้ไหม','ได้หรือไม่','มีสิทธิ','สามารถ','คุณสมบัติ','เข้าเกณฑ์','ทำได้ไหม','เบิกได้ไหม']), expansion: 'เงื่อนไข คุณสมบัติ สิทธิ ข้อยกเว้น หลักเกณฑ์ที่ใช้บังคับ', evidence: Object.freeze(['เงื่อนไข','คุณสมบัติ','สิทธิ','หลักเกณฑ์','ข้อยกเว้น']) }),
+    Object.freeze({ id: 'eligibility-decision', patterns: Object.freeze(['ได้ไหม','ได้หรือไม่','ได้ยัง','มีสิทธิ','สามารถ','คุณสมบัติ','เข้าเกณฑ์','ทำได้ไหม','เบิกได้ไหม']), expansion: 'เงื่อนไข คุณสมบัติ สิทธิ ข้อยกเว้น หลักเกณฑ์ที่ใช้บังคับ', evidence: Object.freeze(['เงื่อนไข','คุณสมบัติ','สิทธิ','หลักเกณฑ์','ข้อยกเว้น']) }),
     Object.freeze({ id: 'duration-deadline', patterns: Object.freeze(['กี่ปี','กี่เดือน','กี่วัน','ภายในกี่','เมื่อไร','ระยะเวลา','ครบกำหนด']), expansion: 'ระยะเวลา กำหนดเวลา เงื่อนไขการนับระยะเวลา หลักเกณฑ์', evidence: Object.freeze(['ระยะเวลา','กำหนดเวลา','ปี','เดือน','วัน','หลักเกณฑ์']) }),
-    Object.freeze({ id: 'authority', patterns: Object.freeze(['ใครอนุมัติ','ใครมีอำนาจ','ผู้มีอำนาจ','อำนาจอนุมัติ','อำนาจหน้าที่','มอบอำนาจ']), expansion: 'อำนาจหน้าที่ ผู้มีอำนาจอนุมัติ การมอบอำนาจ ฐานอำนาจ', evidence: Object.freeze(['อำนาจ','อนุมัติ','มอบอำนาจ','ฐานอำนาจ']) }),
+    Object.freeze({ id: 'authority', patterns: Object.freeze(['ใครอนุมัติ','ใครมีอำนาจ','ผู้มีอำนาจ','อำนาจอนุมัติ','อำนาจหน้าที่','มอบอำนาจ','ใครรับผิดชอบ','ผู้รับผิดชอบ','ความรับผิดชอบ']), expansion: 'อำนาจหน้าที่ ผู้มีอำนาจอนุมัติ ผู้รับผิดชอบ ความรับผิดชอบ การมอบอำนาจ ฐานอำนาจ', evidence: Object.freeze(['อำนาจ','อนุมัติ','รับผิดชอบ','ความรับผิดชอบ','มอบอำนาจ','ฐานอำนาจ']) }),
     Object.freeze({ id: 'procedure-documents', patterns: Object.freeze(['ขั้นตอน','ทำอย่างไร','ทำยังไง','ต้องทำอะไร','ใช้เอกสารอะไร','เอกสารประกอบ']), expansion: 'ขั้นตอน วิธีปฏิบัติ เอกสารประกอบ ผู้อนุมัติ หลักเกณฑ์', evidence: Object.freeze(['ขั้นตอน','วิธีปฏิบัติ','เอกสาร','หลักเกณฑ์']) }),
     Object.freeze({ id: 'amount-rate', patterns: Object.freeze(['เท่าไร','กี่บาท','อัตรา','วงเงิน','เพดาน','เหมาจ่าย']), expansion: 'อัตรา วงเงิน เพดาน เงื่อนไขการเบิกจ่าย หลักเกณฑ์', evidence: Object.freeze(['อัตรา','วงเงิน','เพดาน','เบิกจ่าย','หลักเกณฑ์']) }),
     Object.freeze({ id: 'compliance-risk', patterns: Object.freeze(['ถูกต้องไหม','ถูกต้องหรือไม่','ผิดระเบียบ','ความเสี่ยง','เสี่ยง','ชี้มูล','ร้องเรียน','ตรวจสอบ']), expansion: 'ข้อห้าม เงื่อนไข ความเสี่ยง การปฏิบัติให้ถูกต้อง หลักเกณฑ์ ระเบียบ', evidence: Object.freeze(['ข้อห้าม','เงื่อนไข','ความเสี่ยง','ระเบียบ','หลักเกณฑ์']) }),
@@ -25,7 +30,7 @@
   ]);
 
   function detectUserGoals(query) {
-    const text = lower(query);
+    const text = normalizeIntentText(query);
     return Object.freeze(GOAL_PROFILES.filter(profile => includesAny(text, profile.patterns)).slice(0, 3));
   }
 
