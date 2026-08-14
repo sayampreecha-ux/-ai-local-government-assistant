@@ -20,13 +20,21 @@ for (const directory of publicDirectories) {
 }
 
 const distIndexPath = join(output, "index.html");
-const distIndex = await readFile(distIndexPath, "utf8");
+let distIndex = await readFile(distIndexPath, "utf8");
 const hybridScript = '<script src="assets/js/core/hybrid-intent-classifier.js?v=2.4.1" defer></script>';
 const hotfixScript = '<script src="assets/js/core/router-real-query-hotfix.js?v=2.4.5" defer></script>';
 if (!distIndex.includes(hotfixScript)) {
   if (!distIndex.includes(hybridScript)) throw new Error("Hybrid intent router script marker not found in dist/index.html");
-  await writeFile(distIndexPath, distIndex.replace(hybridScript, `${hybridScript}${hotfixScript}`));
+  distIndex = distIndex.replace(hybridScript, `${hybridScript}${hotfixScript}`);
 }
+
+const officialSearchScript = '<script src="assets/js/core/official-search-connector.js?v=2.4.2" defer></script>';
+const outcomeSearchScript = '<script src="assets/js/core/outcome-first-search-policy.js?v=1.0.0" defer></script>';
+if (!distIndex.includes(outcomeSearchScript)) {
+  if (!distIndex.includes(officialSearchScript)) throw new Error("Official search connector script marker not found in dist/index.html");
+  distIndex = distIndex.replace(officialSearchScript, `${officialSearchScript}${outcomeSearchScript}`);
+}
+await writeFile(distIndexPath, distIndex);
 
 const distSitemap = await readFile(join(output, "sitemap.xml"), "utf8");
 if (!/<urlset\b/.test(distSitemap)) {
