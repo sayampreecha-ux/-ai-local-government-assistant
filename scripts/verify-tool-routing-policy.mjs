@@ -33,7 +33,12 @@ const cases = [
   { q: 'ช่วยตรวจ TOR ที่แนบและระบุความเสี่ยง', attachments: [{ name: 'TOR.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'web-search', 'ai-reasoning'] },
   { q: 'หาอีเมลล่าสุดที่ได้รับเรื่องระเบียบการเบิกจ่าย', mode: 'user-data-first', tools: ['gmail', 'ai-reasoning'], excludes: ['web-search'] },
   { q: 'เปิดไฟล์แนบเรื่องค่าเดินทางไปราชการก่อน แล้วค่อยเทียบกับกฎหมายหรือระเบียบปัจจุบันและเสนอทางแก้', attachments: [{ name: 'travel.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'web-search', 'ai-reasoning'], excludes: ['drive-files'] },
-  { q: 'เปิดเอกสารแนบเรื่อง TOR ก่อน แล้วค่อยเทียบกับระเบียบปัจจุบัน', attachments: [{ name: 'TOR.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'web-search', 'ai-reasoning'], excludes: ['drive-files'] }
+  { q: 'เปิดเอกสารแนบเรื่อง TOR ก่อน แล้วค่อยเทียบกับระเบียบปัจจุบัน', attachments: [{ name: 'TOR.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'web-search', 'ai-reasoning'], excludes: ['drive-files'] },
+  { q: 'ขอหาไฟล์ TOR เดิมใน Google Drive', mode: 'user-data-first', tools: ['drive-files', 'ai-reasoning'], excludes: ['web-search'] },
+  { q: 'ผู้บริหารถามว่า หาไฟล์โครงการเดิมใน Google Drive', mode: 'user-data-first', tools: ['drive-files', 'ai-reasoning'], excludes: ['web-search'] },
+  { q: 'รบกวนหาอีเมลล่าสุดที่ได้รับเรื่องประชุมหน่อยครับ', mode: 'user-data-first', tools: ['gmail', 'ai-reasoning'], excludes: ['web-search'] },
+  { q: 'ดึงประเด็นสำคัญจากเอกสารแนบเรื่องกรรมการตรวจรับพัสดุ 5 ข้อ ใช้เอกสารนี้อย่างเดียว', attachments: [{ name: 'procurement.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'ai-reasoning'], excludes: ['web-search', 'drive-files'] },
+  { q: 'จากเอกสารแนบเรื่องกรรมการตรวจรับพัสดุ ทำสรุปเสนอผู้บริหาร 5 ข้อ ไม่ค้นภายนอก', attachments: [{ name: 'procurement.pdf' }], mode: 'attachment-first', tools: ['attached-files', 'ai-reasoning'], excludes: ['web-search', 'drive-files'] }
 ];
 
 for (const testCase of cases) {
@@ -104,4 +109,4 @@ assert.match(formatted, /web-search/);
 assert.match(formatted, /Answer First/);
 assert.match(formatted, /ห้ามอ้างว่าได้ค้นหรือเปิดข้อมูลแล้ว/);
 
-console.log(`GovPrompt v7 Tool Routing Policy verification passed: ${cases.length} routing cases + source-first and Thai primary-source regressions.`);
+console.log(`GovPrompt v7 Tool Routing Policy verification passed: ${cases.length} routing cases + source-first, natural-language, no-web and Thai primary-source regressions.`);
