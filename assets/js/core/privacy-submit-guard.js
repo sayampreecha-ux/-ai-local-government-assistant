@@ -1,6 +1,10 @@
 (() => {
   'use strict';
 
+  function normalizeCompactPatientIds(value) {
+    return String(value ?? '').replace(/\b(HN|AN)\s*[:：#-]?\s*([A-Za-z0-9/-]{3,30})\b/gi, '$1 $2');
+  }
+
   function install() {
     const form = document.getElementById('chatForm');
     const input = document.getElementById('promptInput');
@@ -17,9 +21,10 @@
         return;
       }
 
-      const original = input.value.trim();
-      if (!original) return;
-      const privacy = core.sanitizeExternalContent(original);
+      const raw = input.value.trim();
+      if (!raw) return;
+      const normalized = normalizeCompactPatientIds(raw);
+      const privacy = core.sanitizeExternalContent(normalized);
 
       if (privacy.blocked) {
         event.preventDefault();
@@ -32,7 +37,7 @@
         return;
       }
 
-      if (privacy.changed) {
+      if (privacy.changed || normalized !== raw) {
         input.value = privacy.safeText;
         input.dispatchEvent(new Event('input', { bubbles: true }));
         const labels = privacy.redactions?.length ? ` (${privacy.redactions.join(', ')})` : '';
