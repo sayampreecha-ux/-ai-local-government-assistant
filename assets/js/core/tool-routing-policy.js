@@ -75,8 +75,17 @@
     const attachmentReference = /(?:ไฟล์|เอกสาร)\s*แนบ|แนบ(?:ไฟล์|เอกสาร)/i.test(text);
     if (isDriveSource && attachmentReference && !explicitDrive && !includesAny(text, USER_DATA_LOOKUP_TERMS)) return false;
     if (includesAny(text, USER_DATA_LOOKUP_TERMS)) return true;
-    return /^(?:ช่วย|กรุณา)?\s*(?:หา|ค้น|เปิด|ดู)/i.test(text)
-      || /(?:^|\s)(?:ช่วย|กรุณา)\s*(?:หา|ค้น|เปิด|ดู)/i.test(text);
+
+    const lookupVerb = /(?:หา|ค้น|เปิด|ดู)/i;
+    if (!lookupVerb.test(text)) return false;
+
+    const naturalPrefixLookup = /^(?:ช่วย|กรุณา|ขอ|รบกวน)?\s*(?:หา|ค้น|เปิด|ดู)/i.test(text)
+      || /^(?:งานนี้|เอาแบบใช้งานจริง|ขอสั้นๆก่อน|เจ้าหน้าที่ถามว่า|ผู้บริหารถามว่า)\s*(?:ช่วย|กรุณา|ขอ|รบกวน)?\s*(?:หา|ค้น|เปิด|ดู)/i.test(text)
+      || /(?:^|\s)(?:ช่วย|กรุณา|ขอ|รบกวน)\s*(?:หา|ค้น|เปิด|ดู)/i.test(text);
+
+    if (naturalPrefixLookup) return true;
+    if (explicitDrive && /(?:หา|ค้น|เปิด|ดู).{0,120}(?:google\s*drive|\bdrive\b|ไดรฟ์)|(?:google\s*drive|\bdrive\b|ไดรฟ์).{0,120}(?:หา|ค้น|เปิด|ดู)/i.test(text)) return true;
+    return false;
   }
 
   function isStableCreation(text) {
