@@ -138,6 +138,8 @@
 
       if (!changed) return;
 
+      // Security invariant: redactable PII is replaced synchronously in capture phase
+      // before Home/UI/router/search/history can observe the submit.
       input.value = safeText;
       input.dispatchEvent(new Event('input', { bubbles: true }));
 
