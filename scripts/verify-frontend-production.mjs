@@ -8,20 +8,34 @@ const robotsUrl = new URL('robots.txt', frontend).toString();
 const sitemapUrl = new URL('sitemap.xml', frontend).toString();
 const llmsUrl = new URL('llms.txt', frontend).toString();
 const adminUrl = new URL('admin.html', frontend).toString();
+const serviceWorkerUrl = new URL('service-worker.js', frontend).toString();
 const canonicalHome = 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/';
-const localIndex = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+
+const [localIndex, localPrivacyGuard, localSubmitGuard, localServiceWorker] = await Promise.all([
+  readFile(new URL('../index.html', import.meta.url), 'utf8'),
+  readFile(new URL('../assets/js/core/privacy-guard.js', import.meta.url), 'utf8'),
+  readFile(new URL('../assets/js/core/privacy-submit-guard.js', import.meta.url), 'utf8'),
+  readFile(new URL('../service-worker.js', import.meta.url), 'utf8')
+]);
+
 const expectedPrivacyGuard = localIndex.match(/assets\/js\/core\/privacy-guard\.js\?v=[^"'\s<]+/)?.[0];
+const expectedSubmitGuard = localIndex.match(/assets\/js\/core\/privacy-submit-guard\.js\?v=[^"'\s<]+/)?.[0];
 assert.ok(expectedPrivacyGuard, 'local index: privacy guard asset reference missing');
+assert.ok(expectedSubmitGuard, 'local index: privacy submit guard asset reference missing');
 
 async function fetchText(url) {
-  const response = await fetch(url, { redirect: 'follow' });
+  const response = await fetch(url, {
+    redirect: 'follow',
+    headers: { 'cache-control': 'no-cache', pragma: 'no-cache' }
+  });
   assert.equal(response.ok, true, `${url}: HTTP ${response.status}`);
   return { response, text: await response.text() };
 }
 
 const { response: indexResponse, text: index } = await fetchText(frontend);
-assert.match(index, /Internal Pilot/);
-assert.equal(index.includes(expectedPrivacyGuard), true, `production privacy guard does not match committed asset: ${expectedPrivacyGuard}`);
+assert.match(index, /Public Beta|Internal Pilot/);
+assert.equal(index.includes(expectedPrivacyGuard), true, `production privacy guard does not match committed asset reference: ${expectedPrivacyGuard}`);
+assert.equal(index.includes(expectedSubmitGuard), true, `production submit guard does not match committed asset reference: ${expectedSubmitGuard}`);
 assert.match(index, /https:\/\/www\.facebook\.com\/GovPromptThailandAI/);
 assert.match(index, /ความโปร่งใสและความปลอดภัย/);
 assert.match(index, /privacy-notice\.html/);
@@ -32,15 +46,44 @@ assert.match(index, /<script type="application\/ld\+json">/);
 assert.match(index, /llms\.txt/);
 assert.equal(indexResponse.url.startsWith('https://'), true, 'frontend must stay on HTTPS');
 
+// Issue #73 production proof: fetch the exact browser-referenced security assets
+// from GitHub Pages and require byte-for-byte equality with the checked-out main
+// commit. This catches stale CDN/browser-facing asset versions after deployment.
+const privacyGuardUrl = new URL(expectedPrivacyGuard, frontend).toString();
+const submitGuardUrl = new URL(expectedSubmitGuard, frontend).toString();
+const { response: privacyGuardResponse, text: productionPrivacyGuard } = await fetchText(privacyGuardUrl);
+const { response: submitGuardResponse, text: productionSubmitGuard } = await fetchText(submitGuardUrl);
+const { response: serviceWorkerResponse, text: productionServiceWorker } = await fetchText(serviceWorkerUrl);
+
+assert.equal(productionPrivacyGuard, localPrivacyGuard, 'production privacy-guard.js is stale or differs from committed main');
+assert.equal(productionSubmitGuard, localSubmitGuard, 'production privacy-submit-guard.js is stale or differs from committed main');
+assert.equal(productionServiceWorker, localServiceWorker, 'production service-worker.js is stale or differs from committed main');
+
+assert.match(productionPrivacyGuard, /sanitizeExternalContent/);
+assert.match(productionPrivacyGuard, /รหัสผู้ป่วย\/HN\/AN/);
+assert.match(productionSubmitGuard, /privacySubmitGuard === '2'/);
+assert.match(productionSubmitGuard, /stopImmediatePropagation/);
+assert.match(productionSubmitGuard, /applyFailSafeRedactions/);
+assert.match(productionSubmitGuard, /requestSubmit/);
+assert.match(productionSubmitGuard, /Home\/UI\/router\/search\/history/);
+assert.match(productionSubmitGuard, /ข้อมูลดิบถูกหยุดก่อนถึงหน้าจอ/);
+
+// The service worker must remain network-first for navigations and must not
+// precache Privacy Guard scripts, preventing an old security gate from being
+// pinned offline after a security deployment.
+assert.match(productionServiceWorker, /request\.mode === 'navigate'/);
+assert.match(productionServiceWorker, /fetch\(request\)/);
+assert.equal(/privacy-(?:submit-)?guard\.js/i.test(productionServiceWorker), false, 'service worker must not pin privacy guard assets in precache');
+
 const { response: trustResponse, text: trust } = await fetchText(trustUrl);
-assert.match(trust, /Internal Pilot/);
+assert.match(trust, /Internal Pilot|Public Beta/);
 assert.match(trust, /Tavily/);
 assert.match(trust, /Data minimization/);
 assert.equal(trustResponse.url.startsWith('https://'), true, 'trust page must stay on HTTPS');
 
 const { response: privacyResponse, text: privacy } = await fetchText(privacyNoticeUrl);
 assert.match(privacy, /ประกาศความเป็นส่วนตัว/);
-assert.match(privacy, /Internal Pilot/);
+assert.match(privacy, /Internal Pilot|Public Beta/);
 assert.match(privacy, /Cloudflare Worker/);
 assert.match(privacy, /Tavily/);
 assert.match(privacy, /ChatGPT/);
@@ -86,10 +129,32 @@ console.log(JSON.stringify({
   sitemapUrl,
   llmsUrl,
   adminUrl,
+  productionSecurityAssets: {
+    privacyGuardUrl,
+    submitGuardUrl,
+    serviceWorkerUrl,
+    cacheControl: {
+      index: indexResponse.headers.get('cache-control'),
+      privacyGuard: privacyGuardResponse.headers.get('cache-control'),
+      submitGuard: submitGuardResponse.headers.get('cache-control'),
+      serviceWorker: serviceWorkerResponse.headers.get('cache-control')
+    },
+    etag: {
+      privacyGuard: privacyGuardResponse.headers.get('etag'),
+      submitGuard: submitGuardResponse.headers.get('etag'),
+      serviceWorker: serviceWorkerResponse.headers.get('etag')
+    }
+  },
   checks: {
     https: 'PASS',
-    internalPilotBanner: 'PASS',
+    betaBanner: 'PASS',
     privacyGuardVersion: 'PASS',
+    privacySubmitGuardVersion: 'PASS',
+    privacyGuardProductionBytes: 'PASS',
+    privacySubmitGuardProductionBytes: 'PASS',
+    serviceWorkerProductionBytes: 'PASS',
+    serviceWorkerNoSecurityPrecache: 'PASS',
+    issue73FailClosedMarkers: 'PASS',
     facebookLink: 'PASS',
     trustPage: 'PASS',
     privacyNotice: 'PASS',
