@@ -37,11 +37,23 @@
     event.stopImmediatePropagation();
   }
 
+  function deferSafeResubmit(callback) {
+    // Browser form submission has a re-entrancy guard. A microtask can still run
+    // inside the original submission algorithm, causing requestSubmit() to be
+    // ignored. Use a new browser task; unit sandboxes without timers fall back
+    // to queueMicrotask while preserving the same fail-closed semantics.
+    if (typeof window.setTimeout === 'function') {
+      window.setTimeout(callback, 0);
+      return;
+    }
+    queueMicrotask(callback);
+  }
+
   function install() {
     const form = document.getElementById('chatForm');
     const input = document.getElementById('promptInput');
-    if (!form || !input || form.dataset.privacySubmitGuard === '2') return;
-    form.dataset.privacySubmitGuard = '2';
+    if (!form || !input || form.dataset.privacySubmitGuard === '3') return;
+    form.dataset.privacySubmitGuard = '3';
 
     form.addEventListener('submit', event => {
       const core = window.GovPromptCore;
@@ -89,13 +101,14 @@
         }
 
         // Redactable PII: replace the input with the masked value, warn the user,
-        // then start a brand-new submit event. The original raw event never passes.
+        // then start a brand-new submit event in a new browser task. The original
+        // raw event never passes and the browser's form re-entrancy lock is gone.
         input.value = safeText;
         input.dispatchEvent(new Event('input', { bubbles: true }));
         const labels = reasons.length ? `\nตรวจพบ: ${reasons.join(', ')}` : '';
         window.alert(`🔐 GovPrompt ตรวจพบข้อมูลส่วนบุคคลและปกปิดให้อัตโนมัติแล้ว${labels}\n\nข้อมูลดิบถูกหยุดก่อนถึงหน้าจอ การค้นหา ประวัติ และระบบภายนอก`);
 
-        queueMicrotask(() => {
+        deferSafeResubmit(() => {
           if (input.value.trim() !== safeText) return;
           const finalCheck = core.sanitizeExternalContent(input.value.trim());
           if (finalCheck.blocked || finalCheck.changed) {
