@@ -7,9 +7,12 @@
   const originalRouteRequest = core.routeRequest;
   const originalRouteTransaction = core.routeTransaction;
   const MODULE_TYPE = Object.freeze({
+    GP001: 'records',
     GP002: 'legal',
     GP003: 'procurement',
-    GP005: 'finance'
+    GP005: 'finance',
+    GP008: 'public-health',
+    GP010: 'internal-audit'
   });
 
   function normalize(value) {
@@ -22,6 +25,12 @@
 
     if (/เบี้ยเลี้ยง/.test(text)) return 'GP005';
 
+    if (/(?:ตรวจ|ตรวจสอบ|เช็ก|เช็ค).{0,18}(?:เอกสาร)?(?:เบิกจ่าย|ฎีกา|ขอเบิก).{0,28}(?:ก่อนเสนอ|เสนออนุมัติ|อนุมัติ)/.test(text)
+      || /(?:เบิกจ่าย|ฎีกา|ขอเบิก).{0,28}(?:ตรวจ|ตรวจสอบ|เช็ก|เช็ค).{0,18}(?:ก่อนเสนอ|เสนออนุมัติ|อนุมัติ)/.test(text)) return 'GP005';
+
+    if (/(?:ทำ|เขียน|จัดทำ).{0,14}(?:โครงการ).{0,32}(?:ส่งเสริมสุขภาพ|สุขภาพ|ป้องกันโรค|ฟื้นฟูสุขภาพ)/.test(text)
+      || /(?:โครงการ).{0,32}(?:ส่งเสริมสุขภาพ|สุขภาพ|ป้องกันโรค|ฟื้นฟูสุขภาพ)/.test(text)) return 'GP008';
+
     if (/\btor\b/i.test(text)
       && (/(?:ตรวจ|เช็ก|เช็ค|ไฟล์).{0,24}\btor\b/i.test(text)
         || /\btor\b.{0,24}(?:ตรวจ|เช็ก|เช็ค|ไฟล์)/i.test(text))) return 'GP003';
@@ -30,6 +39,15 @@
     const actionAuthority = /(?:ยกเลิก|เพิกถอน).{0,45}(?:บัญชี|สอบแข่งขัน|การสอบ).{0,45}(?:มีอำนาจ|ไม่มีอำนาจ)/;
     if (authorityAction.test(text) || actionAuthority.test(text)) return 'GP002';
 
+    return '';
+  }
+
+  function contextualDocumentModule(result, source) {
+    const text = normalize(source);
+    if (!text || result?.primaryModule !== 'GP011' || Number(result?.confidence ?? 1) > 0.5) return '';
+    if (!/(?:เอกสาร|รายงาน|ข้อความ|สองฉบับ|ไฟล์)/.test(text)) return '';
+    if (/(?:ความเสี่ยง|เสี่ยง|จุดขัดแย้ง|ผิดระเบียบ|ตรวจสอบ)/.test(text)) return 'GP010';
+    if (/(?:เปรียบเทียบ|ต่างกัน|ปรับข้อความ|แปลง|ดึง|สรุป|ย่อ)/.test(text)) return 'GP001';
     return '';
   }
 
@@ -53,7 +71,8 @@
 
   core.routeRequest = function routeRequestWithRealQueryHotfix(request, options = {}) {
     const result = originalRouteRequest(request, options);
-    return corrected(result, forcedModule(request), 'real-query-hotfix');
+    const forced = forcedModule(request) || contextualDocumentModule(result, request);
+    return corrected(result, forced, 'real-query-hotfix');
   };
 
   core.routeTransaction = function routeTransactionWithRealQueryHotfix(sharedContext, options = {}) {
@@ -63,8 +82,9 @@
       .concat(Array.isArray(context.specialFlags) ? context.specialFlags : [])
       .filter(Boolean)
       .join(' ');
-    return corrected(result, forcedModule(source), 'real-query-hotfix');
+    const forced = forcedModule(source) || contextualDocumentModule(result, source);
+    return corrected(result, forced, 'real-query-hotfix');
   };
 
-  core.ROUTER_REAL_QUERY_HOTFIX = Object.freeze({ forcedModule });
+  core.ROUTER_REAL_QUERY_HOTFIX = Object.freeze({ forcedModule, contextualDocumentModule });
 })();
