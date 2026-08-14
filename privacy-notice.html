@@ -4,89 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#12372a">
-  <meta name="description" content="ประกาศความเป็นส่วนตัวสำหรับ GovPrompt Thailand ระยะ Internal Pilot">
+  <meta name="description" content="ประกาศความเป็นส่วนตัว GovPrompt Thailand สำหรับ Public Beta">
   <title>ประกาศความเป็นส่วนตัว — GovPrompt Thailand</title>
-  <style>
-    :root{color-scheme:light;--green:#12372a;--green2:#1f5a45;--ink:#17201c;--muted:#66726c;--line:#dce5e0;--bg:#f6f8f7;--warn:#fff8df;--warnline:#e9c75c;--info:#eef6ff;--infoline:#9bc3ef}
-    *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--ink);line-height:1.7}
-    .wrap{max-width:860px;margin:0 auto;padding:20px 16px 48px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.brand,.back,a{color:var(--green2)}.brand{font-weight:800;text-decoration:none}.back{font-weight:700;text-decoration:none}
-    .hero,.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 4px 18px rgba(18,55,42,.05)}.hero{margin-bottom:14px}.hero h1{font-size:1.7rem;line-height:1.25;margin:.25rem 0 .5rem}.eyebrow{font-size:.78rem;font-weight:800;letter-spacing:.12em;color:var(--green2);margin:0}.sub{color:var(--muted);margin:0}
-    .card{margin-top:14px}.card h2{font-size:1.12rem;margin:0 0 8px;color:var(--green)}.card p{margin:7px 0}.card ul{margin:7px 0 0;padding-left:1.25rem}.card li{margin:.35rem 0}.warn{background:var(--warn);border-color:var(--warnline)}.status{background:var(--info);border-color:var(--infoline)}.foot{font-size:.86rem;color:var(--muted);margin-top:18px;text-align:center}
-  </style>
+  <style>:root{color-scheme:light;--g:#12372a;--g2:#1f5a45;--ink:#17201c;--muted:#66726c;--line:#dce5e0;--bg:#f6f8f7;--warn:#fff8df}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--ink);line-height:1.7}.wrap{max-width:860px;margin:auto;padding:20px 16px 48px}.top{display:flex;justify-content:space-between;gap:12px;margin-bottom:18px}.top a,a{color:var(--g2);font-weight:700}.hero,.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;margin-top:14px}.hero h1{margin:.2rem 0}.eyebrow{font-size:.78rem;font-weight:800;letter-spacing:.1em;color:var(--g2)}.warn{background:var(--warn)}h2{color:var(--g);font-size:1.12rem;margin:0 0 8px}.foot{color:var(--muted);font-size:.86rem;text-align:center;margin-top:18px}</style>
 </head>
-<body>
-<main class="wrap">
-  <div class="top"><a class="brand" href="index.html">GovPrompt Thailand</a><a class="back" href="trust.html">← ความโปร่งใสและความปลอดภัย</a></div>
-
-  <section class="hero">
-    <p class="eyebrow">PRIVACY NOTICE · INTERNAL PILOT</p>
-    <h1>ประกาศความเป็นส่วนตัวสำหรับ GovPrompt Thailand</h1>
-    <p class="sub">ฉบับสำหรับการทดลองใช้ภายใน เพื่ออธิบายข้อมูลที่เกี่ยวข้องกับการใช้งาน ระบบส่งข้อมูลไปที่ใด และข้อจำกัดที่ผู้ใช้ต้องทราบก่อนใช้งาน</p>
-  </section>
-
-  <section class="card status">
-    <h2>1. สถานะและขอบเขต</h2>
-    <p><strong>GovPrompt Thailand อยู่ระหว่าง Internal Pilot</strong> และยังไม่ใช่ระบบราชการทางการของหน่วยงานใด การนำไปใช้ในหน่วยงานจริงต้องผ่านการพิจารณาด้านอำนาจหน้าที่ นโยบายความมั่นคงปลอดภัย การคุ้มครองข้อมูลส่วนบุคคล และการอนุมัติที่เกี่ยวข้องของหน่วยงานนั้นก่อน</p>
-    <p>เอกสารนี้เป็นประกาศความโปร่งใสสำหรับระยะทดลอง ไม่ใช่คำรับรองว่าระบบปฏิบัติตามกฎหมายครบถ้วนทุกกรณี และต้องทบทวนอีกครั้งเมื่อขอบเขตผู้ใช้ ข้อมูล หรือผู้ให้บริการภายนอกเปลี่ยนแปลง</p>
-  </section>
-
-  <section class="card warn">
-    <h2>2. ข้อมูลที่ไม่ควรใส่ในระบบ</h2>
-    <ul>
-      <li>ข้อมูลลับของราชการ ข้อมูลด้านความมั่นคง รหัสผ่าน API key token secret หรือ private key</li>
-      <li>เลขบัตรประชาชน เลขบัญชี ข้อมูลสุขภาพ HN/AN ที่อยู่ เบอร์โทรศัพท์ หรือข้อมูลส่วนบุคคลจริงที่ไม่จำเป็น</li>
-      <li>เอกสารจริงที่ยังไม่ปกปิดชื่อ เลขประจำตัว หรือข้อมูลที่สามารถระบุตัวบุคคลได้</li>
-    </ul>
-  </section>
-
-  <section class="card">
-    <h2>3. ข้อมูลที่เกี่ยวข้องกับการใช้งาน</h2>
-    <p>ในหน้า Home ผู้ใช้อาจพิมพ์คำถาม เลือกไฟล์แนบ หรือใช้ฟังก์ชันค้นข้อมูลราชการสด ระบบถูกออกแบบให้ลดการส่งข้อมูลออกภายนอกเท่าที่จำเป็น โดยชื่อไฟล์จะถูกปกปิดก่อนนำไปประกอบ Prompt และ File object ถูกเก็บเพียงชั่วคราวในหน่วยความจำของหน้าเว็บในระหว่างการใช้งาน</p>
-    <p>ประวัติคำถามบนหน้า Home ถูกเก็บในหน่วยความจำของแท็บปัจจุบันและหายไปเมื่อโหลดหรือปิดหน้าใหม่ตามการออกแบบปัจจุบัน</p>
-  </section>
-
-  <section class="card">
-    <h2>4. การค้นข้อมูลราชการสดและผู้ให้บริการภายนอก</h2>
-    <p>เมื่อใช้การค้นสด ข้อความค้นจะผ่าน Privacy Guard ที่หน้าเว็บก่อน แล้วส่งไปยัง Cloudflare Worker ของโครงการ จากนั้น Worker ตรวจข้อมูลเสี่ยงซ้ำอีกชั้นก่อนส่งคำค้นที่ผ่านการตรวจไปยังผู้ให้บริการค้นเว็บ <strong>Tavily</strong> เพื่อค้นเฉพาะโดเมนราชการที่กำหนดไว้</p>
-    <ul>
-      <li>Worker ไม่ควรบันทึกข้อความคำค้นเต็มลง application log ตาม source code ปัจจุบัน แต่ใช้ metadata เช่น request ID ความยาวคำค้น จำนวนแหล่ง และระยะเวลาการทำงาน</li>
-      <li>ผลตอบกลับไม่ echo ข้อความคำค้นกลับมา</li>
-      <li>Tavily ถูกเรียกโดยตั้งค่าไม่ให้สร้าง answer และไม่ให้ส่ง raw content กลับ</li>
-      <li>การใช้ผู้ให้บริการภายนอกยังถือเป็น external processing จึงต้องหลีกเลี่ยงข้อมูลจริงที่ไม่จำเป็นแม้มีตัวกรอง</li>
-    </ul>
-  </section>
-
-  <section class="card">
-    <h2>5. การส่งต่อไป ChatGPT</h2>
-    <p>GovPrompt ไม่ส่ง Prompt ไป ChatGPT โดย API จากหน้า Home โดยอัตโนมัติ ปุ่ม “เปิดใน ChatGPT” จะเปิดเว็บไซต์ ChatGPT และพยายามคัดลอก Prompt ที่ผ่านการตรวจ/ปกปิดข้อมูลก่อน ผู้ใช้เป็นผู้วางข้อความหรือแนบเอกสารกับบริการภายนอกด้วยตนเอง</p>
-    <p>เมื่อผู้ใช้นำข้อมูลไปใช้กับบริการภายนอก ข้อมูลนั้นอยู่ภายใต้นโยบายและเงื่อนไขของบริการภายนอกดังกล่าว รวมทั้งนโยบายของหน่วยงานผู้ใช้ด้วย</p>
-  </section>
-
-  <section class="card">
-    <h2>6. วัตถุประสงค์ของการประมวลผลในระยะทดลอง</h2>
-    <p>วัตถุประสงค์ของ GovPrompt ในระยะ Internal Pilot คือช่วยจัดโครงคำถาม ค้นแหล่งราชการ วิเคราะห์เบื้องต้น และจัดทำร่างงานเพื่อให้เจ้าหน้าที่ตรวจสอบต่อ ระบบไม่ได้ถูกออกแบบให้เป็นฐานทะเบียนประชาชน ระบบจัดเก็บเอกสารลับ หรือระบบอนุมัติอัตโนมัติ</p>
-  </section>
-
-  <section class="card">
-    <h2>7. การเก็บรักษาและความมั่นคงปลอดภัย</h2>
-    <p>หลักการปัจจุบันคือ Data Minimization, Defense in Depth และ Fail Closed โดยลดข้อมูลที่ออกจาก browser ตรวจข้อมูลเสี่ยงทั้งฝั่งหน้าเว็บและ Worker จำกัด Origin/Method/request size ใช้ rate limiting ปิดการ echo query และลดระดับ observability/logging ของ Worker</p>
-    <p>อย่างไรก็ตาม Regex/DLP ไม่สามารถรับประกันการตรวจจับข้อมูลส่วนบุคคลได้ทุกชนิด ผู้ใช้ยังต้องปกปิดข้อมูลก่อนใช้งาน และไม่ควรใช้ GovPrompt เป็นที่เก็บเอกสารหรือข้อมูลสำคัญระยะยาว</p>
-  </section>
-
-  <section class="card">
-    <h2>8. สิทธิและช่องทางติดต่อ</h2>
-    <p>หากผู้ใช้หรือเจ้าของข้อมูลมีคำถามเกี่ยวกับข้อมูลที่เกี่ยวข้องกับ GovPrompt หรือพบเหตุด้านความเป็นส่วนตัว/ความปลอดภัย สามารถติดต่อผู้ดูแลโครงการเพื่อให้ตรวจสอบและดำเนินการตามขอบเขตที่ระบบควบคุมได้</p>
-    <p><strong>ผู้ดูแลโครงการ:</strong> นายสยาม ปรีชา — GovPrompt Thailand</p>
-    <p>อีเมล: <a href="mailto:sayampreecha@gmail.com">sayampreecha@gmail.com</a></p>
-    <p>Facebook: <a href="https://www.facebook.com/GovPromptThailandAI" target="_blank" rel="noopener noreferrer">GovPrompt Thailand</a></p>
-  </section>
-
-  <section class="card">
-    <h2>9. การทบทวนประกาศ</h2>
-    <p>ประกาศนี้ต้องได้รับการทบทวนเมื่อ GovPrompt เริ่มรับผู้ใช้ภายนอก ใช้ข้อมูลจริงในวงกว้าง อ่านเนื้อหาไฟล์ เพิ่มบัญชีผู้ใช้/โปรไฟล์ เพิ่มฐานข้อมูล หรือเปลี่ยนผู้ให้บริการภายนอก โดยควรให้ DPO/ฝ่ายกฎหมาย/ผู้รับผิดชอบด้านความมั่นคงปลอดภัยของหน่วยงานที่นำไปใช้ตรวจทานก่อนใช้งานจริง</p>
-  </section>
-
-  <p class="foot">ปรับปรุงล่าสุด: 9 สิงหาคม 2569 · Internal Pilot Privacy Notice</p>
-</main>
-</body>
-</html>
+<body><main class="wrap">
+  <div class="top"><a href="index.html">GovPrompt Thailand</a><a href="trust.html">ความโปร่งใสและความปลอดภัย</a></div>
+  <section class="hero"><p class="eyebrow">PRIVACY NOTICE · PUBLIC BETA</p><h1>ประกาศความเป็นส่วนตัว</h1><p>อธิบายการไหลของข้อมูลและมาตรการลดความเสี่ยงของ GovPrompt Thailand สำหรับการเปิดใช้งานฟรีแก่เจ้าหน้าที่ภาครัฐและผู้สนใจทั่วไป</p></section>
+  <section class="card"><h2>1. สถานะบริการ</h2><p>GovPrompt Thailand เป็นโครงการอิสระเพื่อช่วยค้น วิเคราะห์ และจัดทำร่างงานราชการ ไม่ใช่ระบบราชการทางการ ไม่ใช่คำวินิจฉัยของหน่วยงานรัฐ และไม่แทนผู้มีอำนาจอนุมัติ ลงนาม สั่งจ่าย หรือตัดสินใจตามกฎหมาย</p></section>
+  <section class="card warn"><h2>2. ข้อมูลที่ไม่ควรกรอกหรือแนบ</h2><p>หลีกเลี่ยงข้อมูลลับของราชการ รหัสผ่าน/API key/token/private key เลขบัตรประชาชน เลขบัญชี ที่อยู่ เบอร์โทรศัพท์ ข้อมูลผู้ป่วย ข้อมูลสุขภาพ ข้อมูลอ่อนไหว และข้อมูลส่วนบุคคลจริงที่ไม่จำเป็นต่อคำถาม หากต้องใช้เอกสารจริงควรปกปิดข้อมูลก่อน</p></section>
+  <section class="card"><h2>3. Privacy Gate ก่อนประมวลผล</h2><p>ช่องถามหลักใช้ Privacy Guard ก่อน routing การค้น และการสร้าง Prompt ระบบพยายามตรวจและปกปิดตัวระบุทั่วไป เช่น เลขประจำตัว อีเมล โทรศัพท์ เลขบัญชี ชื่อบุคคล รหัสผู้ป่วย วันเกิด ที่อยู่ และชื่อไฟล์แนบ พร้อมหยุดการส่งออกเมื่อยังพบข้อมูลเสี่ยงสูงหรือข้อมูลรับรองสิทธิ์ อย่างไรก็ตามการตรวจด้วยกฎอัตโนมัติไม่สามารถรับประกันการตรวจจับได้ทุกกรณี</p></section>
+  <section class="card"><h2>4. การค้นข้อมูลราชการภายนอก</h2><p>เมื่อคำถามจำเป็นต้องค้นข้อมูลปัจจุบัน คำค้นที่ผ่าน Privacy Guard จะถูกส่งไปยัง Cloudflare Worker ของโครงการ และ Worker ตรวจความเสี่ยงซ้ำก่อนเรียกผู้ให้บริการค้นเว็บภายนอกเพื่อค้นแหล่งราชการที่กำหนดไว้ การใช้บริการค้นภายนอกจึงถือเป็น external processing และไม่ควรมีข้อมูลส่วนบุคคลจริงที่ไม่จำเป็น</p><p>ตามการออกแบบปัจจุบัน Worker ไม่ควรบันทึกข้อความคำค้นเต็มเป็น application log และผลตอบกลับไม่ echo คำค้นกลับ ผู้ให้บริการค้นอาจเปลี่ยนแปลงได้ตามการพัฒนาระบบ จึงยึดหลักส่งเฉพาะคำค้นที่ลดข้อมูลแล้ว</p></section>
+  <section class="card"><h2>5. ChatGPT, Gemini และบริการ AI ภายนอก</h2><p>GovPrompt ไม่ส่ง Prompt ไปยัง ChatGPT หรือ Gemini โดยอัตโนมัติ ปุ่มเปิดบริการภายนอกทำหน้าที่คัดลอก Prompt ที่ผ่านการตรวจและเปิดเว็บไซต์ปลายทาง ผู้ใช้เป็นผู้ตัดสินใจวางข้อความหรือแนบเอกสารด้วยตนเอง หลังจากส่งข้อมูลให้บริการภายนอก การประมวลผลอยู่ภายใต้นโยบายของบริการนั้นและนโยบายของหน่วยงานผู้ใช้</p></section>
+  <section class="card"><h2>6. ไฟล์แนบและประวัติการใช้งาน</h2><p>หน้า Home ใช้ข้อมูลไฟล์เพื่อ workflow ในระหว่างการใช้งานและปกปิดชื่อไฟล์ก่อนนำไปประกอบ Prompt ไม่ควรใช้ GovPrompt เป็นคลังเก็บเอกสารหรือฐานข้อมูลบุคคล ประวัติการสนทนาในหน้าเว็บถูกออกแบบให้เป็นสถานะฝั่งผู้ใช้เพื่อการใช้งาน ไม่ใช่คลัง raw prompt ส่วนกลางของโครงการ</p></section>
+  <section class="card"><h2>7. Analytics และการติดตาม</h2><p>Public Beta ไม่ฝังตัวนับผู้เข้าชมจากบุคคลที่สามหรือ advertising/behavioral tracking pixel บนหน้า Home การวัดผลที่จำเป็นในอนาคตต้องยึดหลัก data minimization และต้องทบทวนประกาศนี้ก่อนเปิดใช้</p></section>
+  <section class="card"><h2>8. หลักการรักษาความปลอดภัย</h2><p>ระบบใช้แนวทาง Data Minimization, Defense in Depth, Fail Closed, จำกัด origin/method/request size, rate limiting, no-query-echo และ Human Review งานที่มีผลทางกฎหมาย การเงิน พัสดุ บุคคล หรือสิทธิของบุคคลต้องตรวจต้นฉบับและผู้มีอำนาจก่อนนำไปใช้จริง</p></section>
+  <section class="card"><h2>9. ติดต่อผู้ดูแล</h2><p><strong>ผู้ดูแลโครงการ:</strong> นายสยาม ปรีชา — GovPrompt Thailand</p><p>อีเมล: <a href="mailto:sayampreecha@gmail.com">sayampreecha@gmail.com</a> · Facebook: <a href="https://www.facebook.com/GovPromptThailandAI" target="_blank" rel="noopener noreferrer">GovPrompt Thailand</a></p></section>
+  <section class="card"><h2>10. การทบทวน</h2><p>ประกาศนี้ต้องทบทวนเมื่อมีการเปลี่ยนผู้ให้บริการภายนอก เพิ่ม telemetry/analytics เพิ่มการอ่านเนื้อหาไฟล์หรือการเก็บข้อมูลส่วนกลาง เปลี่ยนกลุ่มผู้ใช้ หรือเปลี่ยนวัตถุประสงค์การประมวลผลอย่างมีสาระสำคัญ</p></section>
+  <p class="foot">ปรับปรุงล่าสุด: 14 สิงหาคม 2569 · Public Beta</p>
+</main></body></html>
