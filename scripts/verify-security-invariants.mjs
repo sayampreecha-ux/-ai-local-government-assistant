@@ -24,6 +24,8 @@ assert.ok(privacyPos >= 0 && submitPos > privacyPos && homePos > submitPos, 'Pri
 
 assert.match(submitGuard, /stopImmediatePropagation/);
 assert.match(submitGuard, /sanitizeExternalContent/);
+assert.match(submitGuard, /normalizeCompactPatientIds/);
+assert.match(submitGuard, /\(HN\|AN\)/, 'Submit gate must explicitly normalize compact HN/AN identifiers');
 assert.match(privacyGuard, /externalRequestSent: false/);
 assert.match(worker, /SENSITIVE_QUERY_BLOCKED/);
 assert.match(worker, /include_raw_content: false/);
@@ -55,6 +57,15 @@ for (const [sample, rawPattern] of piiCases) {
   const result = core.sanitizeExternalContent(sample);
   assert.equal(result.changed, true, `PII must be changed before processing: ${sample}`);
   assert.doesNotMatch(result.safeText, rawPattern, `Raw PII must not survive sanitization: ${sample}`);
+}
+
+const compactPatientIdPattern = /\b(HN|AN)\s*[:：#-]?\s*([A-Za-z0-9/-]{3,30})\b/gi;
+for (const sample of ['HN123456', 'ANABC123', 'HN:123456', 'AN-ABC123']) {
+  const normalized = sample.replace(compactPatientIdPattern, '$1 $2');
+  const result = core.sanitizeExternalContent(normalized);
+  assert.equal(result.changed, true, `Compact patient ID must be normalized then redacted: ${sample}`);
+  assert.doesNotMatch(result.safeText, /123456|ABC123/, `Raw compact patient ID must not survive submit gate: ${sample}`);
+  assert.match(result.safeText, /รหัสผู้ป่วย \[ปกปิด\]/);
 }
 
 const sensitiveCases = [
