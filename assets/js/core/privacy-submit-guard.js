@@ -37,16 +37,12 @@
     event.stopImmediatePropagation();
   }
 
-  function deferSafeResubmit(callback) {
-    // Browser form submission has a re-entrancy guard. A microtask can still run
-    // inside the original submission algorithm, causing requestSubmit() to be
-    // ignored. Use a new browser task; unit sandboxes without timers fall back
-    // to queueMicrotask while preserving the same fail-closed semantics.
-    if (typeof window.setTimeout === 'function') {
-      window.setTimeout(callback, 0);
-      return;
-    }
-    queueMicrotask(callback);
+  function clearAndBlock(event, input, message) {
+    stopSubmit(event);
+    input.value = '';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    window.alert(message);
+    input.focus();
   }
 
   function install() {
@@ -58,11 +54,7 @@
     form.addEventListener('submit', event => {
       const core = window.GovPromptCore;
       if (!core || typeof core.sanitizeExternalContent !== 'function') {
-        stopSubmit(event);
-        input.value = '';
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        window.alert('🔒 Privacy Guard ยังไม่พร้อม ระบบหยุดการส่งข้อความอัตโนมัติเพื่อความปลอดภัย');
-        input.focus();
+        clearAndBlock(event, input, '🔒 Privacy Guard ยังไม่พร้อม ระบบหยุดการส่งข้อความอัตโนมัติเพื่อความปลอดภัย');
         return;
       }
 
@@ -87,41 +79,35 @@
       const changed = normalized !== raw || Boolean(privacy.changed) || failSafe.changed;
       const blocked = Boolean(privacy.blocked) || Boolean(postCheck.blocked);
 
-      // Security invariant: any submit event that contained raw sensitive data is
-      // terminated before Home/UI/router/search/history can observe it.
-      if (blocked || changed) {
-        stopSubmit(event);
-
-        if (blocked || !safeText) {
-          input.value = '';
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-          window.alert(`🔒 GovPrompt บล็อกข้อมูลอ่อนไหว/ข้อมูลเสี่ยง ไม่ส่งต่อและไม่ประมวลผล${reasons.length ? `\nตรวจพบ: ${reasons.join(', ')}` : ''}\n\nกรุณาใช้ข้อมูลสมมติหรือข้อมูลที่ไม่สามารถระบุตัวบุคคลได้`);
-          input.focus();
-          return;
-        }
-
-        // Redactable PII: replace the input with the masked value, warn the user,
-        // then start a brand-new submit event in a new browser task. The original
-        // raw event never passes and the browser's form re-entrancy lock is gone.
-        input.value = safeText;
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        const labels = reasons.length ? `\nตรวจพบ: ${reasons.join(', ')}` : '';
-        window.alert(`🔐 GovPrompt ตรวจพบข้อมูลส่วนบุคคลและปกปิดให้อัตโนมัติแล้ว${labels}\n\nข้อมูลดิบถูกหยุดก่อนถึงหน้าจอ การค้นหา ประวัติ และระบบภายนอก`);
-
-        deferSafeResubmit(() => {
-          if (input.value.trim() !== safeText) return;
-          const finalCheck = core.sanitizeExternalContent(input.value.trim());
-          if (finalCheck.blocked || finalCheck.changed) {
-            input.value = '';
-            input.dispatchEvent(new Event('input', { bubbles: true }));
-            window.alert('🔒 Privacy Guard ตรวจซ้ำไม่ผ่าน ระบบยกเลิกการส่งเพื่อความปลอดภัย');
-            input.focus();
-            return;
-          }
-          if (typeof form.requestSubmit === 'function') form.requestSubmit();
-        });
+      // Security invariant: blocked/special-category data is terminated. For
+      // redactable PII, the DOM value is replaced synchronously in capture phase
+      // before Home/UI/router/search/history can observe the submit.
+      if (blocked || !safeText) {
+        clearAndBlock(
+          event,
+          input,
+          `🔒 GovPrompt บล็อกข้อมูลอ่อนไหว/ข้อมูลเสี่ยง ไม่ส่งต่อและไม่ประมวลผล${reasons.length ? `\nตรวจพบ: ${reasons.join(', ')}` : ''}\n\nกรุณาใช้ข้อมูลสมมติหรือข้อมูลที่ไม่สามารถระบุตัวบุคคลได้`
+        );
         return;
       }
+
+      if (!changed) return;
+
+      // Do not cancel/re-submit redactable PII. Rewrite the textarea before the
+      // event reaches Home's submit listener, then let the same event continue.
+      // This avoids native form re-entrancy while ensuring raw PII never reaches
+      // render/router/search/prompt/history.
+      input.value = safeText;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+
+      const finalCheck = core.sanitizeExternalContent(input.value.trim());
+      if (finalCheck.blocked || finalCheck.changed || !input.value.trim()) {
+        clearAndBlock(event, input, '🔒 Privacy Guard ตรวจซ้ำไม่ผ่าน ระบบยกเลิกการส่งเพื่อความปลอดภัย');
+        return;
+      }
+
+      const labels = reasons.length ? `\nตรวจพบ: ${reasons.join(', ')}` : '';
+      window.alert(`🔐 GovPrompt ตรวจพบข้อมูลส่วนบุคคลและปกปิดให้อัตโนมัติแล้ว${labels}\n\nข้อมูลดิบถูกปกปิดก่อนถึงหน้าจอ การค้นหา ประวัติ และระบบภายนอก`);
     }, true);
   }
 

@@ -64,9 +64,10 @@ assert.match(productionPrivacyGuard, /รหัสผู้ป่วย\/HN\/AN/
 assert.match(productionSubmitGuard, /privacySubmitGuard === '2'/);
 assert.match(productionSubmitGuard, /stopImmediatePropagation/);
 assert.match(productionSubmitGuard, /applyFailSafeRedactions/);
-assert.match(productionSubmitGuard, /requestSubmit/);
+assert.match(productionSubmitGuard, /replaced synchronously in capture phase/);
 assert.match(productionSubmitGuard, /Home\/UI\/router\/search\/history/);
-assert.match(productionSubmitGuard, /ข้อมูลดิบถูกหยุดก่อนถึงหน้าจอ/);
+assert.match(productionSubmitGuard, /ข้อมูลดิบถูกปกปิดก่อนถึงหน้าจอ/);
+assert.doesNotMatch(productionSubmitGuard, /requestSubmit\s*\(/, 'production privacy boundary must not depend on form re-submit');
 
 // The service worker must remain network-first for navigations and must not
 // precache Privacy Guard scripts, preventing an old security gate from being

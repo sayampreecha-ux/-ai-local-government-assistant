@@ -26,9 +26,10 @@ assert.match(submitGuard, /stopImmediatePropagation/);
 assert.match(submitGuard, /sanitizeExternalContent/);
 assert.match(submitGuard, /normalizeCompactPatientIds/);
 assert.match(submitGuard, /applyFailSafeRedactions/);
-assert.match(submitGuard, /requestSubmit/);
-assert.match(submitGuard, /terminated before Home\/UI\/router\/search\/history can observe it/);
+assert.match(submitGuard, /replaced synchronously in capture phase/);
+assert.match(submitGuard, /before Home\/UI\/router\/search\/history can observe the submit/);
 assert.match(submitGuard, /\(HN\|AN\)/, 'Submit gate must explicitly normalize compact HN/AN identifiers');
+assert.doesNotMatch(submitGuard, /requestSubmit\s*\(/, 'Redactable PII must not depend on native form re-submit');
 assert.match(privacyGuard, /externalRequestSent: false/);
 assert.match(worker, /SENSITIVE_QUERY_BLOCKED/);
 assert.match(worker, /include_raw_content: false/);
@@ -88,11 +89,11 @@ for (const sample of sensitiveCases) {
   assert.equal(result.blocked, true, `Sensitive data must fail closed: ${sample}`);
 }
 
-// Issue #73 regression lock: the capture-phase submit gate must stop the raw
-// event, mask redactable PII, warn, and only then create a brand-new safe submit.
+// Issue #73 regression lock: the capture-phase submit gate must rewrite
+// redactable PII before downstream Home/UI can read the input. Special-category
+// sensitive data must cancel the event and never reach downstream at all.
 function runSubmitGateScenario(rawValue) {
   let captureHandler;
-  const microtasks = [];
   const downstream = [];
   const alerts = [];
   const input = {
@@ -106,9 +107,6 @@ function runSubmitGateScenario(rawValue) {
       assert.equal(type, 'submit');
       assert.equal(capture, true);
       captureHandler = handler;
-    },
-    requestSubmit() {
-      dispatch();
     }
   };
 
@@ -141,21 +139,19 @@ function runSubmitGateScenario(rawValue) {
     Event: class Event {
       constructor(type, options = {}) { this.type = type; this.bubbles = Boolean(options.bubbles); }
     },
-    queueMicrotask(callback) { microtasks.push(callback); },
     console
   };
 
   vm.runInNewContext(submitGuard, submitSandbox);
   assert.equal(typeof captureHandler, 'function', 'submit privacy gate must install in capture phase');
   const firstEvent = dispatch();
-  while (microtasks.length) microtasks.shift()();
   return { firstEvent, downstream, alerts, finalInput: input.value };
 }
 
 const hnScenario = runSubmitGateScenario('ตรวจข้อมูล HN123456');
-assert.equal(hnScenario.firstEvent.immediateStopped, true, 'raw HN submit must be stopped before Home handler');
-assert.equal(hnScenario.firstEvent.defaultPrevented, true, 'raw HN submit must be cancelled');
-assert.equal(hnScenario.downstream.length, 1, 'only the sanitized re-submit may reach downstream');
+assert.equal(hnScenario.firstEvent.immediateStopped, false, 'sanitized HN event may continue only after DOM value is rewritten');
+assert.equal(hnScenario.firstEvent.defaultPrevented, false, 'sanitized HN event should continue to Home');
+assert.equal(hnScenario.downstream.length, 1, 'exactly one sanitized submit may reach downstream');
 assert.doesNotMatch(hnScenario.downstream[0], /HN123456|123456/, 'raw HN must never reach downstream/UI');
 assert.match(hnScenario.downstream[0], /\[ปกปิด\]/, 'sanitized HN marker must reach downstream instead');
 assert.ok(hnScenario.alerts.some(message => /ปกปิดให้อัตโนมัติ/.test(message)), 'PII masking warning must be shown');
@@ -167,14 +163,16 @@ for (const rawValue of [
   'เลขบัญชี 1234567890'
 ]) {
   const scenario = runSubmitGateScenario(rawValue);
-  assert.equal(scenario.firstEvent.immediateStopped, true, `raw PII submit must be stopped: ${rawValue}`);
-  assert.equal(scenario.downstream.length, 1, `sanitized re-submit expected: ${rawValue}`);
+  assert.equal(scenario.firstEvent.immediateStopped, false, `redactable PII may continue only after rewrite: ${rawValue}`);
+  assert.equal(scenario.downstream.length, 1, `one sanitized submit expected: ${rawValue}`);
   assert.equal(scenario.downstream[0].includes(rawValue.replace(/^.*?\s/, '')), false, `raw value must not reach downstream: ${rawValue}`);
+  assert.ok(scenario.alerts.some(message => /ปกปิดให้อัตโนมัติ/.test(message)), `mask warning required: ${rawValue}`);
 }
 
 const sensitiveScenario = runSubmitGateScenario('ผู้ป่วยมีผลเลือดผิดปกติ');
 assert.equal(sensitiveScenario.firstEvent.immediateStopped, true, 'special-category data must be stopped');
-assert.equal(sensitiveScenario.downstream.length, 0, 'blocked sensitive context must never auto re-submit');
+assert.equal(sensitiveScenario.firstEvent.defaultPrevented, true, 'special-category data submit must be cancelled');
+assert.equal(sensitiveScenario.downstream.length, 0, 'blocked sensitive context must never reach downstream');
 assert.equal(sensitiveScenario.finalInput, '', 'blocked sensitive context must be removed from composer');
 assert.ok(sensitiveScenario.alerts.some(message => /บล็อกข้อมูลอ่อนไหว/.test(message)), 'blocking warning must be shown');
 
