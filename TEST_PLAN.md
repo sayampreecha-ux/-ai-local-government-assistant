@@ -56,6 +56,7 @@
 - `llms.txt` ต้องระบุ GovPrompt Thailand, public-content boundary, และนโยบาย Search / Agent / Training แยกจากกัน
 - `llms.txt` ต้องระบุชัดว่าข้อมูลผู้ใช้ ไฟล์อัปโหลด API traffic logs และ authenticated content ไม่ใช่ public knowledge
 - `index.html` ต้องมี canonical URL, robots metadata, Open Graph metadata, structured data และ discovery link ไป `llms.txt`
+- `admin.html` ที่เป็น public login shell ต้องมี `noindex,nofollow` และข้อมูล/คำสั่ง privileged ต้องถูกบังคับสิทธิ์ฝั่ง Server; ห้ามถือ `robots.txt` เป็น access control
 - การแก้ GEO ห้ามเปลี่ยน Intent Router, Prompt Engine, Tool Routing, Privacy Guard หรือพฤติกรรมแชต
 - Worker `ai-local-government-assistant` ต้องคงการป้องกันข้อมูลเสี่ยง CORS และ official-source filtering เดิม
 - ก่อน merge ต้องยืนยัน branch ไม่ behind `main` และ diff ไม่มีไฟล์นอกขอบเขต GEO โดยไม่ตั้งใจ
