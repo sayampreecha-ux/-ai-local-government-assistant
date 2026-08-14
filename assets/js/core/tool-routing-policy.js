@@ -27,8 +27,8 @@
   ]);
 
   const USER_DATA_LOOKUP_TERMS = Object.freeze([
-    'หา', 'ค้น', 'เปิด', 'ดู', 'เคยส่ง', 'เคยได้รับ', 'ที่ส่ง', 'ที่ได้รับ',
-    'ส่งไปแล้ว', 'ได้รับมา', 'ย้อนหลัง', 'เดิม', 'ของฉัน', 'ของผม', 'ของเรา'
+    'เคยส่ง', 'เคยได้รับ', 'ที่ส่ง', 'ที่ได้รับ', 'ส่งไปแล้ว', 'ได้รับมา',
+    'ย้อนหลัง', 'เดิม', 'ของฉัน', 'ของผม', 'ของเรา'
   ]);
 
   const STABLE_CREATION_PATTERNS = Object.freeze([
@@ -69,7 +69,10 @@
   }
 
   function isUserDataLookup(text, sourceTerms) {
-    return includesAny(text, sourceTerms) && includesAny(text, USER_DATA_LOOKUP_TERMS);
+    if (!includesAny(text, sourceTerms)) return false;
+    if (includesAny(text, USER_DATA_LOOKUP_TERMS)) return true;
+    return /^(?:ช่วย|กรุณา)?\s*(?:หา|ค้น|เปิด|ดู)/i.test(text)
+      || /(?:^|\s)(?:ช่วย|กรุณา)\s*(?:หา|ค้น|เปิด|ดู)/i.test(text);
   }
 
   function isStableCreation(text) {
