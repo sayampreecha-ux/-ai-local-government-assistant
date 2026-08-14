@@ -39,7 +39,8 @@
 
   const NO_WEB_PATTERNS = Object.freeze([
     /(?:ไม่ต้อง|ไม่จำเป็นต้อง|ยังไม่ต้อง|ห้าม).{0,20}(?:ค้นเว็บ|ค้นข้อมูลเพิ่ม|ค้นข้อมูลภายนอก|ค้นภายนอก|web)/i,
-    /(?:ใช้|จาก).{0,24}(?:ข้อมูลที่ให้|ข้อมูลนี้|เอกสารแนบ).{0,40}(?:เท่านั้น|อย่างเดียว).{0,40}(?:ไม่ต้องค้น|ห้ามค้น)?/i
+    /(?:ไม่|ห้าม)(?:ต้อง|จำเป็นต้อง|ต้องการ)?\s*(?:ค้นเว็บ|ค้นข้อมูลเพิ่ม|ค้นข้อมูลภายนอก|ค้นภายนอก|ค้นภายนอกเพิ่ม|web)/i,
+    /(?:ใช้|จาก).{0,24}(?:ข้อมูลที่ให้|ข้อมูลนี้|เอกสารแนบ|เอกสารนี้|ไฟล์แนบ|ไฟล์นี้).{0,40}(?:เท่านั้น|อย่างเดียว)(?:.{0,40}(?:ไม่ต้องค้น|ห้ามค้น|ไม่ค้น))?/i
   ]);
 
   const GOVERNMENT_DECISION_PATTERNS = Object.freeze([
@@ -75,8 +76,17 @@
     const attachmentReference = /(?:ไฟล์|เอกสาร)\s*แนบ|แนบ(?:ไฟล์|เอกสาร)/i.test(text);
     if (isDriveSource && attachmentReference && !explicitDrive && !includesAny(text, USER_DATA_LOOKUP_TERMS)) return false;
     if (includesAny(text, USER_DATA_LOOKUP_TERMS)) return true;
-    return /^(?:ช่วย|กรุณา)?\s*(?:หา|ค้น|เปิด|ดู)/i.test(text)
-      || /(?:^|\s)(?:ช่วย|กรุณา)\s*(?:หา|ค้น|เปิด|ดู)/i.test(text);
+
+    const lookupVerb = /(?:หา|ค้น|เปิด|ดู)/i;
+    if (!lookupVerb.test(text)) return false;
+
+    const naturalPrefixLookup = /^(?:ช่วย|กรุณา|ขอ|รบกวน)?\s*(?:หา|ค้น|เปิด|ดู)/i.test(text)
+      || /^(?:งานนี้|เอาแบบใช้งานจริง|ขอสั้นๆก่อน|เจ้าหน้าที่ถามว่า|ผู้บริหารถามว่า)\s*(?:ช่วย|กรุณา|ขอ|รบกวน)?\s*(?:หา|ค้น|เปิด|ดู)/i.test(text)
+      || /(?:^|\s)(?:ช่วย|กรุณา|ขอ|รบกวน)\s*(?:หา|ค้น|เปิด|ดู)/i.test(text);
+
+    if (naturalPrefixLookup) return true;
+    if (explicitDrive && /(?:หา|ค้น|เปิด|ดู).{0,120}(?:google\s*drive|\bdrive\b|ไดรฟ์)|(?:google\s*drive|\bdrive\b|ไดรฟ์).{0,120}(?:หา|ค้น|เปิด|ดู)/i.test(text)) return true;
+    return false;
   }
 
   function isStableCreation(text) {
