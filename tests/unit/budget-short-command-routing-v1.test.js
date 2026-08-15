@@ -11,15 +11,16 @@ async function loadIntentFirstRouting() {
     { moduleId:'GP005', transactionTypes:['finance'], title:'การเงินและการคลัง' },
     { moduleId:'GP012', transactionTypes:['public-relations'], title:'ประชาสัมพันธ์' }
   ];
+  const baseRouteRequest = request => {
+    const text = String(request || '');
+    const moduleId = /เบิกค่าเดินทาง/.test(text) ? 'GP005' : /โพสต์/.test(text) ? 'GP012' : 'GP002';
+    return Object.freeze({ primaryModule:moduleId, moduleId, modules:Object.freeze([moduleId]), transactionType:registry.find(item=>item.moduleId===moduleId)?.transactionTypes?.[0] || 'general', assistant:registry.find(item=>item.moduleId===moduleId), confidence:.8, fallback:false, ambiguous:false, reason:'stub-base' });
+  };
   const core = {
     PROMPT_REGISTRY: registry,
-    routeRequest(request) {
-      const text = String(request || '');
-      const moduleId = /เบิกค่าเดินทาง/.test(text) ? 'GP005' : /โพสต์/.test(text) ? 'GP012' : 'GP002';
-      return Object.freeze({ primaryModule:moduleId, moduleId, modules:Object.freeze([moduleId]), transactionType:registry.find(item=>item.moduleId===moduleId)?.transactionTypes?.[0] || 'general', assistant:registry.find(item=>item.moduleId===moduleId), confidence:.8, fallback:false, ambiguous:false, reason:'stub-base' });
-    },
+    routeRequest: baseRouteRequest,
     routeTransaction(sharedContext) {
-      const base = this.routeRequest(sharedContext?.facts || '');
+      const base = baseRouteRequest(sharedContext?.facts || '');
       return Object.freeze({ ...base, context:sharedContext });
     }
   };
