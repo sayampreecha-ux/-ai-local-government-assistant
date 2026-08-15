@@ -147,8 +147,10 @@
     }
 
     const pii = sanitizeOrdinaryPii(original);
-    if (pii.labels.length) {
-      addFinding(findings, riskCodes, 'PII_DETECTED', `ปกปิดข้อมูลส่วนบุคคลทั่วไป: ${pii.labels.join(', ')}`, 'SANITIZE');
+    const canSanitizeOrdinaryPii = isProcurement || isFinance || isDraftInternal;
+    const sanitizedPiiLabels = canSanitizeOrdinaryPii ? pii.labels : [];
+    if (sanitizedPiiLabels.length) {
+      addFinding(findings, riskCodes, 'PII_DETECTED', `ปกปิดข้อมูลส่วนบุคคลทั่วไป: ${sanitizedPiiLabels.join(', ')}`, 'SANITIZE');
     }
     if (isDraftInternal) {
       addFinding(findings, riskCodes, 'DRAFT_INTERNAL_DOCUMENT', 'เอกสารยังเป็นร่าง/เอกสารภายใน จึงต้องผ่านการปกปิดก่อนประมวลผล', 'SANITIZE');
@@ -161,7 +163,7 @@
     }
 
     const uniqueCodes = [...new Set(riskCodes)];
-    const mustSanitize = pii.labels.length > 0 || isDraftInternal;
+    const mustSanitize = sanitizedPiiLabels.length > 0 || isDraftInternal;
     const classification = mustSanitize
       ? DATA_CLASSIFICATIONS.INTERNAL_SANITIZABLE
       : (isPublished || aggregateBudget ? DATA_CLASSIFICATIONS.PUBLIC : (isProcurement || isFinance ? DATA_CLASSIFICATIONS.INTERNAL_SANITIZABLE : DATA_CLASSIFICATIONS.PUBLIC));
@@ -169,7 +171,7 @@
     return Object.freeze({
       decision: mustSanitize ? DATA_GATE_DECISIONS.SANITIZE : DATA_GATE_DECISIONS.ALLOW,
       classification,
-      sanitizedText: pii.safeText,
+      sanitizedText: canSanitizeOrdinaryPii ? pii.safeText : original,
       riskCodes: Object.freeze(uniqueCodes),
       findings: Object.freeze(findings)
     });
@@ -240,7 +242,7 @@
     input.value = '';
     input.dispatchEvent(new Event('input', { bubbles: true }));
     const labels = reasons.length ? `\nตรวจพบ: ${[...new Set(reasons)].join(', ')}` : '';
-    notify(`🔒 GovPrompt บล็อกข้อมูลที่ไม่อนุญาตให้ประมวลผล${labels}\n\nข้อมูลนี้จะไม่ถูกแสดงบน UI ไม่เข้า history/router/search และไม่ถูกส่งไป Worker/API ภายนอก กรุณาลบข้อมูลลับ ข้อมูลส่วนบุคคลระดับสูง หรือข้อมูลการแข่งขันจัดซื้อจัดจ้างที่ยังไม่ควรเปิดเผย`);
+    notify(`🔒 GovPrompt บล็อกข้อมูลส่วนบุคคล/ข้อมูลอ่อนไหวก่อนประมวลผล หรือข้อมูลราชการ/จัดซื้อที่ไม่อนุญาต${labels}\n\nข้อมูลนี้จะไม่ถูกแสดงบน UI ไม่เข้า history/router/search และไม่ถูกส่งไป Worker/API ภายนอก กรุณาลบข้อมูลลับ ข้อมูลส่วนบุคคลระดับสูง หรือข้อมูลการแข่งขันจัดซื้อจัดจ้างที่ยังไม่ควรเปิดเผย`);
     input.focus();
   }
 
@@ -264,8 +266,8 @@
   function install() {
     const form = document.getElementById('chatForm');
     const input = document.getElementById('promptInput');
-    if (!form || !input || form.dataset.privacySubmitGuard === '4') return;
-    form.dataset.privacySubmitGuard = '4';
+    if (!form || !input || form.dataset.privacySubmitGuard === '3') return;
+    form.dataset.privacySubmitGuard = '3';
 
     form.addEventListener('submit', event => {
       const core = window.GovPromptCore;
@@ -307,8 +309,10 @@
         ...(privacy.residualRisks || [])
       ])];
 
-      // Security invariant v4: after the Data Gate has either allowed or sanitized,
-      // every remaining PII/sensitive signal still fails closed in capture phase.
+      // Security invariant v3 remains for every residual signal:
+      // EVERY detected PII/sensitive signal fails closed in capture phase.
+      // The only exception is a domain-scoped Procurement/Finance SANITIZE result whose
+      // raw identifiers have already been removed before downstream code can observe them.
       const detected = reasons.length > 0 || Boolean(privacy.changed) || Boolean(privacy.blocked);
       if (detected) {
         clearAndBlock(event, input, reasons);
