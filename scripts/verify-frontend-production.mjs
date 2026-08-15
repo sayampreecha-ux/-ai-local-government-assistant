@@ -11,7 +11,7 @@ const sitemapUrl = page('sitemap.xml');
 const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
-const RELEASE = Object.freeze({ home:'6.1.0', homeCss:'2.4.5', serviceWorker:'6.1.0', budgetInputRuntime:'1.5.0' });
+const RELEASE = Object.freeze({ home:'6.1.0', homeCss:'2.4.6', serviceWorker:'6.1.0', budgetInputRuntime:'1.5.0' });
 
 const runtimeSourceFiles = Object.freeze([
   'budget-balance-validator.js','budget-official-evidence-adapter.js','budget-official-document-parser.js','budget-document-content-ingestion.js',
@@ -28,7 +28,7 @@ const budgetBrowserAssets = Object.freeze([
   'assets/js/core/official-source-registry.js'
 ]);
 
-const [localIndex, localHomeSource, localPrivacyGuard, localSubmitGuard, localServiceWorker, localRuntimeBridge, localHomeCss, ...rest] = await Promise.all([
+const [localIndex, localHomeSource, localPrivacyGuard, localSubmitGuard, localServiceWorker, localRuntimeBridge, localHomeCssSource, localReviewDialogCss, ...rest] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/home-v3.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/core/privacy-guard.js', import.meta.url),'utf8'),
@@ -36,12 +36,14 @@ const [localIndex, localHomeSource, localPrivacyGuard, localSubmitGuard, localSe
   readFile(new URL('../service-worker.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/core/government-workflow-runtime-v5.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/css/home-v3.css', import.meta.url),'utf8'),
+  readFile(new URL('../assets/css/budget-review-dialog.css', import.meta.url),'utf8'),
   ...runtimeSourceFiles.map(file => readFile(new URL(`../src/${file}`, import.meta.url),'utf8')),
   ...budgetBrowserAssets.map(file => readFile(new URL(`../${file}`, import.meta.url),'utf8'))
 ]);
 const localRuntimeContents = rest.slice(0,runtimeSourceFiles.length);
 const localBudgetAssets = rest.slice(runtimeSourceFiles.length);
 const localHome = localHomeSource.replace(/budget-browser-input-runtime-v1\.js\?v=[^'"\s)]+/g, `budget-browser-input-runtime-v1.js?v=${RELEASE.budgetInputRuntime}`);
+const localHomeCss = `${localHomeCssSource.trimEnd()}\n${localReviewDialogCss.trim()}\n`;
 
 const expectedPrivacyGuard = localIndex.match(/assets\/js\/core\/privacy-guard\.js\?v=[^"'\s<]+/)?.[0];
 const expectedSubmitGuard = localIndex.match(/assets\/js\/core\/privacy-submit-guard\.js\?v=[^"'\s<]+/)?.[0];
@@ -96,6 +98,7 @@ assert.match(home.text,new RegExp(`budget-browser-input-runtime-v1\\.js\\?v=${RE
 assert.match(home.text,/budget-office-export-v1\.js\?v=1\.0\.0/);
 assert.match(home.text,/downloadBudgetOfficeFile/);
 assert.match(css.text,/budget-review-table/);
+assert.match(css.text,/budget-review-overlay/);
 assert.match(css.text,/budget-review-dialog/);
 assert.match(runtimeBridge.text,/WORKFLOW_RUNTIME_BRIDGE_VERSION = '5\.0'/);
 assert.match(runtimeBridge.text,/rawEvidenceValuesReturned: false/);
