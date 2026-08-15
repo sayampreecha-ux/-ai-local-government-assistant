@@ -53,7 +53,7 @@ test('cross-workflow V3 case validates each same-key artifact only in its owning
     {},
     ['gov.legal', 'gov.correspondence'],
     evidence,
-    {},
+    { 'gov.correspondence': ['document-type', 'sender-recipient'] },
     [legal, correspondence]
   );
 
