@@ -15,6 +15,7 @@ on:
       - 'assets/js/home-v3.js'
       - 'assets/js/core/privacy-guard.js'
       - 'assets/js/core/privacy-submit-guard.js'
+      - 'assets/js/core/media-routing-overrides.js'
       - 'assets/js/core/budget-*.js'
       - 'assets/js/core/official-source-registry.js'
       - 'src/search-worker.js'
