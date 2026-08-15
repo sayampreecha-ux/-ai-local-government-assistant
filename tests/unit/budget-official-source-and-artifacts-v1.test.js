@@ -86,7 +86,7 @@ test('budget source runtime is inactive for non-budget workflow and does not cal
   assert.equal(calls, 0);
 });
 
-test('budget source runtime executes three targeted official searches only for budget workflow', async () => {
+test('budget source runtime executes three targeted official searches and then stops at unread-document gate', async () => {
   const calls = [];
   const connector = {
     search: async (query, options) => {
@@ -101,8 +101,12 @@ test('budget source runtime executes three targeted official searches only for b
   });
   assert.equal(calls.length, 3);
   assert.ok(calls.every((item) => item.options.requireFreshness === true));
-  assert.equal(result.status, 'ready');
+  assert.equal(result.status, 'blocked-unverified-document-content');
   assert.ok(result.evidence.some((item) => item.key === 'budgetSourceRegister'));
+  assert.equal(result.documentIngestion.failClosed, true);
+  assert.deepEqual(result.documentIngestion.missingKeys, ['latestRevenueActuals', 'targetYearPlan']);
+  assert.equal(result.artifactAttempt.status, 'blocked-missing-evidence');
+  assert.equal(result.failClosed, true);
 });
 
 test('artifact factory blocks when required internal budget evidence is incomplete', () => {
