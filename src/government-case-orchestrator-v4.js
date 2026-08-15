@@ -155,7 +155,7 @@ export function buildGovernmentWorkOrderV4({ workflowId, state = null, completed
       autoApprovalAllowed: false,
       deliverableContractsRequired: true,
       auditTrailRequired: true,
-      legacyStateMigrationRequired
+      legacyStateMigrationRequired: legacyMigrationRequired
     })
   });
 }
