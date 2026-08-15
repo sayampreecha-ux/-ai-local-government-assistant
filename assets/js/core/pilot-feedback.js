@@ -3,6 +3,7 @@
 
   const STORAGE_KEY = 'govprompt-pilot-feedback-v1';
   const USAGE_STORAGE_KEY = 'govprompt-local-usage-v1';
+  const FEEDBACK_AGGREGATE_KEY = 'govprompt-local-feedback-summary-v1';
   const MAX_RECORDS = 100;
   const MAX_USAGE_DAYS = 30;
   const VALID_MODULES = Object.freeze(Array.from({ length: 13 }, (_, index) => `GP${String(index + 1).padStart(3, '0')}`));
@@ -38,6 +39,42 @@
     return VALID_MODULE_SET.has(moduleId) ? moduleId : '';
   }
 
+  function readLocalFeedbackAggregate() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(FEEDBACK_AGGREGATE_KEY) || '{}');
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function trimDays(byDay) {
+    return Object.fromEntries(Object.entries(byDay || {}).sort(([a], [b]) => b.localeCompare(a)).slice(0, MAX_USAGE_DAYS));
+  }
+
+  function recordLocalFeedbackAggregate(record) {
+    if (!record || !['up', 'down'].includes(record.verdict)) return false;
+    const data = readLocalFeedbackAggregate();
+    const today = new Date().toISOString().slice(0, 10);
+    data.total = Number(data.total || 0) + 1;
+    data.up = Number(data.up || 0) + (record.verdict === 'up' ? 1 : 0);
+    data.down = Number(data.down || 0) + (record.verdict === 'down' ? 1 : 0);
+    data.byModule = { ...(data.byModule || {}) };
+    data.issues = { ...(data.issues || {}) };
+    data.byDay = { ...(data.byDay || {}) };
+    data.byModule[record.moduleId] = Number(data.byModule[record.moduleId] || 0) + 1;
+    (record.issueCodes || []).forEach(code => { data.issues[code] = Number(data.issues[code] || 0) + 1; });
+    data.byDay[today] = Number(data.byDay[today] || 0) + 1;
+    data.byDay = trimDays(data.byDay);
+    data.updatedAt = new Date().toISOString();
+    try {
+      localStorage.setItem(FEEDBACK_AGGREGATE_KEY, JSON.stringify(data));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   function addFeedback({ moduleId, transactionType, verdict, issueCodes = [], expectedModuleId } = {}) {
     const safeVerdict = verdict === 'up' ? 'up' : verdict === 'down' ? 'down' : '';
     if (!safeVerdict) return Object.freeze({ saved: false, reason: 'INVALID_VERDICT' });
@@ -60,7 +97,9 @@
     Object.freeze(record);
 
     const records = [record, ...readRecords()];
-    return Object.freeze({ saved: writeRecords(records), record });
+    const saved = writeRecords(records);
+    if (saved) recordLocalFeedbackAggregate(record);
+    return Object.freeze({ saved, record });
   }
 
   function summary() {
@@ -93,6 +132,24 @@
     });
   }
 
+  function localFeedbackSummary() {
+    const data = readLocalFeedbackAggregate();
+    const total = Number(data.total || 0);
+    const up = Number(data.up || 0);
+    return Object.freeze({
+      total,
+      up,
+      down: Number(data.down || 0),
+      satisfactionRate: total ? Number((up / total * 100).toFixed(1)) : 0,
+      byModule: Object.freeze({ ...(data.byModule || {}) }),
+      issues: Object.freeze({ ...(data.issues || {}) }),
+      byDay: Object.freeze(trimDays(data.byDay)),
+      updatedAt: data.updatedAt || null,
+      scope: 'this-device-only',
+      privacy: 'Aggregate counters only. No prompt text, answer text, files, identifiers, route correction detail, or free-text feedback is persisted.'
+    });
+  }
+
   function clear() {
     try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
   }
@@ -104,10 +161,6 @@
     } catch {
       return {};
     }
-  }
-
-  function trimUsageDays(byDay) {
-    return Object.fromEntries(Object.entries(byDay || {}).sort(([a], [b]) => b.localeCompare(a)).slice(0, MAX_USAGE_DAYS));
   }
 
   function recordLocalUsage(route) {
@@ -124,7 +177,7 @@
     data.byModule[moduleId] = Number(data.byModule[moduleId] || 0) + 1;
     data.byTransaction[transactionType] = Number(data.byTransaction[transactionType] || 0) + 1;
     data.byDay[today] = Number(data.byDay[today] || 0) + 1;
-    data.byDay = trimUsageDays(data.byDay);
+    data.byDay = trimDays(data.byDay);
     data.updatedAt = new Date().toISOString();
     try {
       localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify(data));
@@ -140,7 +193,7 @@
       total: Number(data.total || 0),
       byModule: Object.freeze({ ...(data.byModule || {}) }),
       byTransaction: Object.freeze({ ...(data.byTransaction || {}) }),
-      byDay: Object.freeze(trimUsageDays(data.byDay)),
+      byDay: Object.freeze(trimDays(data.byDay)),
       updatedAt: data.updatedAt || null,
       scope: 'this-device-only',
       privacy: 'Stored only in this browser. No prompt text, file content, name, email, IP, cookie, fingerprint, or user identifier is recorded.'
@@ -150,10 +203,10 @@
   function exportReport() {
     return JSON.stringify({
       generatedAt: new Date().toISOString(),
-      privacy: 'No raw prompt, document content, name, email, IP, or free-text feedback is stored.',
+      privacy: 'No raw prompt, answer text, document content, name, email, IP, cookie, fingerprint, user identifier, or free-text feedback is stored.',
       usage: localUsageSummary(),
-      summary: summary(),
-      records: readRecords()
+      feedbackAggregate: localFeedbackSummary(),
+      currentSessionFeedback: summary()
     }, null, 2);
   }
 
@@ -175,6 +228,7 @@
   window.GovPromptCore.PILOT_FEEDBACK_MODULES = VALID_MODULES;
   window.GovPromptCore.addPilotFeedback = addFeedback;
   window.GovPromptCore.getPilotFeedbackSummary = summary;
+  window.GovPromptCore.getLocalPilotFeedbackSummary = localFeedbackSummary;
   window.GovPromptCore.exportPilotFeedbackReport = exportReport;
   window.GovPromptCore.clearPilotFeedback = clear;
   window.GovPromptCore.recordLocalUsage = recordLocalUsage;
