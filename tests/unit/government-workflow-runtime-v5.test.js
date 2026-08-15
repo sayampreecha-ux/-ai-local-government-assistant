@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 import {
   WORKFLOW_RUNTIME_BRIDGE_VERSION,
   buildWorkflowRuntimeView,
@@ -80,4 +81,15 @@ test('production build copies the exact browser-safe workflow runtime dependency
     assert.match(source, new RegExp(file.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   }
   assert.match(source, /const runtimeOutput = join\(output, "src"\)/);
+});
+
+test('runtime integration and post-deploy verifier are syntactically valid before merge', () => {
+  for (const file of [
+    'assets/js/home-v3.js',
+    'assets/js/core/government-workflow-runtime-v5.js',
+    'scripts/build-static.mjs',
+    'scripts/verify-frontend-production.mjs'
+  ]) {
+    assert.doesNotThrow(() => execFileSync(process.execPath, ['--check', file], { stdio: 'pipe' }), file);
+  }
 });
