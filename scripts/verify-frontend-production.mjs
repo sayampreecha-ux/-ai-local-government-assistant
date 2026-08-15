@@ -9,19 +9,32 @@ const sitemapUrl = new URL('sitemap.xml', frontend).toString();
 const llmsUrl = new URL('llms.txt', frontend).toString();
 const adminUrl = new URL('admin.html', frontend).toString();
 const serviceWorkerUrl = new URL('service-worker.js', frontend).toString();
+const workflowRuntimeBridgeUrl = new URL('assets/js/core/government-workflow-runtime-v5.js?v=5.0.0', frontend).toString();
 const canonicalHome = 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/';
+const workflowRuntimeFiles = Object.freeze([
+  'government-workflow-engine.js',
+  'government-workflow-state-machine-v2.js',
+  'government-deliverable-contracts-v3.js',
+  'government-case-orchestrator-v4.js',
+  'government-workflow-suite.js'
+]);
 
-const [localIndex, localPrivacyGuard, localSubmitGuard, localServiceWorker] = await Promise.all([
+const [localIndex, localHomeV3, localPrivacyGuard, localSubmitGuard, localServiceWorker, localRuntimeBridge, ...localWorkflowRuntimeContents] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
+  readFile(new URL('../assets/js/home-v3.js', import.meta.url), 'utf8'),
   readFile(new URL('../assets/js/core/privacy-guard.js', import.meta.url), 'utf8'),
   readFile(new URL('../assets/js/core/privacy-submit-guard.js', import.meta.url), 'utf8'),
-  readFile(new URL('../service-worker.js', import.meta.url), 'utf8')
+  readFile(new URL('../service-worker.js', import.meta.url), 'utf8'),
+  readFile(new URL('../assets/js/core/government-workflow-runtime-v5.js', import.meta.url), 'utf8'),
+  ...workflowRuntimeFiles.map(file => readFile(new URL(`../src/${file}`, import.meta.url), 'utf8'))
 ]);
 
 const expectedPrivacyGuard = localIndex.match(/assets\/js\/core\/privacy-guard\.js\?v=[^"'\s<]+/)?.[0];
 const expectedSubmitGuard = localIndex.match(/assets\/js\/core\/privacy-submit-guard\.js\?v=[^"'\s<]+/)?.[0];
+const expectedHomeV3 = localIndex.match(/assets\/js\/home-v3\.js\?v=[^"'\s<]+/)?.[0];
 assert.ok(expectedPrivacyGuard, 'local index: privacy guard asset reference missing');
 assert.ok(expectedSubmitGuard, 'local index: privacy submit guard asset reference missing');
+assert.ok(expectedHomeV3, 'local index: home-v3 asset reference missing');
 
 async function fetchText(url) {
   const response = await fetch(url, {
@@ -36,6 +49,7 @@ const { response: indexResponse, text: index } = await fetchText(frontend);
 assert.match(index, /Public Beta|Internal Pilot/);
 assert.equal(index.includes(expectedPrivacyGuard), true, `production privacy guard does not match committed asset reference: ${expectedPrivacyGuard}`);
 assert.equal(index.includes(expectedSubmitGuard), true, `production submit guard does not match committed asset reference: ${expectedSubmitGuard}`);
+assert.equal(index.includes(expectedHomeV3), true, `production home-v3 does not match committed asset reference: ${expectedHomeV3}`);
 assert.match(index, /https:\/\/www\.facebook\.com\/GovPromptThailandAI/);
 assert.match(index, /ความโปร่งใสและความปลอดภัย/);
 assert.match(index, /privacy-notice\.html/);
@@ -48,13 +62,18 @@ assert.equal(indexResponse.url.startsWith('https://'), true, 'frontend must stay
 
 const privacyGuardUrl = new URL(expectedPrivacyGuard, frontend).toString();
 const submitGuardUrl = new URL(expectedSubmitGuard, frontend).toString();
+const homeV3Url = new URL(expectedHomeV3, frontend).toString();
 const { response: privacyGuardResponse, text: productionPrivacyGuard } = await fetchText(privacyGuardUrl);
 const { response: submitGuardResponse, text: productionSubmitGuard } = await fetchText(submitGuardUrl);
+const { response: homeV3Response, text: productionHomeV3 } = await fetchText(homeV3Url);
 const { response: serviceWorkerResponse, text: productionServiceWorker } = await fetchText(serviceWorkerUrl);
+const { response: runtimeBridgeResponse, text: productionRuntimeBridge } = await fetchText(workflowRuntimeBridgeUrl);
 
 assert.equal(productionPrivacyGuard, localPrivacyGuard, 'production privacy-guard.js is stale or differs from committed main');
 assert.equal(productionSubmitGuard, localSubmitGuard, 'production privacy-submit-guard.js is stale or differs from committed main');
+assert.equal(productionHomeV3, localHomeV3, 'production home-v3.js is stale or differs from committed main');
 assert.equal(productionServiceWorker, localServiceWorker, 'production service-worker.js is stale or differs from committed main');
+assert.equal(productionRuntimeBridge, localRuntimeBridge, 'production workflow runtime bridge v5 is stale or differs from committed main');
 
 assert.match(productionPrivacyGuard, /sanitizeExternalContent/);
 assert.match(productionPrivacyGuard, /รหัสผู้ป่วย\/HN\/AN/);
@@ -65,6 +84,29 @@ assert.match(productionSubmitGuard, /EVERY detected PII\/sensitive signal fails 
 assert.match(productionSubmitGuard, /Home\/UI\/history\/router\/search\/Worker\/API/);
 assert.match(productionSubmitGuard, /บล็อกข้อมูลส่วนบุคคล\/ข้อมูลอ่อนไหวก่อนประมวลผล/);
 assert.doesNotMatch(productionSubmitGuard, /requestSubmit\s*\(/, 'production privacy boundary must not depend on form re-submit');
+
+assert.match(productionHomeV3, /prepareWorkflowRuntime/);
+assert.match(productionHomeV3, /prepareExternalPrompt\(text\)/);
+assert.match(productionHomeV3, /government-workflow-runtime-v5\.js\?v=5\.0\.0/);
+assert.match(productionHomeV3, /enrichPromptWithWorkflow/);
+assert.match(productionRuntimeBridge, /WORKFLOW_RUNTIME_BRIDGE_VERSION = '5\.0'/);
+assert.match(productionRuntimeBridge, /buildWorkflowRuntimeView/);
+assert.match(productionRuntimeBridge, /buildWorkflowPromptBlock/);
+assert.match(productionRuntimeBridge, /rawEvidenceValuesReturned: false/);
+assert.match(productionRuntimeBridge, /autoApprovalAllowed: false/);
+
+const productionWorkflowModules = {};
+for (let index = 0; index < workflowRuntimeFiles.length; index += 1) {
+  const file = workflowRuntimeFiles[index];
+  const url = new URL(`src/${file}`, frontend).toString();
+  const { response, text } = await fetchText(url);
+  assert.equal(text, localWorkflowRuntimeContents[index], `production workflow runtime module ${file} is stale or differs from committed main`);
+  productionWorkflowModules[file] = {
+    url,
+    cacheControl: response.headers.get('cache-control'),
+    etag: response.headers.get('etag')
+  };
+}
 
 assert.match(productionServiceWorker, /request\.mode === 'navigate'/);
 assert.match(productionServiceWorker, /fetch\(request\)/);
@@ -127,17 +169,24 @@ console.log(JSON.stringify({
   productionSecurityAssets: {
     privacyGuardUrl,
     submitGuardUrl,
+    homeV3Url,
     serviceWorkerUrl,
+    workflowRuntimeBridgeUrl,
+    workflowRuntimeModules: productionWorkflowModules,
     cacheControl: {
       index: indexResponse.headers.get('cache-control'),
       privacyGuard: privacyGuardResponse.headers.get('cache-control'),
       submitGuard: submitGuardResponse.headers.get('cache-control'),
-      serviceWorker: serviceWorkerResponse.headers.get('cache-control')
+      homeV3: homeV3Response.headers.get('cache-control'),
+      serviceWorker: serviceWorkerResponse.headers.get('cache-control'),
+      workflowRuntimeBridge: runtimeBridgeResponse.headers.get('cache-control')
     },
     etag: {
       privacyGuard: privacyGuardResponse.headers.get('etag'),
       submitGuard: submitGuardResponse.headers.get('etag'),
-      serviceWorker: serviceWorkerResponse.headers.get('etag')
+      homeV3: homeV3Response.headers.get('etag'),
+      serviceWorker: serviceWorkerResponse.headers.get('etag'),
+      workflowRuntimeBridge: runtimeBridgeResponse.headers.get('etag')
     }
   },
   checks: {
@@ -147,8 +196,14 @@ console.log(JSON.stringify({
     privacySubmitGuardVersion: 'PASS',
     privacyGuardProductionBytes: 'PASS',
     privacySubmitGuardProductionBytes: 'PASS',
+    homeV3ProductionBytes: 'PASS',
     serviceWorkerProductionBytes: 'PASS',
     serviceWorkerNoSecurityPrecache: 'PASS',
+    workflowRuntimeBridgeProductionBytes: 'PASS',
+    workflowRuntimeModulesProductionBytes: `${workflowRuntimeFiles.length} PASS`,
+    workflowPrivacyBeforeRuntimeMarkers: 'PASS',
+    workflowNoRawEvidenceMarkers: 'PASS',
+    workflowNoAutoApprovalMarkers: 'PASS',
     issue73FailClosedMarkers: 'PASS',
     facebookLink: 'PASS',
     trustPage: 'PASS',
