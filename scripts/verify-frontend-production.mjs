@@ -11,6 +11,7 @@ const sitemapUrl = page('sitemap.xml');
 const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
+const RELEASE = Object.freeze({ home:'6.1.0', homeCss:'2.4.5', serviceWorker:'6.1.0', budgetInputRuntime:'1.5.0' });
 
 const runtimeSourceFiles = Object.freeze([
   'budget-balance-validator.js','budget-official-evidence-adapter.js','budget-official-document-parser.js','budget-document-content-ingestion.js',
@@ -22,36 +23,39 @@ const budgetBrowserAssets = Object.freeze([
   'assets/js/core/budget-official-source-runtime-v1.js',
   'assets/js/core/budget-official-document-connector-v1.js',
   'assets/js/core/budget-browser-input-runtime-v1.js',
+  'assets/js/core/budget-browser-review-ui-v1.js',
   'assets/js/core/budget-office-export-v1.js',
   'assets/js/core/official-source-registry.js'
 ]);
 
-const [localIndex, localHome, localPrivacyGuard, localSubmitGuard, localServiceWorker, localRuntimeBridge, ...rest] = await Promise.all([
+const [localIndex, localHomeSource, localPrivacyGuard, localSubmitGuard, localServiceWorker, localRuntimeBridge, localHomeCss, ...rest] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/home-v3.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/core/privacy-guard.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/core/privacy-submit-guard.js', import.meta.url),'utf8'),
   readFile(new URL('../service-worker.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/core/government-workflow-runtime-v5.js', import.meta.url),'utf8'),
+  readFile(new URL('../assets/css/home-v3.css', import.meta.url),'utf8'),
   ...runtimeSourceFiles.map(file => readFile(new URL(`../src/${file}`, import.meta.url),'utf8')),
   ...budgetBrowserAssets.map(file => readFile(new URL(`../${file}`, import.meta.url),'utf8'))
 ]);
 const localRuntimeContents = rest.slice(0,runtimeSourceFiles.length);
 const localBudgetAssets = rest.slice(runtimeSourceFiles.length);
+const localHome = localHomeSource.replace(/budget-browser-input-runtime-v1\.js\?v=[^'"\s)]+/g, `budget-browser-input-runtime-v1.js?v=${RELEASE.budgetInputRuntime}`);
 
 const expectedPrivacyGuard = localIndex.match(/assets\/js\/core\/privacy-guard\.js\?v=[^"'\s<]+/)?.[0];
 const expectedSubmitGuard = localIndex.match(/assets\/js\/core\/privacy-submit-guard\.js\?v=[^"'\s<]+/)?.[0];
-const expectedHome = localIndex.match(/assets\/js\/home-v3\.js\?v=[^"'\s<]+/)?.[0];
-assert.ok(expectedPrivacyGuard); assert.ok(expectedSubmitGuard); assert.ok(expectedHome);
+const expectedHome = `assets/js/home-v3.js?v=${RELEASE.home}`;
+assert.ok(expectedPrivacyGuard); assert.ok(expectedSubmitGuard);
 
 async function fetchText(url) {
-  const response = await fetch(url,{redirect:'follow',headers:{'cache-control':'no-cache',pragma:'no-cache'}});
+  const response = await fetch(url,{redirect:'follow',headers:{'cache-control':'no-cache, no-store',pragma:'no-cache'}});
   assert.equal(response.ok,true,`${url}: HTTP ${response.status}`);
   return { response, text:await response.text() };
 }
 async function exactProduction(path, localContent) {
   const result = await fetchText(page(path));
-  assert.equal(result.text,localContent,`production ${path} is stale or differs from committed branch`);
+  assert.equal(result.text,localContent,`production ${path} is stale or differs from committed release candidate`);
   return result;
 }
 
@@ -60,9 +64,10 @@ assert.equal(index.includes(expectedPrivacyGuard),true);
 assert.equal(index.includes(expectedSubmitGuard),true);
 assert.equal(index.includes(expectedHome),true);
 assert.match(index,/Public Beta|Internal Pilot/);
-assert.match(index,/assets\/js\/home-v3\.js\?v=6\.0\.0/);
+assert.match(index,new RegExp(`assets/js/home-v3\\.js\\?v=${RELEASE.home.replaceAll('.','\\.')}`));
+assert.match(index,new RegExp(`assets/css/home-v3\\.css\\?v=${RELEASE.homeCss.replaceAll('.','\\.')}`));
 assert.match(index,/official-source-registry\.js\?v=2\.4\.0/);
-assert.match(index,/service-worker\.js\?v=6\.0\.0/);
+assert.match(index,new RegExp(`service-worker\\.js\\?v=${RELEASE.serviceWorker.replaceAll('.','\\.')}`));
 assert.match(index,/data-prompt="ทำร่างงบปี 70 อบจ\.พะเยา"/);
 assert.match(index,/https:\/\/www\.facebook\.com\/GovPromptThailandAI/);
 assert.match(index,/privacy-notice\.html/);
@@ -71,7 +76,8 @@ assert.equal(indexResponse.url.startsWith('https://'),true);
 const privacy = await exactProduction(expectedPrivacyGuard,localPrivacyGuard);
 const submit = await exactProduction(expectedSubmitGuard,localSubmitGuard);
 const home = await exactProduction(expectedHome,localHome);
-const sw = await exactProduction('service-worker.js',localServiceWorker);
+const css = await exactProduction(`assets/css/home-v3.css?v=${RELEASE.homeCss}`,localHomeCss);
+const sw = await exactProduction(`service-worker.js?v=${RELEASE.serviceWorker}`,localServiceWorker);
 const runtimeBridge = await exactProduction('assets/js/core/government-workflow-runtime-v5.js?v=5.1.0',localRuntimeBridge);
 
 assert.match(privacy.text,/sanitizeExternalContent/);
@@ -86,9 +92,11 @@ assert.match(home.text,/prepareExternalPrompt\(text\)/);
 assert.match(home.text,/government-workflow-runtime-v5\.js\?v=5\.1\.0/);
 assert.match(home.text,/budget-official-source-runtime-v1\.js\?v=2\.0\.0/);
 assert.match(home.text,/budget-official-document-connector-v1\.js\?v=1\.0\.0/);
-assert.match(home.text,/budget-browser-input-runtime-v1\.js\?v=1\.0\.0/);
+assert.match(home.text,new RegExp(`budget-browser-input-runtime-v1\\.js\\?v=${RELEASE.budgetInputRuntime.replaceAll('.','\\.')}`));
 assert.match(home.text,/budget-office-export-v1\.js\?v=1\.0\.0/);
 assert.match(home.text,/downloadBudgetOfficeFile/);
+assert.match(css.text,/budget-review-table/);
+assert.match(css.text,/budget-review-dialog/);
 assert.match(runtimeBridge.text,/WORKFLOW_RUNTIME_BRIDGE_VERSION = '5\.0'/);
 assert.match(runtimeBridge.text,/rawEvidenceValuesReturned: false/);
 assert.match(runtimeBridge.text,/autoApprovalAllowed: false/);
@@ -109,6 +117,7 @@ for (let i=0;i<budgetBrowserAssets.length;i+=1) {
 assert.match(sw.text,/request\.mode === 'navigate'/);
 assert.match(sw.text,/fetch\(request\)/);
 assert.equal(/privacy-(?:submit-)?guard\.js/i.test(sw.text),false);
+assert.equal(/budget-browser-(?:input|review)|budget-file-parser/i.test(sw.text),false);
 
 const { response:trustResponse,text:trust } = await fetchText(trustUrl);
 assert.match(trust,/Internal Pilot|Public Beta/); assert.match(trust,/ผู้ให้บริการค้นเว็บภายนอก|search provider|Tavily/i); assert.match(trust,/data-minimized|Data minimization|ลดข้อมูล/i); assert.equal(trustResponse.url.startsWith('https://'),true);
@@ -126,10 +135,11 @@ assert.match(admin,/<meta name="robots" content="noindex,nofollow,noarchive"\s*\
 
 console.log(JSON.stringify({
   frontend,
+  release:RELEASE,
   checks:{
-    https:'PASS', privacyBoundary:'PASS', issue73FailClosedMarkers:'PASS', homeBudgetRuntime:'PASS', officeExports:'PASS',
+    https:'PASS', privacyBoundary:'PASS', issue73FailClosedMarkers:'PASS', homeBudgetRuntime:'PASS', officeExports:'PASS', editableBudgetReview:'PASS',
     workflowRuntimeBridge:'PASS', workflowRuntimeModules:`${runtimeSourceFiles.length} PASS`, budgetBrowserAssets:`${budgetBrowserAssets.length} PASS`,
-    serviceWorker:'PASS', trustPage:'PASS', privacyNotice:'PASS', robotsPolicy:'PASS', sitemapBoundary:'PASS', llmsPolicy:'PASS', adminNoindexShell:'PASS'
+    releaseCacheBust:'PASS', serviceWorkerNetworkFirst:'PASS', trustPage:'PASS', privacyNotice:'PASS', robotsPolicy:'PASS', sitemapBoundary:'PASS', llmsPolicy:'PASS', adminNoindexShell:'PASS'
   },
-  production:{ runtimeProduction, budgetProduction, etag:{privacy:privacy.response.headers.get('etag'),submit:submit.response.headers.get('etag'),home:home.response.headers.get('etag'),serviceWorker:sw.response.headers.get('etag')} }
+  production:{ runtimeProduction, budgetProduction, etag:{privacy:privacy.response.headers.get('etag'),submit:submit.response.headers.get('etag'),home:home.response.headers.get('etag'),css:css.response.headers.get('etag'),serviceWorker:sw.response.headers.get('etag')} }
 },null,2));
