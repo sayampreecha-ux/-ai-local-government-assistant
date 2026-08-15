@@ -1,11 +1,12 @@
 import { prepareBudgetBrowserFile } from '../../../src/budget-browser-file-ingestion.js';
 import { parseBudgetBrowserFile } from '../../../src/budget-browser-file-parser.js';
+import { createParsedBudgetReview } from '../../../src/budget-file-parser-review.js';
 
-export const BUDGET_BROWSER_INPUT_RUNTIME_VERSION = '1.0';
+export const BUDGET_BROWSER_INPUT_RUNTIME_VERSION = '1.1';
 
-export async function prepareBudgetInternalInputsFromFiles(files = [], { targetYear = null, purposeByIndex = {} } = {}) {
+export async function prepareBudgetInternalInputsFromFiles(files = [], { targetYear = null, purposeByIndex = {}, confirmedInputs = {} } = {}) {
   const list = Array.isArray(files) ? files : Array.from(files || []);
-  const inputs = {};
+  const inputs = { ...(confirmedInputs || {}) };
   const results = [];
   for (let index = 0; index < list.length; index += 1) {
     const file = list[index];
@@ -18,28 +19,40 @@ export async function prepareBudgetInternalInputsFromFiles(files = [], { targetY
       continue;
     }
     const parsed = await parseBudgetBrowserFile(file, prepared, { targetYear });
-    results.push(Object.freeze({ index, status: parsed.status, purpose: prepared.purpose, errors: Object.freeze(parsed.errors || []) }));
-    if (parsed.status !== 'ready') continue;
-    inputs[prepared.purpose] = Object.freeze({
-      sourceType: 'uploaded-document',
-      sourceRef: prepared.file.safeRef,
-      observedAt: prepared.file.observedAt,
-      status: 'verified',
+    if (parsed.status !== 'ready') {
+      results.push(Object.freeze({ index, status: parsed.status, purpose: prepared.purpose, errors: Object.freeze(parsed.errors || []) }));
+      continue;
+    }
+    const review = createParsedBudgetReview({
+      fileRef: prepared.file.safeRef,
       contentHash: prepared.file.contentHash,
-      data: parsed.data
+      purpose: prepared.purpose,
+      parsed: parsed.data,
+      parser: parsed.governance?.parserVersion || 'budget-browser-file-parser'
     });
+    results.push(Object.freeze({
+      index,
+      status: review.status,
+      purpose: prepared.purpose,
+      review,
+      errors: Object.freeze(parsed.errors || [])
+    }));
   }
+  const pendingReviews = results.filter(result => result.review && !result.review.humanConfirmed);
   return Object.freeze({
     runtimeVersion: BUDGET_BROWSER_INPUT_RUNTIME_VERSION,
-    status: Object.keys(inputs).length ? (results.some(result => result.status !== 'ready') ? 'partial' : 'ready') : (list.length ? 'blocked-no-structured-input' : 'empty'),
+    status: pendingReviews.length ? 'awaiting-human-confirmation' : (Object.keys(inputs).length ? 'ready' : (list.length ? 'blocked-no-structured-input' : 'empty')),
     inputs: Object.freeze(inputs),
     results: Object.freeze(results),
+    pendingReviews: Object.freeze(pendingReviews.map(result => result.review)),
     governance: Object.freeze({
       filesRemainInBrowser: true,
       rawFilenameNotRetainedInEvidence: true,
       localHashBeforeParse: true,
       deterministicStructuredParseRequired: true,
-      unsupportedFilesFailClosed: true
+      unsupportedFilesFailClosed: true,
+      parserOutputIsNotEvidence: true,
+      humanConfirmationRequiredBeforePromotion: true
     })
   });
 }
