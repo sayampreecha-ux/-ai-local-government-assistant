@@ -21,7 +21,7 @@ await page.goto(url.toString(),{waitUntil:'domcontentloaded',timeout:30_000});
 await page.waitForFunction(()=>document.readyState==='complete' && document.getElementById('chatForm')?.dataset?.privacySubmitGuard==='3' && typeof window.GovPromptCore?.officialSearchConnector?.search==='function',undefined,{timeout:20_000});
 
 // Keep production verification organization-neutral: never inject a real organization/place name into the visible chat surface.
-const prompt='จัดทำงบประมาณปี 2570';
+const prompt='จัดทำร่างงบประมาณ';
 await page.locator('#promptInput').fill(prompt);
 await page.locator('#chatForm .send-button').click();
 await page.locator('.budget-runtime-result').waitFor({state:'visible',timeout:120_000});
