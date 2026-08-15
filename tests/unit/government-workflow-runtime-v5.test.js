@@ -61,7 +61,7 @@ test('home runtime integration sanitizes before dynamic workflow import and has 
     readFile('assets/js/home-v3.js', 'utf8'),
     readFile('index.html', 'utf8')
   ]);
-  const functionStart = source.indexOf('async function prepareWorkflowRuntime(text)');
+  const functionStart = source.indexOf('async function prepareWorkflowRuntime(');
   const privacyCall = source.indexOf('prepareExternalPrompt(text)', functionStart);
   const runtimeImport = source.indexOf("import('./core/government-workflow-runtime-v5.js?v=5.0.0')", functionStart);
   assert.ok(functionStart >= 0);
@@ -77,6 +77,8 @@ test('production build copies the exact browser-safe workflow runtime dependency
   const source = await readFile('scripts/build-static.mjs', 'utf8');
   for (const file of [
     'budget-balance-validator.js',
+    'budget-official-evidence-adapter.js',
+    'budget-artifact-factory.js',
     'government-workflow-engine.js',
     'government-workflow-state-machine-v2.js',
     'government-deliverable-contracts-v3.js',
@@ -92,7 +94,10 @@ test('runtime integration and post-deploy verifier are syntactically valid befor
   for (const file of [
     'assets/js/home-v3.js',
     'assets/js/core/government-workflow-runtime-v5.js',
+    'assets/js/core/budget-official-source-runtime-v1.js',
     'src/budget-balance-validator.js',
+    'src/budget-official-evidence-adapter.js',
+    'src/budget-artifact-factory.js',
     'src/government-workflow-engine.js',
     'src/government-workflow-state-machine-v2.js',
     'scripts/build-static.mjs',
