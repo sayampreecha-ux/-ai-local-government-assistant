@@ -48,12 +48,19 @@ test('verified and estimated internal inputs retain explicit evidence status and
 });
 
 test('full runtime can reach governed artifacts when official documents and internal budget inputs are all supplied', async () => {
-  const connector = { search: async query => query.includes('รายรับจริง') ? liveSearch(query, 'https://a.go.th/revenue') : query.includes('แผนพัฒนาท้องถิ่น') ? liveSearch(query, 'https://a.go.th/plan') : liveSearch(query, 'https://a.go.th/rule') };
+  const connector = { search: async query => query.includes('รายรับจริง')
+    ? liveSearch(query, 'https://a.go.th/revenue')
+    : query.includes('แผนพัฒนาท้องถิ่น')
+      ? liveSearch(query, 'https://a.go.th/plan')
+      : query.includes('ข้อบัญญัติงบประมาณรายจ่าย')
+        ? liveSearch(query, 'https://a.go.th/baseline')
+        : liveSearch(query, 'https://a.go.th/rule') };
   const result = await executeBudgetOfficialSourceSearch({
     query: 'ทำร่างงบปี 70 อบจ.พะเยา',
     workflowView: { workflowIds: ['gov.budget-draft'] },
     connector,
     readDocuments: {
+      baselineBudget: read('https://a.go.th/baseline', { fiscalYear: 2569, total: 100 }),
       latestRevenueActuals: read('https://a.go.th/revenue', { total: 100 }),
       targetYearPlan: read('https://a.go.th/plan', { targetYear: 2570, projects: ['P1'] })
     },
