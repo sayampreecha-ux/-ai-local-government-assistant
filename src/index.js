@@ -36,28 +36,11 @@ export const authorizeKnowledge = (definition, principal, payload) =>
 export const observability = new Observability(contextManager);
 
 export { ContextManager, MODULES } from "./context-manager.js";
-export {
-  TransactionRouter,
-  DEFAULT_DEFINITIONS,
-  DEFAULT_OPTIONS,
-} from "./transaction-router.js";
-export {
-  PromptRegistry,
-  DEFAULT_PROMPTS,
-  validatePromptDefinition,
-} from "./prompt-registry.js";
-export {
-  KnowledgeRegistry,
-  KNOWLEDGE_TYPES,
-  validateKnowledgeDefinition,
-} from "./knowledge-registry.js";
-export {
-  GovernanceLayer,
-  POLICY_EFFECTS,
-  SAFETY_EFFECTS,
-  validatePolicy,
-  validateSafetyRule,
-} from "./governance-layer.js";
+export { TransactionRouter, DEFAULT_DEFINITIONS, DEFAULT_OPTIONS } from "./transaction-router.js";
+export { PromptRegistry, DEFAULT_PROMPTS, validatePromptDefinition } from "./prompt-registry.js";
+export { KnowledgeRegistry, KNOWLEDGE_TYPES, validateKnowledgeDefinition } from "./knowledge-registry.js";
+export { GovernanceLayer, POLICY_EFFECTS, SAFETY_EFFECTS, validatePolicy, validateSafetyRule } from "./governance-layer.js";
 export { Observability, LOG_LEVELS } from "./observability.js";
+export { WORKFLOWS, detectGovernmentWorkflows, runGovernmentWorkflow } from "./government-workflow-suite.js";
 export * from "./modules/gp001/index.js";
 export default contextManager;
