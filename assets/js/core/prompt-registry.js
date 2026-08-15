@@ -130,6 +130,8 @@
     installPromptQualityStandard
   });
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installPromptQualityStandard, { once: true });
-  else installPromptQualityStandard();
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installPromptQualityStandard, { once: true });
+    else installPromptQualityStandard();
+  }
 })();
