@@ -1,9 +1,9 @@
-export const BUDGET_OFFICIAL_EVIDENCE_ADAPTER_VERSION = '1.0';
+export const BUDGET_OFFICIAL_EVIDENCE_ADAPTER_VERSION = '1.1';
 
 const SEARCH_EVIDENCE_KEYS = Object.freeze([
   'currentBudgetRule',
-  'latestRevenueActuals',
-  'targetYearPlan'
+  'latestRevenueActualsSource',
+  'targetYearPlanSource'
 ]);
 
 const text = (value) => String(value ?? '').trim();
@@ -36,18 +36,25 @@ function verifiedSearchEvidence(key, searchResult, searchedAt = null) {
     fresh: true,
     current: true,
     provenance: Object.freeze({
-      sourceType: 'official-search',
+      sourceType: 'official-search-pointer',
       searchedAt: text(searchResult.searchedAt || searchedAt),
       provider: text(searchResult.provider),
       sourceUrl: text(source.sourceUrl),
-      query: text(searchResult?.plan?.originalQuery || searchResult?.plan?.query)
+      query: text(searchResult?.plan?.originalQuery || searchResult?.plan?.query),
+      contentReadAndVerified: false
     })
   });
 }
 
 export function buildBudgetOfficialEvidenceFromSearchMap(searchMap = {}, options = {}) {
+  const mapping = Object.freeze({
+    currentBudgetRule: searchMap?.currentBudgetRule,
+    latestRevenueActualsSource: searchMap?.latestRevenueActualsSource || searchMap?.latestRevenueActuals,
+    targetYearPlanSource: searchMap?.targetYearPlanSource || searchMap?.targetYearPlan
+  });
+
   const evidence = SEARCH_EVIDENCE_KEYS
-    .map((key) => verifiedSearchEvidence(key, searchMap?.[key], options.searchedAt || null))
+    .map((key) => verifiedSearchEvidence(key, mapping[key], options.searchedAt || null))
     .filter(Boolean);
 
   const acceptedKeys = evidence.map((item) => item.key);
@@ -60,7 +67,8 @@ export function buildBudgetOfficialEvidenceFromSearchMap(searchMap = {}, options
           sourceUrl: item.value.sourceUrl,
           documentTitle: item.value.documentTitle,
           sourceName: item.value.sourceName,
-          documentDate: item.value.documentDate
+          documentDate: item.value.documentDate,
+          contentReadAndVerified: false
         }))),
         official: false,
         verified: true,
@@ -76,7 +84,12 @@ export function buildBudgetOfficialEvidenceFromSearchMap(searchMap = {}, options
     evidence: Object.freeze(sourceRegister ? [...evidence, sourceRegister] : evidence),
     acceptedKeys: Object.freeze(acceptedKeys),
     missingKeys: Object.freeze(missingKeys),
-    failClosed: missingKeys.length > 0
+    failClosed: missingKeys.length > 0,
+    governance: Object.freeze({
+      searchMetadataDoesNotEqualDocumentContent: true,
+      latestRevenueActualsMustComeFromReadData: true,
+      targetYearPlanMustComeFromReadData: true
+    })
   });
 }
 
