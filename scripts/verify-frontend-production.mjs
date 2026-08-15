@@ -46,9 +46,6 @@ assert.match(index, /<script type="application\/ld\+json">/);
 assert.match(index, /llms\.txt/);
 assert.equal(indexResponse.url.startsWith('https://'), true, 'frontend must stay on HTTPS');
 
-// Issue #73 production proof: fetch the exact browser-referenced security assets
-// from GitHub Pages and require byte-for-byte equality with the checked-out main
-// commit. This catches stale CDN/browser-facing asset versions after deployment.
 const privacyGuardUrl = new URL(expectedPrivacyGuard, frontend).toString();
 const submitGuardUrl = new URL(expectedSubmitGuard, frontend).toString();
 const { response: privacyGuardResponse, text: productionPrivacyGuard } = await fetchText(privacyGuardUrl);
@@ -61,17 +58,14 @@ assert.equal(productionServiceWorker, localServiceWorker, 'production service-wo
 
 assert.match(productionPrivacyGuard, /sanitizeExternalContent/);
 assert.match(productionPrivacyGuard, /รหัสผู้ป่วย\/HN\/AN/);
-assert.match(productionSubmitGuard, /privacySubmitGuard === '2'/);
+assert.match(productionSubmitGuard, /privacySubmitGuard === '3'/);
 assert.match(productionSubmitGuard, /stopImmediatePropagation/);
-assert.match(productionSubmitGuard, /applyFailSafeRedactions/);
-assert.match(productionSubmitGuard, /replaced synchronously in capture phase/);
-assert.match(productionSubmitGuard, /Home\/UI\/router\/search\/history/);
-assert.match(productionSubmitGuard, /ข้อมูลดิบถูกปกปิดก่อนถึงหน้าจอ/);
+assert.match(productionSubmitGuard, /detectFailSafeRisks/);
+assert.match(productionSubmitGuard, /EVERY detected PII\/sensitive signal fails closed in capture phase/);
+assert.match(productionSubmitGuard, /Home\/UI\/history\/router\/search\/Worker\/API/);
+assert.match(productionSubmitGuard, /บล็อกข้อมูลส่วนบุคคล\/ข้อมูลอ่อนไหวก่อนประมวลผล/);
 assert.doesNotMatch(productionSubmitGuard, /requestSubmit\s*\(/, 'production privacy boundary must not depend on form re-submit');
 
-// The service worker must remain network-first for navigations and must not
-// precache Privacy Guard scripts, preventing an old security gate from being
-// pinned offline after a security deployment.
 assert.match(productionServiceWorker, /request\.mode === 'navigate'/);
 assert.match(productionServiceWorker, /fetch\(request\)/);
 assert.equal(/privacy-(?:submit-)?guard\.js/i.test(productionServiceWorker), false, 'service worker must not pin privacy guard assets in precache');
