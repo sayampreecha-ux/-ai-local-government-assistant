@@ -115,6 +115,33 @@
     });
   }
 
+  async function prepareWorkflowRuntime(text) {
+    const privacy = prepareExternalPrompt(text);
+    if (privacy.blocked || !privacy.safeText) {
+      return Object.freeze({ view: null, block: '', status: 'privacy-blocked' });
+    }
+    try {
+      const runtime = await import('./core/government-workflow-runtime-v5.js?v=5.0.0');
+      const view = runtime.buildWorkflowRuntimeView({ query: privacy.safeText });
+      return Object.freeze({
+        view,
+        block: runtime.buildWorkflowPromptBlock(view),
+        status: 'ready'
+      });
+    } catch {
+      return Object.freeze({ view: null, block: '', status: 'runtime-unavailable' });
+    }
+  }
+
+  function enrichPromptWithWorkflow(promptBundle, workflowRuntime) {
+    if (!workflowRuntime?.block) return promptBundle;
+    return Object.freeze({
+      ...promptBundle,
+      prompt: `${promptBundle.prompt}\n\n${workflowRuntime.block}`,
+      workflowRuntime: workflowRuntime.view
+    });
+  }
+
   function enrichPromptWithSearch(promptBundle, searchResult) {
     const results = searchResult?.evidence?.primaryResults || [];
     const evidenceLines = results.slice(0, 8).map((item, index) => [
@@ -149,6 +176,7 @@
   async function preparePrompt(text) {
     const core = requireCore();
     const safeAttachments = sanitizedAttachmentMetadata(core);
+    const workflowRuntimePromise = prepareWorkflowRuntime(text);
     const context = core.createSharedContext({
       facts: text,
       desiredOutput: text,
@@ -156,11 +184,17 @@
     });
     const route = core.routeTransaction(context);
     const promptBundle = core.createGovernmentPrompt({ question: text, route, context, attachments: safeAttachments });
-    const searchResult = await core.officialSearchConnector.search(text, { limitSources: 6, count: 10 });
+    const [searchResult, workflowRuntime] = await Promise.all([
+      core.officialSearchConnector.search(text, { limitSources: 6, count: 10 }),
+      workflowRuntimePromise
+    ]);
+    const withSearch = enrichPromptWithSearch(promptBundle, searchResult);
     return Object.freeze({
       route,
-      promptBundle: enrichPromptWithSearch(promptBundle, searchResult),
-      searchResult
+      promptBundle: enrichPromptWithWorkflow(withSearch, workflowRuntime),
+      searchResult,
+      workflowRuntime: workflowRuntime.view,
+      workflowRuntimeStatus: workflowRuntime.status
     });
   }
 
@@ -223,7 +257,7 @@
     section.append(details);
   }
 
-  function addRouteResult({ route, promptBundle, searchResult }) {
+  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime }) {
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
@@ -253,7 +287,10 @@
 
     label.textContent = `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
     heading.textContent = 'GovPrompt เตรียมคำสั่งงานและแหล่งค้นให้แล้ว';
-    description.textContent = `ระบบจัดคำถามไปที่ ${route.assistant.title} พร้อมค้น Primary Source ตรวจความใหม่ และส่งแหล่งอ้างอิงเข้า Prompt สำหรับวิเคราะห์ต่อ`;
+    const workflowSummary = workflowRuntime?.primary?.currentStage?.title
+      ? ` · Workflow: ${workflowRuntime.primary.currentStage.title} → ${workflowRuntime.primary.actionLabel}`
+      : '';
+    description.textContent = `ระบบจัดคำถามไปที่ ${route.assistant.title} พร้อมค้น Primary Source ตรวจความใหม่ และส่งแหล่งอ้างอิงเข้า Prompt สำหรับวิเคราะห์ต่อ${workflowSummary}`;
 
     if (searchResult?.mode === 'live' && searchResult?.evidence?.conclusionEligible) {
       status.textContent = '✅ ค้นสดและยืนยันหลักฐานปัจจุบันได้ตาม metadata ที่มี';
