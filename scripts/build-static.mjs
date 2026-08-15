@@ -10,6 +10,7 @@ const workflowRuntimeSourceFiles = Object.freeze([
   "budget-balance-validator.js",
   "budget-official-evidence-adapter.js",
   "budget-document-content-ingestion.js",
+  "budget-internal-evidence-ingestion.js",
   "budget-artifact-factory.js",
   "government-workflow-engine.js",
   "government-workflow-state-machine-v2.js",
