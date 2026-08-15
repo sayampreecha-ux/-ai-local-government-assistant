@@ -13,6 +13,7 @@ const ACTION_BY_STATUS = Object.freeze({
   'unknown-workflow': 'repair-workflow-classification',
   'blocked-invalid-state': 'repair-workflow-state',
   'blocked-invalid-transition': 'repair-workflow-state',
+  'blocked-legacy-state-migration': 'migrate-workflow-state',
   'blocked-missing-evidence': 'acquire-evidence',
   'blocked-official-source': 'verify-official-evidence',
   'blocked-risk-review': 'perform-risk-review',
@@ -67,12 +68,13 @@ function buildDeliverableWorkOrders(workflowId, stageId, execution) {
   }));
 }
 
-function actionForExecution(execution) {
-  return ACTION_BY_STATUS[execution?.status] || 'resolve-workflow-blocker';
+function actionForStatus(status) {
+  return ACTION_BY_STATUS[status] || 'resolve-workflow-blocker';
 }
 
-function nextInputsFor(execution) {
+function nextInputsFor(execution, legacyMigrationRequired = false) {
   return uniq([
+    ...(legacyMigrationRequired ? ['migrate-workflow-state'] : []),
     ...(execution?.nextRequestedInputs || []),
     ...(execution?.missingEvidence || []).map((key) => `evidence:${key}`),
     ...(execution?.missingOfficialEvidence || []).map((key) => `official-evidence:${key}`),
@@ -81,8 +83,8 @@ function nextInputsFor(execution) {
   ]);
 }
 
-function approvalRequestFor(workflowId, execution) {
-  if (execution?.status !== 'awaiting-human-approval' || !execution?.currentStage) return null;
+function approvalRequestFor(workflowId, execution, workflowStatus) {
+  if (workflowStatus !== 'awaiting-human-approval' || !execution?.currentStage) return null;
   return Object.freeze({
     workflowId,
     stageId: execution.currentStage.id,
@@ -92,8 +94,8 @@ function approvalRequestFor(workflowId, execution) {
   });
 }
 
-function riskWorkFor(workflowId, execution) {
-  if (execution?.status !== 'blocked-risk-review') return null;
+function riskWorkFor(workflowId, execution, workflowStatus) {
+  if (workflowStatus !== 'blocked-risk-review') return null;
   return Object.freeze({
     workflowId,
     stageId: execution?.currentStage?.id || null,
@@ -103,23 +105,25 @@ function riskWorkFor(workflowId, execution) {
   });
 }
 
-function safeExecutionSummary(execution) {
+function safeExecutionSummary(execution, workflowStatus) {
   return Object.freeze({
-    status: execution?.status || 'unknown',
+    status: workflowStatus || execution?.status || 'unknown',
     currentStage: safeStage(execution?.currentStage),
     completedStages: Object.freeze([...(execution?.completedStages || [])]),
     missingEvidence: Object.freeze([...(execution?.missingEvidence || [])]),
     missingOfficialEvidence: Object.freeze([...(execution?.missingOfficialEvidence || [])]),
     deliverablesReady: Object.freeze([...(execution?.deliverablesReady || [])]),
     unresolvedRiskCodes: Object.freeze((execution?.unresolvedRiskFindings || []).map((finding) => String(finding.code))),
-    failClosed: Boolean(execution?.governance?.failClosed)
+    failClosed: Boolean(execution?.governance?.failClosed) || workflowStatus === 'blocked-legacy-state-migration'
   });
 }
 
 export function buildGovernmentWorkOrderV4({ workflowId, state = null, completedStages = [], evidence = [], artifacts = [], input = {} } = {}) {
   const workflowArtifacts = scopedArtifacts(artifacts, workflowId);
   const execution = executeGovernmentWorkflowV3({ workflowId, state, completedStages, evidence, artifacts: workflowArtifacts, input });
-  const action = actionForExecution(execution);
+  const legacyMigrationRequired = !state && Array.isArray(completedStages) && completedStages.length > 0 && !['blocked-invalid-transition', 'unknown-workflow'].includes(execution?.status);
+  const workflowStatus = legacyMigrationRequired ? 'blocked-legacy-state-migration' : (execution?.status || 'unknown');
+  const action = actionForStatus(workflowStatus);
   const stageId = execution?.currentStage?.id || null;
   const stage = stageId ? stageDefinition(workflowId, stageId) : null;
   const deliverableWorkOrders = buildDeliverableWorkOrders(workflowId, stageId, execution);
@@ -129,7 +133,7 @@ export function buildGovernmentWorkOrderV4({ workflowId, state = null, completed
     orchestratorVersion: CASE_ORCHESTRATOR_VERSION,
     caseId: input?.caseId || state?.caseId || null,
     workflowId,
-    workflowStatus: execution?.status || 'unknown',
+    workflowStatus,
     action,
     currentStage: safeStage(stage || execution?.currentStage),
     completedStages: Object.freeze([...(execution?.completedStages || [])]),
@@ -137,11 +141,11 @@ export function buildGovernmentWorkOrderV4({ workflowId, state = null, completed
     missingEvidence: Object.freeze([...(execution?.missingEvidence || [])]),
     missingOfficialEvidence: Object.freeze([...(execution?.missingOfficialEvidence || [])]),
     deliverableWorkOrders: Object.freeze(deliverableWorkOrders),
-    approvalRequest: approvalRequestFor(workflowId, execution),
-    riskWork: riskWorkFor(workflowId, execution),
+    approvalRequest: approvalRequestFor(workflowId, execution, workflowStatus),
+    riskWork: riskWorkFor(workflowId, execution, workflowStatus),
     handoffs: Object.freeze(handoffs),
-    nextInputs: Object.freeze(nextInputsFor(execution)),
-    execution: safeExecutionSummary(execution),
+    nextInputs: Object.freeze(nextInputsFor(execution, legacyMigrationRequired)),
+    execution: safeExecutionSummary(execution, workflowStatus),
     governance: Object.freeze({
       failClosed: Boolean(execution?.governance?.failClosed) || !['transition-ready', 'complete'].includes(action),
       noFabrication: true,
@@ -150,7 +154,8 @@ export function buildGovernmentWorkOrderV4({ workflowId, state = null, completed
       humanApprovalRequiredWhenDeclared: true,
       autoApprovalAllowed: false,
       deliverableContractsRequired: true,
-      auditTrailRequired: true
+      auditTrailRequired: true,
+      legacyStateMigrationRequired
     })
   });
 }
