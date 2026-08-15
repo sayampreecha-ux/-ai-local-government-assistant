@@ -98,7 +98,7 @@
     if (!section || section.querySelector('.simple-handoff-guide')) return;
     const guide = document.createElement('p');
     guide.className = 'simple-handoff-guide';
-    guide.innerHTML = '<strong>ทำต่อแค่ 3 ขั้น:</strong> 1) กด “คัดลอกแล้วเปิด ChatGPT” 2) ใน ChatGPT แตะช่องข้อความแล้วกด “วาง” 3) กดส่ง<br><small>ถ้ามีไฟล์ ให้แนบไฟล์ใน ChatGPT แล้วพิมพ์ว่า “ใช้ไฟล์นี้ทำตามคำสั่งข้างบน”</small>';
+    guide.innerHTML = '<strong>ทำต่อแค่ 3 ขั้น:</strong> 1) กด “คัดลอกแล้วเปิดใน ChatGPT” 2) ใน ChatGPT แตะช่องข้อความแล้วกด “วาง” 3) กดส่ง<br><small>ถ้ามีไฟล์ ให้แนบไฟล์ใน ChatGPT แล้วพิมพ์ว่า “ใช้ไฟล์นี้ทำตามคำสั่งข้างบน”</small>';
     Object.assign(guide.style, { margin: '10px 0 12px', padding: '10px 12px', borderRadius: '12px', background: '#f3f7f5', lineHeight: '1.6' });
     if (heading) heading.after(guide); else section.prepend(guide);
   }
@@ -107,7 +107,7 @@
     const welcome = document.getElementById('welcome');
     if (!welcome) return;
     const intro = [...welcome.children].find(element => element.tagName === 'P' && !element.classList.contains('eyebrow'));
-    if (intro) intro.textContent = 'ใช้ง่าย 3 ขั้น: พิมพ์งาน → กด “คัดลอกแล้วเปิด ChatGPT” → วางใน ChatGPT แล้วกดส่ง';
+    if (intro) intro.textContent = 'ใช้ง่าย 3 ขั้น: พิมพ์งาน → กด “คัดลอกแล้วเปิดใน ChatGPT” → วางใน ChatGPT แล้วกดส่ง';
   }
 
   function simplifyAnswerCard(card) {
@@ -120,9 +120,9 @@
       let gemini = [...actions.querySelectorAll('button')].find(button => /Gemini/i.test(button.textContent));
       const copyButton = [...actions.querySelectorAll('button')].find(button => /คัดลอก\s*(?:Prompt|คำสั่ง)/i.test(button.textContent));
       if (!chatGPT) { chatGPT = document.createElement('button'); chatGPT.type = 'button'; actions.prepend(chatGPT); }
-      chatGPT.textContent = 'คัดลอกแล้วเปิด ChatGPT'; chatGPT.title = 'คัดลอกคำสั่ง แล้วเปิด ChatGPT เพื่อวางและกดส่ง'; chatGPT.classList.add('handoff-primary');
+      chatGPT.textContent = 'คัดลอกแล้วเปิดใน ChatGPT'; chatGPT.title = 'คัดลอกคำสั่ง แล้วเปิด ChatGPT เพื่อวางและกดส่ง'; chatGPT.classList.add('handoff-primary');
       if (!gemini) { gemini = document.createElement('button'); gemini.type = 'button'; chatGPT.after(gemini); }
-      gemini.textContent = 'คัดลอกแล้วเปิด Gemini'; gemini.title = 'คัดลอกคำสั่ง แล้วเปิด Gemini เพื่อวางและกดส่ง'; gemini.classList.add('handoff-primary');
+      gemini.textContent = 'คัดลอกแล้วเปิดใน Gemini'; gemini.title = 'คัดลอกคำสั่ง แล้วเปิด Gemini เพื่อวางและกดส่ง'; gemini.classList.add('handoff-primary');
       if (copyButton) { copyButton.textContent = 'คัดลอกคำสั่งอย่างเดียว'; copyButton.title = 'คัดลอกเฉพาะคำสั่งพร้อมใช้ที่ผ่าน Privacy Guard'; copyButton.classList.add('prompt-copy-secondary'); styleSecondaryCopyButton(copyButton); }
       actions.setAttribute('aria-label', 'เลือกวิธีนำคำสั่งไปใช้ต่อ');
     }
