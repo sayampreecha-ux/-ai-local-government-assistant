@@ -3,7 +3,7 @@ import {
   mergeEvidenceByKey
 } from '../../../src/budget-official-evidence-adapter.js';
 
-export const BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION = '1.0';
+export const BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION = '1.1';
 
 const safeText = (value, max = 240) => String(value || '').trim().slice(0, max);
 
@@ -45,8 +45,8 @@ export function buildBudgetOfficialSearchQueries(query) {
   const yearText = targetYear ? `ปีงบประมาณ ${targetYear}` : 'ปีงบประมาณเป้าหมาย';
   return Object.freeze({
     currentBudgetRule: `${org} หลักเกณฑ์ ระเบียบ หนังสือสั่งการ การจัดทำงบประมาณ ${yearText} ล่าสุด`,
-    latestRevenueActuals: `${org} รายงานรายรับจริง ผลการจัดเก็บรายได้ งบประมาณ ล่าสุด`,
-    targetYearPlan: `${org} แผนพัฒนาท้องถิ่น ${yearText} ฉบับล่าสุด`
+    latestRevenueActualsSource: `${org} รายงานรายรับจริง ผลการจัดเก็บรายได้ งบประมาณ ล่าสุด`,
+    targetYearPlanSource: `${org} แผนพัฒนาท้องถิ่น ${yearText} ฉบับล่าสุด`
   });
 }
 
@@ -91,7 +91,8 @@ export async function executeBudgetOfficialSourceSearch({ query = '', workflowVi
     acceptedKeys: adapted.acceptedKeys,
     missingKeys: adapted.missingKeys,
     searchMap,
-    failClosed: adapted.failClosed
+    failClosed: adapted.failClosed,
+    governance: adapted.governance
   });
 }
 
