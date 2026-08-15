@@ -118,7 +118,7 @@
       [...actions.children].forEach(control => { if (/^เปิดแบบฟอร์ม\b/i.test(String(control.textContent || '').trim())) control.remove(); });
       let chatGPT = [...actions.querySelectorAll('button')].find(button => /ChatGPT/i.test(button.textContent));
       let gemini = [...actions.querySelectorAll('button')].find(button => /Gemini/i.test(button.textContent));
-      const copyButton = [...actions.querySelectorAll('button')].find(button => /คัดลอก (?:Prompt|คำสั่ง)/i.test(button.textContent));
+      const copyButton = [...actions.querySelectorAll('button')].find(button => /คัดลอก\s*(?:Prompt|คำสั่ง)/i.test(button.textContent));
       if (!chatGPT) { chatGPT = document.createElement('button'); chatGPT.type = 'button'; actions.prepend(chatGPT); }
       chatGPT.textContent = 'คัดลอกแล้วเปิด ChatGPT'; chatGPT.title = 'คัดลอกคำสั่ง แล้วเปิด ChatGPT เพื่อวางและกดส่ง'; chatGPT.classList.add('handoff-primary');
       if (!gemini) { gemini = document.createElement('button'); gemini.type = 'button'; chatGPT.after(gemini); }
@@ -148,7 +148,7 @@
     const control = event.target.closest?.('.answer-actions button'); if (!control) return;
     const card = control.closest('.answer-card'); if (!card) return;
     const label = String(control.textContent || '').trim();
-    if (!/ChatGPT|Gemini|คัดลอก (?:Prompt|คำสั่ง)/i.test(label)) return;
+    if (!/ChatGPT|Gemini|คัดลอก\s*(?:Prompt|คำสั่ง)/i.test(label)) return;
     event.preventDefault(); event.stopImmediatePropagation();
     if (/ChatGPT/i.test(label)) void handoffTo(card, 'chatgpt'); else if (/Gemini/i.test(label)) void handoffTo(card, 'gemini'); else void handoffTo(card, 'copy');
   }, true);
