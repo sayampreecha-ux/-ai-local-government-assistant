@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "language": "th-TH",
+  "pii_policy": "synthetic-only",
+  "total_cases": 100,
+  "domains": [
+    {"domain":"procurement_tor","count":20,"case_ids":"PROC-001..020"},
+    {"domain":"finance_disbursement","count":15,"case_ids":"FIN-001..015"},
+    {"domain":"personnel","count":15,"case_ids":"HR-001..015"},
+    {"domain":"correspondence_admin","count":10,"case_ids":"DOC-001..010"},
+    {"domain":"law_local_council","count":10,"case_ids":"LAW-001..010"},
+    {"domain":"public_health_rph","count":10,"case_ids":"HLT-001..010"},
+    {"domain":"engineering_infrastructure","count":10,"case_ids":"ENG-001..010"},
+    {"domain":"pr_general_admin","count":10,"case_ids":"PR-001..010"}
+  ],
+  "difficulty_mix": {"routine":35,"ambiguous":25,"high_risk":20,"insufficient_information":10,"freshness_required":10},
+  "required_case_fields": ["id","domain","difficulty","question","expected_behaviors","critical_failures"],
+  "execution": {"blind_ab":true,"randomize_order":true,"same_model":true,"same_tool_access":true,"raw_user_question_identical":true},
+  "thresholds": {"minimum_cases":100,"mean_advantage_points":10,"minimum_win_rate":0.65,"maximum_govprompt_critical_failure_rate":0.02}
+}
