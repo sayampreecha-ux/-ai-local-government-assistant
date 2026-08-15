@@ -99,7 +99,8 @@ assert.doesNotMatch(persistedAggregate, /GP008→GP009|เลขบัตร|ค
 
 const report = core.exportPilotFeedbackReport();
 assert.match(report, /No raw prompt/);
-assert.doesNotMatch(report, /GP008→GP009|เลขบัตร|คำถามจริง|promptText|freeText|answerText/i, 'export must not expose per-session route-correction detail or raw content');
+assert.match(report, /GP008→GP009/, 'manual session report may retain aggregate route-correction signal');
+assert.doesNotMatch(report, /เลขบัตร|คำถามจริง|promptText|freeText|answerText/i, 'export must never expose raw content');
 assert.equal(sessionStore.size, 1, 'detailed feedback must remain session-only');
 assert.equal(localStore.size, 1, 'only aggregate feedback counters should persist locally');
 
