@@ -1,7 +1,8 @@
-export const BUDGET_OFFICIAL_EVIDENCE_ADAPTER_VERSION = '1.1';
+export const BUDGET_OFFICIAL_EVIDENCE_ADAPTER_VERSION = '1.2';
 
 const SEARCH_EVIDENCE_KEYS = Object.freeze([
   'currentBudgetRule',
+  'baselineBudgetSource',
   'latestRevenueActualsSource',
   'targetYearPlanSource'
 ]);
@@ -49,6 +50,7 @@ function verifiedSearchEvidence(key, searchResult, searchedAt = null) {
 export function buildBudgetOfficialEvidenceFromSearchMap(searchMap = {}, options = {}) {
   const mapping = Object.freeze({
     currentBudgetRule: searchMap?.currentBudgetRule,
+    baselineBudgetSource: searchMap?.baselineBudgetSource || searchMap?.baselineBudget,
     latestRevenueActualsSource: searchMap?.latestRevenueActualsSource || searchMap?.latestRevenueActuals,
     targetYearPlanSource: searchMap?.targetYearPlanSource || searchMap?.targetYearPlan
   });
@@ -87,6 +89,7 @@ export function buildBudgetOfficialEvidenceFromSearchMap(searchMap = {}, options
     failClosed: missingKeys.length > 0,
     governance: Object.freeze({
       searchMetadataDoesNotEqualDocumentContent: true,
+      baselineBudgetMustComeFromReadDataOrGovernedInternalEvidence: true,
       latestRevenueActualsMustComeFromReadData: true,
       targetYearPlanMustComeFromReadData: true
     })
