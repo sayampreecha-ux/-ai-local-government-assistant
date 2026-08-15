@@ -11,6 +11,7 @@
   const COVER_MEDIA_INTENT = /(?:ทำ|สร้าง|ออกแบบ|จัดทำ).{0,16}(?:ปก|หน้าปก|ปกสอบ|ปกคัดเลือก|ปกนำเสนอ|โปรไฟล์|ภาพแนะนำตัว|โปสเตอร์แนะนำตัว|อินโฟผลงาน).{0,35}(?:วิสัยทัศน์|ผลงาน|แนะนำตัว|ประวัติ|ผู้สมัคร|ผู้บริหาร|คัดเลือก|สอบ|องค์กร)?|(?:ปก|หน้าปก|ปกสอบ|ปกคัดเลือก|ปกนำเสนอ).{0,25}(?:วิสัยทัศน์|ผลงาน|แนะนำตัว|ประวัติ|ผู้สมัคร|ผู้บริหาร|คัดเลือก|สอบ|องค์กร)/i;
   const CONTENT_ONLY = /^(?:ช่วย)?(?:เขียน|ร่าง|สรุป|วิเคราะห์|ปรับถ้อยคำ|ตรวจ).{0,24}(?:วิสัยทัศน์|ผลงาน)|^(?:คำกล่าว|ร่างคำกล่าว).{0,30}(?:วิสัยทัศน์|ผลงาน)|(?:executive\s*summary|สรุปผู้บริหาร)/i;
   const FINANCE_DECISION = /(?:เบิก|เบิกจ่าย|ค่าใช้จ่าย|จ่าย|ใช้เงิน|ใช้งบ).{0,80}(?:ได้ไหม|ได้หรือไม่|ได้มั้ย|หรือไม่)/i;
+  const BUDGET_DRAFT_INTENT = /(?:^|\s)(?:ช่วย)?(?:ทำ|จัดทำ|ร่าง|ทำร่าง|เขียนร่าง).{0,10}(?:งบ|งบประมาณ)(?:\s*(?:ปี|พ\.?ศ\.?)\s*(?:25)?\d{2,4})?(?:\s|$)|(?:^|\s)(?:ร่างงบ|ทำงบ|จัดทำงบ)(?:\s*(?:ปี|พ\.?ศ\.?)\s*(?:25)?\d{2,4})?(?:\s|$)/i;
   const SPECIALIZED_DOMAIN = /(?:\btor\b|จัดซื้อจัดจ้าง|พัสดุ|ราคากลาง|เงินบำรุง|รพ\.?สต\.?|โรงพยาบาลส่งเสริมสุขภาพตำบล|เวชภัณฑ์|โรงเรียน|นักเรียน|ครู|ศูนย์พัฒนาเด็กเล็ก|ถนน|ก่อสร้าง)/i;
   const FRESHNESS_INTENT = /(?:ล่าสุด|ปัจจุบัน|ตอนนี้|ขณะนี้|ยังใช้|ยังมีผล|ฉบับใหม่|ฉบับล่าสุด|แก้ไขล่าสุด)/i;
 
@@ -59,6 +60,9 @@
   }
 
   function applyIntentFirstRouting(base, source) {
+    if (BUDGET_DRAFT_INTENT.test(source)) {
+      return correct(base, 'GP004', 'intent-first:budget-draft');
+    }
     if (FINANCE_DECISION.test(source) && !SPECIALIZED_DOMAIN.test(source)) {
       return correct(base, 'GP005', 'intent-first:financial-decision');
     }
@@ -153,7 +157,8 @@
     mediaPattern: MEDIA_INTENT,
     coverPattern: COVER_MEDIA_INTENT,
     contentOnlyPattern: CONTENT_ONLY,
-    financeDecisionPattern: FINANCE_DECISION
+    financeDecisionPattern: FINANCE_DECISION,
+    budgetDraftPattern: BUDGET_DRAFT_INTENT
   });
 
   if (!installIntentFirstSearchPlanner() && typeof window.addEventListener === 'function') {
