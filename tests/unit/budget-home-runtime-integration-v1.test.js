@@ -36,7 +36,7 @@ test('budget runtime receives privacy-sanitized query text rather than raw text'
 
 test('home offers Excel and Word only from ready governed structured budget artifact', async () => {
   const source = await readFile(HOME,'utf8');
-  assert.match(source,/artifact\.key === 'budget-structured-export' && artifact\?\.status === 'ready'/);
+  assert.match(source,/artifact\?\.key === 'budget-structured-export' && artifact\?\.status === 'ready'/);
   assert.match(source,/budget-office-export-v1\.js\?v=1\.0\.0/);
   assert.match(source,/ดาวน์โหลด Excel/);
   assert.match(source,/ดาวน์โหลด Word/);
