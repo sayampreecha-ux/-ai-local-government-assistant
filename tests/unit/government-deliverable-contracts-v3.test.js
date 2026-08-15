@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   DELIVERABLE_CONTRACT_SCHEMA_VERSION,
   getDeliverableContractV3,
+  getStageDeliverableRequirementsV3,
   validateDeliverableContractCoverageV3,
   validateDeliverableArtifactV3,
   validateStageDeliverablesV3,
@@ -13,6 +14,7 @@ import {
 import { runGovernmentWorkflow } from '../../src/government-workflow-suite.js';
 
 const AT = '2026-08-15T05:30:00.000Z';
+const LATER = '2026-08-15T05:31:00.000Z';
 const ev = (key, value = true, official = false, verified = false, extra = {}) => ({ key, value, official, verified, ...extra });
 
 function contentFor(profile) {
@@ -33,9 +35,13 @@ function artifactFor(workflowId, stageId, artifactKey, evidenceKeys = [], extra 
   assert.ok(contract, `missing contract for ${workflowId}:${stageId}:${artifactKey}`);
   return {
     key: artifactKey,
-    status: 'final',
+    contractId: contract.id,
     contractVersion: DELIVERABLE_CONTRACT_SCHEMA_VERSION,
+    workflowId,
+    stageId,
+    status: 'final',
     evidenceKeys: [...evidenceKeys],
+    unresolvedItems: [],
     provenance: {
       generatedBy: 'govprompt-v7',
       generatedAt: AT,
@@ -44,20 +50,25 @@ function artifactFor(workflowId, stageId, artifactKey, evidenceKeys = [], extra 
     validation: {
       validated: true,
       validator: 'workflow-validator-v3',
-      validatedAt: AT
+      validatedAt: AT,
+      errors: []
     },
     content: contentFor(contract.profile),
     ...extra
   };
 }
 
-test('deliverable contract registry covers every declared workflow deliverable', () => {
+test('deliverable contract registry covers every declared workflow deliverable with content requirements', () => {
   const coverage = validateDeliverableContractCoverageV3();
   assert.equal(coverage.valid, true);
   assert.equal(coverage.registeredCount, coverage.expectedCount);
   assert.ok(coverage.expectedCount > 50);
   assert.deepEqual(coverage.missing, []);
   assert.deepEqual(coverage.orphaned, []);
+  assert.deepEqual(coverage.invalidProfiles, []);
+  const requirements = getStageDeliverableRequirementsV3('gov.procurement', 'tor-and-competition-check');
+  assert.equal(requirements.length, 2);
+  assert.ok(requirements.every((contract) => contract.requiredContent.length > 0));
 });
 
 test('artifact name and ready status alone cannot satisfy a V3 deliverable contract', () => {
@@ -69,9 +80,19 @@ test('artifact name and ready status alone cannot satisfy a V3 deliverable contr
     evidence
   });
   assert.equal(result.valid, false);
+  assert.ok(result.errors.some((error) => error.startsWith('contractId:')));
   assert.ok(result.errors.some((error) => error.startsWith('contractVersion:')));
   assert.ok(result.errors.includes('provenance:object-required'));
   assert.ok(result.errors.includes('validation:object-required'));
+});
+
+test('contract binding prevents replaying an artifact into a different workflow or stage', () => {
+  const evidence = [ev('facts', 'facts')];
+  const legalArtifact = artifactFor('gov.legal', 'facts', 'fact-summary', ['facts']);
+  const replay = validateDeliverableArtifactV3({ workflowId: 'gov.correspondence', stageId: 'facts', artifact: legalArtifact, evidence });
+  assert.equal(replay.valid, false);
+  assert.ok(replay.errors.some((error) => error.startsWith('contractId:')));
+  assert.ok(replay.errors.includes('workflowId:gov.correspondence-required'));
 });
 
 test('required stage evidence must be linked by both artifact and provenance', () => {
@@ -92,7 +113,7 @@ test('artifact cannot cite unknown or invalid evidence keys', () => {
   assert.ok(result.errors.includes('provenance.sourceEvidenceKeys:ghostEvidence-unknown-or-invalid'));
 });
 
-test('content profile is enforced for drafts and sheets', () => {
+test('content profile is enforced for drafts, sheets, and completed checklists', () => {
   const draft = artifactFor('gov.correspondence', 'draft', 'official-letter-draft', [], { content: {} });
   const draftResult = validateDeliverableArtifactV3({ workflowId: 'gov.correspondence', stageId: 'draft', artifact: draft, evidence: [] });
   assert.equal(draftResult.valid, false);
@@ -104,9 +125,37 @@ test('content profile is enforced for drafts and sheets', () => {
   assert.equal(sheetResult.valid, false);
   assert.ok(sheetResult.errors.includes('content.rows:non-empty-array-required'));
   assert.ok(sheetResult.errors.includes('content.methodology-or-basis:required'));
+
+  const checklist = artifactFor('gov.procurement', 'approval-and-publication', 'approval-publication-checklist', ['approvalAuthority', 'approvedDocuments'], { content: { items: [{ id: 'C1', status: 'pending' }] } });
+  const checklistResult = validateDeliverableArtifactV3({ workflowId: 'gov.procurement', stageId: 'approval-and-publication', artifact: checklist, evidence: [ev('approvalAuthority', 'a'), ev('approvedDocuments', 'd')], input: { approvals: [{ id: 'A', workflowId: 'gov.procurement', stageId: 'approval-and-publication', approved: true }] } });
+  assert.equal(checklistResult.valid, false);
+  assert.ok(checklistResult.errors.includes('content.items:completed-non-empty-array-required'));
 });
 
-test('human-approval stage requires artifact sign-off tied to the exact approval ID', () => {
+test('unresolved items and validation errors prevent a final artifact from passing', () => {
+  const evidence = [ev('missionAuthority', 'authority', true, true), ev('needJustification', 'need')];
+  const artifact = artifactFor('gov.procurement', 'need-and-authority', 'need-memo', ['missionAuthority', 'needJustification'], {
+    unresolvedItems: ['ยังไม่ยืนยันผู้มีอำนาจ'],
+    validation: { validated: true, validator: 'workflow-validator-v3', validatedAt: AT, errors: ['missing-authority'] }
+  });
+  const result = validateDeliverableArtifactV3({ workflowId: 'gov.procurement', stageId: 'need-and-authority', artifact, evidence });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.includes('unresolvedItems:must-be-empty'));
+  assert.ok(result.errors.includes('validation.errors:must-be-empty'));
+});
+
+test('validation timestamp cannot precede artifact generation', () => {
+  const evidence = [ev('missionAuthority', 'authority', true, true), ev('needJustification', 'need')];
+  const artifact = artifactFor('gov.procurement', 'need-and-authority', 'need-memo', ['missionAuthority', 'needJustification'], {
+    provenance: { generatedBy: 'govprompt-v7', generatedAt: LATER, sourceEvidenceKeys: ['missionAuthority', 'needJustification'] },
+    validation: { validated: true, validator: 'workflow-validator-v3', validatedAt: AT, errors: [] }
+  });
+  const result = validateDeliverableArtifactV3({ workflowId: 'gov.procurement', stageId: 'need-and-authority', artifact, evidence });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.includes('validation.validatedAt:must-not-precede-generation'));
+});
+
+test('human-approval stage requires exact approval ID, approver identity, and approval timestamp after validation', () => {
   const evidence = [ev('currentProcurementRule', 'rule', true, true), ev('methodDecisionFacts', 'facts')];
   const approval = { id: 'APP-77', workflowId: 'gov.procurement', stageId: 'method-selection', approved: true };
   const artifact = artifactFor('gov.procurement', 'method-selection', 'procurement-method-recommendation', ['currentProcurementRule', 'methodDecisionFacts']);
@@ -114,9 +163,22 @@ test('human-approval stage requires artifact sign-off tied to the exact approval
   assert.equal(blocked.valid, false);
   assert.ok(blocked.errors.includes('signoffs:matching-stage-approval-required'));
 
-  const signed = { ...artifact, signoffs: [{ workflowId: 'gov.procurement', stageId: 'method-selection', approvalId: 'APP-77', approved: true }] };
+  const badTime = { ...artifact, signoffs: [{ workflowId: 'gov.procurement', stageId: 'method-selection', approvalId: 'APP-77', approved: true, approvedBy: 'authorized-officer', approvedAt: '2026-08-15T05:29:00.000Z' }] };
+  const badTimeResult = validateDeliverableArtifactV3({ workflowId: 'gov.procurement', stageId: 'method-selection', artifact: badTime, evidence, input: { approvals: [approval] } });
+  assert.equal(badTimeResult.valid, false);
+  assert.ok(badTimeResult.errors.includes('signoffs.approvedAt:must-not-precede-validation'));
+
+  const signed = { ...artifact, signoffs: [{ workflowId: 'gov.procurement', stageId: 'method-selection', approvalId: 'APP-77', approved: true, approvedBy: 'authorized-officer', approvedAt: LATER }] };
   const passed = validateDeliverableArtifactV3({ workflowId: 'gov.procurement', stageId: 'method-selection', artifact: signed, evidence, input: { approvals: [approval] } });
   assert.equal(passed.valid, true);
+});
+
+test('case-bound artifact cannot be reused across cases', () => {
+  const evidence = [ev('missionAuthority', 'authority', true, true), ev('needJustification', 'need')];
+  const artifact = artifactFor('gov.procurement', 'need-and-authority', 'need-memo', ['missionAuthority', 'needJustification'], { caseId: 'CASE-A' });
+  const result = validateDeliverableArtifactV3({ workflowId: 'gov.procurement', stageId: 'need-and-authority', artifact, evidence, input: { caseId: 'CASE-B' } });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.includes('caseId:CASE-B-required'));
 });
 
 test('duplicate artifact keys are rejected as ambiguous stage evidence', () => {
@@ -136,15 +198,17 @@ test('V3 execution fails closed when stage evidence is ready but deliverable con
   assert.deepEqual(result.deliverableValidation.missingArtifacts, ['need-memo']);
 });
 
-test('V3 transition advances exactly one stage only after a valid deliverable contract and logs keys, not raw evidence values', () => {
+test('V3 transition advances exactly one stage and audit records contract IDs but not raw evidence values', () => {
   const evidence = [ev('missionAuthority', 'SECRET_AUTH_VALUE', true, true), ev('needJustification', 'SECRET_NEED_VALUE')];
   const artifact = artifactFor('gov.procurement', 'need-and-authority', 'need-memo', ['missionAuthority', 'needJustification']);
   const result = transitionGovernmentWorkflowV3({ workflowId: 'gov.procurement', evidence, artifacts: [artifact], actor: 'procurement-officer', at: AT });
   assert.equal(result.transitioned, true);
   assert.deepEqual(result.state.completedStages, ['need-and-authority']);
   assert.equal(result.state.currentStageId, 'plan-and-budget');
+  assert.equal(result.state.deliverableContractVersion, DELIVERABLE_CONTRACT_SCHEMA_VERSION);
   assert.doesNotMatch(JSON.stringify(result.state.transitionLog), /SECRET_AUTH_VALUE|SECRET_NEED_VALUE/);
   assert.deepEqual(result.state.transitionLog[0].evidenceKeys.sort(), ['missionAuthority', 'needJustification'].sort());
+  assert.deepEqual(result.state.transitionLog[0].contractIds, [artifact.contractId]);
 });
 
 test('cross-workflow handoff stays blocked until every required artifact passes its owner-stage contract', () => {
@@ -165,6 +229,16 @@ test('cross-workflow handoff stays blocked until every required artifact passes 
   const ready = buildStageHandoffContractsV3('gov.procurement', 'plan-and-budget', [needMemo, planCheck], evidence, {});
   assert.ok(ready.every((handoff) => handoff.status === 'ready'));
   assert.ok(ready.every((handoff) => handoff.payload.artifactKeys.length > 0));
+  assert.ok(ready.every((handoff) => handoff.payload.contractIds.length > 0));
+});
+
+test('cross-workflow handoff rejects duplicate required artifact keys instead of last-write-wins', () => {
+  const evidence = [ev('needJustification', 'need'), ev('planLinkage', 'plan'), ev('fundingSource', 'fund'), ev('budgetAvailability', true), ev('missionAuthority', 'authority', true, true)];
+  const needMemo = artifactFor('gov.procurement', 'need-and-authority', 'need-memo', ['missionAuthority', 'needJustification']);
+  const planCheck = artifactFor('gov.procurement', 'plan-and-budget', 'plan-budget-check', ['planLinkage', 'fundingSource', 'budgetAvailability']);
+  const result = buildStageHandoffContractsV3('gov.procurement', 'plan-and-budget', [needMemo, planCheck, { ...planCheck }], evidence, {});
+  assert.ok(result.every((handoff) => handoff.status === 'blocked-handoff-deliverable-contract'));
+  assert.ok(result.every((handoff) => handoff.invalidDeliverables.some((item) => item.artifactKey === 'plan-budget-check' && item.errors.includes('artifact:duplicate-key'))));
 });
 
 test('record profile permits a true no-activity record only with an explicit reason', () => {
