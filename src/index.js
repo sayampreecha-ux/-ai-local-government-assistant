@@ -41,6 +41,7 @@ export { PromptRegistry, DEFAULT_PROMPTS, validatePromptDefinition } from "./pro
 export { KnowledgeRegistry, KNOWLEDGE_TYPES, validateKnowledgeDefinition } from "./knowledge-registry.js";
 export { GovernanceLayer, POLICY_EFFECTS, SAFETY_EFFECTS, validatePolicy, validateSafetyRule } from "./governance-layer.js";
 export { Observability, LOG_LEVELS } from "./observability.js";
-export { WORKFLOWS, detectGovernmentWorkflows, runGovernmentWorkflow } from "./government-workflow-suite.js";
+export { WORKFLOWS, DEEP_WORKFLOWS, detectGovernmentWorkflows, runGovernmentWorkflow, runGovernmentWorkflowById } from "./government-workflow-suite.js";
+export { evaluateWorkflowStage, executeDeepGovernmentWorkflow, buildCrossWorkflowCase, detectProcurementRisks } from "./government-workflow-engine.js";
 export * from "./modules/gp001/index.js";
 export default contextManager;
