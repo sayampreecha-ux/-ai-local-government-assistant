@@ -136,14 +136,15 @@ test('V3 execution fails closed when stage evidence is ready but deliverable con
   assert.deepEqual(result.deliverableValidation.missingArtifacts, ['need-memo']);
 });
 
-test('V3 transition advances exactly one stage only after a valid deliverable contract', () => {
-  const evidence = [ev('missionAuthority', 'authority', true, true), ev('needJustification', 'need')];
+test('V3 transition advances exactly one stage only after a valid deliverable contract and logs keys, not raw evidence values', () => {
+  const evidence = [ev('missionAuthority', 'SECRET_AUTH_VALUE', true, true), ev('needJustification', 'SECRET_NEED_VALUE')];
   const artifact = artifactFor('gov.procurement', 'need-and-authority', 'need-memo', ['missionAuthority', 'needJustification']);
   const result = transitionGovernmentWorkflowV3({ workflowId: 'gov.procurement', evidence, artifacts: [artifact], actor: 'procurement-officer', at: AT });
   assert.equal(result.transitioned, true);
   assert.deepEqual(result.state.completedStages, ['need-and-authority']);
   assert.equal(result.state.currentStageId, 'plan-and-budget');
-  assert.doesNotMatch(JSON.stringify(result.state.transitionLog), /authority|need(?!-and-authority)/i);
+  assert.doesNotMatch(JSON.stringify(result.state.transitionLog), /SECRET_AUTH_VALUE|SECRET_NEED_VALUE/);
+  assert.deepEqual(result.state.transitionLog[0].evidenceKeys.sort(), ['missionAuthority', 'needJustification'].sort());
 });
 
 test('cross-workflow handoff stays blocked until every required artifact passes its owner-stage contract', () => {
