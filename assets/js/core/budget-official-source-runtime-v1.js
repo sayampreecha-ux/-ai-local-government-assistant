@@ -2,9 +2,10 @@ import {
   buildBudgetOfficialEvidenceFromSearchMap,
   mergeEvidenceByKey
 } from '../../../src/budget-official-evidence-adapter.js';
+import { ingestVerifiedBudgetDocumentContent } from '../../../src/budget-document-content-ingestion.js';
 import { buildBudgetDeliverableArtifacts } from '../../../src/budget-artifact-factory.js';
 
-export const BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION = '1.2';
+export const BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION = '1.3';
 
 const safeText = (value, max = 240) => String(value || '').trim().slice(0, max);
 
@@ -13,27 +14,17 @@ function budgetActive(workflowView) {
 }
 
 function parseBudgetYear(query) {
-  const text = safeText(query, 1000);
-  const thaiShort = text.match(/(?:ปี(?:งบประมาณ)?\s*)?(?:25)?(6[9]|7\d)\b/);
-  if (thaiShort) {
-    const short = Number(thaiShort[1]);
-    return short < 100 ? 2500 + short : short;
-  }
-  const full = text.match(/\b(25\d{2}|20\d{2})\b/);
+  const value = safeText(query, 1000);
+  const thaiShort = value.match(/(?:ปี(?:งบประมาณ)?\s*)?(?:25)?(6[9]|7\d)\b/);
+  if (thaiShort) return 2500 + Number(thaiShort[1]);
+  const full = value.match(/\b(25\d{2}|20\d{2})\b/);
   return full ? Number(full[1]) : null;
 }
 
 function parseOrganization(query) {
-  const text = safeText(query, 1000);
-  const patterns = [
-    /(อบจ\.?\s*[^\s,]+)/i,
-    /(อบต\.?\s*[^\s,]+)/i,
-    /(เทศบาล(?:นคร|เมือง|ตำบล)?\s*[^\s,]+)/i,
-    /(องค์การบริหารส่วนจังหวัด\s*[^\s,]+)/i,
-    /(องค์การบริหารส่วนตำบล\s*[^\s,]+)/i
-  ];
-  for (const pattern of patterns) {
-    const match = text.match(pattern);
+  const value = safeText(query, 1000);
+  for (const pattern of [/(อบจ\.?\s*[^\s,]+)/i, /(อบต\.?\s*[^\s,]+)/i, /(เทศบาล(?:นคร|เมือง|ตำบล)?\s*[^\s,]+)/i, /(องค์การบริหารส่วนจังหวัด\s*[^\s,]+)/i, /(องค์การบริหารส่วนตำบล\s*[^\s,]+)/i]) {
+    const match = value.match(pattern);
     if (match) return safeText(match[1], 120);
   }
   return '';
@@ -43,24 +34,8 @@ function queryEvidence(query) {
   const organization = parseOrganization(query);
   const targetYear = parseBudgetYear(query);
   const evidence = [];
-  if (organization) {
-    evidence.push(Object.freeze({
-      key: 'organizationContext',
-      value: Object.freeze({ organizationName: organization }),
-      official: false,
-      verified: true,
-      provenance: Object.freeze({ sourceType: 'user-query', extracted: true })
-    }));
-  }
-  if (targetYear) {
-    evidence.push(Object.freeze({
-      key: 'targetBudgetYear',
-      value: targetYear,
-      official: false,
-      verified: true,
-      provenance: Object.freeze({ sourceType: 'user-query', extracted: true })
-    }));
-  }
+  if (organization) evidence.push(Object.freeze({ key: 'organizationContext', value: Object.freeze({ organizationName: organization }), official: false, verified: true, provenance: Object.freeze({ sourceType: 'user-query', extracted: true }) }));
+  if (targetYear) evidence.push(Object.freeze({ key: 'targetBudgetYear', value: targetYear, official: false, verified: true, provenance: Object.freeze({ sourceType: 'user-query', extracted: true }) }));
   return Object.freeze(evidence);
 }
 
@@ -76,65 +51,36 @@ export function buildBudgetOfficialSearchQueries(query) {
   });
 }
 
-export async function executeBudgetOfficialSourceSearch({ query = '', workflowView = null, connector = null, existingEvidence = [], input = {} } = {}) {
+export async function executeBudgetOfficialSourceSearch({ query = '', workflowView = null, connector = null, existingEvidence = [], readDocuments = {}, input = {} } = {}) {
   const baseEvidence = mergeEvidenceByKey(existingEvidence, queryEvidence(query));
-  if (!budgetActive(workflowView)) {
-    return Object.freeze({
-      runtimeVersion: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION,
-      status: 'inactive',
-      evidence: baseEvidence,
-      searchMap: Object.freeze({}),
-      artifactAttempt: null,
-      failClosed: false
-    });
-  }
-
-  if (!connector || typeof connector.search !== 'function') {
-    return Object.freeze({
-      runtimeVersion: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION,
-      status: 'blocked-search-unavailable',
-      evidence: baseEvidence,
-      searchMap: Object.freeze({}),
-      artifactAttempt: buildBudgetDeliverableArtifacts({ evidence: baseEvidence, input }),
-      failClosed: true
-    });
-  }
+  if (!budgetActive(workflowView)) return Object.freeze({ runtimeVersion: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION, status: 'inactive', evidence: baseEvidence, searchMap: Object.freeze({}), documentIngestion: null, artifactAttempt: null, failClosed: false });
+  if (!connector || typeof connector.search !== 'function') return Object.freeze({ runtimeVersion: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION, status: 'blocked-search-unavailable', evidence: baseEvidence, searchMap: Object.freeze({}), documentIngestion: null, artifactAttempt: buildBudgetDeliverableArtifacts({ evidence: baseEvidence, input }), failClosed: true });
 
   const queries = buildBudgetOfficialSearchQueries(query);
   const entries = await Promise.all(Object.entries(queries).map(async ([key, searchQuery]) => {
-    try {
-      const result = await connector.search(searchQuery, { limitSources: 6, count: 10, requireFreshness: true });
-      return [key, result];
-    } catch {
-      return [key, null];
-    }
+    try { return [key, await connector.search(searchQuery, { limitSources: 6, count: 10, requireFreshness: true })]; }
+    catch { return [key, null]; }
   }));
   const searchMap = Object.freeze(Object.fromEntries(entries));
   const adapted = buildBudgetOfficialEvidenceFromSearchMap(searchMap);
-  const evidence = mergeEvidenceByKey(baseEvidence, adapted.evidence);
+  const sourceEvidence = mergeEvidenceByKey(baseEvidence, adapted.evidence);
+  const documentIngestion = ingestVerifiedBudgetDocumentContent({ evidence: sourceEvidence, readDocuments });
+  const evidence = mergeEvidenceByKey(sourceEvidence, documentIngestion.evidence);
   const artifactAttempt = buildBudgetDeliverableArtifacts({ evidence, input });
 
   return Object.freeze({
     runtimeVersion: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION,
-    status: adapted.status,
+    status: adapted.failClosed ? adapted.status : documentIngestion.failClosed ? documentIngestion.status : artifactAttempt.status,
     evidence,
-    acceptedKeys: adapted.acceptedKeys,
-    missingKeys: adapted.missingKeys,
+    acceptedKeys: Object.freeze([...new Set([...(adapted.acceptedKeys || []), ...(documentIngestion.acceptedKeys || [])])]),
+    missingKeys: Object.freeze([...new Set([...(adapted.missingKeys || []), ...(documentIngestion.missingKeys || [])])]),
     searchMap,
+    documentIngestion,
     artifactAttempt,
-    failClosed: adapted.failClosed || artifactAttempt.failClosed,
-    governance: Object.freeze({
-      ...adapted.governance,
-      queryFactsMayPopulateOnlyUserStatedContext: true,
-      artifactsRequireInternalEvidenceAndBalanceValidation: true
-    })
+    failClosed: adapted.failClosed || documentIngestion.failClosed || artifactAttempt.failClosed,
+    governance: Object.freeze({ ...adapted.governance, ...documentIngestion.governance, queryFactsMayPopulateOnlyUserStatedContext: true, artifactsRequireInternalEvidenceAndBalanceValidation: true })
   });
 }
 
 export { parseBudgetYear, parseOrganization, queryEvidence };
-
-export default Object.freeze({
-  version: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION,
-  buildBudgetOfficialSearchQueries,
-  executeBudgetOfficialSourceSearch
-});
+export default Object.freeze({ version: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION, buildBudgetOfficialSearchQueries, executeBudgetOfficialSourceSearch });
