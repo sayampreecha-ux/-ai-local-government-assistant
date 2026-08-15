@@ -7,7 +7,8 @@ import { ingestInternalBudgetEvidence } from '../../../src/budget-internal-evide
 import { buildBudgetWorkingDraftEvidence } from '../../../src/budget-working-draft-planner.js';
 import { buildBudgetDeliverableArtifacts } from '../../../src/budget-artifact-factory.js';
 
-export const BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION = '2.0';
+export const BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION = '2.1';
+export const BUDGET_OFFICIAL_SOURCE_TIMEOUT_MS = 15_000;
 
 const safeText = (value, max = 240) => String(value || '').trim().slice(0, max);
 
@@ -39,6 +40,20 @@ function queryEvidence(query) {
   if (organization) evidence.push(Object.freeze({ key: 'organizationContext', value: Object.freeze({ organizationName: organization }), official: false, verified: true, provenance: Object.freeze({ sourceType: 'user-query', extracted: true }) }));
   if (targetYear) evidence.push(Object.freeze({ key: 'targetBudgetYear', value: targetYear, official: false, verified: true, provenance: Object.freeze({ sourceType: 'user-query', extracted: true }) }));
   return Object.freeze(evidence);
+}
+
+async function settleWithin(task, timeoutMs = BUDGET_OFFICIAL_SOURCE_TIMEOUT_MS) {
+  let timer;
+  try {
+    return await Promise.race([
+      Promise.resolve().then(task),
+      new Promise(resolve => { timer = setTimeout(() => resolve(null), timeoutMs); })
+    ]);
+  } catch {
+    return null;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 export function buildBudgetOfficialSearchQueries(query) {
@@ -75,11 +90,10 @@ async function autoReadDocuments({ sourceEvidence = [], readDocuments = {}, docu
       attempts.push(Object.freeze({ targetKey, sourceKey, status: 'source-pointer-missing' }));
       continue;
     }
-    let result;
-    try { result = await documentConnector.read(sourceUrl, targetKey, { targetYear }); }
-    catch { result = { status: 'blocked-document-reader', readDocument: null, errors: ['reader:unexpected-error'] }; }
-    attempts.push(Object.freeze({ targetKey, sourceKey, status: result?.status || 'blocked-document-reader', errors: Object.freeze(result?.errors || []) }));
-    if (result?.status === 'ready' && result.readDocument) resolved[targetKey] = result.readDocument;
+    const result = await settleWithin(() => documentConnector.read(sourceUrl, targetKey, { targetYear }));
+    const normalized = result || { status: 'blocked-document-reader', readDocument: null, errors: ['reader:timeout-or-unexpected-error'] };
+    attempts.push(Object.freeze({ targetKey, sourceKey, status: normalized?.status || 'blocked-document-reader', errors: Object.freeze(normalized?.errors || []) }));
+    if (normalized?.status === 'ready' && normalized.readDocument) resolved[targetKey] = normalized.readDocument;
   }
   const failed = attempts.filter(item => item.status !== 'ready');
   return Object.freeze({
@@ -101,8 +115,8 @@ export async function executeBudgetOfficialSourceSearch({
 
   const queries = buildBudgetOfficialSearchQueries(query);
   const entries = await Promise.all(Object.entries(queries).map(async ([key, searchQuery]) => {
-    try { return [key, await connector.search(searchQuery, { limitSources: 6, count: 10, requireFreshness: true })]; }
-    catch { return [key, null]; }
+    const result = await settleWithin(() => connector.search(searchQuery, { limitSources: 6, count: 10, requireFreshness: true }));
+    return [key, result];
   }));
   const searchMap = Object.freeze(Object.fromEntries(entries));
   const adapted = buildBudgetOfficialEvidenceFromSearchMap(searchMap);
@@ -146,10 +160,12 @@ export async function executeBudgetOfficialSourceSearch({
       ...workingDraft.governance,
       queryFactsMayPopulateOnlyUserStatedContext: true,
       liveDocumentReaderRequiredForOfficialContent: true,
-      artifactsRequireEvidenceAndBalanceValidation: true
+      artifactsRequireEvidenceAndBalanceValidation: true,
+      externalCallsFailClosedWithinTimeout: true,
+      externalCallTimeoutMs: BUDGET_OFFICIAL_SOURCE_TIMEOUT_MS
     })
   });
 }
 
-export { parseBudgetYear, parseOrganization, queryEvidence, autoReadDocuments };
+export { parseBudgetYear, parseOrganization, queryEvidence, autoReadDocuments, settleWithin };
 export default Object.freeze({ version: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION, buildBudgetOfficialSearchQueries, executeBudgetOfficialSourceSearch });
