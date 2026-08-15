@@ -28,6 +28,7 @@ await page.waitForTimeout(1000);
 
 const state=await page.evaluate(()=>({
   userMessages:[...document.querySelectorAll('.message.user .message-body')].map(node=>node.textContent||''),
+  routeLabel:document.querySelector('.message.assistant .route-label')?.textContent||'',
   budgetText:document.querySelector('.budget-runtime-result')?.innerText||'',
   assistantText:[...document.querySelectorAll('.message.assistant')].map(node=>node.innerText||'').join('\n'),
   excelButton:[...document.querySelectorAll('button')].some(button=>button.textContent?.includes('ดาวน์โหลด Excel')),
@@ -38,8 +39,9 @@ const state=await page.evaluate(()=>({
 
 assert.equal(state.submitGuardVersion,'3','privacy submit guard must remain active');
 assert.ok(state.userMessages.includes(prompt),'budget command did not create expected safe user message');
+assert.match(state.routeLabel,/แผน โครงการ และงบประมาณ/,'short budget command routed to wrong government domain');
 assert.match(state.budgetText,/Budget Draft Agent/,'Budget Draft Agent result surface missing');
-assert.match(state.assistantText,/GovPrompt ดำเนินงานร่างงบประมาณให้แล้ว|ร่างงบประมาณ/,'budget workflow response missing');
+assert.match(state.assistantText,/Workflow: บริบทและกรอบการจัดทำงบประมาณ|Budget Draft Agent/,'budget workflow execution evidence missing');
 assert.match(state.homeScript,new RegExp(`home-v3\\.js\\?v=${RELEASE_HOME_VERSION.replaceAll('.','\\.')}`),'production home asset is stale');
 assert.equal(pageErrors.length,0,`page errors: ${JSON.stringify(pageErrors)}`);
 assert.ok(requests.some(item=>/\/api\/official-search/.test(item.url)),'budget workflow did not call official search Worker');
@@ -56,5 +58,5 @@ if (/Working Draft พร้อมส่งออก/.test(state.budgetText)) {
   assert.match(state.budgetText,/ยังไม่พร้อมส่งออก|ต้องยืนยัน|สถานะ/,'blocked budget state did not explain its evidence gate');
 }
 
-console.log(JSON.stringify({frontend,releaseHomeVersion:RELEASE_HOME_VERSION,checks:{shortCommand:'PASS',privacyGuard:'PASS',budgetSurface:'PASS',releaseCacheBust:'PASS',officialSearchWorker:'PASS',documentWorkerRouting:'PASS',officeExportOrFailClosed:'PASS'},requests,responses,pageErrors},null,2));
+console.log(JSON.stringify({frontend,releaseHomeVersion:RELEASE_HOME_VERSION,checks:{shortCommand:'PASS',budgetDomainRouting:'PASS',privacyGuard:'PASS',budgetSurface:'PASS',workflowEvidence:'PASS',releaseCacheBust:'PASS',officialSearchWorker:'PASS',documentWorkerRouting:'PASS',officeExportOrFailClosed:'PASS'},requests,responses,pageErrors},null,2));
 await browser.close();
