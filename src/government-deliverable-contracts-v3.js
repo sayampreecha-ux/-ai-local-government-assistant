@@ -17,6 +17,12 @@ const usableEvidence = (evidence) => Boolean(keyOf(evidence) && evidence?.value 
 const indexByKey = (items, predicate = () => true) => new Map((Array.isArray(items) ? items : []).filter(predicate).map((item) => [keyOf(item), item]));
 const validIsoDate = (value) => NON_EMPTY(value) && Number.isFinite(Date.parse(value));
 const dateMs = (value) => validIsoDate(value) ? Date.parse(value) : null;
+const artifactBelongsToContext = (artifact, workflowId, stageId = null) => Boolean(
+  artifact &&
+  (!artifact.workflowId || artifact.workflowId === workflowId) &&
+  (!stageId || !artifact.stageId || artifact.stageId === stageId)
+);
+const scopeArtifactsForWorkflow = (artifacts, workflowId) => (Array.isArray(artifacts) ? artifacts : []).filter((artifact) => artifactBelongsToContext(artifact, workflowId));
 
 export const DELIVERABLE_PROFILE_REQUIREMENTS_V3 = Object.freeze({
   draft: Object.freeze(['content.body']),
@@ -293,6 +299,7 @@ export function validateStageDeliverablesV3({ workflowId, stageId, artifacts = [
 
   const artifactGroups = new Map();
   for (const artifact of Array.isArray(artifacts) ? artifacts : []) {
+    if (!artifactBelongsToContext(artifact, workflowId, stageId)) continue;
     const key = keyOf(artifact);
     if (!artifactGroups.has(key)) artifactGroups.set(key, []);
     artifactGroups.get(key).push(artifact);
@@ -335,25 +342,25 @@ function validateHandoffContractV3(handoff, artifacts, evidence, input) {
   const contractIds = [];
   const artifactGroups = new Map();
 
-  for (const artifact of Array.isArray(artifacts) ? artifacts : []) {
+  for (const artifact of scopeArtifactsForWorkflow(artifacts, handoff.sourceWorkflowId)) {
     const key = keyOf(artifact);
     if (!artifactGroups.has(key)) artifactGroups.set(key, []);
     artifactGroups.get(key).push(artifact);
   }
 
   for (const artifactKey of handoff.requiredDeliverables) {
-    const candidates = artifactGroups.get(artifactKey) || [];
+    const ownerStage = artifactOwnerStage(handoff.sourceWorkflowId, artifactKey);
+    if (!ownerStage) {
+      invalidDeliverables.push({ artifactKey, errors: ['artifact-owner-stage:ambiguous-or-missing'] });
+      continue;
+    }
+    const candidates = (artifactGroups.get(artifactKey) || []).filter((artifact) => artifactBelongsToContext(artifact, handoff.sourceWorkflowId, ownerStage.id));
     if (candidates.length === 0) {
       missingDeliverables.push(artifactKey);
       continue;
     }
     if (candidates.length > 1) {
       invalidDeliverables.push({ artifactKey, errors: ['artifact:duplicate-key'] });
-      continue;
-    }
-    const ownerStage = artifactOwnerStage(handoff.sourceWorkflowId, artifactKey);
-    if (!ownerStage) {
-      invalidDeliverables.push({ artifactKey, errors: ['artifact-owner-stage:ambiguous-or-missing'] });
       continue;
     }
     const validation = validateDeliverableArtifactV3({ workflowId: handoff.sourceWorkflowId, stageId: ownerStage.id, artifact: candidates[0], evidence, input });
@@ -386,17 +393,18 @@ export function buildStageHandoffContractsV3(workflowId, stageId, artifacts = []
 }
 
 export function executeGovernmentWorkflowV3({ workflowId, state = null, completedStages = [], evidence = [], artifacts = [], input = {} } = {}) {
-  const base = executeGovernmentWorkflowV2({ workflowId, state, completedStages, evidence, artifacts, input });
+  const workflowArtifacts = scopeArtifactsForWorkflow(artifacts, workflowId);
+  const base = executeGovernmentWorkflowV2({ workflowId, state, completedStages, evidence, artifacts: workflowArtifacts, input });
   if (base.status !== 'ready') return { ...base, contractSchemaVersion: DELIVERABLE_CONTRACT_SCHEMA_VERSION };
 
-  const stageValidation = validateStageDeliverablesV3({ workflowId, stageId: base.currentStage.id, artifacts, evidence, input });
+  const stageValidation = validateStageDeliverablesV3({ workflowId, stageId: base.currentStage.id, artifacts: workflowArtifacts, evidence, input });
   if (!stageValidation.valid) {
     return {
       ...base,
       status: stageValidation.status,
       deliverablesReady: [],
       deliverableValidation: stageValidation,
-      handoffContractsV3: buildStageHandoffContractsV3(workflowId, base.currentStage.id, artifacts, evidence, input),
+      handoffContractsV3: buildStageHandoffContractsV3(workflowId, base.currentStage.id, workflowArtifacts, evidence, input),
       nextRequestedInputs: [
         ...(base.nextRequestedInputs || []),
         ...stageValidation.missingArtifacts.map((key) => `artifact:${key}`),
@@ -412,17 +420,18 @@ export function executeGovernmentWorkflowV3({ workflowId, state = null, complete
     status: 'ready',
     deliverablesReady: [...stageValidation.validArtifactKeys],
     deliverableValidation: stageValidation,
-    handoffContractsV3: buildStageHandoffContractsV3(workflowId, base.currentStage.id, artifacts, evidence, input),
+    handoffContractsV3: buildStageHandoffContractsV3(workflowId, base.currentStage.id, workflowArtifacts, evidence, input),
     governance: { ...base.governance, failClosed: false, deliverableContractsRequired: true },
     contractSchemaVersion: DELIVERABLE_CONTRACT_SCHEMA_VERSION
   };
 }
 
 export function transitionGovernmentWorkflowV3({ workflowId, state = null, evidence = [], artifacts = [], input = {}, actor = 'human', at = null } = {}) {
-  const execution = executeGovernmentWorkflowV3({ workflowId, state, evidence, artifacts, input });
+  const workflowArtifacts = scopeArtifactsForWorkflow(artifacts, workflowId);
+  const execution = executeGovernmentWorkflowV3({ workflowId, state, evidence, artifacts: workflowArtifacts, input });
   if (execution.status !== 'ready') return { transitioned: false, status: execution.status, state, execution };
 
-  const transitioned = transitionGovernmentWorkflowV2({ workflowId, state, evidence, artifacts, input, actor, at });
+  const transitioned = transitionGovernmentWorkflowV2({ workflowId, state, evidence, artifacts: workflowArtifacts, input, actor, at });
   if (!transitioned.transitioned) return transitioned;
 
   const contractIds = execution.deliverablesReady.map((artifactKey) => getDeliverableContractV3(workflowId, execution.currentStage.id, artifactKey)?.id).filter(Boolean);
@@ -433,8 +442,8 @@ export function transitionGovernmentWorkflowV3({ workflowId, state = null, evide
   return {
     ...transitioned,
     state: v3State,
-    handoffContracts: buildStageHandoffContractsV3(workflowId, execution.currentStage.id, artifacts, evidence, input),
-    next: executeGovernmentWorkflowV3({ workflowId, state: v3State, evidence, artifacts, input }),
+    handoffContracts: buildStageHandoffContractsV3(workflowId, execution.currentStage.id, workflowArtifacts, evidence, input),
+    next: executeGovernmentWorkflowV3({ workflowId, state: v3State, evidence, artifacts: workflowArtifacts, input }),
     contractSchemaVersion: DELIVERABLE_CONTRACT_SCHEMA_VERSION
   };
 }
@@ -447,7 +456,7 @@ export function buildCrossWorkflowCaseV3(input = {}, workflowIds = [], evidence 
       state: Array.isArray(workflowState) ? null : workflowState,
       completedStages: Array.isArray(workflowState) ? workflowState : [],
       evidence,
-      artifacts,
+      artifacts: scopeArtifactsForWorkflow(artifacts, workflowId),
       input
     });
   });
