@@ -34,6 +34,8 @@ export function runGovernmentWorkflow(input = {}) {
   const stateMachineV2 = buildCrossWorkflowCaseV2(input, workflowIds, evidence, input.workflowStateV2 || input.workflowState || {}, artifacts);
   const primary = deepCase.workflows[0] || null;
   const primaryV2 = stateMachineV2.workflows[0] || null;
+  const needsOfficialEvidence = highRisk && !officialVerified;
+  const topLevelStatus = workflows.length === 0 ? "needs-intent" : needsOfficialEvidence ? "needs-official-evidence" : "workflow-ready";
 
   return {
     intent: workflowIds,
@@ -50,11 +52,12 @@ export function runGovernmentWorkflow(input = {}) {
       piiMinimization: true,
       auditTrailRequired: true,
       humanApprovalRequired: true,
-      failClosed: Boolean(primary?.governance?.failClosed) || (highRisk && !officialVerified),
+      failClosed: needsOfficialEvidence,
+      deepWorkflowFailClosed: Boolean(primary?.governance?.failClosed),
       stateMachineV2FailClosed: Boolean(primaryV2?.governance?.failClosed)
     },
-    status: workflows.length === 0 ? "needs-intent" : primary?.status || "workflow-ready",
-    next: workflows.length === 0 ? ["clarify-task"] : primary?.nextRequestedInputs || []
+    status: topLevelStatus,
+    next: workflows.length === 0 ? ["clarify-task"] : needsOfficialEvidence ? ["verified-official-evidence"] : primary?.nextRequestedInputs || []
   };
 }
 
