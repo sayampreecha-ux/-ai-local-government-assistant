@@ -1,6 +1,7 @@
 import { parseBaselineBudgetDocument } from './budget-official-document-parser.js';
+import { parseCsvText, extractBudgetFromRows } from './budget-tabular-parser.js';
 
-export const BUDGET_BROWSER_FILE_PARSER_VERSION = '1.0';
+export const BUDGET_BROWSER_FILE_PARSER_VERSION = '1.1';
 const decoder = new TextDecoder('utf-8');
 const text = value => String(value ?? '').trim();
 const xmlDecode = value => String(value ?? '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
@@ -122,11 +123,23 @@ function structuredFromText(raw, purpose, targetYear = null) {
     return {
       revenueTotal: Number(baseline.data.total),
       expenseTotal: Number(baseline.data.total),
-      revenueItems: (baseline.data.revenueItems || []).map(row => ({ ...row, status: 'verified' })),
-      expenseItems: (baseline.data.expenseItems || []).map(row => ({ ...row, status: 'verified' }))
+      revenueItems: (baseline.data.revenueItems || []).map(row => ({ ...row, status: 'pending-confirmation' })),
+      expenseItems: (baseline.data.expenseItems || []).map(row => ({ ...row, status: 'pending-confirmation' }))
     };
   }
   return null;
+}
+
+function structuredFromCsv(raw, purpose) {
+  const table = parseCsvText(raw);
+  if (!table.headers.length || !table.rows.length) return null;
+  const extraction = extractBudgetFromRows({ purpose, headers: table.headers, rows: table.rows });
+  const data = extraction?.parsed;
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+  if (purpose === 'budgetTotals' && (!Array.isArray(data.revenueItems) || !data.revenueItems.length || !Array.isArray(data.expenseItems) || !data.expenseItems.length)) return null;
+  if (purpose === 'personnelObligations' && (!Array.isArray(data.items) || !data.items.length)) return null;
+  if (purpose === 'baselineBudget' && !finite(data.total)) return null;
+  return data;
 }
 
 export async function parseBudgetBrowserFile(file, prepared, { targetYear = null } = {}) {
@@ -139,8 +152,11 @@ export async function parseBudgetBrowserFile(file, prepared, { targetYear = null
     if (ext === 'json') {
       const parsed = JSON.parse(decoder.decode(buffer));
       data = parsed?.data && typeof parsed.data === 'object' ? parsed.data : parsed;
-    } else if (ext === 'csv') rawText = csvToText(decoder.decode(buffer));
-    else if (ext === 'xlsx' || ext === 'xls') rawText = ext === 'xlsx' ? await xlsxToText(buffer) : '';
+    } else if (ext === 'csv') {
+      const raw = decoder.decode(buffer);
+      data = structuredFromCsv(raw, prepared.purpose);
+      rawText = data ? '' : csvToText(raw);
+    } else if (ext === 'xlsx' || ext === 'xls') rawText = ext === 'xlsx' ? await xlsxToText(buffer) : '';
     else if (ext === 'docx') rawText = await docxToText(buffer);
     else if (ext === 'pdf') return Object.freeze({ status: 'blocked-local-pdf-parser', data: null, errors: Object.freeze(['pdf:use-official-reader-or-structured-file']) });
     if (!data && rawText) data = structuredFromText(rawText, prepared.purpose, targetYear);
@@ -150,9 +166,9 @@ export async function parseBudgetBrowserFile(file, prepared, { targetYear = null
   if (!data || typeof data !== 'object' || Array.isArray(data)) return Object.freeze({ status: 'blocked-unstructured-file', data: null, errors: Object.freeze(['structured-budget-data:not-found']) });
   return Object.freeze({
     status: 'ready', data: Object.freeze(data), errors: Object.freeze([]),
-    governance: Object.freeze({ deterministicLocalParse: true, rawBytesReturned: false, filenameRetained: false, parserVersion: BUDGET_BROWSER_FILE_PARSER_VERSION })
+    governance: Object.freeze({ deterministicLocalParse: true, rawBytesReturned: false, filenameRetained: false, parserVersion: BUDGET_BROWSER_FILE_PARSER_VERSION, parserOutputIsNotEvidence: true })
   });
 }
 
-export { unzipEntries, xlsxToText, docxToText, csvToText };
+export { unzipEntries, xlsxToText, docxToText, csvToText, structuredFromCsv };
 export default parseBudgetBrowserFile;
