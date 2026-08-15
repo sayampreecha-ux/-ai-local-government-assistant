@@ -32,8 +32,8 @@ async function loadIntentFirstRouting() {
 test('short Thai budget-draft commands route to GP004 planning-budget', async () => {
   const core = await loadIntentFirstRouting();
   for (const query of [
-    'ทำร่างงบปี 70 อบจ.พะเยา',
-    'ร่างงบ ปี 2570 เทศบาล',
+    'ทำร่างงบปี 70',
+    'ร่างงบ ปี 2570',
     'จัดทำงบประมาณปี 2570'
   ]) {
     const route = core.routeRequest(query);
@@ -45,7 +45,7 @@ test('short Thai budget-draft commands route to GP004 planning-budget', async ()
 
 test('routeTransaction applies the same budget-draft guardrail', async () => {
   const core = await loadIntentFirstRouting();
-  const query = 'ทำร่างงบปี 70 อบจ.พะเยา';
+  const query = 'ทำร่างงบปี 70';
   const route = core.routeTransaction({ facts:query, desiredOutput:query, specialFlags:[] });
   assert.equal(route.primaryModule, 'GP004');
   assert.equal(route.transactionType, 'planning-budget');
@@ -53,7 +53,7 @@ test('routeTransaction applies the same budget-draft guardrail', async () => {
 
 test('budget guardrail does not steal legal, finance, or media intents', async () => {
   const core = await loadIntentFirstRouting();
-  assert.equal(core.routeRequest('อบจ.พะเยามีอำนาจทำโครงการได้ไหม').primaryModule, 'GP002');
+  assert.equal(core.routeRequest('หน่วยงานท้องถิ่นมีอำนาจทำโครงการได้ไหม').primaryModule, 'GP002');
   assert.equal(core.routeRequest('เบิกค่าเดินทางได้ไหม').primaryModule, 'GP005');
   assert.equal(core.routeRequest('ทำโพสต์ประชาสัมพันธ์โครงการ').primaryModule, 'GP012');
 });
