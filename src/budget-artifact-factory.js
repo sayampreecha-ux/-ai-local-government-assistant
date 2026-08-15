@@ -5,7 +5,7 @@ import {
   validateDeliverableArtifactV3
 } from './government-deliverable-contracts-v3.js';
 
-export const BUDGET_ARTIFACT_FACTORY_VERSION = '1.0';
+export const BUDGET_ARTIFACT_FACTORY_VERSION = '1.1';
 
 const REQUIRED_EVIDENCE_KEYS = Object.freeze([
   'baselineBudget',
@@ -28,15 +28,24 @@ function sourceRows(index) {
     documentTitle: String(item?.documentTitle || ''),
     sourceName: String(item?.sourceName || ''),
     sourceUrl: String(item?.sourceUrl || ''),
-    documentDate: String(item?.documentDate || '')
+    documentDate: String(item?.documentDate || ''),
+    contentReadAndVerified: Boolean(item?.contentReadAndVerified),
+    contentHash: String(item?.contentHash || ''),
+    readAt: String(item?.readAt || '')
   })) : [];
 }
 
+function organizationName(index) {
+  return safeValue(index.get('organizationContext'))?.organizationName || safeValue(index.get('organizationContext')) || '[ระบุหน่วยงาน]';
+}
+
+function targetYear(index) {
+  return safeValue(index.get('targetBudgetYear')) || safeValue(index.get('targetYearPlan'))?.targetYear || '[ระบุปีงบประมาณ]';
+}
+
 function draftBody(index, balance) {
-  const targetYear = safeValue(index.get('targetBudgetYear')) || safeValue(index.get('targetYearPlan'))?.targetYear || '[ระบุปีงบประมาณ]';
-  const org = safeValue(index.get('organizationContext'))?.organizationName || safeValue(index.get('organizationContext')) || '[ระบุหน่วยงาน]';
   const lines = [
-    `ร่างกรอบงบประมาณ ${org} ปีงบประมาณ ${targetYear}`,
+    `ร่างกรอบงบประมาณ ${organizationName(index)} ปีงบประมาณ ${targetYear(index)}`,
     '',
     `รายรับรวม: ${balance.revenueTotal ?? '[ยังไม่ยืนยัน]'}`,
     `รายจ่ายรวม: ${balance.expenseTotal ?? '[ยังไม่ยืนยัน]'}`,
@@ -44,7 +53,7 @@ function draftBody(index, balance) {
     balance.hasEstimates ? 'หมายเหตุ: มีรายการประมาณการ (estimated) ซึ่งต้องตรวจยืนยันก่อนเสนออนุมัติขั้นสุดท้าย' : 'หมายเหตุ: ไม่พบรายการประมาณการที่ยังต้องติดป้าย estimated',
     '',
     'แหล่งหลักฐานที่ใช้จัดทำ:',
-    ...sourceRows(index).map((row, i) => `${i + 1}. ${row.documentTitle || row.evidenceKey} — ${row.sourceName || 'แหล่งราชการ'}${row.documentDate ? ` (${row.documentDate})` : ''}`),
+    ...sourceRows(index).map((row, i) => `${i + 1}. ${row.documentTitle || row.evidenceKey} — ${row.sourceName || 'แหล่งราชการ'}${row.documentDate ? ` (${row.documentDate})` : ''}${row.contentReadAndVerified ? ' [อ่านเนื้อหาแล้ว]' : ' [metadata]'}`),
     '',
     'สถานะ: ร่างสำหรับตรวจสอบภายใน ยังไม่ใช่การอนุมัติงบประมาณโดย AI'
   ];
@@ -84,85 +93,52 @@ export function buildBudgetDeliverableArtifacts({ evidence = [], input = {}, gen
   const index = evidenceIndex(evidence);
   const missingEvidence = REQUIRED_EVIDENCE_KEYS.filter((key) => !index.has(key));
   if (missingEvidence.length) {
-    return Object.freeze({
-      factoryVersion: BUDGET_ARTIFACT_FACTORY_VERSION,
-      status: 'blocked-missing-evidence',
-      artifacts: Object.freeze([]),
-      missingEvidence: Object.freeze(missingEvidence),
-      failClosed: true
-    });
+    return Object.freeze({ factoryVersion: BUDGET_ARTIFACT_FACTORY_VERSION, status: 'blocked-missing-evidence', artifacts: Object.freeze([]), missingEvidence: Object.freeze(missingEvidence), failClosed: true });
   }
 
   const budgetTotals = safeValue(index.get('budgetTotals')) || {};
   const balance = validateBudgetBalance(budgetTotals);
   if (!balance.valid) {
-    return Object.freeze({
-      factoryVersion: BUDGET_ARTIFACT_FACTORY_VERSION,
-      status: balance.status,
-      artifacts: Object.freeze([]),
-      missingEvidence: Object.freeze([]),
-      balance,
-      failClosed: true
-    });
+    return Object.freeze({ factoryVersion: BUDGET_ARTIFACT_FACTORY_VERSION, status: balance.status, artifacts: Object.freeze([]), missingEvidence: Object.freeze([]), balance, failClosed: true });
   }
 
   const at = nowIso(generatedAt);
   const evidenceKeys = [...REQUIRED_EVIDENCE_KEYS];
-  const draft = artifactBase({
-    artifactKey: 'budget-draft',
-    evidenceKeys,
-    generatedAt: at,
-    content: { body: draftBody(index, balance) }
-  });
+  const draft = artifactBase({ artifactKey: 'budget-draft', evidenceKeys, generatedAt: at, content: { body: draftBody(index, balance) } });
   const structured = artifactBase({
-    artifactKey: 'budget-structured-export',
-    evidenceKeys,
-    generatedAt: at,
+    artifactKey: 'budget-structured-export', evidenceKeys, generatedAt: at,
     content: {
       workflowId: 'gov.budget-draft',
-      schemaVersion: '1.0',
+      schemaVersion: '1.1',
+      organizationName: organizationName(index),
+      targetBudgetYear: targetYear(index),
       revenueTotal: balance.revenueTotal,
       expenseTotal: balance.expenseTotal,
       difference: balance.difference,
       hasEstimates: balance.hasEstimates,
+      estimatedItemKeys: [...(balance.estimatedItemKeys || [])],
+      budgetTotals,
       baselineBudget: safeValue(index.get('baselineBudget')),
       latestRevenueActuals: safeValue(index.get('latestRevenueActuals')),
       targetYearPlan: safeValue(index.get('targetYearPlan')),
+      projectRequests: safeValue(index.get('projectRequests')) || [],
       personnelObligations: safeValue(index.get('personnelObligations')),
+      allocationDraft: safeValue(index.get('allocationDraft')) || null,
+      priorityReadiness: safeValue(index.get('priorityReadiness')) || null,
+      budgetRiskReview: safeValue(index.get('budgetRiskReview')) || null,
       sourceRegister: sourceRows(index),
       sourceEvidenceKeys: [...evidenceKeys]
     }
   });
 
   const candidates = [draft, structured].filter(Boolean);
-  const validations = candidates.map((artifact) => validateDeliverableArtifactV3({
-    workflowId: 'gov.budget-draft',
-    stageId: 'deliverables',
-    artifact,
-    evidence,
-    input
-  }));
+  const validations = candidates.map((artifact) => validateDeliverableArtifactV3({ workflowId: 'gov.budget-draft', stageId: 'deliverables', artifact, evidence, input }));
   const invalid = validations.filter((result) => !result.valid);
   if (invalid.length) {
-    return Object.freeze({
-      factoryVersion: BUDGET_ARTIFACT_FACTORY_VERSION,
-      status: 'blocked-deliverable-contract',
-      artifacts: Object.freeze([]),
-      missingEvidence: Object.freeze([]),
-      balance,
-      validationErrors: Object.freeze(invalid.flatMap((item) => item.errors)),
-      failClosed: true
-    });
+    return Object.freeze({ factoryVersion: BUDGET_ARTIFACT_FACTORY_VERSION, status: 'blocked-deliverable-contract', artifacts: Object.freeze([]), missingEvidence: Object.freeze([]), balance, validationErrors: Object.freeze(invalid.flatMap((item) => item.errors)), failClosed: true });
   }
 
-  return Object.freeze({
-    factoryVersion: BUDGET_ARTIFACT_FACTORY_VERSION,
-    status: 'ready',
-    artifacts: Object.freeze(candidates.map((artifact) => Object.freeze(artifact))),
-    missingEvidence: Object.freeze([]),
-    balance,
-    failClosed: false
-  });
+  return Object.freeze({ factoryVersion: BUDGET_ARTIFACT_FACTORY_VERSION, status: 'ready', artifacts: Object.freeze(candidates.map((artifact) => Object.freeze(artifact))), missingEvidence: Object.freeze([]), balance, failClosed: false });
 }
 
 export { REQUIRED_EVIDENCE_KEYS as BUDGET_DELIVERABLE_REQUIRED_EVIDENCE_KEYS };
