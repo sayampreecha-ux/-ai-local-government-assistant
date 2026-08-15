@@ -35,6 +35,14 @@ test('human approval is stage-specific', () => {
   assert.equal(right.approval.id, 'A2');
 });
 
+test('global humanApproved shortcut cannot approve a V2 stage', () => {
+  const completedStages = ['need-and-authority', 'plan-and-budget', 'technical-requirements', 'market-and-standard-price', 'tor-and-competition-check'];
+  const evidence = [ev('currentProcurementRule', 'rule', true, true), ev('methodDecisionFacts', 'facts')];
+  const r = executeDeepGovernmentWorkflow({ workflowId: 'gov.procurement', completedStages, evidence, input: { humanApproved: true } });
+  assert.equal(r.status, 'awaiting-human-approval');
+  assert.equal(r.approval, null);
+});
+
 test('high procurement risk stays blocked until reviewed and evidence-backed resolution exists', () => {
   const completedStages = ['need-and-authority', 'plan-and-budget', 'technical-requirements', 'market-and-standard-price'];
   const evidence = [ev('draftTor', 'tor'), ev('competitionMemo', 'reviewed')];
@@ -57,6 +65,16 @@ test('state transition cannot complete a stage until required deliverables exist
   assert.deepEqual(blocked.execution.missingDeliverables, ['need-memo']);
 });
 
+test('tampered state cannot claim a completed stage without a matching transition log', () => {
+  const state = createWorkflowState('gov.procurement', 'CASE-TAMPER');
+  state.completedStages = ['need-and-authority'];
+  state.currentStageId = 'plan-and-budget';
+  const r = transitionGovernmentWorkflow({ workflowId: 'gov.procurement', state, evidence: [], artifacts: [] });
+  assert.equal(r.transitioned, false);
+  assert.equal(r.status, 'blocked-invalid-state');
+  assert.equal(r.execution.stateIntegrity.reason, 'transition-log-length');
+});
+
 test('successful transition appends a minimized audit event and advances exactly one stage', () => {
   const state = createWorkflowState('gov.procurement', 'CASE-2');
   const evidence = [ev('missionAuthority', 'SECRET-AUTHORITY', true, true), ev('needJustification', 'SECRET-NEED')];
@@ -67,6 +85,7 @@ test('successful transition appends a minimized audit event and advances exactly
   assert.equal(result.state.transitionLog.length, 1);
   assert.deepEqual(result.state.transitionLog[0].evidenceKeys.sort(), ['missionAuthority', 'needJustification'].sort());
   assert.doesNotMatch(JSON.stringify(result.state.transitionLog[0]), /SECRET-AUTHORITY|SECRET-NEED/);
+  assert.notEqual(result.next.status, 'blocked-invalid-state');
 });
 
 test('cross-workflow handoff is a contract and stays blocked until evidence and deliverables are ready', () => {
