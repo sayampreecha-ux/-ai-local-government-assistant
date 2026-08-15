@@ -1,4 +1,5 @@
 import { buildCrossWorkflowCase, executeDeepGovernmentWorkflow, DEEP_WORKFLOWS } from "./government-workflow-engine.js";
+import { buildCrossWorkflowCaseV2, executeGovernmentWorkflowV2, transitionGovernmentWorkflowV2 } from "./government-workflow-state-machine-v2.js";
 
 const WORKFLOWS = Object.freeze({
   procurement: { id: "gov.procurement", keywords: ["จัดซื้อ", "จัดจ้าง", "ซื้อ", "เครื่องจักร", "รถขุด", "รถบรรทุก", "tor", "ราคากลาง", "e-bidding", "เฉพาะเจาะจง"] },
@@ -25,17 +26,22 @@ export function runGovernmentWorkflow(input = {}) {
   const text = textOf(input);
   const workflows = detectGovernmentWorkflows(input);
   const evidence = Array.isArray(input.evidence) ? input.evidence : [];
+  const artifacts = Array.isArray(input.artifacts) ? input.artifacts : [];
   const officialVerified = evidence.some((e) => e?.official === true && e?.verified === true);
   const highRisk = HIGH_RISK.some((term) => text.includes(term));
   const workflowIds = workflows.map((w) => w.id);
   const deepCase = buildCrossWorkflowCase(input, workflowIds, evidence, input.workflowState || {});
+  const stateMachineV2 = buildCrossWorkflowCaseV2(input, workflowIds, evidence, input.workflowStateV2 || input.workflowState || {}, artifacts);
   const primary = deepCase.workflows[0] || null;
+  const primaryV2 = stateMachineV2.workflows[0] || null;
 
   return {
     intent: workflowIds,
     orchestration: workflows.length > 1 ? "cross-workflow" : workflows.length === 1 ? "single-workflow" : "unclassified",
     deepCase,
+    stateMachineV2,
     current: primary,
+    currentV2: primaryV2,
     governance: {
       officialSourceFirst: true,
       latestRuleVerificationRequired: highRisk,
@@ -44,7 +50,8 @@ export function runGovernmentWorkflow(input = {}) {
       piiMinimization: true,
       auditTrailRequired: true,
       humanApprovalRequired: true,
-      failClosed: Boolean(primary?.governance?.failClosed) || (highRisk && !officialVerified)
+      failClosed: Boolean(primary?.governance?.failClosed) || (highRisk && !officialVerified),
+      stateMachineV2FailClosed: Boolean(primaryV2?.governance?.failClosed)
     },
     status: workflows.length === 0 ? "needs-intent" : primary?.status || "workflow-ready",
     next: workflows.length === 0 ? ["clarify-task"] : primary?.nextRequestedInputs || []
@@ -57,6 +64,29 @@ export function runGovernmentWorkflowById(workflowId, input = {}) {
     evidence: Array.isArray(input.evidence) ? input.evidence : [],
     input,
     completedStages: input.completedStages || []
+  });
+}
+
+export function runGovernmentWorkflowByIdV2(workflowId, input = {}) {
+  return executeGovernmentWorkflowV2({
+    workflowId,
+    state: input.state || null,
+    completedStages: input.completedStages || [],
+    evidence: Array.isArray(input.evidence) ? input.evidence : [],
+    artifacts: Array.isArray(input.artifacts) ? input.artifacts : [],
+    input
+  });
+}
+
+export function transitionGovernmentWorkflowByIdV2(workflowId, input = {}) {
+  return transitionGovernmentWorkflowV2({
+    workflowId,
+    state: input.state || null,
+    evidence: Array.isArray(input.evidence) ? input.evidence : [],
+    artifacts: Array.isArray(input.artifacts) ? input.artifacts : [],
+    input,
+    actor: input.actor || "human",
+    at: input.at || null
   });
 }
 
