@@ -1,12 +1,15 @@
 import { createParsedBudgetReview } from './budget-file-parser-review.js';
 
-export const BUDGET_TABULAR_PARSER_VERSION = '1.0';
+export const BUDGET_TABULAR_PARSER_VERSION = '1.1';
 
 const text = value => String(value ?? '').trim();
 const number = value => {
-  const normalized = text(value).replace(/,/g, '').replace(/[()]/g, match => match === '(' ? '-' : '');
+  const raw = text(value).replace(/,/g, '');
+  const negative = /^\(.*\)$/.test(raw);
+  const normalized = raw.replace(/[()]/g, '');
   const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
+  if (!Number.isFinite(parsed)) return null;
+  return negative ? -parsed : parsed;
 };
 
 function normalizeHeader(value) {
@@ -54,9 +57,9 @@ function sumItems(items) {
 
 export function extractBudgetFromRows({ purpose, headers = [], rows = [] } = {}) {
   const amountHeader = findHeader(headers, ['จำนวนเงิน', 'ยอดเงิน', 'งบประมาณ', 'amount', 'total']);
-  const labelHeader = findHeader(headers, ['รายการ', 'ชื่อรายการ', 'หมวด', 'ประเภท', 'description', 'name']);
+  const labelHeader = findHeader(headers, ['รายการ', 'ชื่อรายการ', 'หมวด', 'description', 'name']);
   const typeHeader = findHeader(headers, ['ประเภท', 'ฝั่ง', 'รายรับรายจ่าย', 'type']);
-  const yearHeader = findHeader(headers, ['ปีงบประมาณ', 'ปี', 'fiscalyear', 'year']);
+  const yearHeader = findHeader(headers, ['ปีงบประมาณ', 'fiscalyear', 'year', 'ปี']);
   const warnings = [];
 
   if (purpose === 'baselineBudget') {
