@@ -66,12 +66,12 @@
   async function handoffTo(card, destination) {
     const handoff = safeHandoff(card);
     if (handoff.blocked || !handoff.safeText) { window.GovPrompt?.toast?.('🔒 หยุดส่งต่อ: ยังพบข้อมูลเสี่ยง กรุณาปกปิดข้อมูลก่อน'); return; }
-    if (!await copyText(handoff.safeText)) { window.GovPrompt?.toast?.('ไม่สามารถคัดลอก Prompt ได้ กรุณาลองใหม่'); return; }
+    if (!await copyText(handoff.safeText)) { window.GovPrompt?.toast?.('ไม่สามารถคัดลอกคำสั่งได้ กรุณาลองใหม่'); return; }
     if (destination === 'chatgpt') window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
     if (destination === 'gemini') window.open('https://gemini.google.com/', '_blank', 'noopener,noreferrer');
-    if (destination === 'chatgpt') window.GovPrompt?.toast?.(handoff.changed ? '🔐 ปกปิดข้อมูลเสี่ยงและคัดลอก Prompt แล้ว — กรุณาวางใน ChatGPT' : 'คัดลอก Prompt แล้ว — กรุณาวางใน ChatGPT');
-    else if (destination === 'gemini') window.GovPrompt?.toast?.(handoff.changed ? '🔐 ปกปิดข้อมูลเสี่ยงและคัดลอก Prompt แล้ว — กรุณาวางใน Gemini' : 'คัดลอก Prompt แล้ว — กรุณาวางใน Gemini');
-    else window.GovPrompt?.toast?.(handoff.changed ? '🔐 ปกปิดข้อมูลเสี่ยงและคัดลอก Prompt แล้ว' : 'คัดลอก Prompt พร้อมใช้แล้ว');
+    if (destination === 'chatgpt') window.GovPrompt?.toast?.(handoff.changed ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว · คัดลอกแล้ว ✅ เปิด ChatGPT → แตะช่องข้อความ → วาง → กดส่ง' : 'คัดลอกแล้ว ✅ เปิด ChatGPT → แตะช่องข้อความ → วาง → กดส่ง');
+    else if (destination === 'gemini') window.GovPrompt?.toast?.(handoff.changed ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว · คัดลอกแล้ว ✅ เปิด Gemini → แตะช่องข้อความ → วาง → กดส่ง' : 'คัดลอกแล้ว ✅ เปิด Gemini → แตะช่องข้อความ → วาง → กดส่ง');
+    else window.GovPrompt?.toast?.(handoff.changed ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว · คัดลอกคำสั่งแล้ว ✅ ไปที่ ChatGPT → วาง → กดส่ง' : 'คัดลอกคำสั่งแล้ว ✅ ไปที่ ChatGPT → วาง → กดส่ง');
   }
 
   function styleSecondaryCopyButton(button) {
@@ -93,6 +93,23 @@
     });
   }
 
+  function addSimpleHandoffGuide(card, heading) {
+    const section = card.querySelector('.answer-section');
+    if (!section || section.querySelector('.simple-handoff-guide')) return;
+    const guide = document.createElement('p');
+    guide.className = 'simple-handoff-guide';
+    guide.innerHTML = '<strong>ทำต่อแค่ 3 ขั้น:</strong> 1) กด “คัดลอกแล้วเปิด ChatGPT” 2) ใน ChatGPT แตะช่องข้อความแล้วกด “วาง” 3) กดส่ง<br><small>ถ้ามีไฟล์ ให้แนบไฟล์ใน ChatGPT แล้วพิมพ์ว่า “ใช้ไฟล์นี้ทำตามคำสั่งข้างบน”</small>';
+    Object.assign(guide.style, { margin: '10px 0 12px', padding: '10px 12px', borderRadius: '12px', background: '#f3f7f5', lineHeight: '1.6' });
+    if (heading) heading.after(guide); else section.prepend(guide);
+  }
+
+  function simplifyWelcome() {
+    const welcome = document.getElementById('welcome');
+    if (!welcome) return;
+    const intro = [...welcome.children].find(element => element.tagName === 'P' && !element.classList.contains('eyebrow'));
+    if (intro) intro.textContent = 'ใช้ง่าย 3 ขั้น: พิมพ์งาน → กด “คัดลอกแล้วเปิด ChatGPT” → วางใน ChatGPT แล้วกดส่ง';
+  }
+
   function simplifyAnswerCard(card) {
     if (!card) return;
     const actions = card.querySelector('.answer-actions');
@@ -101,30 +118,37 @@
       [...actions.children].forEach(control => { if (/^เปิดแบบฟอร์ม\b/i.test(String(control.textContent || '').trim())) control.remove(); });
       let chatGPT = [...actions.querySelectorAll('button')].find(button => /ChatGPT/i.test(button.textContent));
       let gemini = [...actions.querySelectorAll('button')].find(button => /Gemini/i.test(button.textContent));
-      const copyButton = [...actions.querySelectorAll('button')].find(button => button.textContent.includes('คัดลอก Prompt'));
+      const copyButton = [...actions.querySelectorAll('button')].find(button => /คัดลอก (?:Prompt|คำสั่ง)/i.test(button.textContent));
       if (!chatGPT) { chatGPT = document.createElement('button'); chatGPT.type = 'button'; actions.prepend(chatGPT); }
-      chatGPT.textContent = 'เปิดใน ChatGPT'; chatGPT.title = 'คัดลอก Prompt แล้วเปิด ChatGPT เพื่อให้ผู้ใช้วาง Prompt เอง'; chatGPT.classList.add('handoff-primary');
+      chatGPT.textContent = 'คัดลอกแล้วเปิด ChatGPT'; chatGPT.title = 'คัดลอกคำสั่ง แล้วเปิด ChatGPT เพื่อวางและกดส่ง'; chatGPT.classList.add('handoff-primary');
       if (!gemini) { gemini = document.createElement('button'); gemini.type = 'button'; chatGPT.after(gemini); }
-      gemini.textContent = 'เปิดใน Gemini'; gemini.title = 'คัดลอก Prompt แล้วเปิด Gemini เพื่อให้ผู้ใช้วาง Prompt เอง'; gemini.classList.add('handoff-primary');
-      if (copyButton) { copyButton.textContent = 'คัดลอก Prompt'; copyButton.title = 'คัดลอกเฉพาะ Prompt พร้อมใช้ที่ผ่าน Privacy Guard'; copyButton.classList.add('prompt-copy-secondary'); styleSecondaryCopyButton(copyButton); }
-      actions.setAttribute('aria-label', 'นำ Prompt พร้อมใช้ไปวิเคราะห์ต่อ');
+      gemini.textContent = 'คัดลอกแล้วเปิด Gemini'; gemini.title = 'คัดลอกคำสั่ง แล้วเปิด Gemini เพื่อวางและกดส่ง'; gemini.classList.add('handoff-primary');
+      if (copyButton) { copyButton.textContent = 'คัดลอกคำสั่งอย่างเดียว'; copyButton.title = 'คัดลอกเฉพาะคำสั่งพร้อมใช้ที่ผ่าน Privacy Guard'; copyButton.classList.add('prompt-copy-secondary'); styleSecondaryCopyButton(copyButton); }
+      actions.setAttribute('aria-label', 'เลือกวิธีนำคำสั่งไปใช้ต่อ');
     }
-    const heading = card.querySelector('.answer-section > h3'); if (heading) heading.textContent = 'นำไปใช้ต่อ';
+    const heading = card.querySelector('.answer-section > h3');
+    if (heading) heading.textContent = 'คำสั่งพร้อมแล้ว — ทำต่อใน ChatGPT';
+    addSimpleHandoffGuide(card, heading);
     const description = [...card.querySelectorAll('.answer-section > p')].find(p => p.textContent.includes('ระบบจัดคำถามไปที่')); description?.remove();
     const routeLabel = card.parentElement?.querySelector('.route-label'); if (routeLabel) routeLabel.textContent = findDomain(card);
     hideTechnicalSearchStatus(card);
     const detailsBlocks = [...card.querySelectorAll('.answer-section > details')];
     const promptDetails = detailsBlocks.find(details => details.querySelector('pre'));
-    if (promptDetails) { promptDetails.open = false; const summary = promptDetails.querySelector('summary'); const preview = promptDetails.querySelector('pre'); if (summary) summary.textContent = 'ดู Prompt ที่ GovPrompt เตรียมไว้'; if (preview) preview.textContent = buildHandoffPrompt(card); }
+    if (promptDetails) { promptDetails.open = false; const summary = promptDetails.querySelector('summary'); const preview = promptDetails.querySelector('pre'); if (summary) summary.textContent = 'ดูคำสั่งที่ GovPrompt เตรียมไว้'; if (preview) preview.textContent = buildHandoffPrompt(card); }
     card.dataset.leanModeReady = 'true';
   }
 
-  function enforceLeanMode(root = document) { root.querySelectorAll?.('.answer-card').forEach(simplifyAnswerCard); document.querySelector('.bottom-nav [data-panel="tools"]')?.remove(); }
+  function enforceLeanMode(root = document) {
+    simplifyWelcome();
+    root.querySelectorAll?.('.answer-card').forEach(simplifyAnswerCard);
+    document.querySelector('.bottom-nav [data-panel="tools"]')?.remove();
+  }
 
   document.addEventListener('click', event => {
     const control = event.target.closest?.('.answer-actions button'); if (!control) return;
     const card = control.closest('.answer-card'); if (!card) return;
-    const label = String(control.textContent || '').trim(); if (!/^(?:เปิดใน\s+)?(?:ChatGPT|Gemini)$|^คัดลอก Prompt$/i.test(label)) return;
+    const label = String(control.textContent || '').trim();
+    if (!/ChatGPT|Gemini|คัดลอก (?:Prompt|คำสั่ง)/i.test(label)) return;
     event.preventDefault(); event.stopImmediatePropagation();
     if (/ChatGPT/i.test(label)) void handoffTo(card, 'chatgpt'); else if (/Gemini/i.test(label)) void handoffTo(card, 'gemini'); else void handoffTo(card, 'copy');
   }, true);
