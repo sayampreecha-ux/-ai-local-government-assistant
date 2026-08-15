@@ -11,7 +11,7 @@ const sitemapUrl = page('sitemap.xml');
 const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
-const RELEASE = Object.freeze({ home:'6.1.0', homeCss:'2.4.5', serviceWorker:'6.1.0', budgetInputRuntime:'1.5.0' });
+const RELEASE = Object.freeze({ home:'6.1.1', homeCss:'2.4.5', serviceWorker:'6.1.0', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0' });
 
 const runtimeSourceFiles = Object.freeze([
   'budget-balance-validator.js','budget-official-evidence-adapter.js','budget-official-document-parser.js','budget-document-content-ingestion.js',
@@ -41,7 +41,9 @@ const [localIndex, localHomeSource, localPrivacyGuard, localSubmitGuard, localSe
 ]);
 const localRuntimeContents = rest.slice(0,runtimeSourceFiles.length);
 const localBudgetAssets = rest.slice(runtimeSourceFiles.length);
-const localHome = localHomeSource.replace(/budget-browser-input-runtime-v1\.js\?v=[^'"\s)]+/g, `budget-browser-input-runtime-v1.js?v=${RELEASE.budgetInputRuntime}`);
+const localHome = localHomeSource
+  .replace(/budget-browser-input-runtime-v1\.js\?v=[^'"\s)]+/g, `budget-browser-input-runtime-v1.js?v=${RELEASE.budgetInputRuntime}`)
+  .replace(/budget-official-source-runtime-v1\.js\?v=[^'"\s)]+/g, `budget-official-source-runtime-v1.js?v=${RELEASE.budgetOfficialSourceRuntime}`);
 
 const expectedPrivacyGuard = localIndex.match(/assets\/js\/core\/privacy-guard\.js\?v=[^"'\s<]+/)?.[0];
 const expectedSubmitGuard = localIndex.match(/assets\/js\/core\/privacy-submit-guard\.js\?v=[^"'\s<]+/)?.[0];
@@ -90,7 +92,7 @@ assert.match(submit.text,/Home\/UI\/history\/router\/search\/Worker\/API/);
 assert.doesNotMatch(submit.text,/requestSubmit\s*\(/);
 assert.match(home.text,/prepareExternalPrompt\(text\)/);
 assert.match(home.text,/government-workflow-runtime-v5\.js\?v=5\.1\.0/);
-assert.match(home.text,/budget-official-source-runtime-v1\.js\?v=2\.0\.0/);
+assert.match(home.text,new RegExp(`budget-official-source-runtime-v1\\.js\\?v=${RELEASE.budgetOfficialSourceRuntime.replaceAll('.','\\.')}`));
 assert.match(home.text,/budget-official-document-connector-v1\.js\?v=1\.0\.0/);
 assert.match(home.text,new RegExp(`budget-browser-input-runtime-v1\\.js\\?v=${RELEASE.budgetInputRuntime.replaceAll('.','\\.')}`));
 assert.match(home.text,/budget-office-export-v1\.js\?v=1\.0\.0/);

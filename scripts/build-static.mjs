@@ -2,7 +2,7 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 
 const output = "dist";
-const RELEASE_VERSIONS = Object.freeze({ home: "6.1.0", homeCss: "2.4.5", serviceWorker: "6.1.0", budgetInputRuntime: "1.5.0" });
+const RELEASE_VERSIONS = Object.freeze({ home: "6.1.1", homeCss: "2.4.5", serviceWorker: "6.1.0", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0" });
 const publicExtensions = new Set([
   ".html", ".htlm", ".css", ".js", ".json", ".webmanifest", ".txt", ".xml"
 ]);
@@ -68,13 +68,16 @@ await writeFile(distIndexPath, distIndex);
 
 const distHomePath = join(output, "assets/js/home-v3.js");
 let distHome = await readFile(distHomePath, "utf8");
-distHome = distHome.replace(/budget-browser-input-runtime-v1\.js\?v=[^'"\s)]+/g, `budget-browser-input-runtime-v1.js?v=${RELEASE_VERSIONS.budgetInputRuntime}`);
+distHome = distHome
+  .replace(/budget-browser-input-runtime-v1\.js\?v=[^'"\s)]+/g, `budget-browser-input-runtime-v1.js?v=${RELEASE_VERSIONS.budgetInputRuntime}`)
+  .replace(/budget-official-source-runtime-v1\.js\?v=[^'"\s)]+/g, `budget-official-source-runtime-v1.js?v=${RELEASE_VERSIONS.budgetOfficialSourceRuntime}`);
 await writeFile(distHomePath, distHome);
 
 if (!distIndex.includes(`assets/js/home-v3.js?v=${RELEASE_VERSIONS.home}`)) throw new Error("Home release cache-bust version missing from dist/index.html");
 if (!distIndex.includes(`assets/css/home-v3.css?v=${RELEASE_VERSIONS.homeCss}`)) throw new Error("Home CSS release cache-bust version missing from dist/index.html");
 if (!distIndex.includes(`service-worker.js?v=${RELEASE_VERSIONS.serviceWorker}`)) throw new Error("Service worker release cache-bust version missing from dist/index.html");
 if (!distHome.includes(`budget-browser-input-runtime-v1.js?v=${RELEASE_VERSIONS.budgetInputRuntime}`)) throw new Error("Budget input runtime release version missing from dist Home asset");
+if (!distHome.includes(`budget-official-source-runtime-v1.js?v=${RELEASE_VERSIONS.budgetOfficialSourceRuntime}`)) throw new Error("Budget official source runtime release version missing from dist Home asset");
 
 const distSitemap = await readFile(join(output, "sitemap.xml"), "utf8");
 if (!/<urlset\b/.test(distSitemap)) throw new Error("sitemap.xml was not copied into dist correctly");
