@@ -2,191 +2,86 @@
 
 ## Goal
 
-ทำให้ผู้ใช้สั่งงานสั้น เช่น `ทำร่างงบปี 70 อบจ.พะเยา` แล้ว GovPrompt เดิน workflow งานงบประมาณแบบหลายขั้นต่อจาก Workflow Runtime Bridge v5 โดยไม่ต้องให้ผู้ใช้เขียน prompt ยาว และโดยไม่สร้าง orchestration ซ้ำอีกชุด
+ให้ผู้ใช้พิมพ์คำสั่งสั้น เช่น `ทำร่างงบปี 70 อบจ.พะเยา` แล้ว GovPrompt เดินงานร่างงบประมาณแบบหลายขั้นเอง โดยใช้ Workflow Runtime V5 เดิม ไม่สร้าง orchestration ซ้ำ และไม่แต่งตัวเลข/โครงการ/กฎหมายที่ไม่มีหลักฐาน
 
-## Existing foundation
+## Runtime
 
-ฐานที่ต้องใช้ต่อจากระบบเดิม:
-
-- Intent / workflow detection
-- State machine
-- Evidence gates
-- Risk gates
-- Deliverable contracts
-- Case orchestrator
-- Privacy-first runtime bridge v5
-- Human approval gates
-
-หลักการ: เพิ่ม `Budget Draft Agent` เป็น execution profile/workflow ของระบบเดิม ไม่สร้าง agent แยกที่ข้าม governance ของ V7
-
-## User command examples
-
-- `ทำร่างงบปี 70 อบจ.พะเยา`
-- `ร่างงบประมาณรายจ่ายปี 2570`
-- `ช่วยทำข้อบัญญัติงบประมาณปีหน้า`
-- `ทำกรอบงบ 2570 ของ อบจ.`
-- `สรุปคำของบทุกกองแล้วจัดร่างงบ`
-
-## Budget workflow stages
+`gov.budget-draft` มี 11 stages:
 
 1. `budget-context`
-   - ระบุปีงบประมาณ
-   - หน่วยงาน / ประเภท อปท.
-   - งบปีฐาน
-   - สถานะร่าง/เสนอ/ประกาศใช้
-
 2. `baseline-budget`
-   - โหลดข้อบัญญัติ/งบปีฐาน
-   - แยกรายรับ/รายจ่าย/แผนงาน/งบ
-   - เก็บ provenance ของเอกสารต้นทาง
-
 3. `revenue-forecast`
-   - รายได้จัดเก็บเอง
-   - ภาษีจัดสรร
-   - เงินอุดหนุน
-   - รายรับอื่น
-   - แยก `verified`, `estimated`, `pending-confirmation`
-
 4. `plan-project-linkage`
-   - ตรวจแผนพัฒนาท้องถิ่นฉบับที่มีผลใช้บังคับ
-   - คัดเฉพาะโครงการปีเป้าหมาย
-   - ห้ามแต่งชื่อโครงการหรือวงเงินที่ไม่มีหลักฐาน
-
 5. `personnel-obligations`
-   - ภาระบุคลากร
-   - ภาระผูกพัน
-   - รายจ่ายประจำจำเป็น
-   - ใช้ข้อมูลรวมเท่าที่จำเป็น หลีกเลี่ยงข้อมูลส่วนบุคคลรายคน
-
 6. `budget-allocation`
-   - สำนัก/กอง
-   - แผนงาน
-   - งาน
-   - งบ
-   - หมวด/ประเภท
-   - โครงการ/รายการ
-
 7. `priority-readiness`
-   - A = จำเป็น/พร้อม
-   - B = สำคัญ
-   - C = ทำเมื่อมีวงเงิน
-   - Reserve = หลักฐานหรือความพร้อมยังไม่ครบ
-
 8. `risk-review`
-   - อำนาจหน้าที่
-   - อยู่ในแผน
-   - readiness
-   - procurement risk
-   - duplicate funding
-   - privacy / PII
-
 9. `budget-balance`
-   - รายรับรวม = รายจ่ายรวม
-   - ตรวจสูตร/ยอดรวม
-   - ห้าม final หากยอดไม่สมดุล
-
 10. `deliverables`
-    - executive summary
-    - baseline sheet
-    - revenue forecast sheet
-    - request register
-    - priority matrix
-    - risk register
-    - balance check
-    - structured export
-    - Excel/Word artifact เมื่อ backend รองรับ
-
 11. `human-approval`
-    - AI ห้ามอนุมัติแทนผู้มีอำนาจ
-    - final ต้องมี human gate
 
-## Evidence model
+## Implemented
 
-ทุกตัวเลข/ข้อเท็จจริงที่ใช้ในร่างงบต้องมีสถานะอย่างใดอย่างหนึ่ง:
+- short-command routing เข้า `gov.budget-draft` เป็น primary workflow
+- official-source-first + freshness/current gate
+- ค้นหลักเกณฑ์ปัจจุบัน งบปีฐาน รายรับจริงล่าสุด และแผนปีเป้าหมาย
+- Worker v2 ค้นแหล่งราชการไทย `.go.th` และอ่านเอกสารต้นฉบับผ่าน governed document endpoint
+- deterministic parser สำหรับข้อบัญญัติงบปีฐาน รายรับจริง และแผนพัฒนาท้องถิ่น
+- search metadata เป็นเพียง source pointer; ห้ามยกระดับเป็นข้อมูลบัญชีจนอ่านเอกสารจริง
+- content hash + source URL binding + read timestamp + provenance
+- browser file intake แบบ privacy-first; raw filename ไม่เข้า evidence
+- deterministic JSON/CSV/XLSX/DOCX parsing; PDF upload ที่อ่านไม่ได้ใน browser จะ fail closed ส่วน PDF ราชการจาก URL ใช้ official document reader
+- parser output ต้องผ่าน human confirmation ก่อน promotion เป็น internal evidence
+- purpose picker/review gate สำหรับข้อมูลไฟล์ที่จำแนกไม่ชัด
+- `verified` / `estimated` / `pending-confirmation` status contract
+- conservative Working Draft planner: ไม่ขยายเพดานรวมเหนือปีฐานโดยอัตโนมัติ
+- โครงการจากแผน default เป็น `Reserve / unverified` จนหลักฐาน readiness ครบ
+- personnel placeholder จากปีฐานต้องติด `estimated`
+- balance validator ตรวจทั้งรายรับ=รายจ่าย, declared total, line-item formula และ breakdown reconciliation
+- Phayao 2570 real-case regression: จับ investment breakdown ที่คลาด 2,495,700 บาทได้และ fail closed
+- governed deliverable artifacts `budget-draft` + `budget-structured-export`
+- real XLSX และ DOCX Office Open XML export จาก governed structured artifact
+- Home แสดง Budget Draft Agent status และดาวน์โหลด Excel/Word เมื่อ artifact พร้อม
+- privacy guard ทำงานก่อน workflow/search/document execution
+- human approval ยังเป็น final gate; AI ไม่อนุมัติงบแทนมนุษย์
+- cache-busted production assets + exact-byte production verifier
+- production security verifier สำหรับ Worker search/document endpoints
+- Playwright production E2E สำหรับคำสั่งสั้น Budget Draft Agent
 
-- `verified` — มีหลักฐานและผ่านการยืนยันแหล่งต้นฉบับ
-- `estimated` — ประมาณการจากฐานที่ระบุชัด
-- `pending-confirmation` — ยังรอหนังสือ/ข้อมูลจริง
+## Phayao 2570 regression fixture
 
-ห้ามแสดง `estimated` หรือ `pending-confirmation` เสมือนเป็นข้อเท็จจริงที่ยืนยันแล้ว
+ข้อมูลจากอินโฟกราฟิกผู้ใช้ถูกเก็บเป็น `pending-confirmation` จนเทียบต้นฉบับราชการ:
 
-## Tool registry target
+- รายรับ/รายจ่ายรวม 592,782,700 บาท
+- รายรับ: 19,712,500 + 301,700,000 + 271,370,200
+- รายจ่าย: 60,682,445 + 262,162,810 + 134,866,725 + 134,470,720 + 600,000
+- investment set A: 22,770,000 + 111,700,720 = 134,470,720
+- investment set B: 20,774,020 + 111,201,000 = 131,975,020 → ต่าง 2,495,700 บาท → `budget-breakdown-mismatch`
+- personnel: 8,964,120 + 253,198,690 = 262,162,810
+- permanent personnel: 113,960,390 + 139,238,300 = 253,198,690
 
-### Phase A — orchestration profile
+## Governance invariants
 
-- workflow detection
-- evidence requirements
-- deliverable contracts
-- balance validator
-- risk gates
+- no fabrication
+- PII/data minimization
+- raw evidence values ไม่ออกจาก Workflow Runtime V5 safe projection
+- official source + freshness required where current facts matter
+- search snippet ≠ document content
+- parser output ≠ trusted evidence until human confirmation
+- uploaded-document hash binding
+- audit trail + provenance
+- fail closed on critical blockers
+- final human sign-off required
 
-### Phase B — official retrieval
+## Merge gate
 
-- `search_official_sources`
-- `fetch_document`
-- `extract_document`
-- `verify_sources`
+ห้าม merge เข้า `main` จนกว่า P0 verification, Security Release Gate และ Cloudflare credentials check ผ่านครบ
 
-### Phase C — artifact execution
+หลัง merge ต้องรอ deployment แล้วให้ `Verify Production Surface` ผ่านครบ:
 
-- `calculate_budget`
-- `generate_file`
+- GitHub Pages exact asset verification
+- Cloudflare Worker production security
+- Issue #73 real-browser privacy E2E
+- Budget Draft Agent short-command real-browser E2E
 
-## Security and governance invariants
-
-- Privacy Guard ต้องทำงานก่อน router/search/workflow/prompt/history
-- ห้าม raw PII เข้า workflow state โดยไม่จำเป็น
-- ห้ามสร้างเลขหนังสือ กฎหมาย ราคา ผู้มีอำนาจ ตัวเลขรายรับ หรือชื่อโครงการที่ไม่มี evidence
-- current-law/current-budget facts ต้องผ่าน official-source + freshness gate
-- final artifact ต้องมี provenance/evidence linkage
-- human approval required ก่อน final
-- fail closed เมื่อหลักฐานสำคัญขาด
-
-## Acceptance tests
-
-### Routing
-
-คำสั่งต่อไปนี้ต้องเข้า Budget Draft profile และไม่จบแค่ `gov.finance` ทั่วไป:
-
-1. `ทำร่างงบปี 70 อบจ.พะเยา`
-2. `ร่างงบประมาณรายจ่ายปี 2570`
-3. `ช่วยทำข้อบัญญัติงบประมาณปีหน้า`
-4. `ทำกรอบงบ 2570 ของ อบจ.`
-5. `สรุปคำของบทุกกองแล้วจัดร่างงบ`
-
-### Evidence
-
-- ไม่มีงบปีฐาน → stage ต้องขอ baseline evidence
-- ไม่มีรายรับล่าสุด → ห้ามฟันธงประมาณการรายรับ
-- ไม่มีแผนปีเป้าหมาย → ห้ามสร้าง project list
-- ข้อมูล current แต่ไม่มี official/freshness verification → fail closed หรือระบุ pending-confirmation
-
-### Calculation
-
-- รายรับ != รายจ่าย → final blocked
-- สูตรรวมผิด → validation failed
-- `estimated` ต้องถูก label ชัดเจน
-
-### Deliverables
-
-- structured export ต้องมี source/evidence keys
-- final deliverable ต้องผ่าน contract validation
-- human sign-off required เมื่อเข้าสู่ final stage
-
-## Implementation order
-
-1. เพิ่ม Budget Draft detection/profile บน workflow suite เดิม
-2. เพิ่ม stages + deliverable contracts
-3. เพิ่ม budget balance validator และ risk rules
-4. เพิ่ม unit/regression tests
-5. ต่อ official-source tool execution
-6. ต่อ Excel/Word artifact generation
-7. production verification ก่อน merge main
-
-## Branch
-
-`feature/v7-budget-draft-agent-v1`
-
-## Tracking
-
-Issue #104
+Issue #104 ปิดได้เมื่อ production verification ผ่านเท่านั้น
