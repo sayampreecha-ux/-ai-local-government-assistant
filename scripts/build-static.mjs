@@ -8,6 +8,8 @@ const publicExtensions = new Set([
 const publicDirectories = ["assets", "access-system", "Plain text", "knowledge"];
 const workflowRuntimeSourceFiles = Object.freeze([
   "budget-balance-validator.js",
+  "budget-official-evidence-adapter.js",
+  "budget-artifact-factory.js",
   "government-workflow-engine.js",
   "government-workflow-state-machine-v2.js",
   "government-deliverable-contracts-v3.js",
