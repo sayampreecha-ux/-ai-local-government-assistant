@@ -177,7 +177,7 @@
       searchResult?.searchedAt ? `- เวลาค้น: ${searchResult.searchedAt}` : '',
       searchResult?.provider ? `- Search provider: ${searchResult.provider}` : '',
       searchResult?.warning ? `- คำเตือน: ${searchResult.warning}` : '',
-      '- หลักการใช้หลักฐาน: Primary Source First; ห้ามใช้ secondary sourceฟันธงเมื่อมี primary source',
+      '- หลักการใช้หลักฐาน: Primary Source First; ห้ามใช้ secondary source ฟันธงเมื่อมี primary source',
       evidenceLines.length ? evidenceLines.join('\n\n') : '- ยังไม่มีผลค้นต้นฉบับราชการที่นำมาใช้อ้างอิงได้',
       '',
       'คำสั่งเพิ่มเติมสำหรับการวิเคราะห์',
