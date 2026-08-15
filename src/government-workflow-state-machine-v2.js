@@ -68,6 +68,38 @@ export function validateCompletedStagePrefixV2(workflowId, completedStages = [])
   };
 }
 
+export function validateWorkflowStateV2(workflowId, state = null) {
+  const stages = DEEP_WORKFLOWS[workflowId] || [];
+  if (!state || typeof state !== 'object' || Array.isArray(state)) return { valid: false, reason: 'missing-state' };
+  if (state.schemaVersion !== WORKFLOW_STATE_SCHEMA_VERSION) return { valid: false, reason: 'schema-version', expected: WORKFLOW_STATE_SCHEMA_VERSION, received: state.schemaVersion || null };
+  if (state.workflowId !== workflowId) return { valid: false, reason: 'workflow-id', expected: workflowId, received: state.workflowId || null };
+
+  const completedStages = Array.isArray(state.completedStages) ? state.completedStages : [];
+  const prefix = validateCompletedStagePrefixV2(workflowId, completedStages);
+  if (!prefix.valid) return { valid: false, reason: 'completed-stage-prefix', ...prefix };
+
+  const expectedCurrentStageId = stages[completedStages.length]?.id || null;
+  if ((state.currentStageId ?? null) !== expectedCurrentStageId) {
+    return { valid: false, reason: 'current-stage', expected: expectedCurrentStageId, received: state.currentStageId ?? null };
+  }
+
+  const transitionLog = Array.isArray(state.transitionLog) ? state.transitionLog : [];
+  if (transitionLog.length !== completedStages.length) {
+    return { valid: false, reason: 'transition-log-length', expected: completedStages.length, received: transitionLog.length };
+  }
+
+  for (let index = 0; index < completedStages.length; index += 1) {
+    const event = transitionLog[index];
+    const expectedFrom = stages[index]?.id || null;
+    const expectedTo = stages[index + 1]?.id || null;
+    if (!event || event.type !== 'stage-transition' || event.workflowId !== workflowId || event.fromStageId !== expectedFrom || (event.toStageId ?? null) !== expectedTo) {
+      return { valid: false, reason: 'transition-log-event', index, expectedFrom, expectedTo, received: event || null };
+    }
+  }
+
+  return { valid: true, completedStages: [...completedStages], currentStageId: expectedCurrentStageId };
+}
+
 export function createWorkflowStateV2(workflowId, caseId = null) {
   const stages = DEEP_WORKFLOWS[workflowId] || [];
   return {
@@ -83,9 +115,7 @@ export function createWorkflowStateV2(workflowId, caseId = null) {
 
 function approvalFor(input, workflowId, stageId) {
   const approvals = Array.isArray(input?.approvals) ? input.approvals : [];
-  const exact = approvals.find((approval) => approval?.workflowId === workflowId && approval?.stageId === stageId && approval?.approved === true && approval?.revoked !== true);
-  if (exact) return exact;
-  return input?.humanApproved === true ? { id: 'legacy-humanApproved', workflowId, stageId, approved: true, legacy: true } : null;
+  return approvals.find((approval) => approval?.workflowId === workflowId && approval?.stageId === stageId && approval?.approved === true && approval?.revoked !== true) || null;
 }
 
 function riskReviewFor(input, workflowId, stageId) {
@@ -162,6 +192,13 @@ export function evaluateWorkflowStageV2(workflowId, stageIndex, { evidence = [],
 export function executeGovernmentWorkflowV2({ workflowId, state = null, completedStages = [], evidence = [], artifacts = [], input = {} } = {}) {
   const stages = DEEP_WORKFLOWS[workflowId];
   if (!stages) return { workflowId, status: 'unknown-workflow', unresolved: ['workflowId'] };
+  if (state && !Array.isArray(state)) {
+    const integrity = validateWorkflowStateV2(workflowId, state);
+    if (!integrity.valid) {
+      return { workflowId, status: 'blocked-invalid-state', completedStages: Array.isArray(state.completedStages) ? state.completedStages : [], stateIntegrity: integrity, nextRequestedInputs: ['repair-workflow-state'], governance: { failClosed: true, noFabrication: true, piiMinimization: true, auditTrailRequired: true } };
+    }
+  }
+
   const completed = state && !Array.isArray(state) ? state.completedStages || [] : completedStages;
   const prefix = validateCompletedStagePrefixV2(workflowId, completed);
   if (!prefix.valid) {
@@ -199,6 +236,12 @@ export function executeGovernmentWorkflowV2({ workflowId, state = null, complete
 
 export function transitionGovernmentWorkflowV2({ workflowId, state = null, evidence = [], artifacts = [], input = {}, actor = 'human', at = null } = {}) {
   const currentState = state && !Array.isArray(state) ? state : createWorkflowStateV2(workflowId, input.caseId || null);
+  const integrity = validateWorkflowStateV2(workflowId, currentState);
+  if (!integrity.valid) {
+    const execution = { workflowId, status: 'blocked-invalid-state', stateIntegrity: integrity, governance: { failClosed: true, noFabrication: true, piiMinimization: true, auditTrailRequired: true } };
+    return { transitioned: false, status: execution.status, state: currentState, execution };
+  }
+
   const execution = executeGovernmentWorkflowV2({ workflowId, state: currentState, evidence, artifacts, input });
   if (execution.status !== 'ready') return { transitioned: false, status: execution.status, state: currentState, execution };
 
