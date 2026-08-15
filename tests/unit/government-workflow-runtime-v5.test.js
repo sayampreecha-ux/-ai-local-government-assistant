@@ -78,6 +78,7 @@ test('production build copies the exact browser-safe workflow runtime dependency
   for (const file of [
     'budget-balance-validator.js',
     'budget-official-evidence-adapter.js',
+    'budget-document-content-ingestion.js',
     'budget-artifact-factory.js',
     'government-workflow-engine.js',
     'government-workflow-state-machine-v2.js',
@@ -97,6 +98,7 @@ test('runtime integration and post-deploy verifier are syntactically valid befor
     'assets/js/core/budget-official-source-runtime-v1.js',
     'src/budget-balance-validator.js',
     'src/budget-official-evidence-adapter.js',
+    'src/budget-document-content-ingestion.js',
     'src/budget-artifact-factory.js',
     'src/government-workflow-engine.js',
     'src/government-workflow-state-machine-v2.js',
