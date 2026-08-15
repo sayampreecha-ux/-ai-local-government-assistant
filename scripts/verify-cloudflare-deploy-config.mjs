@@ -22,11 +22,11 @@ assert.doesNotMatch(deploy, /pull_request:/);
 assert.match(verify, /Missing CLOUDFLARE_API_TOKEN/);
 assert.match(verify, /Missing CLOUDFLARE_ACCOUNT_ID/);
 assert.match(await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'), /"directory": "\.\/dist"/);
-assert.match(pages, /push:\s*\r?\n\s+branches:\s*\[main\]/);
-assert.match(pages, /if:\s*github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/);
-assert.match(pages, /path:\s*dist/);
-assert.doesNotMatch(pages, /workflow_dispatch:/);
+assert.match(pages, /workflow_dispatch:/);
+assert.doesNotMatch(pages, /push:\s*\r?\n\s+branches:\s*\[main\]/);
 assert.doesNotMatch(pages, /pull_request:/);
+assert.match(pages, /path:\s*dist/);
+assert.match(pages, /actions\/deploy-pages@v4/);
 assert.match(deploy, /verify-production-security\.mjs/);
 
 assert.deepEqual(wrangler?.secrets?.required, [
@@ -51,4 +51,4 @@ assert.equal(wrangler?.observability?.logs?.head_sampling_rate, 0.05);
 assert.equal(wrangler?.observability?.logs?.persist, true);
 assert.equal(wrangler?.observability?.traces?.enabled, false);
 
-console.log('Cloudflare deploy/privacy contract verified: guarded main deploys, complete required secret manifest, rate-limit handling, minimized logs, no invocation logs, traces disabled.');
+console.log('Cloudflare deploy/privacy contract verified: guarded Worker main deploy, manual-only fallback Pages workflow, complete required secret manifest, rate-limit handling, minimized logs, no invocation logs, traces disabled.');
