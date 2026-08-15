@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 
 const frontend = process.env.GOVPROMPT_FRONTEND_URL || 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/index.html';
+const RELEASE_HOME_VERSION = '6.1.0';
 const browser = await chromium.launch({ headless:true });
 const context = await browser.newContext({ serviceWorkers:'allow', viewport:{width:390,height:844}, isMobile:true, hasTouch:true });
 const page = await context.newPage();
@@ -39,17 +40,15 @@ assert.equal(state.submitGuardVersion,'3','privacy submit guard must remain acti
 assert.ok(state.userMessages.includes(prompt),'budget command did not create expected safe user message');
 assert.match(state.budgetText,/Budget Draft Agent/,'Budget Draft Agent result surface missing');
 assert.match(state.assistantText,/GovPrompt ดำเนินงานร่างงบประมาณให้แล้ว|ร่างงบประมาณ/,'budget workflow response missing');
-assert.match(state.homeScript,/home-v3\.js\?v=6\.0\.0/,'production home asset is stale');
+assert.match(state.homeScript,new RegExp(`home-v3\\.js\\?v=${RELEASE_HOME_VERSION.replaceAll('.','\\.')}`),'production home asset is stale');
 assert.equal(pageErrors.length,0,`page errors: ${JSON.stringify(pageErrors)}`);
 assert.ok(requests.some(item=>/\/api\/official-search/.test(item.url)),'budget workflow did not call official search Worker');
 assert.ok(responses.some(item=>/\/api\/official-search/.test(item.url)),'official search Worker returned no response');
 
-// Document reading is required only when a verified official pointer is found. If it runs, it must hit the Worker endpoint.
 for (const item of requests.filter(item=>/\/api\/official-document/.test(item.url))) {
   assert.match(item.url,/ai-local-government-assistant\.sayampreecha\.workers\.dev\/api\/official-document/,'document read used a non-production endpoint');
 }
 
-// A ready artifact must expose both Office downloads. A blocked evidence state must fail closed without pretending readiness.
 if (/Working Draft พร้อมส่งออก/.test(state.budgetText)) {
   assert.equal(state.excelButton,true,'ready budget artifact missing Excel download');
   assert.equal(state.wordButton,true,'ready budget artifact missing Word download');
@@ -57,5 +56,5 @@ if (/Working Draft พร้อมส่งออก/.test(state.budgetText)) {
   assert.match(state.budgetText,/ยังไม่พร้อมส่งออก|ต้องยืนยัน|สถานะ/,'blocked budget state did not explain its evidence gate');
 }
 
-console.log(JSON.stringify({frontend,checks:{shortCommand:'PASS',privacyGuard:'PASS',budgetSurface:'PASS',officialSearchWorker:'PASS',documentWorkerRouting:'PASS',officeExportOrFailClosed:'PASS'},requests,responses,pageErrors},null,2));
+console.log(JSON.stringify({frontend,releaseHomeVersion:RELEASE_HOME_VERSION,checks:{shortCommand:'PASS',privacyGuard:'PASS',budgetSurface:'PASS',releaseCacheBust:'PASS',officialSearchWorker:'PASS',documentWorkerRouting:'PASS',officeExportOrFailClosed:'PASS'},requests,responses,pageErrors},null,2));
 await browser.close();
