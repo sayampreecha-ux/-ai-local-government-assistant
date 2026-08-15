@@ -1,6 +1,6 @@
 import { confirmParsedBudgetReview } from '../../../src/budget-file-parser-review.js';
 
-export const BUDGET_BROWSER_REVIEW_UI_VERSION = '1.0';
+export const BUDGET_BROWSER_REVIEW_UI_VERSION = '1.1';
 
 const text = value => String(value ?? '').trim();
 const number = value => {
@@ -143,4 +143,35 @@ export function renderBudgetReviewPanel(review, { onConfirmed = null, onCancelle
   return panel;
 }
 
-export default Object.freeze({ version: BUDGET_BROWSER_REVIEW_UI_VERSION, renderBudgetReviewPanel });
+export function requestBudgetReviewDecision(review) {
+  if (!review || typeof document === 'undefined') return Promise.resolve(null);
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'budget-review-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    const shell = document.createElement('div');
+    shell.className = 'budget-review-dialog';
+    const panel = renderBudgetReviewPanel(review, {
+      onConfirmed: result => {
+        overlay.remove();
+        resolve(Object.freeze({
+          confirmed: true,
+          reviewer: 'browser-user-review-ui',
+          confirmedAt: result.review?.confirmedAt || new Date().toISOString(),
+          corrections: Object.freeze({ ...result.evidenceInput?.[review.purpose]?.data })
+        }));
+      },
+      onCancelled: () => {
+        overlay.remove();
+        resolve(Object.freeze({ confirmed: false, reviewer: 'browser-user-review-ui' }));
+      }
+    });
+    shell.append(panel);
+    overlay.append(shell);
+    document.body.append(overlay);
+    shell.querySelector('input,button')?.focus();
+  });
+}
+
+export default Object.freeze({ version: BUDGET_BROWSER_REVIEW_UI_VERSION, renderBudgetReviewPanel, requestBudgetReviewDecision });
