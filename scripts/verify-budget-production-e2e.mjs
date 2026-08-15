@@ -20,7 +20,8 @@ url.searchParams.set('nonce',`${Date.now()}-${Math.random().toString(16).slice(2
 await page.goto(url.toString(),{waitUntil:'domcontentloaded',timeout:30_000});
 await page.waitForFunction(()=>document.readyState==='complete' && document.getElementById('chatForm')?.dataset?.privacySubmitGuard==='3' && typeof window.GovPromptCore?.officialSearchConnector?.search==='function',undefined,{timeout:20_000});
 
-const prompt='ทำร่างงบปี 70 อบจ.พะเยา';
+// Keep production verification organization-neutral: never inject a real organization/place name into the visible chat surface.
+const prompt='จัดทำงบประมาณปี 2570';
 await page.locator('#promptInput').fill(prompt);
 await page.locator('#chatForm .send-button').click();
 await page.locator('.budget-runtime-result').waitFor({state:'visible',timeout:120_000});
@@ -39,6 +40,7 @@ const state=await page.evaluate(()=>({
 
 assert.equal(state.submitGuardVersion,'3','privacy submit guard must remain active');
 assert.ok(state.userMessages.includes(prompt),'budget command did not create expected safe user message');
+assert.doesNotMatch(state.userMessages.join('\n'),/อบจ\.พะเยา/,'production E2E must not inject a real organization/place name');
 assert.match(state.routeLabel,/แผน โครงการ และงบประมาณ/,'short budget command routed to wrong government domain');
 assert.match(state.budgetText,/Budget Draft Agent/,'Budget Draft Agent result surface missing');
 assert.match(state.assistantText,/Workflow:\s*บริบทและกรอบการจัดทำงบประมาณ|Budget Draft Agent/,'governed budget workflow markers missing');
@@ -59,5 +61,5 @@ if (/Working Draft พร้อมส่งออก/.test(state.budgetText)) {
   assert.doesNotMatch(state.budgetText,/Working Draft พร้อมส่งออก/,'blocked budget state must not claim export readiness');
 }
 
-console.log(JSON.stringify({frontend,releaseHomeVersion:RELEASE_HOME_VERSION,checks:{shortCommand:'PASS',budgetDomainRouting:'PASS',privacyGuard:'PASS',budgetSurface:'PASS',governedWorkflowMarkers:'PASS',releaseCacheBust:'PASS',officialSearchWorker:'PASS',documentWorkerRouting:'PASS',officeExportOrFailClosed:'PASS'},requests,responses,pageErrors},null,2));
+console.log(JSON.stringify({frontend,releaseHomeVersion:RELEASE_HOME_VERSION,checks:{genericBudgetCommand:'PASS',budgetDomainRouting:'PASS',privacyGuard:'PASS',budgetSurface:'PASS',governedWorkflowMarkers:'PASS',releaseCacheBust:'PASS',officialSearchWorker:'PASS',documentWorkerRouting:'PASS',officeExportOrFailClosed:'PASS'},requests,responses,pageErrors},null,2));
 await browser.close();
