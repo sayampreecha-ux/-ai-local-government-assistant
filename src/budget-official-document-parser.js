@@ -88,43 +88,25 @@ export function parseBaselineBudgetDocument(rawContent, { targetYear = null } = 
   return Object.freeze({
     valid: errors.length === 0,
     errors: Object.freeze(errors),
-    data: Object.freeze({
-      fiscalYear,
-      total,
-      revenueItems: Object.freeze(revenueItems),
-      expenseItems: Object.freeze(expenseItems),
-      parserVersion: BUDGET_OFFICIAL_DOCUMENT_PARSER_VERSION
-    })
+    data: Object.freeze({ fiscalYear, total, revenueItems: Object.freeze(revenueItems), expenseItems: Object.freeze(expenseItems), parserVersion: BUDGET_OFFICIAL_DOCUMENT_PARSER_VERSION })
   });
 }
 
 export function parseRevenueActualsDocument(rawContent) {
   const lines = linesOf(rawContent);
   const rows = extractLabelRows(lines, LABELS.revenue);
-  const explicitTotals = lines
-    .filter(line => /(รวมรายรับ|รายรับรวม|รวมทั้งสิ้น)/i.test(line))
-    .flatMap(moneyNumbers)
-    .filter(number => number >= 1000);
+  const explicitTotals = lines.filter(line => /(รวมรายรับ|รายรับรวม|รวมทั้งสิ้น)/i.test(line)).flatMap(moneyNumbers).filter(number => number >= 1000);
   const rowTotal = rows.length ? rows.reduce((sum, row) => sum + row.amount, 0) : null;
   const total = explicitTotals.length ? Math.max(...explicitTotals) : rowTotal;
   const periodLine = lines.find(line => /(มกราคม|กุมภาพันธ์|มีนาคม|เมษายน|พฤษภาคม|มิถุนายน|กรกฎาคม|สิงหาคม|กันยายน|ตุลาคม|พฤศจิกายน|ธันวาคม|ณ วันที่|ถึงเดือน)/i.test(line));
   const errors = [];
   if (!rows.length && !Number.isFinite(total)) errors.push('revenue-data:not-found');
-  return Object.freeze({
-    valid: errors.length === 0,
-    errors: Object.freeze(errors),
-    data: Object.freeze({
-      total: Number.isFinite(total) ? total : null,
-      rows: Object.freeze(rows),
-      period: periodLine ? periodLine.slice(0, 180) : '',
-      parserVersion: BUDGET_OFFICIAL_DOCUMENT_PARSER_VERSION
-    })
-  });
+  return Object.freeze({ valid: errors.length === 0, errors: Object.freeze(errors), data: Object.freeze({ total: Number.isFinite(total) ? total : null, rows: Object.freeze(rows), period: periodLine ? periodLine.slice(0, 180) : '', parserVersion: BUDGET_OFFICIAL_DOCUMENT_PARSER_VERSION }) });
 }
 
 function projectCandidate(line) {
   if (line.length < 8 || line.length > 500) return false;
-  if (/^(ที่|ลำดับ|แผนงาน|ยุทธศาสตร์|หน้า|รวม|หมายเหตุ)\b/i.test(line)) return false;
+  if (/^(ที่|ลำดับ|แผนงาน|แผนพัฒนาท้องถิ่น|ยุทธศาสตร์|หน้า|รวม|หมายเหตุ)\b/i.test(line)) return false;
   return /(โครงการ|ก่อสร้าง|ปรับปรุง|ซ่อมแซม|จัดซื้อ|จัดหา|อบรม|พัฒนา|ส่งเสริม|ถนน|สะพาน|ระบบประปา|ไฟฟ้า|เสาไฟ|อาคาร|สนามกีฬา)/i.test(line);
 }
 
@@ -142,26 +124,12 @@ export function parseTargetYearPlanDocument(rawContent, { targetYear = null } = 
   const projects = names.map((name, index) => {
     const sourceLine = projectLines.find(line => cleanProjectName(line) === name) || name;
     const amounts = moneyNumbers(sourceLine).filter(number => number >= 1000);
-    return Object.freeze({
-      id: `plan-project-${index + 1}`,
-      name,
-      amount: amounts.length ? amounts[amounts.length - 1] : null,
-      evidenceStatus: 'verified'
-    });
+    return Object.freeze({ id: `plan-project-${index + 1}`, name, amount: amounts.length ? amounts[amounts.length - 1] : null, evidenceStatus: 'verified' });
   });
   const errors = [];
   if (!detectedYear) errors.push('targetYear:not-found');
   if (!projects.length) errors.push('projects:not-found');
-  return Object.freeze({
-    valid: errors.length === 0,
-    errors: Object.freeze(errors),
-    data: Object.freeze({
-      targetYear: detectedYear,
-      projects: Object.freeze(projects),
-      projectCount: projects.length,
-      parserVersion: BUDGET_OFFICIAL_DOCUMENT_PARSER_VERSION
-    })
-  });
+  return Object.freeze({ valid: errors.length === 0, errors: Object.freeze(errors), data: Object.freeze({ targetYear: detectedYear, projects: Object.freeze(projects), projectCount: projects.length, parserVersion: BUDGET_OFFICIAL_DOCUMENT_PARSER_VERSION }) });
 }
 
 export function parseOfficialBudgetDocument(targetKey, rawContent, options = {}) {
