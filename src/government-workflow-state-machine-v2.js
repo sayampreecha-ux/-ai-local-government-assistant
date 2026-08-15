@@ -1,4 +1,5 @@
 import { DEEP_WORKFLOWS, detectProcurementRisks } from './government-workflow-engine.js';
+import { validateBudgetBalance } from './budget-balance-validator.js';
 
 export const WORKFLOW_STATE_SCHEMA_VERSION = '2.0';
 
@@ -7,6 +8,9 @@ const OFFICIAL_EVIDENCE_KEYS = Object.freeze({
   'gov.procurement:market-and-standard-price': ['priceEvidence'],
   'gov.procurement:method-selection': ['currentProcurementRule'],
   'gov.procurement:reference-price': ['referencePriceBasis'],
+  'gov.budget-draft:budget-context': ['currentBudgetRule'],
+  'gov.budget-draft:revenue-forecast': ['latestRevenueActuals'],
+  'gov.budget-draft:plan-project-linkage': ['targetYearPlan'],
   'gov.finance:authority': ['financialAuthority'],
   'gov.finance:loan-debt': ['loanFacts'],
   'gov.legal:authoritative-sources': ['officialLegalSource'],
@@ -18,6 +22,7 @@ const OFFICIAL_EVIDENCE_KEYS = Object.freeze({
 const RISK_REVIEW_STAGES = new Set([
   'gov.procurement:technical-requirements',
   'gov.procurement:tor-and-competition-check',
+  'gov.budget-draft:risk-review',
   'gov.finance:fiscal-capacity',
   'gov.finance:loan-debt',
   'gov.legal:risk-options',
@@ -31,6 +36,19 @@ export const CROSS_WORKFLOW_HANDOFFS_V2 = Object.freeze({
   'gov.procurement:plan-and-budget': [
     { targetWorkflowId: 'gov.project', requiredEvidence: ['needJustification', 'planLinkage'], requiredDeliverables: ['need-memo', 'plan-budget-check'] },
     { targetWorkflowId: 'gov.finance', requiredEvidence: ['fundingSource', 'budgetAvailability'], requiredDeliverables: ['plan-budget-check'] }
+  ],
+  'gov.budget-draft:revenue-forecast': [
+    { targetWorkflowId: 'gov.finance', requiredEvidence: ['latestRevenueActuals', 'revenueForecastBasis'], requiredDeliverables: ['budget-revenue-forecast-sheet'] }
+  ],
+  'gov.budget-draft:plan-project-linkage': [
+    { targetWorkflowId: 'gov.project', requiredEvidence: ['targetYearPlan', 'projectRequests'], requiredDeliverables: ['budget-plan-project-matrix'] }
+  ],
+  'gov.budget-draft:personnel-obligations': [
+    { targetWorkflowId: 'gov.hr', requiredEvidence: ['personnelObligations'], requiredDeliverables: ['personnel-obligation-analysis'] },
+    { targetWorkflowId: 'gov.finance', requiredEvidence: ['personnelObligations'], requiredDeliverables: ['personnel-obligation-analysis'] }
+  ],
+  'gov.budget-draft:budget-allocation': [
+    { targetWorkflowId: 'gov.finance', requiredEvidence: ['allocationDraft'], requiredDeliverables: ['budget-allocation-sheet'] }
   ],
   'gov.finance:loan-debt': [
     { targetWorkflowId: 'gov.legal', requiredEvidence: ['loanFacts'], requiredDeliverables: ['loan-debt-analysis'] }
@@ -47,7 +65,7 @@ export const CROSS_WORKFLOW_HANDOFFS_V2 = Object.freeze({
 });
 
 const keyOf = (value) => String(value?.key || value?.id || value?.type || '').trim();
-const usableEvidence = (e) => Boolean(keyOf(e) && e?.value !== undefined && e?.value !== null && e?.valid !== false && e?.revoked !== true);
+const usableEvidence = (e) => Boolean(keyOf(e) && e?.value !== undefined && e?.value !== null && e?.valid !== false && e?.revoked !== true && e?.status !== 'pending-confirmation');
 const officialEvidence = (e) => Boolean(usableEvidence(e) && e?.official === true && e?.verified === true && e?.fresh !== false && e?.current !== false);
 const readyArtifact = (a) => Boolean(keyOf(a) && a?.revoked !== true && !['draft', 'incomplete', 'rejected'].includes(String(a?.status || 'ready').toLowerCase()));
 const indexByKey = (items, predicate) => new Map((Array.isArray(items) ? items : []).filter(predicate).map((item) => [keyOf(item), item]));
@@ -151,6 +169,14 @@ function handoffContracts(workflowId, stageId, evidenceIndex, artifactIndex) {
   });
 }
 
+function budgetBalancePayload(evidenceIndex, input) {
+  const evidenceValue = evidenceIndex.get('budgetTotals')?.value;
+  if (evidenceValue && typeof evidenceValue === 'object') return evidenceValue;
+  if (input?.budgetBalance && typeof input.budgetBalance === 'object') return input.budgetBalance;
+  if (input?.budgetTotals && typeof input.budgetTotals === 'object') return input.budgetTotals;
+  return {};
+}
+
 export function evaluateWorkflowStageV2(workflowId, stageIndex, { evidence = [], artifacts = [], input = {} } = {}) {
   const stage = DEEP_WORKFLOWS[workflowId]?.[stageIndex];
   if (!stage) return { status: 'complete', currentStage: null, missingEvidence: [], missingOfficialEvidence: [], riskFindings: [], unresolvedRiskFindings: [], handoffContracts: [] };
@@ -162,14 +188,21 @@ export function evaluateWorkflowStageV2(workflowId, stageIndex, { evidence = [],
   const missingOfficialEvidence = officialKeys.filter((key) => !officialEvidence(evidenceIndex.get(key)));
   const riskReviewRequired = RISK_REVIEW_STAGES.has(stageKey(workflowId, stage.id));
   const riskReview = riskReviewRequired ? riskReviewFor(input, workflowId, stage.id) : null;
-  const riskFindings = workflowId === 'gov.procurement' ? detectProcurementRisks(input) : [];
+  const procurementRiskFindings = workflowId === 'gov.procurement' ? detectProcurementRisks(input) : [];
+  const budgetBalanceValidation = workflowId === 'gov.budget-draft' && stage.id === 'budget-balance' && !missingEvidence.length
+    ? validateBudgetBalance(budgetBalancePayload(evidenceIndex, input))
+    : null;
+  const riskFindings = [...procurementRiskFindings, ...(budgetBalanceValidation?.findings || [])];
   const applicableRiskCodes = Array.isArray(stage.riskChecks) ? stage.riskChecks : [];
-  const unresolvedRiskFindings = riskFindings.filter((finding) => applicableRiskCodes.includes(finding.code) && finding.severity === 'high' && !riskResolutionFor(input, finding, evidenceIndex));
+  const unresolvedRiskFindings = workflowId === 'gov.budget-draft' && stage.id === 'budget-balance'
+    ? [...riskFindings]
+    : riskFindings.filter((finding) => applicableRiskCodes.includes(finding.code) && finding.severity === 'high' && !riskResolutionFor(input, finding, evidenceIndex));
   const approval = stage.humanApprovalRequired ? approvalFor(input, workflowId, stage.id) : null;
 
   let status = 'ready';
   if (missingEvidence.length) status = 'blocked-missing-evidence';
   else if (missingOfficialEvidence.length) status = 'blocked-official-source';
+  else if (budgetBalanceValidation && !budgetBalanceValidation.valid) status = 'blocked-risk-review';
   else if (riskReviewRequired && !riskReview) status = 'blocked-risk-review';
   else if (unresolvedRiskFindings.length) status = 'blocked-risk-review';
   else if (stage.humanApprovalRequired && !approval) status = 'awaiting-human-approval';
@@ -183,6 +216,7 @@ export function evaluateWorkflowStageV2(workflowId, stageIndex, { evidence = [],
     riskReview,
     riskFindings,
     unresolvedRiskFindings,
+    budgetBalanceValidation,
     approval,
     requiredDeliverables: stage.deliverables,
     handoffContracts: handoffContracts(workflowId, stage.id, evidenceIndex, artifactIndex)
@@ -220,6 +254,7 @@ export function executeGovernmentWorkflowV2({ workflowId, state = null, complete
     riskReviewRequired: evaluation.riskReviewRequired,
     riskFindings: evaluation.riskFindings,
     unresolvedRiskFindings: evaluation.unresolvedRiskFindings,
+    budgetBalanceValidation: evaluation.budgetBalanceValidation || null,
     approval: evaluation.approval,
     requiredDeliverables: evaluation.requiredDeliverables,
     deliverablesReady: evaluation.status === 'ready' ? evaluation.requiredDeliverables : [],
