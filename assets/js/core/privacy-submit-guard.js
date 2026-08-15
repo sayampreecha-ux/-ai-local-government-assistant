@@ -282,6 +282,7 @@
 
       // Procurement & Finance Data Gate runs before any UI/history/router/search handoff.
       // BLOCK > SANITIZE > ALLOW. Raw restricted data never reaches the bubble-phase submit handler.
+      // Security path remains before Home/UI/history/router/search/Worker/API.
       const gate = core.evaluateProcurementFinanceData(raw);
       if (gate.decision === DATA_GATE_DECISIONS.BLOCK) {
         clearAndBlock(event, input, gate.riskCodes);
