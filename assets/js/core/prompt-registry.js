@@ -77,13 +77,13 @@
   function detectPromptQualityDomains(question = '') {
     const source = String(question).toLocaleLowerCase();
     const domains = [];
-    if (/(?:เบิก|การเงิน|คลัง|ฎีกา|ค่าใช้จ่าย|เงินสะสม|โบนัส|งบประมาณ)/i.test(source)) domains.push('finance');
-    if (/(?:พัสดุ|จัดซื้อ|จัดจ้าง|tor|ราคากลาง|สัญญา|ผู้รับจ้าง|e-bidding)/i.test(source)) domains.push('procurement');
-    if (/(?:บุคคล|บรรจุ|แต่งตั้ง|เลื่อนเงินเดือน|วินัย|พนักงาน|ข้าราชการ|อัตรากำลัง)/i.test(source)) domains.push('hr');
-    if (/(?:หนังสือราชการ|บันทึกข้อความ|สารบรรณ|ร่างหนังสือ|คำสั่ง|ประกาศ)/i.test(source)) domains.push('records');
-    if (/(?:กฎหมาย|ระเบียบ|อำนาจ|ข้อหารือ|คำพิพากษา|มาตรา|สิทธิ)/i.test(source)) domains.push('legal');
-    if (/(?:รพ\.สต|สาธารณสุข|สุขภาพ|เงินบำรุง|ผู้ป่วย|ยา|เวชภัณฑ์)/i.test(source)) domains.push('health');
-    if (/(?:ถนน|สะพาน|ก่อสร้าง|งานช่าง|วิศวกรรม|แบบ|ประมาณราคา)/i.test(source)) domains.push('engineering');
+    if (/(?:เบิก|การเงิน|คลัง|ฎีกา|ค่าใช้จ่าย|เงินสะสม|เงินบำรุง|โบนัส|งบประมาณ)/i.test(source)) domains.push('finance');
+    if (/(?:พัสดุ|จัดซื้อ|จัดจ้าง|tor|ราคากลาง|สัญญา|ผู้รับจ้าง|ผู้ยื่น|ตรวจรับ|e-bidding)/i.test(source)) domains.push('procurement');
+    if (/(?:บุคคล|บรรจุ|แต่งตั้ง|เลื่อนเงินเดือน|เลื่อนระดับ|ทดลองงาน|คุณสมบัติปลัด|วินัย|พนักงาน|ข้าราชการ|อัตรากำลัง)/i.test(source)) domains.push('hr');
+    if (/(?:หนังสือราชการ|หนังสือ|บันทึกข้อความ|บันทึก|สารบรรณ|ร่างหนังสือ|คำสั่ง|ประกาศ)/i.test(source)) domains.push('records');
+    if (/(?:กฎหมาย|ระเบียบ|อำนาจ|ข้อหารือ|คำพิพากษา|มาตรา|สิทธิ|หนังสือเวียน|บทเฉพาะกาล|หลักเกณฑ์)/i.test(source)) domains.push('legal');
+    if (/(?:รพ\.สต|รพสต|สาธารณสุข|สุขภาพ|เงินบำรุง|ผู้ป่วย|อสม\.?|ยา|เวชภัณฑ์)/i.test(source)) domains.push('health');
+    if (/(?:ถนน|สะพาน|ก่อสร้าง|งานช่าง|วิศวกรรม|แบบ|ประมาณราคา|ผู้รับจ้าง|หน้างาน|ความหนาแน่นดิน)/i.test(source)) domains.push('engineering');
     if (/(?:ประชาสัมพันธ์|โพสต์|ข่าว|อินโฟกราฟิก|แคปชัน|โปสเตอร์)/i.test(source)) domains.push('pr');
     return Object.freeze([...new Set(domains)]);
   }
