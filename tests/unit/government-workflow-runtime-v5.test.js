@@ -76,6 +76,7 @@ test('home runtime integration sanitizes before dynamic workflow import and has 
 test('production build copies the exact browser-safe workflow runtime dependency chain into dist/src', async () => {
   const source = await readFile('scripts/build-static.mjs', 'utf8');
   for (const file of [
+    'budget-balance-validator.js',
     'government-workflow-engine.js',
     'government-workflow-state-machine-v2.js',
     'government-deliverable-contracts-v3.js',
@@ -91,6 +92,9 @@ test('runtime integration and post-deploy verifier are syntactically valid befor
   for (const file of [
     'assets/js/home-v3.js',
     'assets/js/core/government-workflow-runtime-v5.js',
+    'src/budget-balance-validator.js',
+    'src/government-workflow-engine.js',
+    'src/government-workflow-state-machine-v2.js',
     'scripts/build-static.mjs',
     'scripts/verify-frontend-production.mjs'
   ]) {
