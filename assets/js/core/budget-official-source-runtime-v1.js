@@ -2,8 +2,9 @@ import {
   buildBudgetOfficialEvidenceFromSearchMap,
   mergeEvidenceByKey
 } from '../../../src/budget-official-evidence-adapter.js';
+import { buildBudgetDeliverableArtifacts } from '../../../src/budget-artifact-factory.js';
 
-export const BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION = '1.1';
+export const BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION = '1.2';
 
 const safeText = (value, max = 240) => String(value || '').trim().slice(0, max);
 
@@ -38,6 +39,31 @@ function parseOrganization(query) {
   return '';
 }
 
+function queryEvidence(query) {
+  const organization = parseOrganization(query);
+  const targetYear = parseBudgetYear(query);
+  const evidence = [];
+  if (organization) {
+    evidence.push(Object.freeze({
+      key: 'organizationContext',
+      value: Object.freeze({ organizationName: organization }),
+      official: false,
+      verified: true,
+      provenance: Object.freeze({ sourceType: 'user-query', extracted: true })
+    }));
+  }
+  if (targetYear) {
+    evidence.push(Object.freeze({
+      key: 'targetBudgetYear',
+      value: targetYear,
+      official: false,
+      verified: true,
+      provenance: Object.freeze({ sourceType: 'user-query', extracted: true })
+    }));
+  }
+  return Object.freeze(evidence);
+}
+
 export function buildBudgetOfficialSearchQueries(query) {
   const organization = parseOrganization(query);
   const targetYear = parseBudgetYear(query);
@@ -50,13 +76,15 @@ export function buildBudgetOfficialSearchQueries(query) {
   });
 }
 
-export async function executeBudgetOfficialSourceSearch({ query = '', workflowView = null, connector = null, existingEvidence = [] } = {}) {
+export async function executeBudgetOfficialSourceSearch({ query = '', workflowView = null, connector = null, existingEvidence = [], input = {} } = {}) {
+  const baseEvidence = mergeEvidenceByKey(existingEvidence, queryEvidence(query));
   if (!budgetActive(workflowView)) {
     return Object.freeze({
       runtimeVersion: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION,
       status: 'inactive',
-      evidence: Object.freeze(Array.isArray(existingEvidence) ? [...existingEvidence] : []),
+      evidence: baseEvidence,
       searchMap: Object.freeze({}),
+      artifactAttempt: null,
       failClosed: false
     });
   }
@@ -65,8 +93,9 @@ export async function executeBudgetOfficialSourceSearch({ query = '', workflowVi
     return Object.freeze({
       runtimeVersion: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION,
       status: 'blocked-search-unavailable',
-      evidence: Object.freeze(Array.isArray(existingEvidence) ? [...existingEvidence] : []),
+      evidence: baseEvidence,
       searchMap: Object.freeze({}),
+      artifactAttempt: buildBudgetDeliverableArtifacts({ evidence: baseEvidence, input }),
       failClosed: true
     });
   }
@@ -82,7 +111,8 @@ export async function executeBudgetOfficialSourceSearch({ query = '', workflowVi
   }));
   const searchMap = Object.freeze(Object.fromEntries(entries));
   const adapted = buildBudgetOfficialEvidenceFromSearchMap(searchMap);
-  const evidence = mergeEvidenceByKey(existingEvidence, adapted.evidence);
+  const evidence = mergeEvidenceByKey(baseEvidence, adapted.evidence);
+  const artifactAttempt = buildBudgetDeliverableArtifacts({ evidence, input });
 
   return Object.freeze({
     runtimeVersion: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION,
@@ -91,12 +121,17 @@ export async function executeBudgetOfficialSourceSearch({ query = '', workflowVi
     acceptedKeys: adapted.acceptedKeys,
     missingKeys: adapted.missingKeys,
     searchMap,
-    failClosed: adapted.failClosed,
-    governance: adapted.governance
+    artifactAttempt,
+    failClosed: adapted.failClosed || artifactAttempt.failClosed,
+    governance: Object.freeze({
+      ...adapted.governance,
+      queryFactsMayPopulateOnlyUserStatedContext: true,
+      artifactsRequireInternalEvidenceAndBalanceValidation: true
+    })
   });
 }
 
-export { parseBudgetYear, parseOrganization };
+export { parseBudgetYear, parseOrganization, queryEvidence };
 
 export default Object.freeze({
   version: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION,
