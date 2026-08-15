@@ -2,7 +2,7 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 
 const output = "dist";
-const RELEASE_VERSIONS = Object.freeze({ home: "6.1.0", homeCss: "2.4.5", serviceWorker: "6.1.0", budgetInputRuntime: "1.5.0" });
+const RELEASE_VERSIONS = Object.freeze({ home: "6.1.0", homeCss: "2.4.6", serviceWorker: "6.1.0", budgetInputRuntime: "1.5.0" });
 const publicExtensions = new Set([
   ".html", ".htlm", ".css", ".js", ".json", ".webmanifest", ".txt", ".xml"
 ]);
@@ -44,6 +44,14 @@ for (const file of workflowRuntimeSourceFiles) {
   await cp(join("src", file), join(runtimeOutput, file));
 }
 
+const distCssPath = join(output, "assets/css/home-v3.css");
+const dialogCss = await readFile("assets/css/budget-review-dialog.css", "utf8");
+let distCss = await readFile(distCssPath, "utf8");
+if (!distCss.includes(".budget-review-dialog")) {
+  distCss = `${distCss.trimEnd()}\n${dialogCss.trim()}\n`;
+  await writeFile(distCssPath, distCss);
+}
+
 const distIndexPath = join(output, "index.html");
 let distIndex = await readFile(distIndexPath, "utf8");
 const hybridScript = '<script src="assets/js/core/hybrid-intent-classifier.js?v=2.4.1" defer></script>';
@@ -75,6 +83,7 @@ if (!distIndex.includes(`assets/js/home-v3.js?v=${RELEASE_VERSIONS.home}`)) thro
 if (!distIndex.includes(`assets/css/home-v3.css?v=${RELEASE_VERSIONS.homeCss}`)) throw new Error("Home CSS release cache-bust version missing from dist/index.html");
 if (!distIndex.includes(`service-worker.js?v=${RELEASE_VERSIONS.serviceWorker}`)) throw new Error("Service worker release cache-bust version missing from dist/index.html");
 if (!distHome.includes(`budget-browser-input-runtime-v1.js?v=${RELEASE_VERSIONS.budgetInputRuntime}`)) throw new Error("Budget input runtime release version missing from dist Home asset");
+if (!distCss.includes(".budget-review-overlay") || !distCss.includes(".budget-review-dialog")) throw new Error("Budget review dialog styles missing from dist Home CSS");
 
 const distSitemap = await readFile(join(output, "sitemap.xml"), "utf8");
 if (!/<urlset\b/.test(distSitemap)) throw new Error("sitemap.xml was not copied into dist correctly");
