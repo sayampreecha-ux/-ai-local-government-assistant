@@ -133,9 +133,9 @@
     if (privacy.blocked || !privacy.safeText) return Object.freeze({ workflowRuntime, budgetSourceRuntime: null });
     try {
       const [budgetRuntime, documentModule, browserInputModule] = await Promise.all([
-        import('./core/budget-official-source-runtime-v1.js?v=2.0.0'),
+        import('./core/budget-official-source-runtime-v1.js?v=2.1.0'),
         import('./core/budget-official-document-connector-v1.js?v=1.0.0'),
-        import('./core/budget-browser-input-runtime-v1.js?v=1.0.0')
+        import('./core/budget-browser-input-runtime-v1.js?v=1.6.0')
       ]);
       const targetYear = budgetRuntime.parseBudgetYear(privacy.safeText);
       const browserInputs = await browserInputModule.prepareBudgetInternalInputsFromFiles(attachments, { targetYear });

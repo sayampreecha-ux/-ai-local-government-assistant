@@ -32,7 +32,7 @@ test('home runtime integration sanitizes before workflow import and has cache-bu
   const runtimeImport = source.indexOf("import('./core/government-workflow-runtime-v5.js?v=5.1.0')",functionStart);
   assert.ok(functionStart >= 0); assert.ok(privacyCall > functionStart); assert.ok(runtimeImport > privacyCall);
   assert.match(source,/status: 'privacy-blocked'/); assert.match(source,/status: 'runtime-unavailable'/); assert.match(source,/enrichPromptWithWorkflow/);
-  assert.match(index,/assets\/js\/home-v3\.js\?v=6\.0\.0/); assert.match(index,/official-source-registry\.js\?v=2\.4\.0/); assert.match(index,/service-worker\.js\?v=6\.0\.0/);
+  assert.match(index,/assets\/js\/home-v3\.js\?v=6\.1\.1/); assert.match(index,/official-source-registry\.js\?v=2\.4\.0/); assert.match(index,/service-worker\.js\?v=6\.1\.0/);
 });
 
 test('production build copies exact browser-safe workflow runtime dependency chain into dist/src', async () => {
