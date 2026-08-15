@@ -14,9 +14,9 @@ test('home invokes budget runtime only after workflow detection then wires offic
   const source = await readFile(HOME,'utf8');
   const helper = source.indexOf('async function prepareBudgetOfficialRuntime');
   const budgetGate = source.indexOf("includes('gov.budget-draft')",helper);
-  const budgetImport = source.indexOf("import('./core/budget-official-source-runtime-v1.js?v=2.0.0')",helper);
+  const budgetImport = source.indexOf("import('./core/budget-official-source-runtime-v1.js?v=2.1.0')",helper);
   const readerImport = source.indexOf("budget-official-document-connector-v1.js?v=1.0.0",helper);
-  const fileImport = source.indexOf("budget-browser-input-runtime-v1.js?v=1.0.0",helper);
+  const fileImport = source.indexOf("budget-browser-input-runtime-v1.js?v=1.6.0",helper);
   const localPrepare = source.indexOf('prepareBudgetInternalInputsFromFiles(attachments',helper);
   const sourceExecution = source.indexOf('executeBudgetOfficialSourceSearch',budgetImport);
   const documentUse = source.indexOf('documentConnector,',sourceExecution);
