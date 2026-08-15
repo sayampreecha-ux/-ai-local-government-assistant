@@ -57,7 +57,10 @@ test('unclassified text degrades safely without inventing a workflow', () => {
 });
 
 test('home runtime integration sanitizes before dynamic workflow import and has graceful fallback', async () => {
-  const source = await readFile('assets/js/home-v3.js', 'utf8');
+  const [source, index] = await Promise.all([
+    readFile('assets/js/home-v3.js', 'utf8'),
+    readFile('index.html', 'utf8')
+  ]);
   const functionStart = source.indexOf('async function prepareWorkflowRuntime(text)');
   const privacyCall = source.indexOf('prepareExternalPrompt(text)', functionStart);
   const runtimeImport = source.indexOf("import('./core/government-workflow-runtime-v5.js?v=5.0.0')", functionStart);
@@ -67,6 +70,7 @@ test('home runtime integration sanitizes before dynamic workflow import and has 
   assert.match(source, /status: 'privacy-blocked'/);
   assert.match(source, /status: 'runtime-unavailable'/);
   assert.match(source, /enrichPromptWithWorkflow/);
+  assert.match(index, /assets\/js\/home-v3\.js\?v=5\.0\.0/);
 });
 
 test('production build copies the exact browser-safe workflow runtime dependency chain into dist/src', async () => {
