@@ -115,14 +115,17 @@
     });
   }
 
-  async function prepareWorkflowRuntime(text) {
+  async function prepareWorkflowRuntime(text, evidence = []) {
     const privacy = prepareExternalPrompt(text);
     if (privacy.blocked || !privacy.safeText) {
       return Object.freeze({ view: null, block: '', status: 'privacy-blocked' });
     }
     try {
       const runtime = await import('./core/government-workflow-runtime-v5.js?v=5.0.0');
-      const view = runtime.buildWorkflowRuntimeView({ query: privacy.safeText });
+      const view = runtime.buildWorkflowRuntimeView({
+        query: privacy.safeText,
+        evidence: Array.isArray(evidence) ? evidence : []
+      });
       return Object.freeze({
         view,
         block: runtime.buildWorkflowPromptBlock(view),
@@ -130,6 +133,31 @@
       });
     } catch {
       return Object.freeze({ view: null, block: '', status: 'runtime-unavailable' });
+    }
+  }
+
+  async function prepareBudgetOfficialRuntime(text, workflowRuntime, core) {
+    if (!workflowRuntime?.view?.workflowIds?.includes('gov.budget-draft')) {
+      return Object.freeze({ workflowRuntime, budgetSourceRuntime: null });
+    }
+    const privacy = prepareExternalPrompt(text);
+    if (privacy.blocked || !privacy.safeText) {
+      return Object.freeze({ workflowRuntime, budgetSourceRuntime: null });
+    }
+    try {
+      const budgetRuntime = await import('./core/budget-official-source-runtime-v1.js?v=1.2.0');
+      const budgetSourceRuntime = await budgetRuntime.executeBudgetOfficialSourceSearch({
+        query: privacy.safeText,
+        workflowView: workflowRuntime.view,
+        connector: core.officialSearchConnector
+      });
+      const refreshedWorkflowRuntime = await prepareWorkflowRuntime(privacy.safeText, budgetSourceRuntime.evidence);
+      return Object.freeze({
+        workflowRuntime: refreshedWorkflowRuntime.status === 'ready' ? refreshedWorkflowRuntime : workflowRuntime,
+        budgetSourceRuntime
+      });
+    } catch {
+      return Object.freeze({ workflowRuntime, budgetSourceRuntime: null });
     }
   }
 
@@ -184,17 +212,20 @@
     });
     const route = core.routeTransaction(context);
     const promptBundle = core.createGovernmentPrompt({ question: text, route, context, attachments: safeAttachments });
-    const [searchResult, workflowRuntime] = await Promise.all([
+    const [searchResult, initialWorkflowRuntime] = await Promise.all([
       core.officialSearchConnector.search(text, { limitSources: 6, count: 10 }),
       workflowRuntimePromise
     ]);
+    const budgetRuntime = await prepareBudgetOfficialRuntime(text, initialWorkflowRuntime, core);
+    const workflowRuntime = budgetRuntime.workflowRuntime;
     const withSearch = enrichPromptWithSearch(promptBundle, searchResult);
     return Object.freeze({
       route,
       promptBundle: enrichPromptWithWorkflow(withSearch, workflowRuntime),
       searchResult,
       workflowRuntime: workflowRuntime.view,
-      workflowRuntimeStatus: workflowRuntime.status
+      workflowRuntimeStatus: workflowRuntime.status,
+      budgetSourceRuntime: budgetRuntime.budgetSourceRuntime
     });
   }
 
