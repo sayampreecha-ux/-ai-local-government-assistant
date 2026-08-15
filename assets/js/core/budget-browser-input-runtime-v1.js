@@ -2,7 +2,7 @@ import { prepareBudgetBrowserFile } from '../../../src/budget-browser-file-inges
 import { parseBudgetBrowserFile } from '../../../src/budget-browser-file-parser.js';
 import { createParsedBudgetReview, confirmParsedBudgetReview } from '../../../src/budget-file-parser-review.js';
 
-export const BUDGET_BROWSER_INPUT_RUNTIME_VERSION = '1.4';
+export const BUDGET_BROWSER_INPUT_RUNTIME_VERSION = '1.5';
 
 function browserConfirmedInputs() {
   const value = typeof globalThis !== 'undefined' ? globalThis.GovPromptBudgetConfirmedInputs : null;
@@ -14,7 +14,13 @@ function persistConfirmedInputs(inputs) {
   globalThis.GovPromptBudgetConfirmedInputs = Object.freeze({ ...(inputs || {}) });
 }
 
-function defaultConfirmReview(review) {
+async function defaultConfirmReview(review) {
+  if (typeof document !== 'undefined') {
+    try {
+      const ui = await import('./budget-browser-review-ui-v1.js?v=1.1.0');
+      return await ui.requestBudgetReviewDecision(review);
+    } catch {}
+  }
   if (typeof globalThis.confirm !== 'function') return null;
   const extracted = review?.extracted || {};
   const summary = [
@@ -97,7 +103,7 @@ export async function prepareBudgetInternalInputsFromFiles(files = [], { targetY
       unsupportedFilesFailClosed: true,
       parserOutputIsNotEvidence: true,
       humanConfirmationRequiredBeforePromotion: true,
-      builtInConfirmationAvailable: typeof globalThis.confirm === 'function',
+      editableReviewModalPreferred: typeof document !== 'undefined',
       confirmedInputsMemoryScope: 'current-browser-tab'
     })
   });
