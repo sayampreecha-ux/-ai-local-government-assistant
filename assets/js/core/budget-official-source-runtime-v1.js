@@ -3,9 +3,10 @@ import {
   mergeEvidenceByKey
 } from '../../../src/budget-official-evidence-adapter.js';
 import { ingestVerifiedBudgetDocumentContent } from '../../../src/budget-document-content-ingestion.js';
+import { ingestInternalBudgetEvidence } from '../../../src/budget-internal-evidence-ingestion.js';
 import { buildBudgetDeliverableArtifacts } from '../../../src/budget-artifact-factory.js';
 
-export const BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION = '1.3';
+export const BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION = '1.4';
 
 const safeText = (value, max = 240) => String(value || '').trim().slice(0, max);
 
@@ -51,10 +52,12 @@ export function buildBudgetOfficialSearchQueries(query) {
   });
 }
 
-export async function executeBudgetOfficialSourceSearch({ query = '', workflowView = null, connector = null, existingEvidence = [], readDocuments = {}, input = {} } = {}) {
-  const baseEvidence = mergeEvidenceByKey(existingEvidence, queryEvidence(query));
-  if (!budgetActive(workflowView)) return Object.freeze({ runtimeVersion: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION, status: 'inactive', evidence: baseEvidence, searchMap: Object.freeze({}), documentIngestion: null, artifactAttempt: null, failClosed: false });
-  if (!connector || typeof connector.search !== 'function') return Object.freeze({ runtimeVersion: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION, status: 'blocked-search-unavailable', evidence: baseEvidence, searchMap: Object.freeze({}), documentIngestion: null, artifactAttempt: buildBudgetDeliverableArtifacts({ evidence: baseEvidence, input }), failClosed: true });
+export async function executeBudgetOfficialSourceSearch({ query = '', workflowView = null, connector = null, existingEvidence = [], readDocuments = {}, internalBudgetInputs = {}, input = {} } = {}) {
+  const queryAndExistingEvidence = mergeEvidenceByKey(existingEvidence, queryEvidence(query));
+  const internalIngestion = ingestInternalBudgetEvidence({ inputs: internalBudgetInputs });
+  const baseEvidence = mergeEvidenceByKey(queryAndExistingEvidence, internalIngestion.evidence);
+  if (!budgetActive(workflowView)) return Object.freeze({ runtimeVersion: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION, status: 'inactive', evidence: baseEvidence, searchMap: Object.freeze({}), internalIngestion, documentIngestion: null, artifactAttempt: null, failClosed: false });
+  if (!connector || typeof connector.search !== 'function') return Object.freeze({ runtimeVersion: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION, status: 'blocked-search-unavailable', evidence: baseEvidence, searchMap: Object.freeze({}), internalIngestion, documentIngestion: null, artifactAttempt: buildBudgetDeliverableArtifacts({ evidence: baseEvidence, input }), failClosed: true });
 
   const queries = buildBudgetOfficialSearchQueries(query);
   const entries = await Promise.all(Object.entries(queries).map(async ([key, searchQuery]) => {
@@ -68,17 +71,19 @@ export async function executeBudgetOfficialSourceSearch({ query = '', workflowVi
   const evidence = mergeEvidenceByKey(sourceEvidence, documentIngestion.evidence);
   const artifactAttempt = buildBudgetDeliverableArtifacts({ evidence, input });
 
+  const invalidInternal = internalIngestion.status === 'blocked-invalid-internal-evidence' || internalIngestion.status === 'blocked-pending-confirmation';
   return Object.freeze({
     runtimeVersion: BUDGET_OFFICIAL_SOURCE_RUNTIME_VERSION,
-    status: adapted.failClosed ? adapted.status : documentIngestion.failClosed ? documentIngestion.status : artifactAttempt.status,
+    status: invalidInternal ? internalIngestion.status : adapted.failClosed ? adapted.status : documentIngestion.failClosed ? documentIngestion.status : artifactAttempt.status,
     evidence,
-    acceptedKeys: Object.freeze([...new Set([...(adapted.acceptedKeys || []), ...(documentIngestion.acceptedKeys || [])])]),
-    missingKeys: Object.freeze([...new Set([...(adapted.missingKeys || []), ...(documentIngestion.missingKeys || [])])]),
+    acceptedKeys: Object.freeze([...new Set([...(internalIngestion.acceptedKeys || []), ...(adapted.acceptedKeys || []), ...(documentIngestion.acceptedKeys || [])])]),
+    missingKeys: Object.freeze([...new Set([...(internalIngestion.missingKeys || []), ...(adapted.missingKeys || []), ...(documentIngestion.missingKeys || [])])]),
     searchMap,
+    internalIngestion,
     documentIngestion,
     artifactAttempt,
-    failClosed: adapted.failClosed || documentIngestion.failClosed || artifactAttempt.failClosed,
-    governance: Object.freeze({ ...adapted.governance, ...documentIngestion.governance, queryFactsMayPopulateOnlyUserStatedContext: true, artifactsRequireInternalEvidenceAndBalanceValidation: true })
+    failClosed: invalidInternal || adapted.failClosed || documentIngestion.failClosed || artifactAttempt.failClosed,
+    governance: Object.freeze({ ...internalIngestion.governance, ...adapted.governance, ...documentIngestion.governance, queryFactsMayPopulateOnlyUserStatedContext: true, artifactsRequireInternalEvidenceAndBalanceValidation: true })
   });
 }
 
