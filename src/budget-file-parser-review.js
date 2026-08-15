@@ -1,6 +1,6 @@
 import { validateBudgetBalance } from './budget-balance-validator.js';
 
-export const BUDGET_FILE_PARSER_REVIEW_VERSION = '1.0';
+export const BUDGET_FILE_PARSER_REVIEW_VERSION = '1.1';
 
 const text = value => String(value ?? '').trim();
 const finite = value => Number.isFinite(Number(String(value ?? '').replace(/,/g, '')));
@@ -14,6 +14,28 @@ function normalizeItems(items = []) {
     amount: number(item?.amount ?? item?.value),
     status: text(item?.status || 'pending-confirmation') || 'pending-confirmation'
   }));
+}
+
+function promoteConfirmedItems(value) {
+  if (Array.isArray(value)) {
+    return Object.freeze(value.map(item => {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) return item;
+      const status = text(item.status);
+      return Object.freeze({
+        ...item,
+        status: status === 'estimated' ? 'estimated' : 'verified'
+      });
+    }));
+  }
+  return value;
+}
+
+function promoteConfirmedData(data = {}) {
+  const promoted = { ...data };
+  for (const key of ['items', 'revenueItems', 'expenseItems']) {
+    if (Array.isArray(promoted[key])) promoted[key] = promoteConfirmedItems(promoted[key]);
+  }
+  return Object.freeze(promoted);
 }
 
 export function normalizeParsedBudgetData({ purpose, parsed = {} } = {}) {
@@ -67,7 +89,8 @@ export function createParsedBudgetReview({ fileRef, contentHash, purpose, parsed
 export function confirmParsedBudgetReview(review, { confirmed = false, reviewer = '', confirmedAt = new Date().toISOString(), corrections = {} } = {}) {
   if (!review || typeof review !== 'object') return Object.freeze({ status: 'blocked-invalid-review', failClosed: true });
   if (!confirmed || !text(reviewer)) return Object.freeze({ status: 'blocked-human-confirmation-required', failClosed: true, review });
-  const merged = Object.freeze({ ...review.extracted, ...corrections });
+  const corrected = { ...review.extracted, ...corrections };
+  const merged = promoteConfirmedData(corrected);
   const sourceEntry = Object.freeze({
     sourceType: 'uploaded-document',
     sourceRef: review.fileRef,
