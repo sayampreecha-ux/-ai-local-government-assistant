@@ -9,9 +9,12 @@ const publicDirectories = ["assets", "access-system", "Plain text", "knowledge"]
 const workflowRuntimeSourceFiles = Object.freeze([
   "budget-balance-validator.js",
   "budget-official-evidence-adapter.js",
+  "budget-official-document-parser.js",
   "budget-document-content-ingestion.js",
   "budget-internal-evidence-ingestion.js",
   "budget-browser-file-ingestion.js",
+  "budget-browser-file-parser.js",
+  "budget-working-draft-planner.js",
   "budget-file-parser-review.js",
   "budget-tabular-parser.js",
   "budget-artifact-factory.js",
@@ -58,9 +61,7 @@ if (!distIndex.includes(outcomeSearchScript)) {
 await writeFile(distIndexPath, distIndex);
 
 const distSitemap = await readFile(join(output, "sitemap.xml"), "utf8");
-if (!/<urlset\b/.test(distSitemap)) {
-  throw new Error("sitemap.xml was not copied into dist correctly");
-}
+if (!/<urlset\b/.test(distSitemap)) throw new Error("sitemap.xml was not copied into dist correctly");
 
 for (const file of workflowRuntimeSourceFiles) {
   const content = await readFile(join(runtimeOutput, file), "utf8");
