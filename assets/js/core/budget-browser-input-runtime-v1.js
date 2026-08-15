@@ -2,7 +2,17 @@ import { prepareBudgetBrowserFile } from '../../../src/budget-browser-file-inges
 import { parseBudgetBrowserFile } from '../../../src/budget-browser-file-parser.js';
 import { createParsedBudgetReview, confirmParsedBudgetReview } from '../../../src/budget-file-parser-review.js';
 
-export const BUDGET_BROWSER_INPUT_RUNTIME_VERSION = '1.3';
+export const BUDGET_BROWSER_INPUT_RUNTIME_VERSION = '1.4';
+
+function browserConfirmedInputs() {
+  const value = typeof globalThis !== 'undefined' ? globalThis.GovPromptBudgetConfirmedInputs : null;
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
+function persistConfirmedInputs(inputs) {
+  if (typeof globalThis === 'undefined') return;
+  globalThis.GovPromptBudgetConfirmedInputs = Object.freeze({ ...(inputs || {}) });
+}
 
 function defaultConfirmReview(review) {
   if (typeof globalThis.confirm !== 'function') return null;
@@ -18,9 +28,10 @@ function defaultConfirmReview(review) {
   return Object.freeze({ confirmed: globalThis.confirm(summary), reviewer: 'browser-user-confirmed' });
 }
 
-export async function prepareBudgetInternalInputsFromFiles(files = [], { targetYear = null, purposeByIndex = {}, confirmedInputs = {}, confirmReview = null } = {}) {
+export async function prepareBudgetInternalInputsFromFiles(files = [], { targetYear = null, purposeByIndex = {}, confirmedInputs = null, confirmReview = null } = {}) {
   const list = Array.isArray(files) ? files : Array.from(files || []);
-  const inputs = { ...(confirmedInputs || {}) };
+  const carried = confirmedInputs && typeof confirmedInputs === 'object' ? confirmedInputs : browserConfirmedInputs();
+  const inputs = { ...carried };
   const results = [];
   const reviews = [];
   const reviewHandler = typeof confirmReview === 'function' ? confirmReview : defaultConfirmReview;
@@ -61,6 +72,7 @@ export async function prepareBudgetInternalInputsFromFiles(files = [], { targetY
       });
       if (confirmation.status === 'confirmed' && confirmation.evidenceInput?.[prepared.purpose]) {
         inputs[prepared.purpose] = confirmation.evidenceInput[prepared.purpose];
+        persistConfirmedInputs(inputs);
         results.push(Object.freeze({ index, status: 'confirmed', purpose: prepared.purpose, review: confirmation.review, errors: Object.freeze([]) }));
         continue;
       }
@@ -85,10 +97,11 @@ export async function prepareBudgetInternalInputsFromFiles(files = [], { targetY
       unsupportedFilesFailClosed: true,
       parserOutputIsNotEvidence: true,
       humanConfirmationRequiredBeforePromotion: true,
-      builtInConfirmationAvailable: typeof globalThis.confirm === 'function'
+      builtInConfirmationAvailable: typeof globalThis.confirm === 'function',
+      confirmedInputsMemoryScope: 'current-browser-tab'
     })
   });
 }
 
-export { defaultConfirmReview };
+export { defaultConfirmReview, browserConfirmedInputs };
 export default Object.freeze({ version: BUDGET_BROWSER_INPUT_RUNTIME_VERSION, prepareBudgetInternalInputsFromFiles });
