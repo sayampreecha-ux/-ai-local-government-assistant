@@ -235,7 +235,7 @@ test('V4 scopes artifacts by workflow so same artifact key in another workflow c
 
 test('case view exposes workflow-specific next actions and cross-workflow handoff graph', () => {
   const evidence = [ev('missionAuthority', 'authority', true, true), ev('needJustification', 'need')];
-  const artifacts = [artifactFor('gov.procurement', 'need-and-authority', 'need-memo', ['missionAuthority', 'needJustification'])];
+  const artifacts = [artifactFor('gov.procurement', 'need-and-authority', 'need-memo', ['missionAuthority', 'needJustification'], { caseId: 'CASE-4' })];
   const result = runGovernmentCaseV4({ input: { caseId: 'CASE-4' }, workflowIds: ['gov.procurement', 'gov.project', 'gov.finance'], evidence, artifacts });
   assert.equal(result.status, 'ready-to-advance');
   assert.equal(result.workflows.length, 3);
@@ -246,7 +246,7 @@ test('case view exposes workflow-specific next actions and cross-workflow handof
 
 test('case driver advances only ready workflows and returns a persisted state map', () => {
   const evidence = [ev('missionAuthority', 'authority', true, true), ev('needJustification', 'need')];
-  const artifacts = [artifactFor('gov.procurement', 'need-and-authority', 'need-memo', ['missionAuthority', 'needJustification'])];
+  const artifacts = [artifactFor('gov.procurement', 'need-and-authority', 'need-memo', ['missionAuthority', 'needJustification'], { caseId: 'CASE-5' })];
   const result = driveGovernmentCaseV4({ input: { caseId: 'CASE-5' }, workflowIds: ['gov.procurement', 'gov.project'], evidence, artifacts, maxTransitionsPerWorkflow: 5, at: AT });
   assert.equal(result.transitionCount, 1);
   assert.ok(result.state['gov.procurement']);
