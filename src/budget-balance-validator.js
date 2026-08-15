@@ -1,4 +1,4 @@
-export const BUDGET_BALANCE_VALIDATOR_VERSION = '1.0';
+export const BUDGET_BALANCE_VALIDATOR_VERSION = '1.1';
 export const BUDGET_EVIDENCE_STATUSES = Object.freeze(['verified', 'estimated', 'pending-confirmation']);
 
 const EPSILON = 0.01;
@@ -41,6 +41,38 @@ function computedTotal(items) {
   return round2(items.reduce((sum, item) => sum + item.amount, 0));
 }
 
+function normalizeBreakdowns(breakdowns = []) {
+  if (!Array.isArray(breakdowns)) return [];
+  return breakdowns.map((breakdown, index) => {
+    const key = String(breakdown?.key || breakdown?.id || `breakdown-${index + 1}`);
+    const items = normalizeItems(breakdown?.items, `breakdown:${key}`);
+    return {
+      key,
+      declaredTotal: asNumber(breakdown?.declaredTotal ?? breakdown?.total),
+      items,
+      calculatedTotal: computedTotal(items)
+    };
+  });
+}
+
+function validateBreakdowns(breakdowns, errors) {
+  const normalized = normalizeBreakdowns(breakdowns);
+  for (const breakdown of normalized) {
+    if (breakdown.declaredTotal == null) errors.push(`breakdown:${breakdown.key}:declared-total-required`);
+    if (!breakdown.items.length) errors.push(`breakdown:${breakdown.key}:items-required`);
+    for (const item of breakdown.items) {
+      if (item.amount == null) errors.push(`breakdown:${breakdown.key}:${item.key}:finite-amount-required`);
+      if (item.status && !BUDGET_EVIDENCE_STATUSES.includes(item.status)) errors.push(`breakdown:${breakdown.key}:${item.key}:invalid-status`);
+      if (item.estimated && item.status !== 'estimated') errors.push(`breakdown:${breakdown.key}:${item.key}:estimated-status-label-required`);
+      if (item.status === 'pending-confirmation') errors.push(`breakdown:${breakdown.key}:${item.key}:pending-confirmation`);
+    }
+    if (breakdown.declaredTotal != null && breakdown.calculatedTotal != null && !closeEnough(breakdown.declaredTotal, breakdown.calculatedTotal)) {
+      errors.push(`breakdown:${breakdown.key}:formula-mismatch`);
+    }
+  }
+  return normalized;
+}
+
 function finding(code, message) {
   return Object.freeze({ code, severity: 'high', message });
 }
@@ -49,6 +81,7 @@ export function validateBudgetBalance(payload = {}) {
   const errors = [];
   const revenueItems = validateLineItems(payload.revenueItems, 'revenue', errors);
   const expenseItems = validateLineItems(payload.expenseItems, 'expense', errors);
+  const breakdowns = validateBreakdowns(payload.breakdowns, errors);
   const declaredRevenue = asNumber(payload.revenueTotal);
   const declaredExpense = asNumber(payload.expenseTotal);
   const calculatedRevenue = computedTotal(revenueItems);
@@ -74,9 +107,11 @@ export function validateBudgetBalance(payload = {}) {
   }
 
   const formulaErrors = errors.filter((error) => error.includes('formula-mismatch'));
+  const breakdownFormulaErrors = errors.filter((error) => error.startsWith('breakdown:') && error.endsWith(':formula-mismatch'));
   const pendingErrors = errors.filter((error) => error.includes('pending-confirmation'));
   const balanceError = errors.includes('budget:revenue-expense-not-balanced');
-  const hasEstimates = [...revenueItems, ...expenseItems].some((item) => item.status === 'estimated' || item.estimated);
+  const allItems = [...revenueItems, ...expenseItems, ...breakdowns.flatMap((breakdown) => breakdown.items)];
+  const hasEstimates = allItems.some((item) => item.status === 'estimated' || item.estimated);
 
   let status = 'balanced';
   if (errors.length) {
@@ -88,6 +123,7 @@ export function validateBudgetBalance(payload = {}) {
 
   const findings = [];
   if (formulaErrors.length) findings.push(finding('budget-formula-mismatch', 'ผลรวมรายการไม่ตรงกับยอดรวมที่ประกาศ ต้องแก้สูตรหรือข้อมูลก่อนเดินต่อ'));
+  if (breakdownFormulaErrors.length) findings.push(finding('budget-breakdown-mismatch', 'พบยอดรายละเอียดภายในหมวดงบไม่รวมเท่ากับยอดหมวดที่ประกาศ ต้องตรวจแหล่งข้อมูลและแก้ไขก่อนถือเป็นร่างสุดท้าย'));
   if (balanceError) findings.push(finding('budget-not-balanced', 'รายรับและรายจ่ายไม่สมดุล ต้องปรับให้สมดุลก่อนจัดทำร่างขั้นสุดท้าย'));
   if (pendingErrors.length) findings.push(finding('budget-pending-confirmation', 'มีตัวเลขที่ยังอยู่ระหว่างยืนยัน จึงยังใช้เป็นยอดยืนยันขั้นสุดท้ายไม่ได้'));
   if (errors.some((error) => error.includes('estimated-status-label-required'))) findings.push(finding('budget-estimate-unlabelled', 'รายการประมาณการต้องระบุสถานะ estimated อย่างชัดเจน'));
@@ -101,8 +137,16 @@ export function validateBudgetBalance(payload = {}) {
     difference: effectiveRevenue != null && effectiveExpense != null ? round2(effectiveRevenue - effectiveExpense) : null,
     calculatedRevenue,
     calculatedExpense,
+    breakdowns: Object.freeze(breakdowns.map((breakdown) => Object.freeze({
+      key: breakdown.key,
+      declaredTotal: breakdown.declaredTotal,
+      calculatedTotal: breakdown.calculatedTotal,
+      difference: breakdown.declaredTotal != null && breakdown.calculatedTotal != null
+        ? round2(breakdown.declaredTotal - breakdown.calculatedTotal)
+        : null
+    }))),
     hasEstimates,
-    estimatedItemKeys: Object.freeze([...revenueItems, ...expenseItems].filter((item) => item.status === 'estimated').map((item) => item.key)),
+    estimatedItemKeys: Object.freeze(allItems.filter((item) => item.status === 'estimated').map((item) => item.key)),
     errors: Object.freeze(errors),
     findings: Object.freeze(findings),
     failClosed: errors.length > 0
