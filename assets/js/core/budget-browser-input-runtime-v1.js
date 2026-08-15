@@ -2,13 +2,28 @@ import { prepareBudgetBrowserFile } from '../../../src/budget-browser-file-inges
 import { parseBudgetBrowserFile } from '../../../src/budget-browser-file-parser.js';
 import { createParsedBudgetReview, confirmParsedBudgetReview } from '../../../src/budget-file-parser-review.js';
 
-export const BUDGET_BROWSER_INPUT_RUNTIME_VERSION = '1.2';
+export const BUDGET_BROWSER_INPUT_RUNTIME_VERSION = '1.3';
+
+function defaultConfirmReview(review) {
+  if (typeof globalThis.confirm !== 'function') return null;
+  const extracted = review?.extracted || {};
+  const summary = [
+    `ประเภทข้อมูล: ${review?.purpose || '-'}`,
+    Number.isFinite(Number(extracted.total)) ? `ยอดรวม: ${Number(extracted.total).toLocaleString('th-TH')} บาท` : '',
+    Number.isFinite(Number(extracted.revenueTotal)) ? `รายรับรวม: ${Number(extracted.revenueTotal).toLocaleString('th-TH')} บาท` : '',
+    Number.isFinite(Number(extracted.expenseTotal)) ? `รายจ่ายรวม: ${Number(extracted.expenseTotal).toLocaleString('th-TH')} บาท` : '',
+    '',
+    'ยืนยันว่าค่าที่ระบบอ่านจากไฟล์ถูกต้องและให้นำไปใช้เป็นหลักฐานภายในสำหรับ Working Draft หรือไม่?'
+  ].filter(value => value !== '').join('\n');
+  return Object.freeze({ confirmed: globalThis.confirm(summary), reviewer: 'browser-user-confirmed' });
+}
 
 export async function prepareBudgetInternalInputsFromFiles(files = [], { targetYear = null, purposeByIndex = {}, confirmedInputs = {}, confirmReview = null } = {}) {
   const list = Array.isArray(files) ? files : Array.from(files || []);
   const inputs = { ...(confirmedInputs || {}) };
   const results = [];
   const reviews = [];
+  const reviewHandler = typeof confirmReview === 'function' ? confirmReview : defaultConfirmReview;
   for (let index = 0; index < list.length; index += 1) {
     const file = list[index];
     const explicitPurpose = purposeByIndex[index] || null;
@@ -34,8 +49,8 @@ export async function prepareBudgetInternalInputsFromFiles(files = [], { targetY
     });
     reviews.push(review);
     let decision = null;
-    if (typeof confirmReview === 'function') {
-      try { decision = await confirmReview(review); } catch { decision = null; }
+    if (typeof reviewHandler === 'function') {
+      try { decision = await reviewHandler(review); } catch { decision = null; }
     }
     if (decision?.confirmed === true) {
       const confirmation = confirmParsedBudgetReview(review, {
@@ -69,9 +84,11 @@ export async function prepareBudgetInternalInputsFromFiles(files = [], { targetY
       deterministicStructuredParseRequired: true,
       unsupportedFilesFailClosed: true,
       parserOutputIsNotEvidence: true,
-      humanConfirmationRequiredBeforePromotion: true
+      humanConfirmationRequiredBeforePromotion: true,
+      builtInConfirmationAvailable: typeof globalThis.confirm === 'function'
     })
   });
 }
 
+export { defaultConfirmReview };
 export default Object.freeze({ version: BUDGET_BROWSER_INPUT_RUNTIME_VERSION, prepareBudgetInternalInputsFromFiles });
