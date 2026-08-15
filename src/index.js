@@ -41,7 +41,8 @@ export { PromptRegistry, DEFAULT_PROMPTS, validatePromptDefinition } from "./pro
 export { KnowledgeRegistry, KNOWLEDGE_TYPES, validateKnowledgeDefinition } from "./knowledge-registry.js";
 export { GovernanceLayer, POLICY_EFFECTS, SAFETY_EFFECTS, validatePolicy, validateSafetyRule } from "./governance-layer.js";
 export { Observability, LOG_LEVELS } from "./observability.js";
-export { WORKFLOWS, DEEP_WORKFLOWS, detectGovernmentWorkflows, runGovernmentWorkflow, runGovernmentWorkflowById } from "./government-workflow-suite.js";
+export { WORKFLOWS, DEEP_WORKFLOWS, detectGovernmentWorkflows, runGovernmentWorkflow, runGovernmentWorkflowById, runGovernmentWorkflowByIdV2, transitionGovernmentWorkflowByIdV2 } from "./government-workflow-suite.js";
 export { evaluateWorkflowStage, executeDeepGovernmentWorkflow, buildCrossWorkflowCase, detectProcurementRisks } from "./government-workflow-engine.js";
+export { WORKFLOW_STATE_SCHEMA_VERSION, CROSS_WORKFLOW_HANDOFFS_V2, validateCompletedStagePrefixV2, validateWorkflowStateV2, createWorkflowStateV2, evaluateWorkflowStageV2, executeGovernmentWorkflowV2, transitionGovernmentWorkflowV2, buildCrossWorkflowCaseV2 } from "./government-workflow-state-machine-v2.js";
 export * from "./modules/gp001/index.js";
 export default contextManager;
