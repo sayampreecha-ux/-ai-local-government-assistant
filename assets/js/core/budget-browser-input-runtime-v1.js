@@ -2,7 +2,7 @@ import { prepareBudgetBrowserFile } from '../../../src/budget-browser-file-inges
 import { parseBudgetBrowserFile } from '../../../src/budget-browser-file-parser.js';
 import { createParsedBudgetReview, confirmParsedBudgetReview } from '../../../src/budget-file-parser-review.js';
 
-export const BUDGET_BROWSER_INPUT_RUNTIME_VERSION = '1.5';
+export const BUDGET_BROWSER_INPUT_RUNTIME_VERSION = '1.6';
 
 function browserConfirmedInputs() {
   const value = typeof globalThis !== 'undefined' ? globalThis.GovPromptBudgetConfirmedInputs : null;
@@ -12,6 +12,15 @@ function browserConfirmedInputs() {
 function persistConfirmedInputs(inputs) {
   if (typeof globalThis === 'undefined') return;
   globalThis.GovPromptBudgetConfirmedInputs = Object.freeze({ ...(inputs || {}) });
+}
+
+async function choosePurposeWhenNeeded(prepared) {
+  if (prepared?.status === 'ready-for-parser') return null;
+  if (!Array.isArray(prepared?.errors) || !prepared.errors.includes('purpose:confirmation-required') || typeof document === 'undefined') return null;
+  try {
+    const picker = await import('./budget-purpose-picker-ui-v1.js?v=1.0.0');
+    return await picker.chooseBudgetPurpose();
+  } catch { return null; }
 }
 
 async function defaultConfirmReview(review) {
@@ -43,10 +52,18 @@ export async function prepareBudgetInternalInputsFromFiles(files = [], { targetY
   const reviewHandler = typeof confirmReview === 'function' ? confirmReview : defaultConfirmReview;
   for (let index = 0; index < list.length; index += 1) {
     const file = list[index];
-    const explicitPurpose = purposeByIndex[index] || null;
+    let explicitPurpose = purposeByIndex[index] || null;
     let prepared;
     try { prepared = await prepareBudgetBrowserFile(file, { purpose: explicitPurpose }); }
     catch { prepared = { status: 'rejected', errors: ['file-preparation:failed'] }; }
+    if (prepared.status !== 'ready-for-parser') {
+      const selectedPurpose = await choosePurposeWhenNeeded(prepared);
+      if (selectedPurpose) {
+        explicitPurpose = selectedPurpose;
+        try { prepared = await prepareBudgetBrowserFile(file, { purpose: explicitPurpose }); }
+        catch { prepared = { status: 'rejected', errors: ['file-preparation:failed'] }; }
+      }
+    }
     if (prepared.status !== 'ready-for-parser') {
       results.push(Object.freeze({ index, status: prepared.status, purpose: explicitPurpose, errors: Object.freeze(prepared.errors || []) }));
       continue;
@@ -104,10 +121,11 @@ export async function prepareBudgetInternalInputsFromFiles(files = [], { targetY
       parserOutputIsNotEvidence: true,
       humanConfirmationRequiredBeforePromotion: true,
       editableReviewModalPreferred: typeof document !== 'undefined',
+      ambiguousFilePurposeRequiresHumanSelection: true,
       confirmedInputsMemoryScope: 'current-browser-tab'
     })
   });
 }
 
-export { defaultConfirmReview, browserConfirmedInputs };
+export { defaultConfirmReview, browserConfirmedInputs, choosePurposeWhenNeeded };
 export default Object.freeze({ version: BUDGET_BROWSER_INPUT_RUNTIME_VERSION, prepareBudgetInternalInputsFromFiles });
