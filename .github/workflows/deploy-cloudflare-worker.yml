@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'src/search-worker.js'
+      - 'src/search-worker-v2.js'
       - 'access-system/**'
       - 'Plain text/**'
       - 'scripts/build-static.mjs'

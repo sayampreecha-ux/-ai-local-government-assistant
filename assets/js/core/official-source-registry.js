@@ -18,12 +18,29 @@
     return String(value ?? '').normalize('NFC').trim().toLocaleLowerCase();
   }
 
-  function matchSource(urlOrHost) {
+  function hostOf(urlOrHost) {
     const raw = String(urlOrHost ?? '').trim();
     let host = raw;
     try { host = new URL(raw).hostname; } catch {}
-    const normalized = normalize(host).replace(/^www\./, '');
-    return SOURCES.find(source => normalized === source.host || normalized.endsWith(`.${source.host}`)) || null;
+    return normalize(host).replace(/^www\./, '');
+  }
+
+  function dynamicThaiGovernmentSource(host) {
+    if (!(host === 'go.th' || host.endsWith('.go.th'))) return null;
+    return Object.freeze({
+      id: `thai-gov:${host}`,
+      name: host,
+      host,
+      tier: 'primary',
+      priority: 86,
+      topics: Object.freeze(['หน่วยงานราชการ', 'องค์กรปกครองส่วนท้องถิ่น', 'งบประมาณ', 'แผนพัฒนาท้องถิ่น']),
+      dynamic: true
+    });
+  }
+
+  function matchSource(urlOrHost) {
+    const normalized = hostOf(urlOrHost);
+    return SOURCES.find(source => normalized === source.host || normalized.endsWith(`.${source.host}`)) || dynamicThaiGovernmentSource(normalized);
   }
 
   function rankSources(query = '') {

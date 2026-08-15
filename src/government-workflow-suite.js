@@ -4,6 +4,7 @@ import { buildCrossWorkflowCaseV3, executeGovernmentWorkflowV3, transitionGovern
 import { buildGovernmentWorkOrderV4, advanceGovernmentWorkflowV4, driveGovernmentWorkflowV4, runGovernmentCaseV4, driveGovernmentCaseV4 } from "./government-case-orchestrator-v4.js";
 
 const WORKFLOWS = Object.freeze({
+  budgetDraft: { id: "gov.budget-draft", keywords: ["ทำร่างงบ", "ร่างงบประมาณ", "ร่างงบ", "ข้อบัญญัติงบประมาณ", "ทำกรอบงบ", "กรอบงบ", "จัดร่างงบ", "สรุปคำของบ"] },
   procurement: { id: "gov.procurement", keywords: ["จัดซื้อ", "จัดจ้าง", "ซื้อ", "เครื่องจักร", "รถขุด", "รถบรรทุก", "tor", "ราคากลาง", "e-bidding", "เฉพาะเจาะจง"] },
   finance: { id: "gov.finance", keywords: ["เบิก", "เบิกจ่าย", "งบประมาณ", "เงินกู้", "กู้เงิน", "เงินสะสม", "ค่าใช้จ่าย", "การเงิน"] },
   correspondence: { id: "gov.correspondence", keywords: ["หนังสือราชการ", "ร่างหนังสือ", "บันทึกข้อความ", "หนังสือภายนอก", "หนังสือภายใน"] },
@@ -12,13 +13,14 @@ const WORKFLOWS = Object.freeze({
   hr: { id: "gov.hr", keywords: ["บุคคล", "อัตรากำลัง", "เลื่อนขั้น", "เลื่อนเงินเดือน", "บรรจุ", "แต่งตั้ง", "โอน", "ย้าย"] }
 });
 
-const HIGH_RISK = ["เงินกู้", "กู้เงิน", "เครื่องจักร", "e-bidding", "เฉพาะเจาะจง", "ยุบตำแหน่ง", "เพิ่มตำแหน่ง", "วินัย", "คำพิพากษา"];
+const HIGH_RISK = ["เงินกู้", "กู้เงิน", "เครื่องจักร", "e-bidding", "เฉพาะเจาะจง", "ยุบตำแหน่ง", "เพิ่มตำแหน่ง", "วินัย", "คำพิพากษา", "ทำร่างงบ", "ร่างงบประมาณ", "ข้อบัญญัติงบประมาณ", "จัดร่างงบ"];
 const textOf = (input = {}) => String(input.query || input.question || input.text || input.intent || "").toLowerCase();
 
 export function detectGovernmentWorkflows(input = {}) {
   const text = textOf(input);
   const matched = Object.values(WORKFLOWS).filter((wf) => wf.keywords.some((k) => text.includes(k.toLowerCase())));
   const ids = new Set(matched.map((x) => x.id));
+  if (ids.has("gov.budget-draft")) ids.add("gov.finance");
   if (ids.has("gov.procurement")) { ids.add("gov.project"); ids.add("gov.finance"); }
   if (text.includes("เงินกู้") || text.includes("กู้เงิน")) { ids.add("gov.finance"); ids.add("gov.legal"); }
   return Object.values(WORKFLOWS).filter((wf) => ids.has(wf.id));

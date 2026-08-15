@@ -15,11 +15,16 @@ on:
       - 'assets/js/home-v3.js'
       - 'assets/js/core/privacy-guard.js'
       - 'assets/js/core/privacy-submit-guard.js'
+      - 'assets/js/core/budget-*.js'
+      - 'assets/js/core/official-source-registry.js'
       - 'src/search-worker.js'
+      - 'src/search-worker-v2.js'
+      - 'src/budget-*.js'
       - 'scripts/build-static.mjs'
       - 'scripts/verify-frontend-production.mjs'
       - 'scripts/verify-production-security.mjs'
       - 'scripts/verify-issue73-production-e2e.mjs'
+      - 'scripts/verify-budget-production-e2e.mjs'
       - '.github/workflows/verify-production-surface.yml'
   workflow_dispatch:
 
@@ -39,14 +44,16 @@ jobs:
         with:
           node-version: 24
       - name: Wait for deployment propagation
-        run: sleep 45
+        run: sleep 60
       - name: Verify GitHub Pages production surface
         run: node scripts/verify-frontend-production.mjs
       - name: Verify Cloudflare Worker production security
         run: node scripts/verify-production-security.mjs
-      - name: Install Chromium for Issue 73 production E2E
+      - name: Install Chromium for production E2E
         run: |
           npm install --no-save --package-lock=false playwright@1.55.0
           npx playwright install --with-deps chromium
       - name: Verify Issue 73 privacy boundary in real browser
         run: node scripts/verify-issue73-production-e2e.mjs
+      - name: Verify Budget Draft Agent short-command workflow in real browser
+        run: node scripts/verify-budget-production-e2e.mjs

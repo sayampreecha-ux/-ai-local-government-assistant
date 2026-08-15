@@ -1,0 +1,63 @@
+{
+  "caseId": "phayao-budget-2570-user-infographic-2026-08-15",
+  "sourceType": "user-provided-infographic",
+  "sourceAuthority": {
+    "official": false,
+    "verified": false,
+    "status": "pending-confirmation",
+    "note": "ตัวเลขถอดจากอินโฟกราฟิกที่ผู้ใช้ส่งมา ต้องตรวจเทียบร่างข้อบัญญัติ/เอกสารราชการต้นฉบับก่อนใช้เป็น final"
+  },
+  "organization": "องค์การบริหารส่วนจังหวัดพะเยา",
+  "budgetYear": 2570,
+  "budget": {
+    "revenueTotal": 592782700,
+    "expenseTotal": 592782700,
+    "revenueItems": [
+      { "key": "own-revenue", "amount": 19712500, "status": "pending-confirmation" },
+      { "key": "allocated-revenue", "amount": 301700000, "status": "pending-confirmation" },
+      { "key": "general-grant", "amount": 271370200, "status": "pending-confirmation" }
+    ],
+    "expenseItems": [
+      { "key": "central-budget", "amount": 60682445, "status": "pending-confirmation" },
+      { "key": "personnel", "amount": 262162810, "status": "pending-confirmation" },
+      { "key": "operations", "amount": 134866725, "status": "pending-confirmation" },
+      { "key": "investment", "amount": 134470720, "status": "pending-confirmation" },
+      { "key": "subsidy", "amount": 600000, "status": "pending-confirmation" }
+    ]
+  },
+  "investmentInfographicA": {
+    "declaredTotal": 134470720,
+    "items": [
+      { "key": "equipment", "amount": 22770000, "status": "pending-confirmation" },
+      { "key": "land-buildings", "amount": 111700720, "status": "pending-confirmation" }
+    ],
+    "counts": {
+      "allItems": 306,
+      "equipmentItems": 103,
+      "landBuildingProjects": 203,
+      "projects500k": 197,
+      "solarLedProjects": 30,
+      "solarLedSets": 420
+    },
+    "specialFigures": {
+      "projects500kTotal": 98500000,
+      "solarLedTotal": 14910000,
+      "solarLedPerProject": 497000
+    }
+  },
+  "investmentInfographicB": {
+    "declaredTotal": 134470720,
+    "items": [
+      { "key": "equipment", "amount": 20774020, "status": "pending-confirmation" },
+      { "key": "land-buildings", "amount": 111201000, "status": "pending-confirmation" }
+    ]
+  },
+  "personnel": {
+    "declaredTotal": 262162810,
+    "political": 8964120,
+    "permanent": 253198690,
+    "permanentFromOwnRevenue": 113960390,
+    "permanentFromGeneralGrant": 139238300,
+    "specialCompensation": 15900000
+  }
+}

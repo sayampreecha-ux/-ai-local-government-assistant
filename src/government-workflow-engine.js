@@ -1,6 +1,9 @@
+import { validateBudgetBalance } from './budget-balance-validator.js';
+
 const stage = (id, title, requiredEvidence = [], deliverables = [], options = {}) => ({
   id, title, requiredEvidence, deliverables,
   officialEvidenceRequired: Boolean(options.officialEvidenceRequired),
+  officialEvidenceKeys: options.officialEvidenceKeys || [],
   humanApprovalRequired: Boolean(options.humanApprovalRequired),
   handoffs: options.handoffs || [],
   riskChecks: options.riskChecks || []
@@ -21,6 +24,19 @@ export const DEEP_WORKFLOWS = Object.freeze({
     stage("contract", "ทำสัญญา", ["awardDecision", "contractTerms"], ["contract-checklist"], { humanApprovalRequired: true }),
     stage("delivery-and-inspection", "ส่งมอบและตรวจรับ", ["deliveryEvidence", "inspectionCriteria"], ["inspection-checklist", "acceptance-record"], { humanApprovalRequired: true }),
     stage("asset-registration-and-maintenance", "ขึ้นทะเบียนและบำรุงรักษา", ["assetData", "maintenancePlan"], ["asset-maintenance-record"])
+  ],
+  "gov.budget-draft": [
+    stage("budget-context", "บริบทและกรอบการจัดทำงบประมาณ", ["organizationContext", "targetBudgetYear", "currentBudgetRule"], ["budget-context-check"], { officialEvidenceRequired: true, officialEvidenceKeys: ["currentBudgetRule"] }),
+    stage("baseline-budget", "ฐานงบประมาณเดิม", ["baselineBudget"], ["baseline-budget-analysis"]),
+    stage("revenue-forecast", "ประมาณการรายรับ", ["latestRevenueActuals", "revenueForecastBasis"], ["budget-revenue-forecast-sheet"], { officialEvidenceRequired: true, officialEvidenceKeys: ["latestRevenueActuals"], handoffs: ["gov.finance"] }),
+    stage("plan-project-linkage", "เชื่อมโยงแผนและคำขอโครงการ", ["targetYearPlan", "projectRequests"], ["budget-plan-project-matrix"], { officialEvidenceRequired: true, officialEvidenceKeys: ["targetYearPlan"], handoffs: ["gov.project"] }),
+    stage("personnel-obligations", "ภาระบุคลากรและภาระผูกพัน", ["personnelObligations"], ["personnel-obligation-analysis"], { handoffs: ["gov.hr", "gov.finance"] }),
+    stage("budget-allocation", "จัดสรรวงเงินงบประมาณ", ["allocationDraft"], ["budget-allocation-sheet"], { handoffs: ["gov.finance"] }),
+    stage("priority-readiness", "จัดลำดับความสำคัญและความพร้อม", ["priorityReadiness"], ["budget-priority-readiness-matrix"]),
+    stage("risk-review", "ทบทวนความเสี่ยงงบประมาณ", ["budgetRiskReview"], ["budget-risk-register"], { riskChecks: ["budget-source-gap", "budget-plan-gap", "budget-obligation-gap"] }),
+    stage("budget-balance", "ตรวจสมดุลรายรับและรายจ่าย", ["budgetTotals"], ["budget-balance-check"], { riskChecks: ["budget-formula-mismatch", "budget-not-balanced", "budget-pending-confirmation", "budget-estimate-unlabelled"] }),
+    stage("deliverables", "จัดทำร่างและชุดข้อมูลส่งออก", ["baselineBudget", "latestRevenueActuals", "targetYearPlan", "personnelObligations", "budgetTotals", "budgetSourceRegister"], ["budget-draft", "budget-structured-export"]),
+    stage("human-approval", "เสนอผู้มีอำนาจตรวจและรับรอง", ["decisionAuthority"], ["budget-approval-pack"], { humanApprovalRequired: true })
   ],
   "gov.finance": [
     stage("authority", "ฐานอำนาจทางการเงิน", ["financialAuthority"], ["financial-authority-check"], { officialEvidenceRequired: true }),
@@ -83,7 +99,7 @@ export const DEEP_WORKFLOWS = Object.freeze({
 });
 
 const byKey = (evidence = []) => new Map(evidence.filter(Boolean).map((e) => [e.key, e]));
-const isVerifiedOfficial = (e) => Boolean(e && e.official === true && e.verified === true);
+const isVerifiedOfficial = (e) => Boolean(e && e.official === true && e.verified === true && e.fresh !== false && e.current !== false);
 
 export function detectProcurementRisks(input = {}) {
   const text = `${input.query || ""} ${input.draftTor || ""} ${input.specification || ""}`.toLowerCase();
@@ -94,21 +110,44 @@ export function detectProcurementRisks(input = {}) {
   return findings;
 }
 
+function budgetBalancePayload(index, input) {
+  const evidenceValue = index.get('budgetTotals')?.value;
+  if (evidenceValue && typeof evidenceValue === 'object') return evidenceValue;
+  if (input?.budgetBalance && typeof input.budgetBalance === 'object') return input.budgetBalance;
+  if (input?.budgetTotals && typeof input.budgetTotals === 'object') return input.budgetTotals;
+  return {};
+}
+
 export function evaluateWorkflowStage(workflowId, stageIndex, evidence = [], input = {}) {
   const stages = DEEP_WORKFLOWS[workflowId] || [];
   const current = stages[stageIndex];
   if (!current) return { status: "complete", current: null, missingEvidence: [], riskFindings: [] };
   const index = byKey(evidence);
   const missingEvidence = current.requiredEvidence.filter((key) => !index.has(key));
-  const officialMissing = current.officialEvidenceRequired && !current.requiredEvidence.some((key) => isVerifiedOfficial(index.get(key)));
-  const riskFindings = workflowId === "gov.procurement" ? detectProcurementRisks(input) : [];
+  const pendingEvidence = workflowId === 'gov.budget-draft'
+    ? current.requiredEvidence.filter((key) => index.get(key)?.status === 'pending-confirmation')
+    : [];
+  const explicitOfficialKeys = Array.isArray(current.officialEvidenceKeys) ? current.officialEvidenceKeys : [];
+  const officialMissingKeys = explicitOfficialKeys.length
+    ? explicitOfficialKeys.filter((key) => !isVerifiedOfficial(index.get(key)))
+    : [];
+  const officialMissing = explicitOfficialKeys.length
+    ? officialMissingKeys.length > 0
+    : current.officialEvidenceRequired && !current.requiredEvidence.some((key) => isVerifiedOfficial(index.get(key)));
+  const procurementRisks = workflowId === "gov.procurement" ? detectProcurementRisks(input) : [];
+  const balanceValidation = workflowId === 'gov.budget-draft' && current.id === 'budget-balance'
+    ? validateBudgetBalance(budgetBalancePayload(index, input))
+    : null;
+  const riskFindings = [...procurementRisks, ...(balanceValidation?.findings || [])];
   const blockingRisk = current.riskChecks?.some((code) => riskFindings.some((r) => r.code === code && r.severity === "high"));
   let status = "ready";
   if (missingEvidence.length) status = "blocked-missing-evidence";
+  else if (pendingEvidence.length) status = 'blocked-missing-evidence';
   else if (officialMissing) status = "blocked-official-source";
+  else if (balanceValidation && !balanceValidation.valid) status = 'blocked-risk-review';
   else if (blockingRisk) status = "blocked-risk-review";
   else if (current.humanApprovalRequired && input.humanApproved !== true) status = "awaiting-human-approval";
-  return { status, current, missingEvidence, officialMissing, riskFindings, deliverables: current.deliverables, handoffs: current.handoffs };
+  return { status, current, missingEvidence: [...new Set([...missingEvidence, ...pendingEvidence])], officialMissing, officialMissingKeys, riskFindings, balanceValidation, deliverables: current.deliverables, handoffs: current.handoffs };
 }
 
 export function executeDeepGovernmentWorkflow({ workflowId, evidence = [], input = {}, completedStages = [] } = {}) {
@@ -124,7 +163,9 @@ export function executeDeepGovernmentWorkflow({ workflowId, evidence = [], input
     currentStage: evaluation.current,
     completedStages: [...completed],
     missingEvidence: evaluation.missingEvidence,
+    missingOfficialEvidence: evaluation.officialMissingKeys || [],
     riskFindings: evaluation.riskFindings,
+    budgetBalanceValidation: evaluation.balanceValidation || null,
     deliverablesReady: evaluation.status === "ready" ? evaluation.deliverables : [],
     handoffs: evaluation.handoffs || [],
     nextRequestedInputs: evaluation.missingEvidence,
