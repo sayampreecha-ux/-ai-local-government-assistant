@@ -2,7 +2,7 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 
 const output = "dist";
-const RELEASE_VERSIONS = Object.freeze({ home: "6.1.1", homeCss: "2.4.5", serviceWorker: "6.1.0", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0" });
+const RELEASE_VERSIONS = Object.freeze({ home: "6.1.1", homeCss: "2.4.5", serviceWorker: "6.1.1", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0" });
 const publicExtensions = new Set([
   ".html", ".htlm", ".css", ".js", ".json", ".webmanifest", ".txt", ".xml"
 ]);

@@ -1,14 +1,12 @@
-const APP_VERSION = '1.2';
+const APP_VERSION = '1.3';
 const CACHE = `lg-assistant-ready-v${APP_VERSION.replace('.', '-')}`;
 const ASSETS = [
   './',
   './index.html',
-  './assets/styles.css',
-  './assets/app.js',
+  './assets/css/govprompt.css',
+  './assets/css/home-v3.css',
+  './assets/js/home-v3.js',
   './manifest.webmanifest',
-  './assets/icons/icon-192.png',
-  './assets/icons/icon-512.png',
-  './assets/icons/apple-touch-icon.png'
 ];
 const PRECACHE_URLS = new Set(ASSETS.map(asset => new URL(asset, self.registration.scope).href));
 
