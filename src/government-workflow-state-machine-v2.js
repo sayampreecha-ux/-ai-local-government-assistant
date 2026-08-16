@@ -29,7 +29,16 @@ const RISK_REVIEW_STAGES = new Set([
   'gov.project:risk',
   'gov.correspondence:pii',
   'gov.hr:eligibility',
-  'gov.hr:financial-impact'
+  'gov.hr:financial-impact',
+  'gov.engineering:construction-control',
+  'gov.health:privacy-consent',
+  'gov.health:quality-safety',
+  'gov.education:child-data-safety',
+  'gov.internal-audit:risk-assessment',
+  'gov.internal-audit:findings',
+  'gov.executive:impact-risk',
+  'gov.public-relations:privacy-rights',
+  'gov.council:quorum-conflict'
 ]);
 
 export const CROSS_WORKFLOW_HANDOFFS_V2 = Object.freeze({
@@ -61,6 +70,26 @@ export const CROSS_WORKFLOW_HANDOFFS_V2 = Object.freeze({
   ],
   'gov.hr:financial-impact': [
     { targetWorkflowId: 'gov.finance', requiredEvidence: [], requiredDeliverables: ['hr-financial-impact'] }
+  ],
+  'gov.engineering:estimate-standard-price': [
+    { targetWorkflowId: 'gov.finance', requiredEvidence: ['costEstimate', 'standardPriceEvidence'], requiredDeliverables: ['engineering-cost-estimate-sheet'] }
+  ],
+  'gov.engineering:procurement-handoff': [
+    { targetWorkflowId: 'gov.procurement', requiredEvidence: ['technicalSpecification', 'budgetAvailability'], requiredDeliverables: ['engineering-procurement-pack'] },
+    { targetWorkflowId: 'gov.finance', requiredEvidence: ['budgetAvailability'], requiredDeliverables: ['engineering-procurement-pack'] }
+  ],
+  'gov.health:funding-source': [
+    { targetWorkflowId: 'gov.finance', requiredEvidence: ['fundingSource', 'healthFundRule'], requiredDeliverables: ['health-funding-check'] }
+  ],
+  'gov.health:medicine-supply-procurement': [
+    { targetWorkflowId: 'gov.procurement', requiredEvidence: ['medicineOrSupplyNeed'], requiredDeliverables: ['health-procurement-plan'] }
+  ],
+  'gov.education:plan-budget': [
+    { targetWorkflowId: 'gov.project', requiredEvidence: ['planLinkage'], requiredDeliverables: ['education-plan-budget-check'] },
+    { targetWorkflowId: 'gov.finance', requiredEvidence: ['budgetAvailability'], requiredDeliverables: ['education-plan-budget-check'] }
+  ],
+  'gov.education:procurement-support': [
+    { targetWorkflowId: 'gov.procurement', requiredEvidence: ['procurementNeeds'], requiredDeliverables: ['education-procurement-map'] }
   ]
 });
 
@@ -184,7 +213,8 @@ export function evaluateWorkflowStageV2(workflowId, stageIndex, { evidence = [],
   const evidenceIndex = indexByKey(evidence, usableEvidence);
   const artifactIndex = indexByKey(artifacts, readyArtifact);
   const missingEvidence = stage.requiredEvidence.filter((key) => !evidenceIndex.has(key));
-  const officialKeys = OFFICIAL_EVIDENCE_KEYS[stageKey(workflowId, stage.id)] || [];
+  const declaredOfficialKeys = Array.isArray(stage.officialEvidenceKeys) ? stage.officialEvidenceKeys : [];
+  const officialKeys = declaredOfficialKeys.length ? declaredOfficialKeys : (OFFICIAL_EVIDENCE_KEYS[stageKey(workflowId, stage.id)] || []);
   const missingOfficialEvidence = officialKeys.filter((key) => !officialEvidence(evidenceIndex.get(key)));
   const riskReviewRequired = RISK_REVIEW_STAGES.has(stageKey(workflowId, stage.id));
   const riskReview = riskReviewRequired ? riskReviewFor(input, workflowId, stage.id) : null;
