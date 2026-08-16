@@ -38,7 +38,7 @@ jobs:
       - run: pnpm build
       - name: Install Chromium for mobile browser verification
         run: |
-          npm install --no-save --package-lock=false playwright@1.55.0
+          npm install --no-save --package-lock=false --legacy-peer-deps playwright@1.55.0
           npx playwright install --with-deps chromium
       - name: Verify mobile workflow runtime and privacy boundary
         run: node scripts/verify-workflow-mobile-e2e.mjs
