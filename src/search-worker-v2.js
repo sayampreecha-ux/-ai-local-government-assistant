@@ -68,6 +68,15 @@ function corsGuard(request, requestId) {
   return null;
 }
 
+function classifyProviderFailure(response, operation) {
+  const providerStatus = Number(response?.status || 0);
+  const prefix = operation === 'extract' ? 'DOCUMENT_EXTRACT' : 'SEARCH_PROVIDER';
+  if (providerStatus === 432) return { ok: false, status: 503, error: `${prefix}_USAGE_LIMIT`, providerStatus };
+  if (providerStatus === 433) return { ok: false, status: 503, error: `${prefix}_PAYGO_LIMIT`, providerStatus };
+  if (providerStatus === 429) return { ok: false, status: 503, error: `${prefix}_RATE_LIMIT`, providerStatus };
+  return { ok: false, status: 502, error: `${prefix}_ERROR`, providerStatus };
+}
+
 function normalizeSearchResult(item) {
   const parsed = parseOfficialUrl(item?.url);
   if (!parsed) return null;
@@ -92,7 +101,7 @@ async function tavilySearchOfficial(env, query, count) {
       body: JSON.stringify({ query, search_depth: 'advanced', max_results: Math.min(20, Math.max(8, count * 2)), include_answer: false, include_raw_content: false })
     });
   } catch { return { ok: false, status: 502, error: 'SEARCH_PROVIDER_NETWORK_ERROR' }; }
-  if (!response.ok) return { ok: false, status: 502, error: 'SEARCH_PROVIDER_ERROR', providerStatus: response.status };
+  if (!response.ok) return classifyProviderFailure(response, 'search');
   let body;
   try { body = await response.json(); } catch { return { ok: false, status: 502, error: 'SEARCH_PROVIDER_INVALID_RESPONSE' }; }
   const results = (Array.isArray(body?.results) ? body.results : []).map(normalizeSearchResult).filter(Boolean).slice(0, count);
@@ -124,7 +133,7 @@ async function tavilyExtract(env, url) {
       body: JSON.stringify({ urls: url.toString(), extract_depth: 'advanced', format: 'markdown', include_images: false, timeout: 45 })
     });
   } catch { return { ok: false, status: 502, error: 'DOCUMENT_EXTRACT_NETWORK_ERROR' }; }
-  if (!response.ok) return { ok: false, status: 502, error: 'DOCUMENT_EXTRACT_PROVIDER_ERROR', providerStatus: response.status };
+  if (!response.ok) return classifyProviderFailure(response, 'extract');
   let body; try { body = await response.json(); } catch { return { ok: false, status: 502, error: 'DOCUMENT_EXTRACT_INVALID_RESPONSE' }; }
   const result = Array.isArray(body?.results) ? body.results[0] : null;
   const rawContent = typeof result?.raw_content === 'string' ? result.raw_content : '';
