@@ -28,6 +28,7 @@ test('deep workflow registry covers the seven GovPrompt domains that were previo
 test('natural-language detection reaches every added workflow without requiring menu selection', () => {
   assert.ok(ids('ตรวจรับงานถนนและความหนาแน่นดิน').includes('gov.engineering'));
   assert.ok(ids('รพ.สต. จะใช้เงินบำรุงซื้อเวชภัณฑ์').includes('gov.health'));
+  assert.ok(ids('จัดทำ BOQ และประมาณราคางานก่อสร้างถนน').includes('gov.engineering'));
   assert.ok(ids('โรงเรียนจะจัดกิจกรรมให้นักเรียน').includes('gov.education'));
   assert.ok(ids('ทำแผนตรวจสอบภายในและติดตามข้อค้นพบ').includes('gov.internal-audit'));
   assert.ok(ids('ทำสรุปผู้บริหารเพื่อช่วยตัดสินใจ').includes('gov.executive'));
@@ -84,11 +85,66 @@ test('health privacy stage requires an explicit risk review before proceeding', 
   const result = executeGovernmentWorkflowV2({
     workflowId: 'gov.health',
     completedStages: ['authority-service-scope', 'population-need', 'funding-source', 'health-standard', 'medicine-supply-procurement'],
-    evidence: [ev('dataCategory', 'health data'), ev('privacyBasis', 'documented basis')]
+    evidence: [ev('dataCategory', 'health data'), ev('privacyBasis', 'documented basis'), ev('dataMinimizationPlan', 'metadata-only plan')]
   });
   assert.equal(result.currentStage.id, 'privacy-consent');
   assert.equal(result.riskReviewRequired, true);
   assert.equal(result.status, 'blocked-risk-review');
+});
+
+test('HR eligibility, engineering BOQ, and health privacy fail closed on their domain-specific evidence and risk gates', () => {
+  const hr = executeGovernmentWorkflowV2({
+    workflowId: 'gov.hr',
+    completedStages: ['intent-facts', 'current-rule'],
+    evidence: [ev('eligibilityFacts', 'synthetic eligibility facts')]
+  });
+  assert.equal(hr.status, 'blocked-missing-evidence');
+  assert.deepEqual(hr.missingEvidence, ['dataMinimizationAssessment']);
+
+  const hrRisk = executeGovernmentWorkflowV2({
+    workflowId: 'gov.hr',
+    completedStages: ['intent-facts', 'current-rule'],
+    evidence: [ev('eligibilityFacts', 'synthetic eligibility facts'), ev('dataMinimizationAssessment', 'metadata only')]
+  });
+  assert.equal(hrRisk.status, 'blocked-risk-review');
+  assert.equal(hrRisk.riskReviewRequired, true);
+
+  const boq = executeGovernmentWorkflowV2({
+    workflowId: 'gov.engineering',
+    completedStages: ['scope-authority', 'site-existing-condition', 'survey-design-basis'],
+    evidence: [ev('drawings', 'drawing metadata'), ev('calculations', 'calculation metadata'), ev('boqEvidence', 'BOQ metadata only')]
+  });
+  assert.equal(boq.currentStage.id, 'drawings-calculations');
+  assert.equal(boq.status, 'blocked-risk-review');
+  assert.equal(boq.riskReviewRequired, true);
+  assert.ok(boq.requiredDeliverables.includes('boq-check'));
+
+  const health = executeGovernmentWorkflowV2({
+    workflowId: 'gov.health',
+    completedStages: ['authority-service-scope', 'population-need', 'funding-source', 'health-standard', 'medicine-supply-procurement'],
+    evidence: [ev('dataCategory', 'health data category'), ev('privacyBasis', 'documented basis')]
+  });
+  assert.equal(health.status, 'blocked-missing-evidence');
+  assert.deepEqual(health.missingEvidence, ['dataMinimizationPlan']);
+});
+
+test('HR, engineering, and health handoffs remain key-only contracts and never move raw evidence', () => {
+  const scenarios = [
+    ['gov.hr', ['intent-facts', 'current-rule', 'eligibility', 'workforce-impact'], [ev('financialImpact', 'synthetic'), ev('budgetAvailability', true)], [{ key: 'hr-financial-impact', status: 'ready' }], 'gov.finance'],
+    ['gov.engineering', ['scope-authority', 'site-existing-condition', 'survey-design-basis', 'drawings-calculations'], [ev('costEstimate', 1), ev('standardPriceEvidence', 'official', true, true)], [{ key: 'engineering-cost-estimate-sheet', status: 'ready' }], 'gov.finance'],
+    ['gov.health', ['authority-service-scope', 'population-need'], [ev('fundingSource', 'fund'), ev('healthFundRule', 'official', true, true)], [{ key: 'health-funding-check', status: 'ready' }], 'gov.finance']
+  ];
+  for (const [workflowId, completedStages, evidence, artifacts, targetWorkflowId] of scenarios) {
+    const input = workflowId === 'gov.hr'
+      ? { riskReviews: [{ workflowId: 'gov.hr', stageId: 'financial-impact', completed: true }] }
+      : {};
+    const result = executeGovernmentWorkflowV2({ workflowId, completedStages, evidence, artifacts, input });
+    const handoff = result.handoffContracts.find((item) => item.targetWorkflowId === targetWorkflowId);
+    assert.equal(result.status, 'ready');
+    assert.equal(handoff.status, 'ready');
+    assert.equal(Object.hasOwn(handoff.payload, 'values'), false);
+    assert.ok(handoff.payload.artifactKeys.length > 0);
+  }
 });
 
 test('public-relations publication path cannot bypass human approval', () => {

@@ -30,6 +30,7 @@ const RISK_REVIEW_STAGES = new Set([
   'gov.correspondence:pii',
   'gov.hr:eligibility',
   'gov.hr:financial-impact',
+  'gov.engineering:drawings-calculations',
   'gov.engineering:construction-control',
   'gov.health:privacy-consent',
   'gov.health:quality-safety',
