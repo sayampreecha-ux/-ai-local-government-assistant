@@ -35,6 +35,25 @@ test('natural-language detection reaches every added workflow without requiring 
   assert.ok(ids('องค์ประชุมสภาท้องถิ่นครบหรือไม่').includes('gov.council'));
 });
 
+test('specialist domain becomes primary when a generic keyword also appears', () => {
+  assert.equal(ids('รพ.สต. จะใช้เงินบำรุงซื้อเวชภัณฑ์')[0], 'gov.health');
+  assert.equal(ids('ทำโพสต์ประชาสัมพันธ์โครงการ')[0], 'gov.public-relations');
+  assert.equal(ids('โรงเรียนจัดกิจกรรมให้นักเรียน')[0], 'gov.education');
+  assert.equal(ids('ตรวจรับงานถนนโครงการก่อสร้าง')[0], 'gov.engineering');
+});
+
+test('explicit task action still outranks specialist context', () => {
+  assert.equal(ids('จัดซื้อเวชภัณฑ์สำหรับ รพ.สต.')[0], 'gov.procurement');
+  assert.equal(ids('เบิกค่าใช้จ่ายกิจกรรมโรงเรียนได้ไหม')[0], 'gov.finance');
+  assert.equal(ids('ร่างหนังสือราชการเรื่องถนนชำรุด')[0], 'gov.correspondence');
+});
+
+test('Thai place name พะเยา does not trigger health workflow from the substring ยา', () => {
+  const result = ids('ทำโครงการอบรม AI ของ อบจ.พะเยา');
+  assert.ok(result.includes('gov.project'));
+  assert.equal(result.includes('gov.health'), false);
+});
+
 test('engineering authority fails closed until the authority evidence is official and verified', () => {
   const missing = executeGovernmentWorkflowV2({ workflowId: 'gov.engineering' });
   assert.equal(missing.currentStage.id, 'scope-authority');
