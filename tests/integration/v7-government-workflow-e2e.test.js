@@ -38,9 +38,25 @@ test('V7 government workflows are deterministically routable and fail closed bef
     assert.equal(first.governance.rawEvidenceValuesReturned, false);
     assert.equal(first.qualityGate.status, 'NEEDS_INFO');
     assert.equal(first.qualityGate.rawEvidenceValuesReturned, false);
+    assert.equal(first.deliverablePlan.status, 'BLOCKED');
+    assert.equal(first.deliverablePlan.autoGenerationAllowed, false);
+    assert.equal(first.deliverablePlan.rawEvidenceValuesReturned, false);
     assert.ok(first.currentStage);
     assert.ok(first.missingEvidence.length > 0, `${workflowId} must request evidence before it proceeds`);
     assert.ok(first.deliverableWorkOrders.length > 0, `${workflowId} must define a stage deliverable`);
+  }
+});
+
+test('all workflow work orders expose a metadata-only deliverable plan and fail-closed shared handoff context', () => {
+  for (const [workflowId, query] of WORKFLOW_CASES) {
+    const result = buildGovernmentWorkOrderV4({ workflowId, input: { query, caseId: `CASE-${workflowId}` } });
+    assert.equal(result.deliverablePlan.workflowId, workflowId);
+    assert.equal(result.deliverablePlan.caseId, `CASE-${workflowId}`);
+    assert.equal(result.deliverablePlan.autoGenerationAllowed, false);
+    assert.equal(result.deliverablePlan.rawEvidenceValuesReturned, false);
+    assert.equal(result.governance.rawSharedContextValuesReturned, false);
+    assert.ok(result.sharedHandoffContexts.every((context) => context.status === 'BLOCKED'));
+    assert.ok(result.sharedHandoffContexts.every((context) => context.autoTransferAllowed === false && context.rawEvidenceValuesReturned === false));
   }
 });
 

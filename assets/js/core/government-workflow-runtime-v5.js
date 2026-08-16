@@ -68,6 +68,15 @@ function safeWorkOrder(workOrder) {
       substantiveDecisionMade: false,
       rawEvidenceValuesReturned: false
     }),
+    deliverablePlan: Object.freeze({
+      status: safeText(workOrder.deliverablePlan?.status, 48),
+      stageId: safeText(workOrder.deliverablePlan?.stageId, 100),
+      qualityStatus: safeText(workOrder.deliverablePlan?.qualityStatus, 32),
+      humanDraftRequired: Boolean(workOrder.deliverablePlan?.humanDraftRequired),
+      autoGenerationAllowed: false,
+      artifacts: Object.freeze((workOrder.deliverablePlan?.artifacts || []).map(safeDeliverable)),
+      rawEvidenceValuesReturned: false
+    }),
     handoffs: Object.freeze((workOrder.handoffs || []).map((handoff) => Object.freeze({
       sourceWorkflowId: safeText(handoff?.sourceWorkflowId, 80),
       sourceStageId: safeText(handoff?.sourceStageId, 100),
