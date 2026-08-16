@@ -76,7 +76,8 @@ try {
   assert.equal(privacyState.input, '', 'privacy-blocked input must be cleared');
   assert.equal(privacyState.userMessages.length, 0, 'privacy-blocked input must not create a user message');
   assert.equal(privacyState.bodyText.includes('HN000000'), false, 'privacy-blocked input leaked into the visible UI');
-  assert.match(privacyState.warning, /PII_DETECTED/, 'privacy-blocked input must show a blocking warning');
+  assert.match(privacyState.warning, /บล็อกข้อมูลส่วนบุคคล\/ข้อมูลอ่อนไหวก่อนประมวลผล/, 'privacy-blocked input must show a blocking warning');
+  assert.match(privacyState.warning, /รหัสผู้ป่วย\/HN\/AN/, 'HN input must be classified as protected patient data');
 
   const workflowState = await page.evaluate(async () => {
     const runtime = await import('/assets/js/core/government-workflow-runtime-v5.js');
