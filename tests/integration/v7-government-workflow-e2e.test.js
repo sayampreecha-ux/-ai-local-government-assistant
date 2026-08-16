@@ -36,6 +36,8 @@ test('V7 government workflows are deterministically routable and fail closed bef
     assert.equal(first.governance.failClosed, true);
     assert.equal(first.governance.autoApprovalAllowed, false);
     assert.equal(first.governance.rawEvidenceValuesReturned, false);
+    assert.equal(first.qualityGate.status, 'NEEDS_INFO');
+    assert.equal(first.qualityGate.rawEvidenceValuesReturned, false);
     assert.ok(first.currentStage);
     assert.ok(first.missingEvidence.length > 0, `${workflowId} must request evidence before it proceeds`);
     assert.ok(first.deliverableWorkOrders.length > 0, `${workflowId} must define a stage deliverable`);
@@ -65,6 +67,20 @@ test('declared cross-workflow handoffs stay structured and do not carry raw valu
     assert.equal(Object.hasOwn(handoff, 'value'), false);
     assert.equal(Object.hasOwn(handoff, 'rawInput'), false);
   }
+});
+
+test('handoff payload stays fail-closed until a human confirmation is supplied', () => {
+  const stages = DEEP_WORKFLOWS['gov.procurement'];
+  const stage = stages.find((item) => item.id === 'plan-and-budget');
+  const evidence = [
+    { key: 'missionAuthority', value: 'SYNTHETIC_AUTHORITY', official: true, verified: true },
+    { key: 'needJustification', value: 'SYNTHETIC_NEED' },
+    ...stage.requiredEvidence.map((key) => ({ key, value: 'SYNTHETIC_METADATA' }))
+  ];
+  const blocked = buildGovernmentWorkOrderV4({ workflowId: 'gov.procurement', completedStages: ['need-and-authority'], evidence });
+  assert.ok(blocked.handoffs.every((handoff) => handoff.status !== 'ready'));
+  assert.ok(blocked.handoffs.every((handoff) => handoff.humanConfirmationRequired && !handoff.humanConfirmed));
+  assert.doesNotMatch(JSON.stringify(blocked.handoffs), /SYNTHETIC_AUTHORITY|SYNTHETIC_NEED/);
 });
 
 test('newly declared risk stages block until a human records an evidence-backed risk review', () => {

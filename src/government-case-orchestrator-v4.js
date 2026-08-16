@@ -118,6 +118,33 @@ function safeExecutionSummary(execution, workflowStatus) {
   });
 }
 
+function qualityGateFor({ workflowStatus, action, missingEvidence, missingOfficialEvidence, deliverableWorkOrders, approvalRequest, riskWork }) {
+  const missingInformation = uniq([
+    ...(missingEvidence || []),
+    ...(missingOfficialEvidence || []),
+    ...(deliverableWorkOrders || []).filter((order) => order.status !== 'valid').map((order) => `artifact:${order.artifactKey}`)
+  ]);
+  const riskFlags = uniq((riskWork?.findings || []).map((finding) => finding?.code));
+  const humanReviewRequired = Boolean(approvalRequest?.required || riskWork?.reviewRequired);
+  let status = 'BLOCKED';
+  if (['transition-ready', 'complete'].includes(action)) status = 'PASS';
+  else if (['blocked-missing-evidence', 'blocked-official-source', 'blocked-missing-deliverables', 'blocked-deliverable-contract'].includes(workflowStatus)) status = 'NEEDS_INFO';
+  else if (['blocked-risk-review', 'awaiting-human-approval'].includes(workflowStatus)) status = 'REVIEW_REQUIRED';
+
+  return Object.freeze({
+    status,
+    completeness: missingInformation.length === 0,
+    missingInformation: Object.freeze(missingInformation),
+    sourceEvidenceReady: (missingOfficialEvidence || []).length === 0,
+    riskFlags: Object.freeze(riskFlags),
+    humanReviewRequired,
+    deliverableReady: (deliverableWorkOrders || []).every((order) => order.status === 'valid'),
+    workflowReady: status === 'PASS',
+    substantiveDecisionMade: false,
+    rawEvidenceValuesReturned: false
+  });
+}
+
 export function buildGovernmentWorkOrderV4({ workflowId, state = null, completedStages = [], evidence = [], artifacts = [], input = {} } = {}) {
   const workflowArtifacts = scopedArtifacts(artifacts, workflowId);
   const execution = executeGovernmentWorkflowV3({ workflowId, state, completedStages, evidence, artifacts: workflowArtifacts, input });
@@ -128,6 +155,9 @@ export function buildGovernmentWorkOrderV4({ workflowId, state = null, completed
   const stage = stageId ? stageDefinition(workflowId, stageId) : null;
   const deliverableWorkOrders = buildDeliverableWorkOrders(workflowId, stageId, execution);
   const handoffs = stageId ? buildStageHandoffContractsV3(workflowId, stageId, workflowArtifacts, evidence, input) : [];
+  const approvalRequest = approvalRequestFor(workflowId, execution, workflowStatus);
+  const riskWork = riskWorkFor(workflowId, execution, workflowStatus);
+  const qualityGate = qualityGateFor({ workflowStatus, action, missingEvidence: execution?.missingEvidence, missingOfficialEvidence: execution?.missingOfficialEvidence, deliverableWorkOrders, approvalRequest, riskWork });
 
   return Object.freeze({
     orchestratorVersion: CASE_ORCHESTRATOR_VERSION,
@@ -141,8 +171,9 @@ export function buildGovernmentWorkOrderV4({ workflowId, state = null, completed
     missingEvidence: Object.freeze([...(execution?.missingEvidence || [])]),
     missingOfficialEvidence: Object.freeze([...(execution?.missingOfficialEvidence || [])]),
     deliverableWorkOrders: Object.freeze(deliverableWorkOrders),
-    approvalRequest: approvalRequestFor(workflowId, execution, workflowStatus),
-    riskWork: riskWorkFor(workflowId, execution, workflowStatus),
+    approvalRequest,
+    riskWork,
+    qualityGate,
     handoffs: Object.freeze(handoffs),
     nextInputs: Object.freeze(nextInputsFor(execution, legacyMigrationRequired)),
     execution: safeExecutionSummary(execution, workflowStatus),
@@ -153,7 +184,9 @@ export function buildGovernmentWorkOrderV4({ workflowId, state = null, completed
       rawEvidenceValuesReturned: false,
       humanApprovalRequiredWhenDeclared: true,
       autoApprovalAllowed: false,
+      autoHandoffAllowed: false,
       deliverableContractsRequired: true,
+      qualityGateRequired: true,
       auditTrailRequired: true,
       legacyStateMigrationRequired: legacyMigrationRequired
     })

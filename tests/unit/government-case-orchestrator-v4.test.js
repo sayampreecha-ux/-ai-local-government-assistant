@@ -244,6 +244,27 @@ test('case view exposes workflow-specific next actions and cross-workflow handof
   assert.equal(result.governance.autoApprovalAllowed, false);
 });
 
+test('V4 quality gate normalizes missing evidence, risk review, and ready states without returning raw values', () => {
+  const missing = buildGovernmentWorkOrderV4({ workflowId: 'gov.procurement' });
+  assert.equal(missing.qualityGate.status, 'NEEDS_INFO');
+  assert.equal(missing.qualityGate.completeness, false);
+  assert.equal(missing.qualityGate.rawEvidenceValuesReturned, false);
+
+  const riskStages = DEEP_WORKFLOWS['gov.procurement'];
+  const riskIndex = riskStages.findIndex((stage) => stage.riskChecks.length > 0);
+  const riskEvidence = riskStages.slice(0, riskIndex + 1).flatMap((stage) => stage.requiredEvidence.map((key) => ev(key, 'SYNTHETIC_ONLY', stage.officialEvidenceRequired, stage.officialEvidenceRequired)));
+  const risk = buildGovernmentWorkOrderV4({ workflowId: 'gov.procurement', state: stateFor('gov.procurement', riskStages.slice(0, riskIndex).map((stage) => stage.id)), evidence: riskEvidence });
+  assert.equal(risk.qualityGate.status, 'REVIEW_REQUIRED');
+  assert.equal(risk.qualityGate.humanReviewRequired, true);
+  assert.doesNotMatch(JSON.stringify(risk.qualityGate), /SYNTHETIC_ONLY/);
+
+  const evidence = [ev('missionAuthority', 'authority', true, true), ev('needJustification', 'need')];
+  const artifact = artifactFor('gov.procurement', 'need-and-authority', 'need-memo', ['missionAuthority', 'needJustification']);
+  const ready = buildGovernmentWorkOrderV4({ workflowId: 'gov.procurement', evidence, artifacts: [artifact] });
+  assert.equal(ready.qualityGate.status, 'PASS');
+  assert.equal(ready.qualityGate.workflowReady, true);
+});
+
 test('case driver advances only ready workflows and returns a persisted state map', () => {
   const evidence = [ev('missionAuthority', 'authority', true, true), ev('needJustification', 'need')];
   const artifacts = [artifactFor('gov.procurement', 'need-and-authority', 'need-memo', ['missionAuthority', 'needJustification'], { caseId: 'CASE-5' })];
