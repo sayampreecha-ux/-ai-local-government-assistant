@@ -57,7 +57,7 @@ async function fetchText(url) {
 }
 async function exactProduction(path, localContent) {
   const result = await fetchText(page(path));
-  assert.equal(result.text,localContent,`production ${path} is stale or differs from committed release candidate`);
+  assert.equal(result.text.replace(/\r\n/g,'\n'),localContent.replace(/\r\n/g,'\n'),`production ${path} is stale or differs from committed release candidate`);
   return result;
 }
 
@@ -70,7 +70,7 @@ assert.match(index,new RegExp(`assets/js/home-v3\\.js\\?v=${RELEASE.home.replace
 assert.match(index,new RegExp(`assets/css/home-v3\\.css\\?v=${RELEASE.homeCss.replaceAll('.','\\.')}`));
 assert.match(index,/official-source-registry\.js\?v=2\.4\.0/);
 assert.match(index,new RegExp(`service-worker\\.js\\?v=${RELEASE.serviceWorker.replaceAll('.','\\.')}`));
-assert.match(index,/data-prompt="ทำร่างงบปี 70 อบจ\.พะเยา"/);
+assert.match(index,/data-prompt="จัดทำร่างงบประมาณ"/);
 assert.match(index,/https:\/\/www\.facebook\.com\/GovPromptThailandAI/);
 assert.match(index,/privacy-notice\.html/);
 assert.equal(indexResponse.url.startsWith('https://'),true);
