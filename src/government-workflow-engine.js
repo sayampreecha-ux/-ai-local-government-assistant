@@ -95,6 +95,78 @@ export const DEEP_WORKFLOWS = Object.freeze({
     stage("financial-impact", "ผลด้านงบประมาณ", [], ["hr-financial-impact"], { handoffs: ["gov.finance"] }),
     stage("recommendation", "ข้อเสนอ", [], ["hr-recommendation"]),
     stage("human-approval", "เสนอผู้มีอำนาจ", ["decisionAuthority"], ["hr-decision-pack"], { humanApprovalRequired: true })
+  ],
+  "gov.engineering": [
+    stage("scope-authority", "ขอบเขตงานและอำนาจหน้าที่", ["engineeringScope", "missionAuthority"], ["engineering-authority-check"], { officialEvidenceRequired: true, officialEvidenceKeys: ["missionAuthority"] }),
+    stage("site-existing-condition", "สำรวจพื้นที่และสภาพเดิม", ["siteEvidence", "existingCondition"], ["site-condition-record"]),
+    stage("survey-design-basis", "ข้อมูลสำรวจและเกณฑ์ออกแบบ", ["surveyData", "designCriteria"], ["engineering-design-basis"]),
+    stage("drawings-calculations", "แบบ รายการ และการคำนวณ", ["drawings", "calculations"], ["drawing-calculation-check"]),
+    stage("estimate-standard-price", "ประมาณราคาและราคามาตรฐาน", ["costEstimate", "standardPriceEvidence"], ["engineering-cost-estimate-sheet"], { officialEvidenceRequired: true, officialEvidenceKeys: ["standardPriceEvidence"], handoffs: ["gov.finance"] }),
+    stage("procurement-handoff", "ชุดข้อมูลส่งต่อพัสดุ", ["technicalSpecification", "budgetAvailability"], ["engineering-procurement-pack"], { handoffs: ["gov.procurement", "gov.finance"] }),
+    stage("construction-control", "ควบคุมงานและความปลอดภัยหน้างาน", ["workPlan", "controlEvidence"], ["construction-control-record"], { riskChecks: ["site-safety", "quality-deviation"] }),
+    stage("inspection-acceptance", "ตรวจรับและยืนยันคุณภาพงาน", ["inspectionEvidence", "acceptanceCriteria"], ["engineering-inspection-checklist", "engineering-acceptance-record"], { humanApprovalRequired: true }),
+    stage("defect-warranty", "ประกันผลงานและการแก้ไขข้อบกพร่อง", ["warrantyTerms", "defectRecord"], ["defect-warranty-register"])
+  ],
+  "gov.health": [
+    stage("authority-service-scope", "อำนาจหน้าที่และขอบเขตบริการสุขภาพ", ["healthAuthority", "serviceScope"], ["health-authority-check"], { officialEvidenceRequired: true, officialEvidenceKeys: ["healthAuthority"] }),
+    stage("population-need", "ปัญหาสุขภาพและกลุ่มเป้าหมาย", ["healthNeedEvidence", "targetPopulation"], ["health-need-analysis"]),
+    stage("funding-source", "แหล่งเงินและหลักเกณฑ์เฉพาะ", ["fundingSource", "healthFundRule"], ["health-funding-check"], { officialEvidenceRequired: true, officialEvidenceKeys: ["healthFundRule"], handoffs: ["gov.finance"] }),
+    stage("health-standard", "มาตรฐานบริการ/วิชาการที่ใช้", ["officialHealthStandard"], ["health-standard-register"], { officialEvidenceRequired: true, officialEvidenceKeys: ["officialHealthStandard"] }),
+    stage("medicine-supply-procurement", "ยา เวชภัณฑ์ และรายการจัดซื้อ", ["medicineOrSupplyNeed"], ["health-procurement-plan"], { handoffs: ["gov.procurement"] }),
+    stage("privacy-consent", "ข้อมูลสุขภาพ ความเป็นส่วนตัว และฐานการใช้ข้อมูล", ["dataCategory", "privacyBasis"], ["health-privacy-check"], { riskChecks: ["sensitive-health-data", "excessive-data"] }),
+    stage("activity-service-plan", "แผนกิจกรรม/การให้บริการ", ["activities", "timeline"], ["health-service-plan"]),
+    stage("quality-safety", "คุณภาพ ความปลอดภัย และเหตุไม่พึงประสงค์", ["qualityIndicators", "safetyPlan"], ["health-quality-safety-check"], { riskChecks: ["clinical-safety", "service-safety"] }),
+    stage("approval", "เสนอผู้มีอำนาจอนุมัติ", ["approvalAuthority"], ["health-approval-pack"], { humanApprovalRequired: true }),
+    stage("monitor-evaluate", "ติดตามผลและประเมินบริการ", ["monitoringData"], ["health-monitoring-report"])
+  ],
+  "gov.education": [
+    stage("authority-policy", "อำนาจหน้าที่และนโยบายการศึกษา", ["educationAuthority", "educationPolicy"], ["education-authority-policy-check"], { officialEvidenceRequired: true, officialEvidenceKeys: ["educationAuthority", "educationPolicy"] }),
+    stage("learner-need", "ความจำเป็นและกลุ่มผู้เรียน", ["learnerNeed", "targetGroup"], ["education-need-analysis"]),
+    stage("plan-budget", "แผนและงบประมาณ", ["planLinkage", "budgetAvailability"], ["education-plan-budget-check"], { handoffs: ["gov.project", "gov.finance"] }),
+    stage("program-design", "กิจกรรม หลักสูตร และระยะเวลา", ["programDesign", "timeline"], ["education-program-plan"]),
+    stage("procurement-support", "พัสดุ/บริการสนับสนุน", ["procurementNeeds"], ["education-procurement-map"], { handoffs: ["gov.procurement"] }),
+    stage("child-data-safety", "ข้อมูลเด็ก/ผู้เรียนและความปลอดภัย", ["privacyBasis", "safetyPlan"], ["education-privacy-safety-check"], { riskChecks: ["child-data", "learner-safety"] }),
+    stage("approval", "เสนอผู้มีอำนาจอนุมัติ", ["approvalAuthority"], ["education-approval-pack"], { humanApprovalRequired: true }),
+    stage("monitor-evaluate", "ติดตามและประเมินผลการเรียนรู้", ["learningIndicators"], ["education-evaluation-report"])
+  ],
+  "gov.internal-audit": [
+    stage("audit-mandate", "อำนาจตรวจสอบและขอบเขต", ["auditAuthority", "auditScope"], ["audit-mandate-check"], { officialEvidenceRequired: true, officialEvidenceKeys: ["auditAuthority"] }),
+    stage("risk-assessment", "ประเมินความเสี่ยงและจัดลำดับงานตรวจ", ["riskUniverse", "riskAssessment"], ["audit-risk-assessment"]),
+    stage("audit-plan", "วัตถุประสงค์ เกณฑ์ และแผนตรวจ", ["auditObjectives", "auditCriteria"], ["audit-plan"]),
+    stage("evidence-testing", "รวบรวมหลักฐานและทดสอบ", ["auditEvidence", "testResults"], ["audit-testing-record"]),
+    stage("findings", "ข้อค้นพบ สาเหตุ ผลกระทบ และความเสี่ยง", ["auditFindings"], ["audit-findings-report"], { riskChecks: ["material-control-failure", "fraud-indicator"] }),
+    stage("management-response", "คำชี้แจงและแผนแก้ไขของหน่วยรับตรวจ", ["managementResponse"], ["management-response-record"]),
+    stage("report-approval", "รายงานผลและการรับรองโดยผู้มีอำนาจ", ["reportAuthority"], ["audit-report-pack"], { humanApprovalRequired: true }),
+    stage("follow-up", "ติดตามการแก้ไข", ["followUpEvidence"], ["audit-follow-up-register"])
+  ],
+  "gov.executive": [
+    stage("decision-question", "โจทย์ตัดสินใจและข้อเท็จจริง", ["decisionQuestion", "facts"], ["executive-fact-brief"]),
+    stage("authority", "อำนาจและผู้ตัดสินใจ", ["decisionAuthority", "missionAuthority"], ["executive-authority-check"], { officialEvidenceRequired: true, officialEvidenceKeys: ["missionAuthority"] }),
+    stage("options", "ทางเลือกที่เป็นไปได้", ["options"], ["executive-options-matrix"]),
+    stage("impact-risk", "ผลกระทบ ความเสี่ยง และข้อจำกัด", ["impactAnalysis"], ["executive-risk-analysis"], { riskChecks: ["legal-impact", "financial-impact", "public-impact"] }),
+    stage("briefing", "จัดทำข้อเสนอเพื่อการตัดสินใจ", ["briefingFacts"], ["executive-brief"]),
+    stage("human-decision", "ตัดสินใจโดยผู้มีอำนาจ", ["decisionAuthority"], ["executive-decision-record"], { humanApprovalRequired: true }),
+    stage("action-tracking", "มอบหมาย ติดตาม และกำหนดเวลา", ["actionOwners", "timeline"], ["executive-action-tracker"])
+  ],
+  "gov.public-relations": [
+    stage("objective-audience", "วัตถุประสงค์และกลุ่มเป้าหมายการสื่อสาร", ["communicationObjective", "targetAudience"], ["pr-communication-brief"]),
+    stage("facts-verification", "ตรวจข้อเท็จจริง ชื่อ ตัวเลข วันที่ และลิงก์", ["verifiedFacts"], ["pr-fact-check"]),
+    stage("privacy-rights", "ข้อมูลส่วนบุคคล สิทธิภาพ และความเหมาะสม", ["mediaRights", "privacyBasis"], ["pr-privacy-rights-check"], { riskChecks: ["pii-exposure", "image-rights", "misleading-claim"] }),
+    stage("content-draft", "ร่างเนื้อหา", ["contentBrief"], ["pr-content-draft"]),
+    stage("channel-format", "ช่องทาง รูปแบบ และการเข้าถึง", ["channel", "format"], ["pr-channel-format-check"]),
+    stage("approval", "อนุมัติก่อนเผยแพร่", ["approvalAuthority"], ["pr-approval-check"], { humanApprovalRequired: true }),
+    stage("publication", "เผยแพร่และบันทึกหลักฐาน", ["publicationEvidence"], ["pr-publication-record"]),
+    stage("correction-archive", "แก้ไขข้อความและเก็บประวัติ", [], ["pr-correction-archive"])
+  ],
+  "gov.council": [
+    stage("matter-authority", "เรื่องเสนอและฐานอำนาจของสภา", ["councilMatter", "councilAuthority"], ["council-authority-check"], { officialEvidenceRequired: true, officialEvidenceKeys: ["councilAuthority"] }),
+    stage("procedure-rule", "ข้อบังคับ/ระเบียบการประชุมปัจจุบัน", ["currentCouncilRule"], ["council-rule-register"], { officialEvidenceRequired: true, officialEvidenceKeys: ["currentCouncilRule"] }),
+    stage("agenda-submission", "การเสนอญัตติ/ระเบียบวาระและเอกสาร", ["agendaFacts", "submissionEvidence"], ["council-agenda-check"]),
+    stage("quorum-conflict", "องค์ประชุม ผลประโยชน์ทับซ้อน และผู้มีสิทธิ", ["memberFacts", "quorumFacts"], ["council-quorum-conflict-check"], { riskChecks: ["quorum-defect", "conflict-of-interest"] }),
+    stage("meeting-deliberation", "การประชุมและการอภิปราย", ["meetingEvidence"], ["council-deliberation-record"]),
+    stage("vote-resolution", "การลงมติและผลมติ", ["voteEvidence"], ["council-resolution-record"], { humanApprovalRequired: true }),
+    stage("minutes", "รายงานการประชุม", ["minutesEvidence"], ["council-minutes-check"]),
+    stage("follow-up", "ติดตามการดำเนินการตามมติ", ["resolutionActions"], ["council-resolution-tracker"])
   ]
 });
 
