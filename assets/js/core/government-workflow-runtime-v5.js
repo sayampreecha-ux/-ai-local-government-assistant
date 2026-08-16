@@ -56,11 +56,26 @@ function safeWorkOrder(workOrder) {
     autoApprovalAllowed: false,
     riskReviewRequired: Boolean(workOrder.riskWork),
     unresolvedRiskCodes: Object.freeze(uniq(workOrder.riskWork?.findings?.map((finding) => finding?.code))),
+    qualityGate: Object.freeze({
+      status: safeText(workOrder.qualityGate?.status, 32),
+      completeness: Boolean(workOrder.qualityGate?.completeness),
+      missingInformation: Object.freeze(uniq(workOrder.qualityGate?.missingInformation)),
+      sourceEvidenceReady: Boolean(workOrder.qualityGate?.sourceEvidenceReady),
+      riskFlags: Object.freeze(uniq(workOrder.qualityGate?.riskFlags)),
+      humanReviewRequired: Boolean(workOrder.qualityGate?.humanReviewRequired),
+      deliverableReady: Boolean(workOrder.qualityGate?.deliverableReady),
+      workflowReady: Boolean(workOrder.qualityGate?.workflowReady),
+      substantiveDecisionMade: false,
+      rawEvidenceValuesReturned: false
+    }),
     handoffs: Object.freeze((workOrder.handoffs || []).map((handoff) => Object.freeze({
       sourceWorkflowId: safeText(handoff?.sourceWorkflowId, 80),
       sourceStageId: safeText(handoff?.sourceStageId, 100),
       targetWorkflowId: safeText(handoff?.targetWorkflowId, 80),
       status: safeText(handoff?.status, 80),
+      humanConfirmationRequired: Boolean(handoff?.humanConfirmationRequired),
+      humanConfirmed: Boolean(handoff?.humanConfirmed),
+      autoHandoffAllowed: false,
       missingEvidence: Object.freeze(uniq(handoff?.missingEvidence)),
       missingDeliverables: Object.freeze(uniq(handoff?.missingDeliverables))
     })))

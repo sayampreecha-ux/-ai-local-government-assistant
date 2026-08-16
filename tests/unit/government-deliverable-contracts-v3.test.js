@@ -226,7 +226,17 @@ test('cross-workflow handoff stays blocked until every required artifact passes 
   assert.equal(blockedProject.status, 'blocked-handoff-deliverable-contract');
 
   const planCheck = artifactFor('gov.procurement', 'plan-and-budget', 'plan-budget-check', ['planLinkage', 'fundingSource', 'budgetAvailability']);
-  const ready = buildStageHandoffContractsV3('gov.procurement', 'plan-and-budget', [needMemo, planCheck], evidence, {});
+  const awaitingConfirmation = buildStageHandoffContractsV3('gov.procurement', 'plan-and-budget', [needMemo, planCheck], evidence, {});
+  assert.ok(awaitingConfirmation.every((handoff) => handoff.status === 'awaiting-human-handoff-confirmation'));
+  assert.ok(awaitingConfirmation.every((handoff) => handoff.humanConfirmationRequired && !handoff.humanConfirmed));
+  assert.ok(awaitingConfirmation.every((handoff) => handoff.payload.artifactKeys.length === 0));
+
+  const ready = buildStageHandoffContractsV3('gov.procurement', 'plan-and-budget', [needMemo, planCheck], evidence, {
+    handoffConfirmations: [
+      { sourceWorkflowId: 'gov.procurement', sourceStageId: 'plan-and-budget', targetWorkflowId: 'gov.project', confirmed: true },
+      { sourceWorkflowId: 'gov.procurement', sourceStageId: 'plan-and-budget', targetWorkflowId: 'gov.finance', confirmed: true }
+    ]
+  });
   assert.ok(ready.every((handoff) => handoff.status === 'ready'));
   assert.ok(ready.every((handoff) => handoff.payload.artifactKeys.length > 0));
   assert.ok(ready.every((handoff) => handoff.payload.contractIds.length > 0));

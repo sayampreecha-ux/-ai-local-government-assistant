@@ -368,10 +368,21 @@ function validateHandoffContractV3(handoff, artifacts, evidence, input) {
     else contractIds.push(validation.contract.id);
   }
 
+  // A completed source stage only prepares a handoff.  Moving the minimized
+  // metadata to the next workflow is always an explicit human action.
+  const confirmation = (Array.isArray(input?.handoffConfirmations) ? input.handoffConfirmations : []).find((item) =>
+    item?.sourceWorkflowId === handoff.sourceWorkflowId &&
+    item?.sourceStageId === handoff.sourceStageId &&
+    item?.targetWorkflowId === handoff.targetWorkflowId &&
+    item?.confirmed === true &&
+    item?.revoked !== true
+  );
+  const humanConfirmed = Boolean(confirmation);
   let status = 'ready';
   if (missingEvidence.length) status = 'blocked-handoff-evidence';
   else if (missingDeliverables.length) status = 'blocked-handoff-deliverables';
   else if (invalidDeliverables.length) status = 'blocked-handoff-deliverable-contract';
+  else if (!humanConfirmed) status = 'awaiting-human-handoff-confirmation';
 
   return {
     ...handoff,
@@ -379,6 +390,9 @@ function validateHandoffContractV3(handoff, artifacts, evidence, input) {
     missingEvidence,
     missingDeliverables,
     invalidDeliverables,
+    humanConfirmationRequired: true,
+    humanConfirmed,
+    autoHandoffAllowed: false,
     payload: status === 'ready' ? {
       evidenceKeys: handoff.requiredEvidence,
       artifactKeys: handoff.requiredDeliverables,
