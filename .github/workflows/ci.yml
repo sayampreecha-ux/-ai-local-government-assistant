@@ -36,3 +36,8 @@ jobs:
           if-no-files-found: warn
           retention-days: 3
       - run: pnpm build
+      - name: Install Chromium for mobile browser verification
+        run: |
+          pnpm exec playwright install --with-deps chromium
+      - name: Verify mobile workflow runtime and privacy boundary
+        run: node scripts/verify-workflow-mobile-e2e.mjs

@@ -42,7 +42,7 @@ export const DEEP_WORKFLOWS = Object.freeze({
     stage("authority", "ฐานอำนาจทางการเงิน", ["financialAuthority"], ["financial-authority-check"], { officialEvidenceRequired: true }),
     stage("funding-source", "แหล่งเงิน", ["fundingSource"], ["funding-source-check"]),
     stage("budget-appropriation", "งบประมาณรองรับ", ["budgetAvailability"], ["budget-availability-check"]),
-    stage("fiscal-capacity", "ฐานะการคลังและภาระผูกพัน", ["fiscalCapacity"], ["fiscal-capacity-analysis"]),
+    stage("fiscal-capacity", "ฐานะการคลังและภาระผูกพัน", ["fiscalCapacity"], ["fiscal-capacity-analysis"], { riskChecks: ["fiscal-capacity-risk"] }),
     stage("loan-debt", "เงินกู้และภาระหนี้", ["loanFacts"], ["loan-debt-analysis"], { officialEvidenceRequired: true, handoffs: ["gov.legal"] }),
     stage("supporting-documents", "เอกสารประกอบ", ["paymentDocuments"], ["payment-document-checklist"]),
     stage("approval", "อนุมัติ", ["approvalAuthority"], ["finance-approval-check"], { humanApprovalRequired: true }),
@@ -57,7 +57,7 @@ export const DEEP_WORKFLOWS = Object.freeze({
     stage("freshness-status", "สถานะความเป็นปัจจุบัน", ["currentStatusEvidence"], ["freshness-check"], { officialEvidenceRequired: true }),
     stage("application", "ปรับบทกฎหมายกับข้อเท็จจริง", ["facts", "officialLegalSource"], ["legal-analysis"]),
     stage("ambiguity-conflict", "ข้อขัดแย้ง/ความไม่ชัดเจน", [], ["ambiguity-note"]),
-    stage("risk-options", "ความเสี่ยงและทางเลือก", [], ["legal-risk-options"]),
+    stage("risk-options", "ความเสี่ยงและทางเลือก", [], ["legal-risk-options"], { riskChecks: ["legal-ambiguity", "authority-boundary"] }),
     stage("human-decision", "การวินิจฉัย/ตัดสินใจโดยผู้มีอำนาจ", ["decisionAuthority"], ["decision-record"], { humanApprovalRequired: true })
   ],
   "gov.project": [
@@ -70,7 +70,7 @@ export const DEEP_WORKFLOWS = Object.freeze({
     stage("budget-reasonableness", "งบประมาณและความสมเหตุสมผล", ["budget", "costBasis"], ["budget-rationale"], { handoffs: ["gov.finance"] }),
     stage("procurement-dependency", "รายการที่ต้องจัดซื้อจัดจ้าง", [], ["procurement-dependency-map"], { handoffs: ["gov.procurement"] }),
     stage("kpi", "ตัวชี้วัด", ["kpi"], ["kpi-matrix"]),
-    stage("risk", "ความเสี่ยงโครงการ", [], ["project-risk-register"]),
+    stage("risk", "ความเสี่ยงโครงการ", [], ["project-risk-register"], { riskChecks: ["project-delivery-risk", "budget-assumption-risk"] }),
     stage("approval", "อนุมัติโครงการ", ["approvalAuthority"], ["project-approval-pack"], { humanApprovalRequired: true }),
     stage("monitor-evaluate", "ติดตามและประเมินผล", [], ["monitoring-plan"]),
     stage("closeout", "ปิดโครงการ", [], ["project-closeout-checklist"])
@@ -83,14 +83,14 @@ export const DEEP_WORKFLOWS = Object.freeze({
     stage("requested-action", "ความประสงค์ของหนังสือ", ["requestedAction"], ["action-statement"]),
     stage("draft", "ร่างหนังสือ", [], ["official-letter-draft"]),
     stage("style-format", "ตรวจรูปแบบสารบรรณ", [], ["records-style-check"]),
-    stage("pii", "ตรวจข้อมูลส่วนบุคคล", [], ["pii-check"]),
+    stage("pii", "ตรวจข้อมูลส่วนบุคคล", [], ["pii-check"], { riskChecks: ["pii-exposure", "unverified-recipient"] }),
     stage("signature", "เสนอผู้มีอำนาจลงนาม", ["signingAuthority"], ["signature-check"], { humanApprovalRequired: true }),
     stage("dispatch-record", "ส่งและลงทะเบียน", [], ["dispatch-record-checklist"])
   ],
   "gov.hr": [
     stage("intent-facts", "ประเภทงานบุคคลและข้อเท็จจริง", ["hrIntent", "facts"], ["hr-fact-summary"]),
     stage("current-rule", "หลักเกณฑ์ปัจจุบัน", ["officialHrRule"], ["hr-rule-register"], { officialEvidenceRequired: true }),
-    stage("eligibility", "คุณสมบัติ/เงื่อนไข", ["eligibilityFacts"], ["eligibility-analysis"]),
+    stage("eligibility", "คุณสมบัติ/เงื่อนไข", ["eligibilityFacts"], ["eligibility-analysis"], { riskChecks: ["eligibility-uncertainty", "hr-data-minimization"] }),
     stage("workforce-impact", "ผลต่อกรอบกำลังคน", [], ["workforce-impact"]),
     stage("financial-impact", "ผลด้านงบประมาณ", [], ["hr-financial-impact"], { handoffs: ["gov.finance"] }),
     stage("recommendation", "ข้อเสนอ", [], ["hr-recommendation"]),

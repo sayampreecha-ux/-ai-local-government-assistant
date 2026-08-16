@@ -40,7 +40,7 @@
     "test:official-search:thai": "node scripts/benchmark-thai-relevance.mjs"
   },
   "dependencies": { "@supabase/supabase-js": "2.57.4" },
-  "devDependencies": { "wrangler": "4.119.0" },
+  "devDependencies": { "playwright": "1.55.0", "wrangler": "4.119.0" },
   "engines": { "node": ">=20" },
   "packageManager": "pnpm@11.9.0"
 }
