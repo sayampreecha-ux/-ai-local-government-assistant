@@ -12,7 +12,7 @@ const WORKFLOWS = Object.freeze({
   project: { id: "gov.project", keywords: ["ทำโครงการ", "โครงการ", "จัดอบรม", "กิจกรรม", "ดำเนินโครงการ"] },
   hr: { id: "gov.hr", keywords: ["บุคคล", "อัตรากำลัง", "เลื่อนขั้น", "เลื่อนเงินเดือน", "บรรจุ", "แต่งตั้ง", "โอน", "ย้าย"] },
   engineering: { id: "gov.engineering", keywords: ["งานช่าง", "วิศวกรรม", "ถนน", "สะพาน", "ก่อสร้าง", "แบบก่อสร้าง", "ประมาณราคา", "ควบคุมงาน", "ตรวจรับงาน", "ความหนาแน่นดิน"] },
-  health: { id: "gov.health", keywords: ["สาธารณสุข", "รพ.สต", "รพสต", "สุขภาพ", "เงินบำรุง", "ผู้ป่วย", "อสม", "ยา", "เวชภัณฑ์", "บริการสุขภาพ"] },
+  health: { id: "gov.health", keywords: ["สาธารณสุข", "รพ.สต", "รพสต", "สุขภาพ", "เงินบำรุง", "ผู้ป่วย", "อสม", "เวชภัณฑ์", "บริการสุขภาพ"] },
   education: { id: "gov.education", keywords: ["การศึกษา", "โรงเรียน", "นักเรียน", "ผู้เรียน", "ครู", "ศูนย์พัฒนาเด็ก", "เด็กเล็ก", "ทุนการศึกษา"] },
   internalAudit: { id: "gov.internal-audit", keywords: ["ตรวจสอบภายใน", "แผนตรวจสอบ", "ข้อค้นพบ", "กระดาษทำการ", "หน่วยรับตรวจ", "ควบคุมภายใน"] },
   executive: { id: "gov.executive", keywords: ["ผู้บริหาร", "สรุปผู้บริหาร", "ข้อเสนอผู้บริหาร", "ช่วยตัดสินใจ", "ทางเลือก", "สั่งการ", "มอบหมายงาน"] },
@@ -24,16 +24,60 @@ const HIGH_RISK = [
   "เงินกู้", "กู้เงิน", "เครื่องจักร", "e-bidding", "เฉพาะเจาะจง", "ยุบตำแหน่ง", "เพิ่มตำแหน่ง", "วินัย", "คำพิพากษา",
   "ทำร่างงบ", "ร่างงบประมาณ", "ข้อบัญญัติงบประมาณ", "จัดร่างงบ", "ข้อมูลผู้ป่วย", "ผู้ป่วย", "องค์ประชุม", "มติสภา"
 ];
+
+const PRIMARY_ACTION_RULES = Object.freeze([
+  ['gov.correspondence', /(?:ช่วย)?(?:ร่าง|ทำ|เขียน).{0,16}(?:หนังสือราชการ|บันทึกข้อความ|หนังสือภายนอก|หนังสือภายใน)/i],
+  ['gov.procurement', /(?:จัดซื้อ|จัดจ้าง|ร่าง\s*tor|ตรวจ\s*tor|e-?bidding|เฉพาะเจาะจง|ราคากลาง)/i],
+  ['gov.finance', /(?:เบิก|เบิกจ่าย|ขอเบิก|จ่ายได้ไหม|จ่ายได้หรือไม่|ใช้งบ.{0,16}(?:ได้ไหม|ได้หรือไม่)|กู้เงิน|เงินกู้)/i],
+  ['gov.public-relations', /(?:(?:ทำ|สร้าง|ออกแบบ|เขียน|ร่าง).{0,24}(?:โพสต์|ข่าวประชาสัมพันธ์|อินโฟกราฟิก|แคปชัน|โปสเตอร์|สื่อประชาสัมพันธ์)|ประชาสัมพันธ์.{0,24}(?:โครงการ|กิจกรรม|ข่าว))/i],
+  ['gov.budget-draft', /(?:ทำร่างงบ|ร่างงบประมาณ|ร่างงบ|จัดร่างงบ|ทำกรอบงบ)/i],
+  ['gov.legal', /(?:(?:วิเคราะห์|ตรวจ|หารือ).{0,24}(?:กฎหมาย|ข้อกฎหมาย|อำนาจ)|(?:มีอำนาจ|ผิดกฎหมาย).{0,30}(?:ไหม|หรือไม่))/i]
+]);
+
+const PRIMARY_DOMAIN_RULES = Object.freeze([
+  ['gov.health', /(?:รพ\.?สต\.?|รพสต|สาธารณสุข|สุขภาพ|เงินบำรุง|ผู้ป่วย|อสม\.?|เวชภัณฑ์|บริการสุขภาพ)/i],
+  ['gov.engineering', /(?:งานช่าง|วิศวกรรม|ถนน|สะพาน|ก่อสร้าง|แบบก่อสร้าง|ควบคุมงาน|ตรวจรับงาน|ความหนาแน่นดิน)/i],
+  ['gov.education', /(?:งานการศึกษา|โรงเรียน|นักเรียน|ผู้เรียน|ครู|ศูนย์พัฒนาเด็ก|เด็กเล็ก|ทุนการศึกษา)/i],
+  ['gov.internal-audit', /(?:ตรวจสอบภายใน|แผนตรวจสอบ|กระดาษทำการ|หน่วยรับตรวจ|ควบคุมภายใน)/i],
+  ['gov.council', /(?:สภาท้องถิ่น|ญัตติ|องค์ประชุม|มติสภา|รายงานการประชุมสภา|ระเบียบวาระ.{0,12}สภา)/i],
+  ['gov.hr', /(?:อัตรากำลัง|เลื่อนขั้น|เลื่อนเงินเดือน|บรรจุ|แต่งตั้ง|โอนย้าย|งานบุคคล)/i],
+  ['gov.public-relations', /(?:งานประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์|อินโฟกราฟิก|แคปชัน|โปสเตอร์)/i],
+  ['gov.correspondence', /(?:หนังสือราชการ|บันทึกข้อความ|หนังสือภายนอก|หนังสือภายใน)/i],
+  ['gov.executive', /(?:สรุปผู้บริหาร|ข้อเสนอผู้บริหาร|ช่วยตัดสินใจ|สั่งการ|มอบหมายงาน)/i],
+  ['gov.legal', /(?:ข้อกฎหมาย|กฎหมาย|คำพิพากษา|ข้อหารือ)/i],
+  ['gov.project', /(?:ทำโครงการ|จัดอบรม|ดำเนินโครงการ|กิจกรรม)/i],
+  ['gov.procurement', /(?:เครื่องจักร|รถขุด|รถบรรทุก|พัสดุ)/i],
+  ['gov.finance', /(?:เงินสะสม|ค่าใช้จ่าย|การเงิน)/i]
+]);
+
 const textOf = (input = {}) => String(input.query || input.question || input.text || input.intent || "").toLowerCase();
+
+function resolvePrimaryWorkflowId(text, directIds, matched) {
+  for (const [workflowId, pattern] of PRIMARY_ACTION_RULES) {
+    if (directIds.has(workflowId) && pattern.test(text)) return workflowId;
+  }
+  for (const [workflowId, pattern] of PRIMARY_DOMAIN_RULES) {
+    if (directIds.has(workflowId) && pattern.test(text)) return workflowId;
+  }
+  return matched[0]?.id || null;
+}
 
 export function detectGovernmentWorkflows(input = {}) {
   const text = textOf(input);
-  const matched = Object.values(WORKFLOWS).filter((wf) => wf.keywords.some((k) => text.includes(k.toLowerCase())));
-  const ids = new Set(matched.map((x) => x.id));
+  const all = Object.values(WORKFLOWS);
+  const matched = all.filter((wf) => wf.keywords.some((k) => text.includes(k.toLowerCase())));
+  const directIds = new Set(matched.map((x) => x.id));
+  const ids = new Set(directIds);
   if (ids.has("gov.budget-draft")) ids.add("gov.finance");
   if (ids.has("gov.procurement")) { ids.add("gov.project"); ids.add("gov.finance"); }
   if (text.includes("เงินกู้") || text.includes("กู้เงิน")) { ids.add("gov.finance"); ids.add("gov.legal"); }
-  return Object.values(WORKFLOWS).filter((wf) => ids.has(wf.id));
+
+  const primaryId = resolvePrimaryWorkflowId(text, directIds, matched);
+  const orderedIds = [];
+  if (primaryId) orderedIds.push(primaryId);
+  for (const workflow of matched) if (!orderedIds.includes(workflow.id)) orderedIds.push(workflow.id);
+  for (const workflow of all) if (ids.has(workflow.id) && !orderedIds.includes(workflow.id)) orderedIds.push(workflow.id);
+  return orderedIds.map((workflowId) => all.find((workflow) => workflow.id === workflowId)).filter(Boolean);
 }
 
 export function runGovernmentWorkflow(input = {}) {
