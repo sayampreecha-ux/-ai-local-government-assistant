@@ -145,6 +145,48 @@ function qualityGateFor({ workflowStatus, action, missingEvidence, missingOffici
   });
 }
 
+function deliverablePlanFor({ workflowId, caseId, currentStage, action, deliverableWorkOrders, qualityGate }) {
+  const status = action === 'generate-deliverables'
+    ? 'DRAFT_SPEC_READY'
+    : action === 'transition-ready' || action === 'complete'
+      ? 'DELIVERABLES_VALIDATED'
+      : 'BLOCKED';
+  return Object.freeze({
+    status,
+    workflowId,
+    caseId: caseId || null,
+    stageId: currentStage?.id || null,
+    qualityStatus: qualityGate.status,
+    humanDraftRequired: status === 'DRAFT_SPEC_READY',
+    autoGenerationAllowed: false,
+    artifacts: Object.freeze((deliverableWorkOrders || []).map((order) => Object.freeze({
+      artifactKey: order.artifactKey,
+      contractId: order.contractId,
+      contractVersion: order.contractVersion,
+      requiredEvidenceKeys: Object.freeze([...order.requiredEvidence]),
+      requiresSignoff: Boolean(order.requiresSignoff),
+      status: order.status
+    }))),
+    rawEvidenceValuesReturned: false
+  });
+}
+
+function sharedHandoffContextsFor(handoffs, qualityGate) {
+  return Object.freeze((handoffs || []).map((handoff) => Object.freeze({
+    sourceWorkflowId: handoff.sourceWorkflowId,
+    sourceStageId: handoff.sourceStageId,
+    targetWorkflowId: handoff.targetWorkflowId,
+    status: handoff.status === 'ready' && qualityGate.status === 'PASS' ? 'READY_FOR_HUMAN_TRANSFER' : 'BLOCKED',
+    humanConfirmationRequired: true,
+    humanConfirmed: Boolean(handoff.humanConfirmed),
+    autoTransferAllowed: false,
+    evidenceKeys: Object.freeze(handoff.status === 'ready' ? [...(handoff.payload?.evidenceKeys || [])] : []),
+    artifactKeys: Object.freeze(handoff.status === 'ready' ? [...(handoff.payload?.artifactKeys || [])] : []),
+    contractIds: Object.freeze(handoff.status === 'ready' ? [...(handoff.payload?.contractIds || [])] : []),
+    rawEvidenceValuesReturned: false
+  })));
+}
+
 export function buildGovernmentWorkOrderV4({ workflowId, state = null, completedStages = [], evidence = [], artifacts = [], input = {} } = {}) {
   const workflowArtifacts = scopedArtifacts(artifacts, workflowId);
   const execution = executeGovernmentWorkflowV3({ workflowId, state, completedStages, evidence, artifacts: workflowArtifacts, input });
@@ -158,10 +200,13 @@ export function buildGovernmentWorkOrderV4({ workflowId, state = null, completed
   const approvalRequest = approvalRequestFor(workflowId, execution, workflowStatus);
   const riskWork = riskWorkFor(workflowId, execution, workflowStatus);
   const qualityGate = qualityGateFor({ workflowStatus, action, missingEvidence: execution?.missingEvidence, missingOfficialEvidence: execution?.missingOfficialEvidence, deliverableWorkOrders, approvalRequest, riskWork });
+  const caseId = input?.caseId || state?.caseId || null;
+  const deliverablePlan = deliverablePlanFor({ workflowId, caseId, currentStage: safeStage(stage || execution?.currentStage), action, deliverableWorkOrders, qualityGate });
+  const sharedHandoffContexts = sharedHandoffContextsFor(handoffs, qualityGate);
 
   return Object.freeze({
     orchestratorVersion: CASE_ORCHESTRATOR_VERSION,
-    caseId: input?.caseId || state?.caseId || null,
+    caseId,
     workflowId,
     workflowStatus,
     action,
@@ -174,7 +219,9 @@ export function buildGovernmentWorkOrderV4({ workflowId, state = null, completed
     approvalRequest,
     riskWork,
     qualityGate,
+    deliverablePlan,
     handoffs: Object.freeze(handoffs),
+    sharedHandoffContexts,
     nextInputs: Object.freeze(nextInputsFor(execution, legacyMigrationRequired)),
     execution: safeExecutionSummary(execution, workflowStatus),
     governance: Object.freeze({
@@ -185,6 +232,7 @@ export function buildGovernmentWorkOrderV4({ workflowId, state = null, completed
       humanApprovalRequiredWhenDeclared: true,
       autoApprovalAllowed: false,
       autoHandoffAllowed: false,
+      rawSharedContextValuesReturned: false,
       deliverableContractsRequired: true,
       qualityGateRequired: true,
       auditTrailRequired: true,
