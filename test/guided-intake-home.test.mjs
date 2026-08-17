@@ -15,11 +15,24 @@ function api() {
 }
 
 test('short TOR request is stopped for three critical intake questions', () => {
-  const result = api().assessQuery('ร่างtor', { transactionType: 'procurement' });
+  const tool = api();
+  const result = tool.assessQuery('ร่างtor', { transactionType: 'procurement' });
+  assert.equal(tool.version, '1.1.0');
   assert.equal(result.ready, false);
   assert.equal(result.intent, 'procurement');
   assert.deepEqual([...result.missingFields], ['item', 'purpose', 'budget']);
   assert.equal(result.questions.length, 3);
+  assert.match(result.questions[0], /ซื้อ จ้าง หรือก่อสร้างอะไร/);
+  assert.match(result.questions[1], /นำไปใช้ทำอะไร/);
+  assert.match(result.questions[2], /วงเงินโดยประมาณ/);
+});
+
+test('TOR first-success copy is simple but keeps governance guardrails', () => {
+  assert.match(source, /ร่าง TOR ให้เริ่มง่าย — บอก GP 3 เรื่อง/);
+  assert.match(source, /ไม่ต้องเขียน Prompt และยังไม่ต้องรู้สเปกทั้งหมด/);
+  assert.match(source, /ล็อกสเปก\/การแข่งขัน/);
+  assert.match(source, /ผู้ใช้ตรวจและอนุมัติอีกครั้ง/);
+  assert.match(source, /ยังไม่ทราบ — ให้ GP ช่วยตั้งต้น/);
 });
 
 test('short project and training requests are guided instead of handed off immediately', () => {
