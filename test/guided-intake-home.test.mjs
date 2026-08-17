@@ -17,7 +17,7 @@ function api() {
 test('short TOR request is stopped for three critical intake questions', () => {
   const tool = api();
   const result = tool.assessQuery('ร่างtor', { transactionType: 'procurement' });
-  assert.equal(tool.version, '1.1.0');
+  assert.equal(tool.version, '1.1.1');
   assert.equal(result.ready, false);
   assert.equal(result.intent, 'procurement');
   assert.deepEqual([...result.missingFields], ['item', 'purpose', 'budget']);
@@ -27,12 +27,16 @@ test('short TOR request is stopped for three critical intake questions', () => {
   assert.match(result.questions[2], /วงเงินโดยประมาณ/);
 });
 
-test('TOR first-success copy is simple but keeps governance guardrails', () => {
+test('TOR first-success copy is limited to TOR requests and keeps governance guardrails', () => {
+  const tool = api();
+  assert.equal(tool.isTorRequest('ช่วยร่าง TOR หรือขอบเขตของงาน'), true);
+  assert.equal(tool.isTorRequest('ช่วยตรวจขั้นตอน วิธีการ และเงื่อนไขการจัดซื้อจัดจ้างภาครัฐ'), false);
   assert.match(source, /ร่าง TOR ให้เริ่มง่าย — บอก GP 3 เรื่อง/);
   assert.match(source, /ไม่ต้องเขียน Prompt และยังไม่ต้องรู้สเปกทั้งหมด/);
   assert.match(source, /ล็อกสเปก\/การแข่งขัน/);
-  assert.match(source, /ผู้ใช้ตรวจและอนุมัติอีกครั้ง/);
+  assert.match(source, /ผู้ใช้ตรวจและอนุมัติก่อนใช้จริง/);
   assert.match(source, /ยังไม่ทราบ — ให้ GP ช่วยตั้งต้น/);
+  assert.match(source, /assessment\.intent === 'procurement' && isTorRequest\(subject\)/);
 });
 
 test('short project and training requests are guided instead of handed off immediately', () => {
@@ -71,11 +75,11 @@ test('guided intake stays memory-only and network-free, without duplicate lazy l
 });
 
 test('home loads guided intake directly before bridge and home handler with fresh cache keys', () => {
-  const intake = 'assets/js/core/guided-intake-v1.js?v=1.1.0';
+  const intake = 'assets/js/core/guided-intake-v1.js?v=1.1.1';
   const bridge = 'assets/js/ui/quick-action-guided-bridge-v1.js?v=1.0.0';
   const home = 'assets/js/home-v3.js?v=6.1.1';
   const feedback = 'assets/js/ui/pilot-feedback-ui.js?v=1.1.1';
-  assert.match(homeHtml, /guided-intake-v1\.js\?v=1\.1\.0/);
+  assert.match(homeHtml, /guided-intake-v1\.js\?v=1\.1\.1/);
   assert.match(homeHtml, /pilot-feedback-ui\.js\?v=1\.1\.1/);
   assert.ok(homeHtml.indexOf(intake) < homeHtml.indexOf(bridge));
   assert.ok(homeHtml.indexOf(bridge) < homeHtml.indexOf(home));
