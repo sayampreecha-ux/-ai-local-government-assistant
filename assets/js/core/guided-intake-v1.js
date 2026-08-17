@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.0.0';
+  const VERSION = '1.1.1';
   const MAX_QUESTIONS = 3;
   const UNKNOWN_PATTERN = /(?:ไม่ทราบ|ยังไม่ทราบ|ยังไม่กำหนด|ยังไม่มีข้อมูล)/i;
   const CREATE_PATTERN = /(?:^|\s)(?:ร่าง|จัดทำ|ทำ|สร้าง|เขียน|เตรียม|ออกแบบ|จัดซื้อ|จัดจ้าง|จัดอบรม)(?:\s|$|[^ก-๙a-z0-9])/i;
@@ -13,9 +13,9 @@
 
   const PROFILES = Object.freeze({
     procurement: Object.freeze([
-      Object.freeze({ key: 'item', question: 'จะจัดซื้อ/จัดจ้างหรือทำ TOR เรื่องอะไร เช่น รถขุด ถนน ระบบ หรือวัสดุอะไร?' }),
-      Object.freeze({ key: 'purpose', question: 'ต้องการนำไปใช้งานอะไร หรือมีเหตุผลความจำเป็นอย่างไร?' }),
-      Object.freeze({ key: 'budget', question: 'วงเงินหรืองบประมาณประมาณเท่าไร? ถ้ายังไม่ทราบพิมพ์ “ไม่ทราบ” ได้' })
+      Object.freeze({ key: 'item', question: 'จะซื้อ จ้าง หรือก่อสร้างอะไร? ถ้ามีชื่อโครงการ บอกชื่อสั้น ๆ ได้เลย' }),
+      Object.freeze({ key: 'purpose', question: 'ต้องการนำไปใช้ทำอะไร หรืออยากได้ผลลัพธ์แบบไหนจากงานนี้?' }),
+      Object.freeze({ key: 'budget', question: 'วงเงินโดยประมาณเท่าไร และถ้าทราบ ใช้งบจากแหล่งใด? ถ้ายังไม่ทราบพิมพ์ “ไม่ทราบ” ได้' })
     ]),
     project: Object.freeze([
       Object.freeze({ key: 'topic', question: 'โครงการหรือการอบรมนี้เกี่ยวกับเรื่องอะไร และต้องการแก้ปัญหา/พัฒนาเรื่องใด?' }),
@@ -54,6 +54,22 @@
     ])
   });
 
+  const TOR_FIRST_SUCCESS_COPY = Object.freeze({
+    label: 'เริ่ม TOR อย่างเป็นขั้นตอน',
+    heading: 'ร่าง TOR ให้เริ่มง่าย — บอก GP 3 เรื่อง',
+    intro: 'ไม่ต้องเขียน Prompt และยังไม่ต้องรู้สเปกทั้งหมด ตอบเท่าที่มี แล้ว GP จะช่วยตั้งโครงงานต่อให้',
+    note: 'จากนั้น GP จะช่วย 3 อย่าง: จัดโครง TOR · ตรวจจุดเสี่ยงล็อกสเปก/การแข่งขัน · บอกข้อมูลหรือหลักฐานที่ยังต้องยืนยัน — ผู้ใช้ตรวจและอนุมัติก่อนใช้จริง',
+    unknown: 'ยังไม่ทราบ — ให้ GP ช่วยตั้งต้น'
+  });
+
+  const DEFAULT_COPY = Object.freeze({
+    label: 'ขอข้อมูลเพิ่ม',
+    heading: 'ขอข้อมูลเพิ่มอีกนิดก่อนทำต่อ',
+    intro: '',
+    note: 'ตอบรวมกันได้ในข้อความเดียว ไม่ต้องเขียน Prompt',
+    unknown: 'ยังไม่ทราบบางข้อ — ทำต่อ'
+  });
+
   const normalize = value => String(value || '').normalize('NFC').replace(/\s+/g, ' ').trim();
   const lower = value => normalize(value).toLocaleLowerCase('th-TH');
 
@@ -74,6 +90,10 @@
     if (transactionType === 'finance') return 'finance';
     if (transactionType === 'engineering') return 'engineering';
     return 'general';
+  }
+
+  function isTorRequest(text) {
+    return /(?:\btor\b|ขอบเขตของงาน|ร่าง\s*tor)/i.test(normalize(text));
   }
 
   function isGenericRequest(text) {
@@ -159,21 +179,23 @@
     function scrollLatest() { conversation.lastElementChild?.scrollIntoView?.({ behavior: 'smooth', block: 'end' }); }
 
     function appendQuestionCard(assessment, subject) {
+      const copy = assessment.intent === 'procurement' && isTorRequest(subject) ? TOR_FIRST_SUCCESS_COPY : DEFAULT_COPY;
       const article = document.createElement('article');
       article.className = 'message assistant guided-intake-message';
       const mark = document.createElement('span');
       mark.className = 'assistant-mark'; mark.setAttribute('aria-hidden', 'true'); mark.textContent = 'กพ';
       const content = document.createElement('div'); content.className = 'assistant-content';
-      const label = document.createElement('span'); label.className = 'route-label'; label.textContent = 'ขอข้อมูลเพิ่ม';
+      const label = document.createElement('span'); label.className = 'route-label'; label.textContent = copy.label;
       const card = document.createElement('div'); card.className = 'answer-card';
       const section = document.createElement('section'); section.className = 'answer-section';
-      const heading = document.createElement('h3'); heading.textContent = 'ขอข้อมูลเพิ่มอีกนิดก่อนทำต่อ';
-      const intro = document.createElement('p'); intro.textContent = `เพื่อไม่ให้ GP เดาข้อมูลในงาน “${normalize(subject).slice(0, 80)}” กรุณาตอบเฉพาะข้อมูลที่มีผลต่อผลลัพธ์`;
+      const heading = document.createElement('h3'); heading.textContent = copy.heading;
+      const intro = document.createElement('p');
+      intro.textContent = copy.intro || `เพื่อไม่ให้ GP เดาข้อมูลในงาน “${normalize(subject).slice(0, 80)}” กรุณาตอบเฉพาะข้อมูลที่มีผลต่อผลลัพธ์`;
       const list = document.createElement('ol');
       assessment.questions.forEach(question => { const li = document.createElement('li'); li.textContent = question; list.append(li); });
-      const note = document.createElement('p'); note.textContent = 'ตอบรวมกันได้ในข้อความเดียว ไม่ต้องเขียน Prompt';
+      const note = document.createElement('p'); note.textContent = copy.note;
       const actions = document.createElement('div'); actions.className = 'answer-actions';
-      const unknownButton = document.createElement('button'); unknownButton.type = 'button'; unknownButton.textContent = 'ยังไม่ทราบบางข้อ — ทำต่อ';
+      const unknownButton = document.createElement('button'); unknownButton.type = 'button'; unknownButton.textContent = copy.unknown;
       unknownButton.addEventListener('click', () => {
         if (!pending) return;
         assessment.missingFields.forEach(field => pending.unknown.add(field));
@@ -231,7 +253,7 @@
     return true;
   }
 
-  const api = Object.freeze({ version: VERSION, inferIntent, assessQuery, shouldGuide, install });
+  const api = Object.freeze({ version: VERSION, inferIntent, isTorRequest, assessQuery, shouldGuide, install });
   window.GovPromptGuidedIntake = api;
   install();
 })();
