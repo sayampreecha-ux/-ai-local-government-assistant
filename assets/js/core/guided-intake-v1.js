@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.1.0';
+  const VERSION = '1.1.1';
   const MAX_QUESTIONS = 3;
   const UNKNOWN_PATTERN = /(?:ไม่ทราบ|ยังไม่ทราบ|ยังไม่กำหนด|ยังไม่มีข้อมูล)/i;
   const CREATE_PATTERN = /(?:^|\s)(?:ร่าง|จัดทำ|ทำ|สร้าง|เขียน|เตรียม|ออกแบบ|จัดซื้อ|จัดจ้าง|จัดอบรม)(?:\s|$|[^ก-๙a-z0-9])/i;
@@ -54,14 +54,12 @@
     ])
   });
 
-  const FIRST_SUCCESS_COPY = Object.freeze({
-    procurement: Object.freeze({
-      label: 'เริ่ม TOR อย่างเป็นขั้นตอน',
-      heading: 'ร่าง TOR ให้เริ่มง่าย — บอก GP 3 เรื่อง',
-      intro: 'ไม่ต้องเขียน Prompt และยังไม่ต้องรู้สเปกทั้งหมด ตอบเท่าที่มี แล้ว GP จะช่วยตั้งโครงงานต่อให้',
-      note: 'จากข้อมูลนี้ GP จะช่วยจัดโครง TOR ชี้ข้อมูลที่ยังต้องยืนยัน ตรวจจุดเสี่ยงล็อกสเปก/การแข่งขัน และเตือนหลักฐานที่ควรมี ก่อนให้ผู้ใช้ตรวจและอนุมัติอีกครั้ง',
-      unknown: 'ยังไม่ทราบ — ให้ GP ช่วยตั้งต้น'
-    })
+  const TOR_FIRST_SUCCESS_COPY = Object.freeze({
+    label: 'เริ่ม TOR อย่างเป็นขั้นตอน',
+    heading: 'ร่าง TOR ให้เริ่มง่าย — บอก GP 3 เรื่อง',
+    intro: 'ไม่ต้องเขียน Prompt และยังไม่ต้องรู้สเปกทั้งหมด ตอบเท่าที่มี แล้ว GP จะช่วยตั้งโครงงานต่อให้',
+    note: 'จากนั้น GP จะช่วย 3 อย่าง: จัดโครง TOR · ตรวจจุดเสี่ยงล็อกสเปก/การแข่งขัน · บอกข้อมูลหรือหลักฐานที่ยังต้องยืนยัน — ผู้ใช้ตรวจและอนุมัติก่อนใช้จริง',
+    unknown: 'ยังไม่ทราบ — ให้ GP ช่วยตั้งต้น'
   });
 
   const DEFAULT_COPY = Object.freeze({
@@ -92,6 +90,10 @@
     if (transactionType === 'finance') return 'finance';
     if (transactionType === 'engineering') return 'engineering';
     return 'general';
+  }
+
+  function isTorRequest(text) {
+    return /(?:\btor\b|ขอบเขตของงาน|ร่าง\s*tor)/i.test(normalize(text));
   }
 
   function isGenericRequest(text) {
@@ -177,7 +179,7 @@
     function scrollLatest() { conversation.lastElementChild?.scrollIntoView?.({ behavior: 'smooth', block: 'end' }); }
 
     function appendQuestionCard(assessment, subject) {
-      const copy = FIRST_SUCCESS_COPY[assessment.intent] || DEFAULT_COPY;
+      const copy = assessment.intent === 'procurement' && isTorRequest(subject) ? TOR_FIRST_SUCCESS_COPY : DEFAULT_COPY;
       const article = document.createElement('article');
       article.className = 'message assistant guided-intake-message';
       const mark = document.createElement('span');
@@ -251,7 +253,7 @@
     return true;
   }
 
-  const api = Object.freeze({ version: VERSION, inferIntent, assessQuery, shouldGuide, install });
+  const api = Object.freeze({ version: VERSION, inferIntent, isTorRequest, assessQuery, shouldGuide, install });
   window.GovPromptGuidedIntake = api;
   install();
 })();
