@@ -177,8 +177,6 @@
   const conversation = document.getElementById('conversation');
   if (!conversation) return;
 
-  void import('../core/guided-intake-v1.js?v=1.0.0').catch(() => {});
-
   const observer = new MutationObserver(records => {
     records.forEach(record => record.addedNodes.forEach(node => {
       if (!(node instanceof HTMLElement)) return;
