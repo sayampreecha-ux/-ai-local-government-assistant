@@ -5,6 +5,7 @@ import vm from 'node:vm';
 
 const source = readFileSync('assets/js/core/guided-intake-v1.js', 'utf8');
 const hookSource = readFileSync('assets/js/ui/pilot-feedback-ui.js', 'utf8');
+const homeHtml = readFileSync('index.html', 'utf8');
 
 function api() {
   const context = { window: {} };
@@ -54,4 +55,14 @@ test('guided intake stays memory-only, network-free, and is loaded on the real h
   assert.doesNotMatch(source, /\b(localStorage|sessionStorage|indexedDB|document\.cookie)\b/);
   assert.doesNotMatch(source, /\b(fetch\s*\(|XMLHttpRequest|WebSocket|sendBeacon)\b/);
   assert.match(hookSource, /guided-intake-v1\.js\?v=1\.0\.0/);
+});
+
+test('home loads guided intake directly before home handler with fresh cache keys', () => {
+  const intake = 'assets/js/core/guided-intake-v1.js?v=1.0.1';
+  const home = 'assets/js/home-v3.js?v=6.1.1';
+  const feedback = 'assets/js/ui/pilot-feedback-ui.js?v=1.1.0';
+  assert.match(homeHtml, /guided-intake-v1\.js\?v=1\.0\.1/);
+  assert.match(homeHtml, /pilot-feedback-ui\.js\?v=1\.1\.0/);
+  assert.ok(homeHtml.indexOf(intake) < homeHtml.indexOf(home));
+  assert.ok(homeHtml.indexOf(home) < homeHtml.indexOf(feedback));
 });
