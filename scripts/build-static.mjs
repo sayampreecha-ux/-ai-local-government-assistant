@@ -2,7 +2,7 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 
 const output = "dist";
-const RELEASE_VERSIONS = Object.freeze({ home: "6.1.1", homeCss: "2.4.5", serviceWorker: "6.1.1", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0" });
+const RELEASE_VERSIONS = Object.freeze({ home: "6.1.1", homeCss: "2.4.6", serviceWorker: "6.1.1", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0" });
 const publicExtensions = new Set([
   ".html", ".htlm", ".css", ".js", ".json", ".webmanifest", ".txt", ".xml"
 ]);
@@ -78,6 +78,8 @@ if (!distIndex.includes(`assets/css/home-v3.css?v=${RELEASE_VERSIONS.homeCss}`))
 if (!distIndex.includes(`service-worker.js?v=${RELEASE_VERSIONS.serviceWorker}`)) throw new Error("Service worker release cache-bust version missing from dist/index.html");
 if (!distHome.includes(`budget-browser-input-runtime-v1.js?v=${RELEASE_VERSIONS.budgetInputRuntime}`)) throw new Error("Budget input runtime release version missing from dist Home asset");
 if (!distHome.includes(`budget-official-source-runtime-v1.js?v=${RELEASE_VERSIONS.budgetOfficialSourceRuntime}`)) throw new Error("Budget official source runtime release version missing from dist Home asset");
+const distHomeCss = await readFile(join(output, "assets/css/home-v3.css"), "utf8");
+if (!distHomeCss.includes(".budget-review-overlay") || !distHomeCss.includes(".budget-review-dialog")) throw new Error("Budget review dialog styles missing from dist Home CSS");
 
 const distSitemap = await readFile(join(output, "sitemap.xml"), "utf8");
 if (!/<urlset\b/.test(distSitemap)) throw new Error("sitemap.xml was not copied into dist correctly");
