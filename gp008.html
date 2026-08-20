@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b3b75">
   <title>ผู้ช่วยสาธารณสุขและ รพ.สต. | GovPrompt Thailand</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif;background:#f7f9fc;color:#10233f}.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #e4eaf2}.bar{max-width:980px;margin:auto;padding:11px 14px;display:flex;justify-content:space-between}.bar a{text-decoration:none;color:#0b3b75}.wrap{max-width:980px;margin:auto;padding:16px 14px 86px}h1{font-size:25px}.search,input,textarea,select{width:100%;border:1px solid #d8e1ec;border-radius:10px;padding:11px;font:inherit;background:#fff}textarea{min-height:96px}.list,.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.task{border:1px solid #e0e7f0;background:#fff;border-radius:12px;padding:12px;text-align:left;font:inherit}.task.active{border-color:#0b3b75;box-shadow:0 0 0 2px #dbe8f7}.generator{margin-top:16px;background:#fff;border:1px solid #dde6f0;border-radius:14px;padding:15px}.full{grid-column:1/-1}.field{position:relative}.field .mic{position:absolute;right:7px;bottom:7px;border:0;background:#edf2f7;border-radius:8px;padding:7px;cursor:pointer}.field input,.field textarea{padding-right:48px}label{display:block;font-weight:700;margin:9px 0 5px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.btn{border:0;border-radius:10px;padding:11px 15px;font-weight:700}.primary{background:#0b3b75;color:#fff}.secondary{background:#edf2f7}.output{display:none;white-space:pre-wrap;background:#f3f7fb;border-radius:10px;padding:12px;margin-top:12px}.note{font-size:12px;color:#65758b;margin-top:10px}.other-heading{grid-column:1/-1;margin-top:8px;padding-top:10px;border-top:1px solid #e0e7f0;font-weight:800;color:#0b3b75}@media(max-width:650px){.list,.grid{grid-template-columns:1fr}.wrap{padding-bottom:30px}}
+    *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif;background:#f7f9fc;color:#10233f}.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #e4eaf2}.bar{max-width:980px;margin:auto;padding:11px 14px;display:flex;justify-content:space-between}.bar a{text-decoration:none;color:#0b3b75}.wrap{max-width:980px;margin:auto;padding:16px 14px 86px}h1{font-size:25px}.search,input,textarea,select{width:100%;border:1px solid #d8e1ec;border-radius:10px;padding:11px;font:inherit;background:#fff}textarea{min-height:96px}.list,.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.task{border:1px solid #e0e7f0;background:#fff;border-radius:12px;padding:12px;text-align:left;font:inherit;text-decoration:none;color:inherit;cursor:pointer}.task.active{border-color:#0b3b75;box-shadow:0 0 0 2px #dbe8f7}.generator{margin-top:16px;background:#fff;border:1px solid #dde6f0;border-radius:14px;padding:15px}.full{grid-column:1/-1}.field{position:relative}.field .mic{position:absolute;right:7px;bottom:7px;border:0;background:#edf2f7;border-radius:8px;padding:7px;cursor:pointer}.field input,.field textarea{padding-right:48px}label{display:block;font-weight:700;margin:9px 0 5px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.btn{border:0;border-radius:10px;padding:11px 15px;font-weight:700}.primary{background:#0b3b75;color:#fff}.secondary{background:#edf2f7}.output{display:none;white-space:pre-wrap;background:#f3f7fb;border-radius:10px;padding:12px;margin-top:12px}.note{font-size:12px;color:#65758b;margin-top:10px}.other-heading{grid-column:1/-1;margin-top:8px;padding-top:10px;border-top:1px solid #e0e7f0;font-weight:800;color:#0b3b75}@media(max-width:650px){.list,.grid{grid-template-columns:1fr}.wrap{padding-bottom:30px}}
   </style>
   <link rel="stylesheet" href="assets/css/govprompt.css">
 </head>
@@ -14,7 +14,7 @@
 <header class="top"><div class="bar"><a href="index.html"><b>GovPrompt Thailand</b></a><a href="index.html">← ผู้ช่วยทั้งหมด</a></div></header>
 <main class="wrap">
   <h1>🩺 ผู้ช่วยสาธารณสุขและ รพ.สต.</h1>
-  <input class="search" id="filter" placeholder="ค้นหา เช่น รพ.สต. PM2.5 โรคติดต่อ โครงการสุขภาพ">
+  <input class="search" id="filter" placeholder="ค้นหา เช่น รพ.สต. PM2.5 โรคติดต่อ โครงการสุขภาพ ลูกน้ำ HI CI">
   <section class="list" id="tasks">
     <button class="task" data-task="วิเคราะห์งาน รพ.สต.">🏥 งาน รพ.สต.</button>
     <button class="task" data-task="เขียนโครงการส่งเสริมสุขภาพ">📊 โครงการสุขภาพ</button>
@@ -32,6 +32,7 @@
     <button class="task" data-task="ตรวจ PDPA ข้อมูลสุขภาพ">🔒 PDPA สุขภาพ</button>
     <div id="publicHealthOtherToolsHeading" class="other-heading" role="heading" aria-level="2">อื่นๆ</div>
     <button id="healthWorkerToolkitTask" class="task health-worker-toolkit-task" type="button" data-task="เครื่องมือหมออนามัยและ รพ.สต." aria-controls="healthWorkerToolkitPanel">🩺 เครื่องมือหมออนามัย</button>
+    <a id="mosquitoOnepageTask" class="task mosquito-static-entry" href="mosquito-onepage.html" data-task="วันเพจลูกน้ำยุงลาย HI CI" data-search="ลูกน้ำ ยุงลาย HI CI House Index Container Index" aria-controls="mosquitoOnepageTool">🦟 วันเพจลูกน้ำยุงลาย</a>
   </section>
 
   <section class="generator">
@@ -61,7 +62,7 @@
 
   tasksEl.addEventListener('click', event => {
     const button = event.target.closest('.task');
-    if (!button || button.classList.contains('health-worker-toolkit-task') || button.classList.contains('mosq-task')) return;
+    if (!button || button.classList.contains('health-worker-toolkit-task') || button.classList.contains('mosq-task') || button.classList.contains('mosquito-static-entry')) return;
     task = button.dataset.task || '';
     document.querySelectorAll('.task').forEach(item => item.classList.remove('active'));
     button.classList.add('active');
@@ -71,7 +72,8 @@
   $('filter').addEventListener('input', event => {
     const query = event.target.value.toLowerCase();
     document.querySelectorAll('#tasks .task').forEach(item => {
-      item.style.display = item.innerText.toLowerCase().includes(query) ? 'block' : 'none';
+      const haystack = `${item.innerText} ${item.dataset.search || ''}`.toLowerCase();
+      item.style.display = haystack.includes(query) ? 'block' : 'none';
     });
   });
 
@@ -103,7 +105,7 @@
 
 <script id="mosquitoOnepageFeatureScript" src="assets/js/features/mosquito-survey-onepage-v1.js?v=1.0.1"></script>
 <script id="publicHealthWorkerToolkitScript" src="assets/js/features/public-health-worker-toolkit-v1.js?v=1.0.1"></script>
-<script id="mosquitoPublicHealthPlacementScript" src="assets/js/features/mosquito-public-health-placement-v1.js?v=1.0.1"></script>
+<script id="mosquitoPublicHealthPlacementScript" src="assets/js/features/mosquito-public-health-placement-v1.js?v=1.0.2"></script>
 <script src="assets/js/core/shared-context.js"></script>
 <script src="assets/js/core/prompt-registry.js"></script>
 <script src="assets/js/core/transaction-router.js"></script>
