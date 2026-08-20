@@ -1,6 +1,28 @@
 name: Deploy GitHub Pages
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - '*.html'
+      - '*.htlm'
+      - '*.css'
+      - '*.js'
+      - '*.json'
+      - '*.webmanifest'
+      - '*.txt'
+      - '*.xml'
+      - 'assets/**'
+      - 'access-system/**'
+      - 'Plain text/**'
+      - 'knowledge/**'
+      - 'src/**'
+      - 'scripts/build-static.mjs'
+      - 'scripts/verify-security-invariants.mjs'
+      - 'scripts/verify-internal-pilot-security.mjs'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/deploy-github-pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -14,6 +36,8 @@ concurrency:
 
 jobs:
   deploy:
+    # Production Pages may only publish the main branch, including manual fallback runs.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     environment:
       name: github-pages

@@ -31,11 +31,22 @@ assert.match(deploy, /- 'sitemap\.xml'/);
 assert.match(verify, /Missing CLOUDFLARE_API_TOKEN/);
 assert.match(verify, /Missing CLOUDFLARE_ACCOUNT_ID/);
 assert.match(await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'), /"directory": "\.\/dist"/);
+
+// Canonical GitHub Pages production must follow approved changes on main automatically.
+assert.match(pages, /push:\s*\r?\n\s+branches:\s*\[main\]/);
 assert.match(pages, /workflow_dispatch:/);
-assert.doesNotMatch(pages, /push:\s*\r?\n\s+branches:\s*\[main\]/);
 assert.doesNotMatch(pages, /pull_request:/);
+assert.match(pages, /if:\s*github\.ref == 'refs\/heads\/main' && \(github\.event_name == 'push' \|\| github\.event_name == 'workflow_dispatch'\)/);
+assert.match(pages, /- '\*\.html'/);
+assert.match(pages, /- 'assets\/\*\*'/);
+assert.match(pages, /- 'knowledge\/\*\*'/);
 assert.match(pages, /path:\s*dist/);
 assert.match(pages, /actions\/deploy-pages@v4/);
+assert.match(pages, /verify-security-invariants\.mjs/);
+assert.match(pages, /verify-internal-pilot-security\.mjs/);
+assert.match(pages, /pnpm test/);
+assert.match(pages, /pnpm build/);
+
 assert.match(deploy, /verify-production-security\.mjs/);
 assert.match(deploy, /permissions:\s*\r?\n\s+contents:\s*read/);
 assert.doesNotMatch(deploy, /permissions:\s*write-all/);
@@ -73,4 +84,4 @@ assert.match(leastPrivilegeRunbook, /Only after all prior checks pass/i);
 assert.match(leastPrivilegeRunbook, /revoke the old broad token/i);
 assert.doesNotMatch(leastPrivilegeRunbook, /(?:api[_ -]?token|secret)\s*[=:]\s*[A-Za-z0-9_-]{20,}/i);
 
-console.log('Cloudflare deploy/privacy contract verified: guarded Worker main deploy covers static UI surfaces, manual-only fallback Pages workflow, complete required secret manifest, rate-limit handling, minimized logs, no invocation logs, traces disabled.');
+console.log('Deployment/privacy contract verified: guarded Cloudflare and canonical GitHub Pages production deploy only approved main, static UI changes auto-publish, security/privacy gates run before Pages publication, required secret manifest and minimized observability remain enforced.');
