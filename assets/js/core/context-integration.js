@@ -48,6 +48,16 @@
     return currentRoute;
   }
 
+  function loadModuleFeature(moduleId) {
+    if (moduleId !== 'GP008' || typeof document !== 'object' || !document.createElement) return;
+    if (window.GovPromptMosquitoOnepage || document.getElementById('mosquitoOnepageFeatureScript')) return;
+    const script = document.createElement('script');
+    script.id = 'mosquitoOnepageFeatureScript';
+    script.src = 'assets/js/features/mosquito-survey-onepage-v1.js?v=1.0.0';
+    script.defer = true;
+    document.head?.appendChild(script);
+  }
+
   window.GovPromptCore.FIELD_MAP = FIELD_MAP;
   window.GovPromptCore.collectAssistantContext = collectAssistantContext;
   window.GovPromptCore.refreshAssistantContext = refreshAssistantContext;
@@ -55,7 +65,9 @@
   window.GovPromptCore.getCurrentRoute = getCurrentRoute;
 
   if (typeof document === 'object') {
+    const pageModuleId = window.GovPromptCore.detectModuleId();
     refreshAssistantContext();
+    loadModuleFeature(pageModuleId);
     document.getElementById('make')?.addEventListener('click', () => refreshAssistantContext(), true);
   }
 })();
