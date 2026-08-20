@@ -23,6 +23,11 @@ assert.match(deploy, /push:\s*\r?\n\s+branches:\s*\[main\]/);
 assert.match(deploy, /if:\s*github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/);
 assert.doesNotMatch(deploy, /workflow_dispatch:/);
 assert.doesNotMatch(deploy, /pull_request:/);
+assert.match(deploy, /- 'assets\/\*\*'/);
+assert.match(deploy, /- '\*\.html'/);
+assert.match(deploy, /- 'service-worker\.js'/);
+assert.match(deploy, /- 'manifest\.webmanifest'/);
+assert.match(deploy, /- 'sitemap\.xml'/);
 assert.match(verify, /Missing CLOUDFLARE_API_TOKEN/);
 assert.match(verify, /Missing CLOUDFLARE_ACCOUNT_ID/);
 assert.match(await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'), /"directory": "\.\/dist"/);
@@ -68,4 +73,4 @@ assert.match(leastPrivilegeRunbook, /Only after all prior checks pass/i);
 assert.match(leastPrivilegeRunbook, /revoke the old broad token/i);
 assert.doesNotMatch(leastPrivilegeRunbook, /(?:api[_ -]?token|secret)\s*[=:]\s*[A-Za-z0-9_-]{20,}/i);
 
-console.log('Cloudflare deploy/privacy contract verified: guarded Worker main deploy, manual-only fallback Pages workflow, complete required secret manifest, rate-limit handling, minimized logs, no invocation logs, traces disabled.');
+console.log('Cloudflare deploy/privacy contract verified: guarded Worker main deploy covers static UI surfaces, manual-only fallback Pages workflow, complete required secret manifest, rate-limit handling, minimized logs, no invocation logs, traces disabled.');
