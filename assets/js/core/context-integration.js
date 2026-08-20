@@ -63,6 +63,9 @@
       appendScript('mosquitoOnepageFeatureScript', 'assets/js/features/mosquito-survey-onepage-v1.js?v=1.0.0');
     }
     appendScript('mosquitoPublicHealthPlacementScript', 'assets/js/features/mosquito-public-health-placement-v1.js?v=1.0.0');
+    if (!window.GovPromptPublicHealthToolkit) {
+      appendScript('publicHealthWorkerToolkitScript', 'assets/js/features/public-health-worker-toolkit-v1.js?v=1.0.0');
+    }
   }
 
   window.GovPromptCore.FIELD_MAP = FIELD_MAP;
