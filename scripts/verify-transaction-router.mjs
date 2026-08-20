@@ -9,6 +9,7 @@ vm.runInNewContext(await readFile('assets/js/core/prompt-registry.js', 'utf8'), 
 vm.runInNewContext(await readFile('assets/js/core/transaction-router.js', 'utf8'), sandbox);
 vm.runInNewContext(await readFile('assets/js/core/router-regression-overrides.js', 'utf8'), sandbox);
 vm.runInNewContext(await readFile('assets/js/core/hybrid-intent-classifier.js', 'utf8'), sandbox);
+vm.runInNewContext(await readFile('assets/js/core/hybrid-real-world-overrides.js', 'utf8'), sandbox);
 
 const { MODULES, V7_MODULE_IDS, detectModuleId, detectTransactionType, routeRequest, routeTransaction } = sandbox.window.GovPromptCore;
 assert.equal(MODULES.length, 13);
@@ -90,7 +91,13 @@ const realLanguage = [
   ['จัดซื้ออาหารโรงเรียน', 'GP003'],
   ['ร่างคำสั่งแต่งตั้ง', 'GP001'],
   ['โอนงบทำยังไง', 'GP004'],
-  ['ทำโครงการ 5 แสน', 'GP004']
+  ['ทำโครงการ 5 แสน', 'GP004'],
+  ['โครงการคุณธรรม', 'GP004'],
+  ['โครงการจริยธรรม', 'GP004'],
+  ['โครงการธรรมาภิบาล', 'GP004'],
+  ['โครงการป้องกันการทุจริต', 'GP004'],
+  ['โครงการส่งเสริมสุขภาพ', 'GP008'],
+  ['โรงเรียนทำโครงการคุณธรรม', 'GP009']
 ];
 for (const [request, expectedModuleId] of realLanguage) {
   assert.equal(routeRequest(request).primaryModule, expectedModuleId, `real-language: ${request}`);
@@ -118,4 +125,4 @@ for (let index = 1; index <= 13; index += 1) {
   assert.equal(normalizeEol(current.replace(insertedScripts, '')), normalizeEol(baseline), `${file}: existing UI or prompt behavior changed`);
 }
 
-console.log('GovPrompt hybrid intent router verification passed for GP001-GP013, cross-domain adversarial cases, and 30 real-language production queries.');
+console.log('GovPrompt hybrid intent router verification passed for GP001-GP013, cross-domain adversarial cases, and 36 real-language production queries.');
