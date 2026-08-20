@@ -6,6 +6,11 @@ on:
     paths:
       - 'src/search-worker.js'
       - 'src/search-worker-v2.js'
+      - 'assets/**'
+      - '*.html'
+      - 'service-worker.js'
+      - 'manifest.webmanifest'
+      - 'sitemap.xml'
       - 'access-system/**'
       - 'Plain text/**'
       - 'scripts/build-static.mjs'
@@ -15,6 +20,7 @@ on:
       - 'scripts/verify-live-search-backend.mjs'
       - 'scripts/benchmark-production-endpoint.mjs'
       - 'scripts/verify-production-security.mjs'
+      - 'scripts/verify-cloudflare-deploy-config.mjs'
       - '.github/workflows/deploy-cloudflare-worker.yml'
 permissions:
   contents: read
