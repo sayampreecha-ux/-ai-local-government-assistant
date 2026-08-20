@@ -48,14 +48,21 @@
     return currentRoute;
   }
 
-  function loadModuleFeature(moduleId) {
-    if (moduleId !== 'GP008' || typeof document !== 'object' || !document.createElement) return;
-    if (window.GovPromptMosquitoOnepage || document.getElementById('mosquitoOnepageFeatureScript')) return;
+  function appendScript(id, src) {
+    if (document.getElementById(id)) return;
     const script = document.createElement('script');
-    script.id = 'mosquitoOnepageFeatureScript';
-    script.src = 'assets/js/features/mosquito-survey-onepage-v1.js?v=1.0.0';
+    script.id = id;
+    script.src = src;
     script.defer = true;
     document.head?.appendChild(script);
+  }
+
+  function loadModuleFeature(moduleId) {
+    if (moduleId !== 'GP008' || typeof document !== 'object' || !document.createElement) return;
+    if (!window.GovPromptMosquitoOnepage) {
+      appendScript('mosquitoOnepageFeatureScript', 'assets/js/features/mosquito-survey-onepage-v1.js?v=1.0.0');
+    }
+    appendScript('mosquitoPublicHealthPlacementScript', 'assets/js/features/mosquito-public-health-placement-v1.js?v=1.0.0');
   }
 
   window.GovPromptCore.FIELD_MAP = FIELD_MAP;
