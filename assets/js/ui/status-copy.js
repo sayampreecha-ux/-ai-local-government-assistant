@@ -103,24 +103,11 @@
     if (heading) heading.after(guide); else section.prepend(guide);
   }
 
-  function addMosquitoOnepageQuickAction() {
-    const quickActions = document.querySelector('#welcome .quick-actions');
-    if (!quickActions || document.getElementById('mosquitoOnepageQuickAction')) return;
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.id = 'mosquitoOnepageQuickAction';
-    button.textContent = '🦟 วันเพจลูกน้ำยุงลาย';
-    button.title = 'คำนวณ HI/CI และสร้างคำสั่งทำวันเพจ';
-    button.addEventListener('click', () => { window.location.href = 'mosquito-onepage.html'; });
-    quickActions.appendChild(button);
-  }
-
   function simplifyWelcome() {
     const welcome = document.getElementById('welcome');
     if (!welcome) return;
     const intro = [...welcome.children].find(element => element.tagName === 'P' && !element.classList.contains('eyebrow'));
     if (intro) intro.textContent = 'ใช้ง่าย 3 ขั้น: พิมพ์งาน → กด “คัดลอกแล้วเปิดใน ChatGPT” → วางใน ChatGPT แล้วกดส่ง';
-    addMosquitoOnepageQuickAction();
   }
 
   function simplifyAnswerCard(card) {
