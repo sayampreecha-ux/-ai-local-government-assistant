@@ -35,10 +35,16 @@ test('toolbox includes practical primary-care work without diagnosis or prescrib
 test('GP008 loads toolbox and groups specialist tools under Other, not global home', async () => {
   const integration = await readFile('assets/js/core/context-integration.js', 'utf8');
   const placement = await readFile('assets/js/features/mosquito-public-health-placement-v1.js', 'utf8');
+  const gp008 = await readFile('gp008.html', 'utf8');
   const home = await readFile('assets/js/ui/status-copy.js', 'utf8');
-  assert.match(integration, /moduleId !== 'GP008'/);
-  assert.match(integration, /public-health-worker-toolkit-v1\.js\?v=1\.0\.0/);
+
+  assert.match(integration, /function isPublicHealthPage\(moduleId\)/);
+  assert.match(integration, /loadModuleFeature\(pageModuleId\)/);
+  assert.match(integration, /public-health-worker-toolkit-v1\.js\?v=1\.0\.1/);
   assert.match(placement, /health-worker-toolkit-task/);
   assert.match(placement, /อื่นๆ/);
+  assert.match(gp008, /data-module-id=["']GP008["']/i);
+  assert.match(gp008, /id=["']healthWorkerToolkitTask["']/i);
+  assert.match(gp008, /public-health-worker-toolkit-v1\.js\?v=1\.0\.1/);
   assert.doesNotMatch(home, /healthWorkerToolkitTask/);
 });

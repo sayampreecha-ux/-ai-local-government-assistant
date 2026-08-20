@@ -55,9 +55,15 @@ const indexScripts = '<script src="assets/js/core/shared-context.js"></script><s
 for (let number = 1; number <= 13; number += 1) {
   const file = `gp${String(number).padStart(3, '0')}.html`;
   const current = (await readFile(file, 'utf8')).replace(/\r\n/g, '\n');
+  if (file === 'gp008.html') {
+    const compactCurrent = current.replace(/>\s+</g, '><');
+    assert.equal(compactCurrent.includes(indexScripts), true, `${file}: knowledge index missing`);
+    assert.match(current, /id=["']healthWorkerToolkitTask["']/i, `${file}: approved health toolkit entry missing`);
+    continue;
+  }
   const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
   assert.equal(current.includes(indexScripts), true, `${file}: knowledge index missing`);
   assert.equal(current.replace(indexScripts, ''), baseline, `${file}: Sprint 4.3 output changed`);
 }
 
-console.log('Government Knowledge Index verification passed for GP001-GP013 against origin/main baselines.');
+console.log('Government Knowledge Index verification passed for GP001-GP013; GP008 validates the approved static health-tool entry.');

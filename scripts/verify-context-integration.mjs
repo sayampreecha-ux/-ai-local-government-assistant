@@ -38,9 +38,19 @@ const integrationScripts = '<script src="assets/js/core/shared-context.js"></scr
 for (let index = 1; index <= 13; index += 1) {
   const file = `gp${String(index).padStart(3, '0')}.html`;
   const current = (await readFile(file, 'utf8')).replace(/\r\n/g, '\n');
+
+  if (file === 'gp008.html') {
+    const compactCurrent = current.replace(/>\s+</g, '><');
+    assert.equal(compactCurrent.includes(integrationScripts), true, `${file}: Shared Context integration missing`);
+    assert.match(current, /data-module-id=["']GP008["']/i, `${file}: explicit GP008 module marker missing`);
+    assert.match(current, /id=["']healthWorkerToolkitTask["']/i, `${file}: health toolkit entry missing`);
+    assert.match(current, /public-health-worker-toolkit-v1\.js\?v=1\.0\.1/i, `${file}: health toolkit runtime missing`);
+    continue;
+  }
+
   const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
   assert.equal(current.includes(integrationScripts), true, `${file}: Shared Context integration missing`);
   assert.equal(current.replace(integrationScripts, ''), baseline, `${file}: Sprint 3.3 output behavior changed`);
 }
 
-console.log('Shared Context integration verification passed for GP001-GP013 against origin/main baselines.');
+console.log('Shared Context integration verification passed for GP001-GP013; GP008 explicitly validates the approved static health-tool entry while other assistants remain baseline-locked.');

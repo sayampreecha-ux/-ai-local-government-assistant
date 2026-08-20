@@ -119,10 +119,23 @@ const insertedScripts = '<script src="assets/js/core/shared-context.js"></script
 for (let index = 1; index <= 13; index += 1) {
   const file = `gp${String(index).padStart(3, '0')}.html`;
   const current = await readFile(file, 'utf8');
+  const normalizeEol = text => text.replace(/\r\n/g, '\n');
+
+  if (file === 'gp008.html') {
+    const compactCurrent = current.replace(/>\s+</g, '><');
+    assert.equal(compactCurrent.includes(insertedScripts), true, `${file}: router scripts not integrated`);
+    assert.match(current, /data-module-id=["']GP008["']/i, `${file}: GP008 module marker missing`);
+    assert.match(current, /id=["']publicHealthOtherToolsHeading["'][^>]*>\s*อื่นๆ\s*</i, `${file}: Other heading missing`);
+    assert.match(current, /id=["']healthWorkerToolkitTask["']/i, `${file}: static health toolkit entry missing`);
+    assert.match(current, /public-health-worker-toolkit-v1\.js\?v=1\.0\.1/i, `${file}: health toolkit cache-busted script missing`);
+    assert.match(current, /mosquito-survey-onepage-v1\.js\?v=1\.0\.1/i, `${file}: mosquito tool cache-busted script missing`);
+    assert.match(current, /หลีกเลี่ยงชื่อผู้ป่วย เลขบัตรประชาชน/i, `${file}: PDPA warning missing`);
+    continue;
+  }
+
   const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' });
   assert.equal(current.includes(insertedScripts), true, `${file}: router scripts not integrated`);
-  const normalizeEol = text => text.replace(/\r\n/g, '\n');
   assert.equal(normalizeEol(current.replace(insertedScripts, '')), normalizeEol(baseline), `${file}: existing UI or prompt behavior changed`);
 }
 
-console.log('GovPrompt hybrid intent router verification passed for GP001-GP013, cross-domain adversarial cases, and 36 real-language production queries.');
+console.log('GovPrompt hybrid intent router verification passed for GP001-GP013, cross-domain adversarial cases, GP008 static health tools, and 36 real-language production queries.');
