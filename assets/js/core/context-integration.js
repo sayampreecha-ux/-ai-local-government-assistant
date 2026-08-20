@@ -57,14 +57,21 @@
     document.head?.appendChild(script);
   }
 
+  function isPublicHealthPage(moduleId) {
+    if (moduleId === 'GP008') return true;
+    const path = typeof location === 'object' ? String(location.pathname || '') : '';
+    const explicit = typeof document === 'object' ? String(document.documentElement?.dataset?.moduleId || '') : '';
+    return /(?:^|\/)gp0*8(?:\.html)?(?:$|\/)/i.test(path) || /^GP008$/i.test(explicit);
+  }
+
   function loadModuleFeature(moduleId) {
-    if (moduleId !== 'GP008' || typeof document !== 'object' || !document.createElement) return;
+    if (!isPublicHealthPage(moduleId) || typeof document !== 'object' || !document.createElement) return;
     if (!window.GovPromptMosquitoOnepage) {
-      appendScript('mosquitoOnepageFeatureScript', 'assets/js/features/mosquito-survey-onepage-v1.js?v=1.0.0');
+      appendScript('mosquitoOnepageFeatureScript', 'assets/js/features/mosquito-survey-onepage-v1.js?v=1.0.1');
     }
-    appendScript('mosquitoPublicHealthPlacementScript', 'assets/js/features/mosquito-public-health-placement-v1.js?v=1.0.0');
+    appendScript('mosquitoPublicHealthPlacementScript', 'assets/js/features/mosquito-public-health-placement-v1.js?v=1.0.1');
     if (!window.GovPromptPublicHealthToolkit) {
-      appendScript('publicHealthWorkerToolkitScript', 'assets/js/features/public-health-worker-toolkit-v1.js?v=1.0.0');
+      appendScript('publicHealthWorkerToolkitScript', 'assets/js/features/public-health-worker-toolkit-v1.js?v=1.0.1');
     }
   }
 
@@ -76,8 +83,15 @@
 
   if (typeof document === 'object') {
     const pageModuleId = window.GovPromptCore.detectModuleId();
-    refreshAssistantContext();
+    // GP008 tools are user-facing UI and must not depend on successful context routing.
     loadModuleFeature(pageModuleId);
-    document.getElementById('make')?.addEventListener('click', () => refreshAssistantContext(), true);
+    try {
+      refreshAssistantContext();
+    } catch (error) {
+      console.warn('GovPrompt context refresh skipped during page bootstrap:', error);
+    }
+    document.getElementById('make')?.addEventListener('click', () => {
+      try { refreshAssistantContext(); } catch (error) { console.warn('GovPrompt context refresh failed:', error); }
+    }, true);
   }
 })();
