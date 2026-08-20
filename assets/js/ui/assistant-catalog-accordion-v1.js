@@ -17,6 +17,9 @@
     [/PDPA|คุ้มครองข้อมูล|ข้อมูลส่วนบุคคล/i, '🔒']
   ]);
 
+  const OPENER_LABEL = 'ผู้ช่วยงานราชการทั้งหมด';
+  const INTRO_LABEL = 'กดเลือกผู้ช่วย แล้วเลือกงานใช้บ่อยจากรายการด้านล่าง — ไม่ต้องจำชื่อ Prompt';
+
   function iconFor(title) {
     return ICONS.find(([pattern]) => pattern.test(title))?.[1] || '🧰';
   }
@@ -25,11 +28,12 @@
     const toggle = group.querySelector('.assistant-catalog-toggle');
     const tasks = group.querySelector('.work-catalog-tasks');
     if (!toggle || !tasks) return;
-    toggle.setAttribute('aria-expanded', String(expanded));
-    tasks.hidden = !expanded;
+    if (toggle.getAttribute('aria-expanded') !== String(expanded)) toggle.setAttribute('aria-expanded', String(expanded));
+    if (tasks.hidden === expanded) tasks.hidden = !expanded;
     group.classList.toggle('is-open', expanded);
     const caret = toggle.querySelector('.assistant-catalog-caret');
-    if (caret) caret.textContent = expanded ? '⌃' : '⌄';
+    const nextCaret = expanded ? '⌃' : '⌄';
+    if (caret && caret.textContent !== nextCaret) caret.textContent = nextCaret;
   }
 
   function collapseOthers(current) {
@@ -106,10 +110,10 @@
 
   function enhanceCatalog(root = document) {
     const opener = document.querySelector('.work-catalog-open');
-    if (opener) opener.textContent = 'ผู้ช่วยงานราชการทั้งหมด';
+    if (opener && opener.textContent !== OPENER_LABEL) opener.textContent = OPENER_LABEL;
 
     const intro = root.querySelector?.('.work-catalog-intro');
-    if (intro) intro.textContent = 'กดเลือกผู้ช่วย แล้วเลือกงานใช้บ่อยจากรายการด้านล่าง — ไม่ต้องจำชื่อ Prompt';
+    if (intro && intro.textContent !== INTRO_LABEL) intro.textContent = INTRO_LABEL;
 
     const groups = root.querySelector?.('.work-catalog-groups');
     if (!groups) return false;
