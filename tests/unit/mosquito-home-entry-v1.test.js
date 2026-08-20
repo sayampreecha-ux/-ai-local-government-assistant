@@ -16,6 +16,7 @@ test('mosquito one-page appears under Other in the public-health GP008 feature',
   assert.match(integration, /mosquito-public-health-placement-v1\.js\?v=1\.0\.0/);
   assert.match(feature, /🦟 วันเพจลูกน้ำยุงลาย/);
   assert.match(placement, /textContent = 'อื่นๆ'/);
-  assert.match(placement, /tasks\.append\(heading, button\)/);
+  assert.match(placement, /tasks\.querySelector\('\.mosq-task'\)/);
+  assert.match(placement, /tasks\.append\(heading, \.\.\.buttons\)/);
   assert.match(html, /mosquito-survey-onepage-v1\.js\?v=1\.0\.1/);
 });
