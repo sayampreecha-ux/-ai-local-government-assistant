@@ -2,6 +2,7 @@
   'use strict';
 
   const HEADING_ID = 'publicHealthOtherToolsHeading';
+  const STATIC_MOSQUITO_ID = 'mosquitoOnepageTask';
 
   function ensureHeading(tasks) {
     let heading = document.getElementById(HEADING_ID);
@@ -22,13 +23,23 @@
     return heading;
   }
 
+  function resolveMosquitoEntry(tasks) {
+    const staticEntry = document.getElementById(STATIC_MOSQUITO_ID);
+    const dynamicEntry = [...tasks.querySelectorAll('.mosq-task')].find(node => node !== staticEntry) || null;
+
+    // GP008 now carries a permanent HTML entry so the tool is visible even if
+    // feature bootstrap fails. Keep only one visible entry to preserve task count.
+    if (staticEntry && dynamicEntry) dynamicEntry.remove();
+    return staticEntry || dynamicEntry;
+  }
+
   function placePublicHealthOtherTools() {
     const tasks = document.getElementById('tasks');
     if (!tasks) return false;
     const heading = ensureHeading(tasks);
     const buttons = [
       tasks.querySelector('.health-worker-toolkit-task'),
-      tasks.querySelector('.mosq-task')
+      resolveMosquitoEntry(tasks)
     ].filter(Boolean);
     if (!buttons.length) return false;
 
