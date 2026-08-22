@@ -47,5 +47,6 @@ export { WORKFLOW_STATE_SCHEMA_VERSION, CROSS_WORKFLOW_HANDOFFS_V2, validateComp
 export { DELIVERABLE_CONTRACT_SCHEMA_VERSION, DELIVERABLE_PROFILE_REQUIREMENTS_V3, DELIVERABLE_CONTRACTS_V3, listDeliverableContractsV3, getDeliverableContractV3, getStageDeliverableRequirementsV3, validateDeliverableContractCoverageV3, validateDeliverableArtifactV3, validateStageDeliverablesV3, buildStageHandoffContractsV3, executeGovernmentWorkflowV3, transitionGovernmentWorkflowV3, buildCrossWorkflowCaseV3 } from "./government-deliverable-contracts-v3.js";
 export { CASE_ORCHESTRATOR_VERSION, DEFAULT_MAX_AUTO_TRANSITIONS_V4, buildGovernmentWorkOrderV4, advanceGovernmentWorkflowV4, driveGovernmentWorkflowV4, runGovernmentCaseV4, driveGovernmentCaseV4 } from "./government-case-orchestrator-v4.js";
 export { CITIZEN_SERVICE_WORKFLOW_ID, SERVICE_PROFILES as CITIZEN_SERVICE_PROFILES, CITIZEN_SERVICE_STAGES, detectCitizenServiceIntent, createCitizenServiceState, runCitizenServiceWorkflow, transitionCitizenServiceWorkflow } from "./citizen-service-workflow.js";
+export { GOVERNMENT_TASK_ROUTER_VERSION, detectGovernmentTaskV5, runGovernmentTaskV5 } from "./government-task-router-v5.js";
 export * from "./modules/gp001/index.js";
 export default contextManager;
