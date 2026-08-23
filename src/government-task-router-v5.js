@@ -1,8 +1,9 @@
 import { runGovernmentWorkflow, detectGovernmentWorkflows } from "./government-workflow-suite.js";
 import { detectCitizenServiceIntent, runCitizenServiceWorkflow } from "./citizen-service-workflow.js";
 import { buildAssessmentPack } from "./evidence-assessment-layer.js";
+import { buildWorkflowProgressView } from "./workflow-progress-view-model.js";
 
-export const GOVERNMENT_TASK_ROUTER_VERSION = "5.1";
+export const GOVERNMENT_TASK_ROUTER_VERSION = "5.2";
 
 export function detectGovernmentTaskV5(input = {}) {
   const citizen = detectCitizenServiceIntent(input);
@@ -33,17 +34,22 @@ function buildEvidenceAssessment(input, detection, primary) {
   });
 }
 
+function attachProgress(result) {
+  return { ...result, progress: buildWorkflowProgressView(result) };
+}
+
 export function runGovernmentTaskV5(input = {}) {
   const detection = detectGovernmentTaskV5(input);
   if (!detection.citizenService.matched) {
     const primary = runGovernmentWorkflow(input);
-    return {
+    const result = {
       version: GOVERNMENT_TASK_ROUTER_VERSION,
       detection,
       primary,
       citizenService: null,
       evidenceAssessment: buildEvidenceAssessment(input, detection, primary)
     };
+    return attachProgress(result);
   }
 
   const citizenInput = {
@@ -53,7 +59,7 @@ export function runGovernmentTaskV5(input = {}) {
   const citizenService = runCitizenServiceWorkflow(citizenInput);
   const core = runGovernmentWorkflow(input);
 
-  return {
+  const result = {
     version: GOVERNMENT_TASK_ROUTER_VERSION,
     detection,
     primary: citizenService,
@@ -71,4 +77,5 @@ export function runGovernmentTaskV5(input = {}) {
       aiDecisionAllowed: false
     }
   };
+  return attachProgress(result);
 }
