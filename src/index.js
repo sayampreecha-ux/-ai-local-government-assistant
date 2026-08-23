@@ -48,5 +48,6 @@ export { DELIVERABLE_CONTRACT_SCHEMA_VERSION, DELIVERABLE_PROFILE_REQUIREMENTS_V
 export { CASE_ORCHESTRATOR_VERSION, DEFAULT_MAX_AUTO_TRANSITIONS_V4, buildGovernmentWorkOrderV4, advanceGovernmentWorkflowV4, driveGovernmentWorkflowV4, runGovernmentCaseV4, driveGovernmentCaseV4 } from "./government-case-orchestrator-v4.js";
 export { CITIZEN_SERVICE_WORKFLOW_ID, SERVICE_PROFILES as CITIZEN_SERVICE_PROFILES, CITIZEN_SERVICE_STAGES, detectCitizenServiceIntent, createCitizenServiceState, runCitizenServiceWorkflow, transitionCitizenServiceWorkflow } from "./citizen-service-workflow.js";
 export { GOVERNMENT_TASK_ROUTER_VERSION, detectGovernmentTaskV5, runGovernmentTaskV5 } from "./government-task-router-v5.js";
+export { EVIDENCE_ASSESSMENT_VERSION, EVIDENCE_ASSESSMENT_DIMENSIONS, createEvidenceSnapshot, analyzeEvidenceGaps, buildImprovementActionPlan, buildAssessmentPack } from "./evidence-assessment-layer.js";
 export * from "./modules/gp001/index.js";
 export default contextManager;
