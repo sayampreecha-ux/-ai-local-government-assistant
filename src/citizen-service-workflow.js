@@ -35,14 +35,14 @@ const STAGES = Object.freeze([
   { id: "records-audit", title: "จัดเก็บหลักฐานและ Audit Trail", required: [], deliverables: ["service-audit-trail"], humanApproval: false }
 ]);
 
-const textOf = (input = {}) => String(input.query || input.question || input.text || "").normalize("NFKC").toLowerCase();
+const textOf = (input = {}) => String(input.query || input.question || input.text || "").normalize("NFC").toLowerCase();
 const keyOf = (value) => String(value?.key || value?.id || value?.type || "").trim();
 const usable = (item) => Boolean(keyOf(item) && item?.value !== undefined && item?.value !== null && item?.valid !== false && item?.revoked !== true);
 const official = (item) => Boolean(usable(item) && item?.official === true && item?.verified === true && item?.fresh !== false && item?.current !== false);
 
 export function detectCitizenServiceIntent(input = {}) {
   const text = textOf(input);
-  const matched = Object.values(SERVICE_PROFILES).find((profile) => profile.keywords.some((keyword) => text.includes(keyword)));
+  const matched = Object.values(SERVICE_PROFILES).find((profile) => profile.keywords.some((keyword) => text.includes(keyword.normalize("NFC").toLowerCase())));
   return matched ? { matched: true, workflowId: WORKFLOW_ID, serviceProfile: matched.id, handoffs: [...matched.handoffs] } : { matched: false, workflowId: null, serviceProfile: null, handoffs: [] };
 }
 
@@ -112,8 +112,10 @@ export function runCitizenServiceWorkflow(input = {}) {
   }
 
   const index = evidenceIndex(input.evidence || []);
-  const missingEvidence = stage.required.filter((key) => !index.has(key));
-  const missingOfficialEvidence = stage.official.filter((key) => !official(index.get(key)));
+  const requiredKeys = Array.isArray(stage.required) ? stage.required : [];
+  const officialKeys = Array.isArray(stage.official) ? stage.official : [];
+  const missingEvidence = requiredKeys.filter((key) => !index.has(key));
+  const missingOfficialEvidence = officialKeys.filter((key) => !official(index.get(key)));
   const risks = [...requestOutsideManualRisk(input), ...aiDecisionRisk(input), ...piiRisk(input)];
   const stageRisks = stage.id === "requirements" || stage.id === "completeness" || stage.id === "deficiency-handling"
     ? risks.filter((risk) => risk.code === "extra-document-request" || risk.code === "excessive-pii")
