@@ -2,8 +2,9 @@ import {
   runGovernmentWorkflow,
   runGovernmentCaseByDetectedWorkflowsV4
 } from '../../../src/government-workflow-suite.js';
+import { publishWorkflowProgressView } from '../ui/workflow-progress-ui-v1.js';
 
-export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.0';
+export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.1';
 
 const ACTION_LABELS = Object.freeze({
   'repair-workflow-classification': 'ยืนยันประเภทงาน',
@@ -116,7 +117,7 @@ export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts 
   const caseView = runGovernmentCaseByDetectedWorkflowsV4(input);
   const workflows = Object.freeze((caseView.workflows || []).map(safeWorkOrder));
 
-  return Object.freeze({
+  const view = Object.freeze({
     bridgeVersion: WORKFLOW_RUNTIME_BRIDGE_VERSION,
     status: safeText(result.status, 80),
     orchestration: safeText(result.orchestration, 80),
@@ -139,6 +140,8 @@ export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts 
       deliverableContractsRequired: true
     })
   });
+  publishWorkflowProgressView(view);
+  return view;
 }
 
 function formatList(values, emptyText = 'ไม่มี') {
