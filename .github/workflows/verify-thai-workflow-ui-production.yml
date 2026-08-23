@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'index.html'
       - 'service-worker.js'
       - 'assets/js/ui/workflow-progress-ui-v1.js'
       - 'assets/js/core/government-workflow-runtime-v5.js'
