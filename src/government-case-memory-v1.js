@@ -20,7 +20,7 @@ const ROUTING_HINT_BY_WORKFLOW = Object.freeze({
   'gov.budget-draft': 'งบประมาณ'
 });
 
-const safeText = (value, max = 120) => String(value || '').normalize('NFKC').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
+const safeText = (value, max = 120) => String(value || '').normalize('NFC').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
 const uniq = (values = []) => [...new Set((Array.isArray(values) ? values : []).filter(Boolean).map(String))];
 
 export function generateCaseId(now = Date.now(), random = Math.random()) {

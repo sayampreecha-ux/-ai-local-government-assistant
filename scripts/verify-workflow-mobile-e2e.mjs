@@ -97,9 +97,10 @@ try {
       ['gov.council', 'ตรวจองค์ประชุมสภาท้องถิ่น'],
       ['gov.budget-draft', 'จัดทำร่างงบประมาณประจำปี']
     ];
-    return cases.map(([workflowId, query]) => {
-      const first = runtime.buildWorkflowRuntimeView({ query });
-      const second = runtime.buildWorkflowRuntimeView({ query });
+    return cases.map(([workflowId, query], index) => {
+      const caseId = `mobile-e2e-${index}-${workflowId.replace(/[^a-z0-9]+/gi, '-')}`;
+      const first = runtime.buildWorkflowRuntimeView({ query, caseId });
+      const second = runtime.buildWorkflowRuntimeView({ query, caseId });
       return {
         workflowId,
         included: first.workflowIds.includes(workflowId),

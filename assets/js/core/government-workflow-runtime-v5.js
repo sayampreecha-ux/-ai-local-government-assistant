@@ -55,12 +55,18 @@ function notifyCaseMemoryUpdated() {
   } catch {}
 }
 
+function toPersistedCase(item) {
+  const sanitized = sanitizeCaseRecord(item);
+  const { privacy, ...persisted } = sanitized;
+  return persisted;
+}
+
 function readCaseMemory() {
   const storage = safeStorage();
   if (!storage) return [];
   try {
     const parsed = JSON.parse(storage.getItem(CASE_MEMORY_STORAGE_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.map((item) => sanitizeCaseRecord(item)) : [];
   } catch {
     return [];
   }
@@ -70,7 +76,8 @@ function writeCaseMemory(cases) {
   const storage = safeStorage();
   if (!storage) return false;
   try {
-    storage.setItem(CASE_MEMORY_STORAGE_KEY, JSON.stringify(cases));
+    const minimized = (Array.isArray(cases) ? cases : []).map(toPersistedCase);
+    storage.setItem(CASE_MEMORY_STORAGE_KEY, JSON.stringify(minimized));
     notifyCaseMemoryUpdated();
     return true;
   } catch {

@@ -12,6 +12,16 @@ function safeStorage(storage = null) {
   try { return window.localStorage || null; } catch { return null; }
 }
 
+function toPersistedCase(item) {
+  const sanitized = sanitizeCaseRecord(item);
+  const { privacy, ...persisted } = sanitized;
+  return persisted;
+}
+
+function persistCases(target, cases = []) {
+  target.setItem(CASE_MEMORY_STORAGE_KEY, JSON.stringify((Array.isArray(cases) ? cases : []).map(toPersistedCase)));
+}
+
 export function readRememberedCases(storage = null) {
   const target = safeStorage(storage);
   if (!target) return [];
@@ -56,7 +66,7 @@ export function prioritizeRememberedCase(caseId, storage = null) {
   if (!target) return false;
   try {
     const next = prioritizeCase(readRememberedCases(target), caseId);
-    target.setItem(CASE_MEMORY_STORAGE_KEY, JSON.stringify(next));
+    persistCases(target, next);
     return true;
   } catch {
     return false;
@@ -69,7 +79,7 @@ export function forgetCase(caseId, storage = null) {
   const id = safeText(caseId, 100);
   try {
     const next = readRememberedCases(target).filter((item) => item.caseId !== id);
-    target.setItem(CASE_MEMORY_STORAGE_KEY, JSON.stringify(next));
+    persistCases(target, next);
     return true;
   } catch {
     return false;
