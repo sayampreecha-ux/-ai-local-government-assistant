@@ -126,7 +126,6 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 title,
-                body,
-                labels: ['production-proof']
+                body
               });
             }
