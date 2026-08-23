@@ -4,7 +4,7 @@
   const app = window.GovPrompt = window.GovPrompt || {};
   const events = app.events || new EventTarget();
 
-  app.version = '2.0.4';
+  app.version = '2.0.5';
   app.events = events;
   app.on = (type, listener, options) => events.addEventListener(type, listener, options);
   app.off = (type, listener, options) => events.removeEventListener(type, listener, options);
@@ -71,6 +71,16 @@
     });
   }
 
+  async function initializeCaseList() {
+    if (!document.querySelector('.bottom-nav') || !document.getElementById('chatForm')) return;
+    try {
+      const module = await import('./ui/case-list-ui-v1.js?v=1.0.0');
+      module.initializeCaseListUI({ app });
+    } catch {
+      // Case Memory UI is progressive enhancement; the core chat remains usable.
+    }
+  }
+
   function initializeShell() {
     if (app.shellInitialized) return;
     app.shellInitialized = true;
@@ -80,6 +90,7 @@
     initializeAccessibleNames();
     initializeNavigation();
     initializeDialogs();
+    initializeCaseList();
   }
 
   app.initializeShell = initializeShell;
