@@ -102,9 +102,10 @@ assert.match(css.text,/budget-review-table/);
 assert.match(css.text,/budget-purpose-picker/);
 assert.match(css.text,/budget-review-overlay/);
 assert.match(css.text,/budget-review-dialog/);
-assert.match(runtimeBridge.text,/WORKFLOW_RUNTIME_BRIDGE_VERSION = '5\.0'/);
+assert.match(runtimeBridge.text,/WORKFLOW_RUNTIME_BRIDGE_VERSION = '5\.3'/);
 assert.match(runtimeBridge.text,/rawEvidenceValuesReturned: false/);
 assert.match(runtimeBridge.text,/autoApprovalAllowed: false/);
+assert.match(runtimeBridge.text,/gov\.citizen-service/);
 
 const runtimeProduction = {};
 for (let i=0;i<runtimeSourceFiles.length;i+=1) {

@@ -20,6 +20,12 @@ on:
       - 'assets/js/core/media-routing-overrides.js'
       - 'assets/js/core/budget-*.js'
       - 'assets/js/core/official-source-registry.js'
+      - 'assets/js/core/government-workflow-runtime-v5.js'
+      - 'assets/js/ui/case-list-ui-v1.js'
+      - 'src/government-case-memory-v1.js'
+      - 'src/citizen-service-workflow.js'
+      - 'src/government-workflow-*.js'
+      - 'src/government-task-router-v5.js'
       - 'assets/js/features/public-health-worker-toolkit-v1.js'
       - 'assets/js/features/mosquito-public-health-placement-v1.js'
       - 'assets/js/features/mosquito-survey-onepage-v1.js'
@@ -32,6 +38,7 @@ on:
       - 'scripts/verify-production-security.mjs'
       - 'scripts/verify-issue73-production-e2e.mjs'
       - 'scripts/verify-budget-production-e2e.mjs'
+      - 'scripts/verify-three-workflows-production-e2e.mjs'
       - '.github/workflows/verify-production-surface.yml'
   workflow_dispatch:
 
@@ -66,3 +73,5 @@ jobs:
         run: node scripts/verify-issue73-production-e2e.mjs
       - name: Verify Budget Draft Agent short-command workflow in real browser
         run: node scripts/verify-budget-production-e2e.mjs
+      - name: Verify three priority government workflows in real browser
+        run: node scripts/verify-three-workflows-production-e2e.mjs

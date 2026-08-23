@@ -1,8 +1,9 @@
-export const GOVERNMENT_CASE_MEMORY_VERSION = '1.0';
+export const GOVERNMENT_CASE_MEMORY_VERSION = '1.1';
 export const CASE_MEMORY_STORAGE_KEY = 'govprompt-v7-case-memory';
 export const CASE_MEMORY_MAX_CASES = 20;
 
 const ROUTING_HINT_BY_WORKFLOW = Object.freeze({
+  'gov.citizen-service': 'ขออนุญาต บริการประชาชน',
   'gov.procurement': 'จัดซื้อจัดจ้าง',
   'gov.finance': 'การเงิน',
   'gov.legal': 'กฎหมาย',

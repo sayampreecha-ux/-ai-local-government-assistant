@@ -4,18 +4,22 @@ import {
   DEEP_WORKFLOWS
 } from '../../../src/government-workflow-suite.js';
 import {
+  detectCitizenServiceIntent,
+  runCitizenServiceWorkflow,
+  CITIZEN_SERVICE_STAGES
+} from '../../../src/citizen-service-workflow.js';
+import {
   CASE_MEMORY_STORAGE_KEY,
   buildCaseTitle,
   buildResumableWorkflowState,
   generateCaseId,
-  isResumeIntent,
   resolveResumeCase,
   sanitizeCaseRecord,
   upsertCaseMemory
 } from '../../../src/government-case-memory-v1.js';
 import { publishWorkflowProgressView } from '../ui/workflow-progress-ui-v1.js';
 
-export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.2';
+export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.3';
 
 const ACTION_LABELS = Object.freeze({
   'repair-workflow-classification': 'ยืนยันประเภทงาน',
@@ -43,6 +47,14 @@ function safeStorage() {
   }
 }
 
+function notifyCaseMemoryUpdated() {
+  try {
+    if (typeof document !== 'undefined' && typeof CustomEvent !== 'undefined') {
+      document.dispatchEvent(new CustomEvent('govprompt:case-memory-updated'));
+    }
+  } catch {}
+}
+
 function readCaseMemory() {
   const storage = safeStorage();
   if (!storage) return [];
@@ -59,6 +71,7 @@ function writeCaseMemory(cases) {
   if (!storage) return false;
   try {
     storage.setItem(CASE_MEMORY_STORAGE_KEY, JSON.stringify(cases));
+    notifyCaseMemoryUpdated();
     return true;
   } catch {
     return false;
@@ -134,9 +147,85 @@ function safeWorkOrder(workOrder) {
   });
 }
 
+function citizenAction(status) {
+  if (status === 'blocked-missing-evidence') return 'acquire-evidence';
+  if (status === 'blocked-official-source') return 'verify-official-evidence';
+  if (status === 'blocked-risk-review') return 'perform-risk-review';
+  if (status === 'awaiting-human-approval') return 'request-human-approval';
+  if (status === 'complete') return 'complete';
+  return 'transition-ready';
+}
+
+function safeCitizenWorkOrder(execution) {
+  if (!execution) return null;
+  const action = citizenAction(execution.status);
+  const stage = execution.currentStage || null;
+  const riskFindings = Array.isArray(execution.riskFindings) ? execution.riskFindings : [];
+  const deliverables = (execution.requiredDeliverables || []).map((artifactKey) => safeDeliverable({
+    artifactKey,
+    profile: 'structured',
+    requiredEvidence: stage?.required || [],
+    requiresSignoff: Boolean(stage?.humanApproval),
+    status: execution.status === 'complete' ? 'ready' : 'required'
+  }));
+  const blocked = String(execution.status || '').startsWith('blocked-');
+  const approvalRequired = Boolean(stage?.humanApproval) || execution.status === 'awaiting-human-approval';
+  return Object.freeze({
+    workflowId: 'gov.citizen-service',
+    workflowStatus: safeText(execution.status, 80),
+    action,
+    actionLabel: ACTION_LABELS[action] || 'ดำเนินการตาม blocker ปัจจุบัน',
+    currentStage: stage ? Object.freeze({ id: safeText(stage.id, 100), title: safeText(stage.title, 160) }) : null,
+    completedStages: Object.freeze(uniq(execution.completedStages)),
+    requiredEvidence: Object.freeze(uniq(stage?.required)),
+    missingEvidence: Object.freeze(uniq(execution.missingEvidence)),
+    missingOfficialEvidence: Object.freeze(uniq(execution.missingOfficialEvidence)),
+    deliverables: Object.freeze(deliverables),
+    nextInputs: Object.freeze(uniq(execution.nextRequestedInputs)),
+    approvalRequired,
+    autoApprovalAllowed: false,
+    riskReviewRequired: riskFindings.length > 0,
+    unresolvedRiskCodes: Object.freeze(uniq(riskFindings.map((finding) => finding?.code))),
+    qualityGate: Object.freeze({
+      status: execution.status === 'complete' ? 'COMPLETE' : approvalRequired && execution.status === 'awaiting-human-approval' ? 'AWAITING_APPROVAL' : blocked ? 'BLOCKED' : 'READY',
+      completeness: !execution.missingEvidence?.length,
+      missingInformation: Object.freeze(uniq(execution.missingEvidence)),
+      sourceEvidenceReady: !execution.missingOfficialEvidence?.length,
+      riskFlags: Object.freeze(uniq(riskFindings.map((finding) => finding?.code))),
+      humanReviewRequired: approvalRequired,
+      deliverableReady: execution.status === 'complete',
+      workflowReady: execution.status === 'ready' || execution.status === 'complete',
+      substantiveDecisionMade: false,
+      rawEvidenceValuesReturned: false
+    }),
+    deliverablePlan: Object.freeze({
+      status: execution.status === 'complete' ? 'ready' : 'pending',
+      stageId: safeText(stage?.id, 100),
+      qualityStatus: blocked ? 'BLOCKED' : 'READY',
+      humanDraftRequired: approvalRequired,
+      autoGenerationAllowed: false,
+      artifacts: Object.freeze(deliverables),
+      rawEvidenceValuesReturned: false
+    }),
+    handoffs: Object.freeze((execution.handoffs || []).map((targetWorkflowId) => Object.freeze({
+      sourceWorkflowId: 'gov.citizen-service',
+      sourceStageId: safeText(stage?.id, 100),
+      targetWorkflowId: safeText(targetWorkflowId, 80),
+      status: 'supporting-workflow',
+      humanConfirmationRequired: false,
+      humanConfirmed: false,
+      autoHandoffAllowed: false,
+      missingEvidence: Object.freeze([]),
+      missingDeliverables: Object.freeze([])
+    })))
+  });
+}
+
 function detectIntentIds(query) {
   try {
-    return uniq(runGovernmentWorkflow({ query })?.intent);
+    const citizen = detectCitizenServiceIntent({ query });
+    const core = uniq(runGovernmentWorkflow({ query })?.intent);
+    return citizen.matched ? uniq(['gov.citizen-service', ...citizen.handoffs, ...core]) : core;
   } catch {
     return [];
   }
@@ -157,23 +246,47 @@ function workflowStateFromMemory(record) {
   return map;
 }
 
-function resolveCaseContext(query, explicitState, explicitCaseId) {
+function citizenStateFromMemory(record) {
+  const item = (record?.progress || []).find((progress) => progress?.workflowId === 'gov.citizen-service');
+  if (!item) return null;
+  const completedStages = uniq(item.completedStages);
+  const currentStageId = CITIZEN_SERVICE_STAGES[completedStages.length]?.id || null;
+  return {
+    schemaVersion: '1.0',
+    workflowId: 'gov.citizen-service',
+    caseId: record.caseId,
+    status: currentStageId ? 'active' : 'complete',
+    completedStages,
+    currentStageId,
+    transitionLog: []
+  };
+}
+
+function resolveCaseContext(query, explicitState, explicitCaseId, explicitCitizenState = null) {
   const hasExplicitState = explicitState && typeof explicitState === 'object' && Object.keys(explicitState).length > 0;
-  if (hasExplicitState || explicitCaseId) {
-    return { caseId: explicitCaseId || generateCaseId(), workflowState: explicitState || {}, resumed: false, memoryRecord: null, effectiveQuery: query };
+  if (hasExplicitState || explicitCaseId || explicitCitizenState) {
+    return {
+      caseId: explicitCaseId || explicitCitizenState?.caseId || generateCaseId(),
+      workflowState: explicitState || {},
+      citizenServiceState: explicitCitizenState || null,
+      resumed: false,
+      memoryRecord: null,
+      effectiveQuery: query
+    };
   }
 
   const stored = readCaseMemory();
   const detectedIds = detectIntentIds(query);
   const record = resolveResumeCase(stored, query, detectedIds);
   if (!record) {
-    return { caseId: generateCaseId(), workflowState: {}, resumed: false, memoryRecord: null, effectiveQuery: query };
+    return { caseId: generateCaseId(), workflowState: {}, citizenServiceState: null, resumed: false, memoryRecord: null, effectiveQuery: query };
   }
 
   const effectiveQuery = detectedIds.length ? query : `${query} ${record.routingHint || ''}`.trim();
   return {
     caseId: record.caseId,
     workflowState: workflowStateFromMemory(record),
+    citizenServiceState: citizenStateFromMemory(record),
     resumed: true,
     memoryRecord: record,
     effectiveQuery
@@ -220,7 +333,7 @@ export function clearRememberedCases() {
   return writeCaseMemory([]);
 }
 
-export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts = [], workflowState = {}, caseId = null } = {}) {
+export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts = [], workflowState = {}, citizenServiceState = null, caseId = null } = {}) {
   const normalizedQuery = safeText(query, 6000);
   if (!normalizedQuery) {
     return Object.freeze({
@@ -236,7 +349,7 @@ export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts 
     });
   }
 
-  const caseContext = resolveCaseContext(normalizedQuery, workflowState, caseId);
+  const caseContext = resolveCaseContext(normalizedQuery, workflowState, caseId, citizenServiceState);
   const input = {
     query: caseContext.effectiveQuery,
     caseId: caseContext.caseId,
@@ -244,27 +357,57 @@ export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts 
     artifacts: Array.isArray(artifacts) ? artifacts : [],
     workflowStateV4: caseContext.workflowState
   };
+  const citizenIntent = detectCitizenServiceIntent(input);
   const result = runGovernmentWorkflow(input);
   const caseView = runGovernmentCaseByDetectedWorkflowsV4(input);
-  const workflows = Object.freeze((caseView.workflows || []).map(safeWorkOrder));
+  const coreWorkflows = (caseView.workflows || []).map(safeWorkOrder);
+
+  let primary = safeWorkOrder(result.currentV4);
+  let workflowIds = uniq(result.intent);
+  let workflows = coreWorkflows;
+  let status = safeText(result.status, 80);
+  let caseStatus = safeText(caseView.status, 80);
+  let nextActions = (caseView.nextActions || []).map((item) => Object.freeze({
+    workflowId: safeText(item?.workflowId, 80),
+    stageId: safeText(item?.stageId, 100),
+    action: safeText(item?.action, 80),
+    actionLabel: ACTION_LABELS[item?.action] || 'ดำเนินการตาม blocker ปัจจุบัน'
+  }));
+  let failClosed = Boolean(result.currentV4?.governance?.failClosed);
+
+  if (citizenIntent.matched) {
+    const citizenExecution = runCitizenServiceWorkflow({
+      ...input,
+      state: caseContext.citizenServiceState || undefined
+    });
+    const citizenWorkOrder = safeCitizenWorkOrder(citizenExecution);
+    primary = citizenWorkOrder;
+    workflowIds = uniq(['gov.citizen-service', ...citizenIntent.handoffs, ...workflowIds]);
+    workflows = [citizenWorkOrder, ...coreWorkflows.filter((item) => item?.workflowId !== 'gov.citizen-service')];
+    status = safeText(citizenExecution.status, 80);
+    caseStatus = citizenExecution.status === 'complete' && caseView.status === 'complete' ? 'complete' : 'active';
+    const citizenActionName = citizenAction(citizenExecution.status);
+    nextActions = [Object.freeze({
+      workflowId: 'gov.citizen-service',
+      stageId: safeText(citizenExecution.currentStage?.id, 100),
+      action: citizenActionName,
+      actionLabel: ACTION_LABELS[citizenActionName] || 'ดำเนินการตาม blocker ปัจจุบัน'
+    }), ...nextActions];
+    failClosed = Boolean(citizenExecution.governance?.failClosed || failClosed);
+  }
 
   const view = Object.freeze({
     bridgeVersion: WORKFLOW_RUNTIME_BRIDGE_VERSION,
-    status: safeText(result.status, 80),
-    orchestration: safeText(result.orchestration, 80),
-    workflowIds: Object.freeze(uniq(result.intent)),
+    status,
+    orchestration: workflowIds.length > 1 ? 'cross-workflow' : workflowIds.length === 1 ? 'single-workflow' : 'unclassified',
+    workflowIds: Object.freeze(workflowIds),
     caseId: caseContext.caseId,
     resumedCase: caseContext.resumed,
     resumeLabel: caseContext.resumed ? 'ทำต่อจากเรื่องเดิม' : 'เริ่มเรื่องใหม่',
-    caseStatus: safeText(caseView.status, 80),
-    primary: safeWorkOrder(result.currentV4),
-    workflows,
-    nextActions: Object.freeze((caseView.nextActions || []).map((item) => Object.freeze({
-      workflowId: safeText(item?.workflowId, 80),
-      stageId: safeText(item?.stageId, 100),
-      action: safeText(item?.action, 80),
-      actionLabel: ACTION_LABELS[item?.action] || 'ดำเนินการตาม blocker ปัจจุบัน'
-    }))),
+    caseStatus,
+    primary,
+    workflows: Object.freeze(workflows),
+    nextActions: Object.freeze(nextActions),
     caseMemory: Object.freeze({
       enabled: Boolean(safeStorage()),
       resumed: caseContext.resumed,
@@ -275,7 +418,7 @@ export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts 
     governance: Object.freeze({
       rawEvidenceValuesReturned: false,
       autoApprovalAllowed: false,
-      failClosed: Boolean(result.currentV4?.governance?.failClosed),
+      failClosed,
       noFabrication: true,
       humanApprovalRequiredWhenDeclared: true,
       deliverableContractsRequired: true
