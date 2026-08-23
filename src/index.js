@@ -50,5 +50,6 @@ export { CITIZEN_SERVICE_WORKFLOW_ID, SERVICE_PROFILES as CITIZEN_SERVICE_PROFIL
 export { GOVERNMENT_TASK_ROUTER_VERSION, detectGovernmentTaskV5, runGovernmentTaskV5 } from "./government-task-router-v5.js";
 export { EVIDENCE_ASSESSMENT_VERSION, EVIDENCE_ASSESSMENT_DIMENSIONS, createEvidenceSnapshot, analyzeEvidenceGaps, buildImprovementActionPlan, buildAssessmentPack } from "./evidence-assessment-layer.js";
 export { buildWorkflowProgressView } from "./workflow-progress-view-model.js";
+export { GOVERNMENT_CASE_MEMORY_VERSION, CASE_MEMORY_STORAGE_KEY, CASE_MEMORY_MAX_CASES, generateCaseId, isResumeIntent, buildRoutingHint, buildResumableWorkflowState, sanitizeCaseRecord, upsertCaseMemory, resolveResumeCase, buildCaseTitle } from "./government-case-memory-v1.js";
 export * from "./modules/gp001/index.js";
 export default contextManager;

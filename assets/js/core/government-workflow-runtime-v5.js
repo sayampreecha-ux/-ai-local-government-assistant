@@ -1,10 +1,21 @@
 import {
   runGovernmentWorkflow,
-  runGovernmentCaseByDetectedWorkflowsV4
+  runGovernmentCaseByDetectedWorkflowsV4,
+  DEEP_WORKFLOWS
 } from '../../../src/government-workflow-suite.js';
+import {
+  CASE_MEMORY_STORAGE_KEY,
+  buildCaseTitle,
+  buildResumableWorkflowState,
+  generateCaseId,
+  isResumeIntent,
+  resolveResumeCase,
+  sanitizeCaseRecord,
+  upsertCaseMemory
+} from '../../../src/government-case-memory-v1.js';
 import { publishWorkflowProgressView } from '../ui/workflow-progress-ui-v1.js';
 
-export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.1';
+export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.2';
 
 const ACTION_LABELS = Object.freeze({
   'repair-workflow-classification': 'ยืนยันประเภทงาน',
@@ -22,6 +33,37 @@ const ACTION_LABELS = Object.freeze({
 
 const uniq = (values = []) => [...new Set((Array.isArray(values) ? values : []).filter(Boolean).map(String))];
 const safeText = (value, max = 160) => String(value || '').trim().slice(0, max);
+
+function safeStorage() {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function readCaseMemory() {
+  const storage = safeStorage();
+  if (!storage) return [];
+  try {
+    const parsed = JSON.parse(storage.getItem(CASE_MEMORY_STORAGE_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCaseMemory(cases) {
+  const storage = safeStorage();
+  if (!storage) return false;
+  try {
+    storage.setItem(CASE_MEMORY_STORAGE_KEY, JSON.stringify(cases));
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function safeDeliverable(order) {
   return Object.freeze({
@@ -92,6 +134,92 @@ function safeWorkOrder(workOrder) {
   });
 }
 
+function detectIntentIds(query) {
+  try {
+    return uniq(runGovernmentWorkflow({ query })?.intent);
+  } catch {
+    return [];
+  }
+}
+
+function workflowStateFromMemory(record) {
+  const map = {};
+  for (const item of record?.progress || []) {
+    const orderedStageIds = (DEEP_WORKFLOWS[item.workflowId] || []).map((stage) => stage.id);
+    if (!orderedStageIds.length) continue;
+    map[item.workflowId] = buildResumableWorkflowState({
+      workflowId: item.workflowId,
+      caseId: record.caseId,
+      completedStages: item.completedStages,
+      orderedStageIds
+    });
+  }
+  return map;
+}
+
+function resolveCaseContext(query, explicitState, explicitCaseId) {
+  const hasExplicitState = explicitState && typeof explicitState === 'object' && Object.keys(explicitState).length > 0;
+  if (hasExplicitState || explicitCaseId) {
+    return { caseId: explicitCaseId || generateCaseId(), workflowState: explicitState || {}, resumed: false, memoryRecord: null, effectiveQuery: query };
+  }
+
+  const stored = readCaseMemory();
+  const detectedIds = detectIntentIds(query);
+  const record = resolveResumeCase(stored, query, detectedIds);
+  if (!record) {
+    return { caseId: generateCaseId(), workflowState: {}, resumed: false, memoryRecord: null, effectiveQuery: query };
+  }
+
+  const effectiveQuery = detectedIds.length ? query : `${query} ${record.routingHint || ''}`.trim();
+  return {
+    caseId: record.caseId,
+    workflowState: workflowStateFromMemory(record),
+    resumed: true,
+    memoryRecord: record,
+    effectiveQuery
+  };
+}
+
+function persistCaseView(view) {
+  if (!view?.caseId || !view?.workflows?.length) return false;
+  const now = new Date().toISOString();
+  const prior = readCaseMemory().find((item) => item?.caseId === view.caseId) || null;
+  const progress = view.workflows.map((item) => ({
+    workflowId: item.workflowId,
+    currentStageId: item.currentStage?.id || null,
+    currentStageTitle: item.currentStage?.title || null,
+    completedStages: item.completedStages || [],
+    workflowStatus: item.workflowStatus,
+    nextAction: item.actionLabel,
+    approvalRequired: item.approvalRequired,
+    failClosed: Boolean(item.qualityGate?.status === 'BLOCKED')
+  }));
+  const record = sanitizeCaseRecord({
+    caseId: view.caseId,
+    title: prior?.title || buildCaseTitle(view.workflows),
+    workflowIds: view.workflowIds,
+    progress,
+    status: view.caseStatus === 'complete' ? 'complete' : 'active',
+    createdAt: prior?.createdAt || now,
+    updatedAt: now
+  });
+  return writeCaseMemory(upsertCaseMemory(readCaseMemory(), record));
+}
+
+export function listRememberedCases() {
+  return Object.freeze(readCaseMemory().map((item) => sanitizeCaseRecord(item)));
+}
+
+export function forgetRememberedCase(caseId) {
+  const id = safeText(caseId, 100);
+  if (!id) return false;
+  return writeCaseMemory(readCaseMemory().filter((item) => item?.caseId !== id));
+}
+
+export function clearRememberedCases() {
+  return writeCaseMemory([]);
+}
+
 export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts = [], workflowState = {}, caseId = null } = {}) {
   const normalizedQuery = safeText(query, 6000);
   if (!normalizedQuery) {
@@ -100,18 +228,21 @@ export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts 
       status: 'needs-intent',
       orchestration: 'unclassified',
       workflowIds: Object.freeze([]),
+      caseId: null,
+      resumedCase: false,
       primary: null,
       workflows: Object.freeze([]),
       governance: Object.freeze({ rawEvidenceValuesReturned: false, autoApprovalAllowed: false, failClosed: true })
     });
   }
 
+  const caseContext = resolveCaseContext(normalizedQuery, workflowState, caseId);
   const input = {
-    query: normalizedQuery,
-    caseId: caseId || null,
+    query: caseContext.effectiveQuery,
+    caseId: caseContext.caseId,
     evidence: Array.isArray(evidence) ? evidence : [],
     artifacts: Array.isArray(artifacts) ? artifacts : [],
-    workflowStateV4: workflowState && typeof workflowState === 'object' ? workflowState : {}
+    workflowStateV4: caseContext.workflowState
   };
   const result = runGovernmentWorkflow(input);
   const caseView = runGovernmentCaseByDetectedWorkflowsV4(input);
@@ -122,6 +253,9 @@ export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts 
     status: safeText(result.status, 80),
     orchestration: safeText(result.orchestration, 80),
     workflowIds: Object.freeze(uniq(result.intent)),
+    caseId: caseContext.caseId,
+    resumedCase: caseContext.resumed,
+    resumeLabel: caseContext.resumed ? 'ทำต่อจากเรื่องเดิม' : 'เริ่มเรื่องใหม่',
     caseStatus: safeText(caseView.status, 80),
     primary: safeWorkOrder(result.currentV4),
     workflows,
@@ -131,6 +265,13 @@ export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts 
       action: safeText(item?.action, 80),
       actionLabel: ACTION_LABELS[item?.action] || 'ดำเนินการตาม blocker ปัจจุบัน'
     }))),
+    caseMemory: Object.freeze({
+      enabled: Boolean(safeStorage()),
+      resumed: caseContext.resumed,
+      storesRawPrompt: false,
+      storesRawEvidence: false,
+      storesPersonalData: false
+    }),
     governance: Object.freeze({
       rawEvidenceValuesReturned: false,
       autoApprovalAllowed: false,
@@ -140,6 +281,7 @@ export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts 
       deliverableContractsRequired: true
     })
   });
+  persistCaseView(view);
   publishWorkflowProgressView(view);
   return view;
 }
@@ -165,6 +307,7 @@ export function buildWorkflowPromptBlock(view) {
 
   return [
     'GovPrompt Workflow Execution Contract v5',
+    `- Case: ${view.caseId || 'new'} · ${view.resumeLabel || 'เริ่มเรื่องใหม่'}`,
     `- Orchestration: ${view.orchestration || 'single-workflow'}`,
     `- Primary workflow: ${primary.workflowId}`,
     `- ขั้นปัจจุบัน: ${primary.currentStage?.title || 'เสร็จแล้ว'}${primary.currentStage?.id ? ` (${primary.currentStage.id})` : ''}`,
@@ -179,6 +322,7 @@ export function buildWorkflowPromptBlock(view) {
     '',
     'กติกาการเดินงาน',
     '- ใช้ state/evidence/risk/deliverable gates ตามลำดับ ห้ามข้ามขั้นหรือถือว่าผ่านจากชื่อเอกสารอย่างเดียว',
+    '- Case Memory เก็บเฉพาะสถานะ workflow ที่ผ่านการลดข้อมูล ไม่เก็บ prompt ดิบ หลักฐานดิบ ข้อมูลส่วนบุคคล หรือ secret',
     '- ห้ามสมมติข้อเท็จจริง เลขหนังสือ กฎหมาย ราคา อัตรา ผู้มีอำนาจ หรือหลักฐานที่ผู้ใช้ยังไม่ได้ให้/ยังไม่ได้ยืนยัน',
     '- ถ้าหลักฐานยังไม่ครบ ให้ตอบเบื้องต้นเท่าที่หลักฐานรองรับ แล้วขอเฉพาะข้อมูลหรือเอกสารที่เปลี่ยนผลลัพธ์จริง',
     '- ถ้าต้องใช้ข้อมูลปัจจุบัน ให้ตรวจต้นฉบับราชการและสถานะความใหม่ก่อนฟันธง',
@@ -191,7 +335,10 @@ export function buildWorkflowPromptBlock(view) {
 const api = Object.freeze({
   version: WORKFLOW_RUNTIME_BRIDGE_VERSION,
   buildWorkflowRuntimeView,
-  buildWorkflowPromptBlock
+  buildWorkflowPromptBlock,
+  listRememberedCases,
+  forgetRememberedCase,
+  clearRememberedCases
 });
 
 if (typeof window !== 'undefined') {
