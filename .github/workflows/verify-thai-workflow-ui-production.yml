@@ -1,0 +1,88 @@
+name: Verify Thai Workflow UI Production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'service-worker.js'
+      - 'assets/js/ui/workflow-progress-ui-v1.js'
+      - 'assets/js/core/government-workflow-runtime-v5.js'
+      - 'scripts/verify-thai-workflow-ui-production-e2e.mjs'
+      - '.github/workflows/verify-thai-workflow-ui-production.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: thai-workflow-ui-production
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Wait for GitHub Pages deployment propagation
+        run: sleep 90
+      - name: Install Chromium
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify Thai workflow labels on production in real browser
+        run: node scripts/verify-thai-workflow-ui-production-e2e.mjs
+      - name: Publish Thai Workflow UI Production PASS proof
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'Thai Workflow UI Production PASS Proof';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const productionUrl = 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/index.html';
+            const body = [
+              '# ✅ Thai Workflow UI Production PASS',
+              '',
+              `- Verified commit: \`${context.sha}\``,
+              `- Verified at: ${new Date().toISOString()}`,
+              `- Production: ${productionUrl}`,
+              `- Workflow run: ${runUrl}`,
+              '',
+              '## User-facing checks',
+              '- “ข้อมูล/หลักฐานที่ต้องเพิ่มเติม”: PASS',
+              '- hrIntent → “วัตถุประสงค์และประเภทงานบุคคลที่ต้องการ”: PASS',
+              '- facts → “ข้อเท็จจริงและข้อมูลพื้นฐานที่เกี่ยวข้อง”: PASS',
+              '- “ชิ้นงานที่จะจัดทำ”: PASS',
+              '- hr-fact-summary → “สรุปข้อเท็จจริงสำหรับงานบุคคล”: PASS',
+              '- need-memo → “บันทึกเหตุผลและความจำเป็น”: PASS',
+              '- Unknown internal keys are not exposed to ordinary users: PASS',
+              '- Real mobile Chromium page errors: PASS',
+              '',
+              '> This proof is written only after the real production page renders the Thai labels successfully.'
+            ].join('\n');
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              per_page: 100
+            });
+            const existing = issues.find(issue => !issue.pull_request && issue.title === title);
+            if (existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                title,
+                body,
+                state: 'open'
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body
+              });
+            }

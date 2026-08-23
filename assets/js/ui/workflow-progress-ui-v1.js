@@ -1,4 +1,4 @@
-export const WORKFLOW_PROGRESS_UI_VERSION = '1.1';
+export const WORKFLOW_PROGRESS_UI_VERSION = '1.2';
 
 let latestView = null;
 let observerStarted = false;
@@ -29,27 +29,64 @@ const KEY_LABELS = Object.freeze({
   marketPrice: 'ข้อมูลราคาตลาด/ราคาที่ใช้ประกอบการพิจารณา',
   procurementMethod: 'วิธีการจัดซื้อจัดจ้างที่เหมาะสม',
   citizenRequest: 'รายละเอียดคำขอของประชาชน',
+  serviceType: 'ประเภทบริการหรือคำขอที่ต้องการ',
+  officialServiceManual: 'คู่มือประชาชน/หลักเกณฑ์ฉบับปัจจุบัน',
+  serviceAuthority: 'ฐานอำนาจและหน่วยงานผู้รับผิดชอบบริการ',
+  minimumApplicantData: 'ข้อมูลผู้ยื่นคำขอเท่าที่จำเป็น',
   serviceManual: 'คู่มือประชาชน/หลักเกณฑ์ของบริการ',
   requiredDocuments: 'เอกสารประกอบคำขอที่กำหนด',
+  feeRule: 'หลักเกณฑ์ค่าธรรมเนียม',
+  serviceTimeRule: 'กรอบระยะเวลาดำเนินการ',
   fee: 'ค่าธรรมเนียมตามหลักเกณฑ์',
   timeframe: 'ระยะเวลาดำเนินการตามหลักเกณฑ์',
+  applicationData: 'ข้อมูลคำขอที่จำเป็น',
+  reviewCriteria: 'หลักเกณฑ์ที่เจ้าหน้าที่ใช้พิจารณา',
+  decisionAuthority: 'ผู้มีอำนาจพิจารณา',
+  decisionRecord: 'ผลการพิจารณาที่ได้รับการรับรองแล้ว',
   hrFactSummary: 'สรุปข้อเท็จจริงสำหรับงานบุคคล',
+  'hr-fact-summary': 'สรุปข้อเท็จจริงสำหรับงานบุคคล',
   needMemo: 'บันทึกเหตุผลและความจำเป็น',
+  'need-memo': 'บันทึกเหตุผลและความจำเป็น',
   workforcePlanDraft: 'ร่างแผนอัตรากำลัง',
+  'workforce-plan-draft': 'ร่างแผนอัตรากำลัง',
   torDraft: 'ร่างขอบเขตของงาน (TOR)',
+  'tor-draft': 'ร่างขอบเขตของงาน (TOR)',
   procurementMemo: 'ร่างบันทึกเสนอการจัดซื้อจัดจ้าง',
+  'procurement-memo': 'ร่างบันทึกเสนอการจัดซื้อจัดจ้าง',
   priceComparison: 'ตารางเปรียบเทียบราคา',
+  'price-comparison': 'ตารางเปรียบเทียบราคา',
   applicationChecklist: 'รายการตรวจสอบเอกสารคำขอ',
+  'application-checklist': 'รายการตรวจสอบเอกสารคำขอ',
   serviceAdvice: 'คำแนะนำขั้นตอนการรับบริการ',
-  decisionDraft: 'ร่างเอกสารเสนอผู้มีอำนาจพิจารณา'
+  'service-advice': 'คำแนะนำขั้นตอนการรับบริการ',
+  decisionDraft: 'ร่างเอกสารเสนอผู้มีอำนาจพิจารณา',
+  'decision-draft': 'ร่างเอกสารเสนอผู้มีอำนาจพิจารณา',
+  'service-identification': 'สรุปประเภทบริการและหน่วยงานเจ้าของเรื่อง',
+  'official-manual-register': 'ทะเบียนคู่มือประชาชน/หลักเกณฑ์ที่ใช้อ้างอิง',
+  'authority-scope-check': 'ผลตรวจอำนาจและขอบเขตบริการ',
+  'data-minimization-check': 'รายการข้อมูลผู้ยื่นที่จำเป็นตาม PDPA',
+  'requirements-checklist': 'รายการเอกสารและเงื่อนไขที่ต้องใช้',
+  'fee-time-summary': 'สรุปค่าธรรมเนียมและระยะเวลาดำเนินการ',
+  'application-receipt': 'หลักฐานรับคำขอ',
+  'completeness-check': 'ผลตรวจความครบถ้วนของคำขอ',
+  'deficiency-notice-or-clearance': 'รายการแจ้งเอกสารที่ขาดหรือผลยืนยันว่าครบถ้วน',
+  'officer-review-record': 'บันทึกผลการตรวจของเจ้าหน้าที่',
+  'decision-pack': 'ชุดเอกสารเสนอผู้มีอำนาจพิจารณา',
+  'decision-notification': 'หนังสือ/ข้อความแจ้งผลการพิจารณา',
+  'service-status-timeline': 'สถานะและลำดับเวลาการดำเนินงาน',
+  'service-audit-trail': 'บันทึกหลักฐานและประวัติการดำเนินงาน'
 });
 
-function humanizeKey(value = '') {
+function isThaiText(value = '') {
+  return /[ก-๙]/.test(String(value || ''));
+}
+
+export function humanizeWorkflowKey(value = '', fallback = 'ข้อมูล/หลักฐานเพิ่มเติมตามขั้นตอนนี้') {
   const key = String(value || '').trim();
   if (!key) return '';
   if (KEY_LABELS[key]) return KEY_LABELS[key];
-  const normalized = key.replace(/[._-]+/g, ' ').replace(/([a-z0-9])([A-Z])/g, '$1 $2').trim();
-  return normalized || key;
+  if (isThaiText(key)) return key;
+  return fallback;
 }
 
 function uniq(values = []) {
@@ -146,10 +183,20 @@ function renderInto(card, view) {
   grid.className = 'workflow-progress-grid';
   const missing = document.createElement('div');
   missing.className = 'workflow-progress-item';
-  missing.append(textNode('b', 'ข้อมูล/หลักฐานที่ต้องเพิ่มเติม'), textNode('span', model.missing.length ? model.missing.slice(0, 5).map(humanizeKey).join(' • ') : 'ข้อมูลและหลักฐานที่จำเป็นครบแล้ว'));
+  missing.append(
+    textNode('b', 'ข้อมูล/หลักฐานที่ต้องเพิ่มเติม'),
+    textNode('span', model.missing.length
+      ? model.missing.slice(0, 5).map((key) => humanizeWorkflowKey(key)).join(' • ')
+      : 'ข้อมูลและหลักฐานที่จำเป็นครบแล้ว')
+  );
   const deliverables = document.createElement('div');
   deliverables.className = 'workflow-progress-item';
-  deliverables.append(textNode('b', 'ชิ้นงานที่จะจัดทำ'), textNode('span', model.deliverables.length ? model.deliverables.slice(0, 5).map((item) => humanizeKey(item.key)).join(' • ') : 'ยังไม่มีชิ้นงานที่ต้องจัดทำในขั้นนี้'));
+  deliverables.append(
+    textNode('b', 'ชิ้นงานที่จะจัดทำ'),
+    textNode('span', model.deliverables.length
+      ? model.deliverables.slice(0, 5).map((item) => humanizeWorkflowKey(item.key, 'เอกสาร/ชิ้นงานประกอบขั้นตอนนี้')).join(' • ')
+      : 'ยังไม่มีชิ้นงานที่ต้องจัดทำในขั้นนี้')
+  );
   grid.append(missing, deliverables);
 
   const next = document.createElement('div');
@@ -175,7 +222,7 @@ function renderInto(card, view) {
     });
     model.missingOfficial.forEach((key) => {
       const li = document.createElement('li');
-      li.textContent = `ต้องยืนยันจากแหล่งราชการ: ${humanizeKey(key)}`;
+      li.textContent = `ต้องยืนยันจากแหล่งราชการ: ${humanizeWorkflowKey(key)}`;
       list.append(li);
     });
     details.append(summary, list);
@@ -215,4 +262,9 @@ if (typeof document !== 'undefined') {
   else ensureObserver();
 }
 
-export default Object.freeze({ version: WORKFLOW_PROGRESS_UI_VERSION, buildWorkflowProgressPanelModel, publishWorkflowProgressView });
+export default Object.freeze({
+  version: WORKFLOW_PROGRESS_UI_VERSION,
+  buildWorkflowProgressPanelModel,
+  humanizeWorkflowKey,
+  publishWorkflowProgressView
+});

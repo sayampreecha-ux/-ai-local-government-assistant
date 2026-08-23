@@ -9,6 +9,10 @@ const ASSETS = [
   './manifest.webmanifest',
 ];
 const PRECACHE_URLS = new Set(ASSETS.map(asset => new URL(asset, self.registration.scope).href));
+const NETWORK_FRESH_MODULES = Object.freeze([
+  '/assets/js/core/government-workflow-runtime-v5.js',
+  '/assets/js/ui/workflow-progress-ui-v1.js'
+]);
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));
@@ -46,6 +50,11 @@ self.addEventListener('fetch', event => {
         })
         .catch(() => caches.match('./index.html'))
     );
+    return;
+  }
+
+  if (NETWORK_FRESH_MODULES.some(path => url.pathname.endsWith(path))) {
+    event.respondWith(fetch(request, { cache: 'no-store' }));
     return;
   }
 
