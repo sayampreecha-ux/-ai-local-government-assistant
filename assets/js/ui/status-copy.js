@@ -42,12 +42,32 @@
     return formatPlan(createPlan({ question })) || '- ใช้ AI วิเคราะห์จากข้อมูลที่ผู้ใช้ให้ก่อน';
   }
 
+  function isDocumentFormattingQuestion(question) {
+    return /จัดหน้า|จัดรูปแบบ|จัดเอกสาร|เรียบเรียงเอกสาร|สรุปเอกสาร|สรุปรายงาน|สรุปประชุม|รายงานประชุม|ทำสไลด์|แปลง.*สไลด์|presentation|powerpoint|pptx|word|pdf/i.test(String(question || ''));
+  }
+
+  function buildDocumentFormattingBlock(question) {
+    if (!isDocumentFormattingQuestion(question)) return '';
+    return [
+      'โหมดจัดหน้าเอกสาร',
+      '- หากมี PDF/Word/PPTX แนบอยู่ใน AI ปลายทาง ให้อ่านไฟล์ที่แนบก่อน แล้วใช้เนื้อหาในไฟล์เป็นหลัก',
+      '- รักษาข้อเท็จจริง ชื่อบุคคล ชื่อหน่วยงาน ตัวเลข วันที่ เลขที่หนังสือ และสาระเดิม ห้ามแต่งเติมข้อเท็จจริงที่ไม่มีในเอกสาร',
+      '- จัดโครงสร้างให้อ่านง่ายและเป็นทางการด้วยหัวข้อหลัก หัวข้อย่อย Bullet Points ตาราง และระยะห่างตามความเหมาะสม โดยไม่ทำให้สาระเดิมคลาดเคลื่อน',
+      '- ถ้าเป็นรายงานทั่วไป: แยกหัวข้อหลัก/ย่อย เน้นสาระสำคัญ และใช้ Bullet Points หรือตารางเมื่อช่วยให้อ่านเร็วขึ้น',
+      '- ถ้าเป็นสรุปประชุม: แยก 1) สาระสำคัญ 2) มติ 3) งานที่ต้องดำเนินการ 4) ผู้รับผิดชอบ 5) กำหนดส่ง และห้ามสร้างมติ/ผู้รับผิดชอบ/กำหนดส่งที่เอกสารไม่ได้ระบุ',
+      '- ถ้าเป็นสไลด์นำเสนอ: แบ่งเป็นสไลด์ตามหัวข้อที่ชัดเจน ใช้ประมาณ 3–4 ประเด็นต่อสไลด์ และระบุชื่อสไลด์ทุกหน้า',
+      '- หากผู้ใช้ขอไฟล์ PDF/Word/PPTX และแพลตฟอร์มรองรับการสร้างไฟล์ ให้สร้างไฟล์ตามรูปแบบที่ขอ; หากไม่รองรับ ให้จัดเนื้อหาและโครงสร้างพร้อมนำไปวางต่อ และห้ามอ้างว่าส่งออกไฟล์แล้วหากไม่ได้สร้างไฟล์จริง',
+      '- ตรวจความครบถ้วน ความสม่ำเสมอของหัวข้อ การเว้นวรรค ตาราง และตัวเลขอีกครั้งก่อนส่งผลลัพธ์'
+    ].join('\n');
+  }
+
   function buildHandoffPrompt(card) {
     const question = findQuestion(card) || '[คำถามของผู้ใช้]';
     const domain = findDomain(card);
     const sources = collectOfficialSources(card);
     const sourceBlock = sources.length ? sources.map((source, index) => `${index + 1}. ${source.title || 'แหล่งราชการ'}\n${source.url}`).join('\n\n') : 'ยังไม่มีแหล่งราชการที่ยืนยันได้จาก GovPrompt';
-    return ['บทบาท', `คุณเป็นผู้ช่วยงานราชการไทยด้าน${domain}`, '', 'คำถามจากผู้ใช้', question, '', 'แนวทางเลือกเครื่องมือ', buildToolRoutingBlock(question), '', 'แนวทางตอบ', '- ตอบจากข้อเท็จจริงและหลักฐานที่มี ไม่สมมติเลขมาตรา เลขหนังสือ วันที่ ชื่อบุคคล หรือข้อเท็จจริงที่ไม่ได้ให้มา', '- หากข้อมูลสำคัญไม่ครบ ให้ตอบเบื้องต้นเท่าที่ทำได้ แล้วถามเพิ่มเฉพาะข้อมูลที่มีผลต่อคำตอบ', '- ใช้แหล่งราชการ/ต้นฉบับเป็นหลัก และตรวจสถานะความเป็นปัจจุบันก่อนฟันธง', '- แยกข้อเท็จจริง ประเด็นวิเคราะห์ ความเสี่ยง และข้อเสนอแนะเมื่อเหมาะสม', '- คำนึงถึง PDPA และหลีกเลี่ยงการขอหรือแสดงข้อมูลส่วนบุคคลที่ไม่จำเป็น', '- หากยังยืนยันฉบับล่าสุดไม่ได้ ให้ระบุชัดว่า ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง', '', 'แหล่งราชการที่ GovPrompt ค้นให้', sourceBlock, '', 'หมายเหตุ', 'Prompt นี้เป็นผลลัพธ์สำหรับนำไปวิเคราะห์ต่อ ไม่รวมกฎภายใน ระบบจัดอันดับ หรือกลไกความปลอดภัยภายในของ GovPrompt'].join('\n');
+    const formattingBlock = buildDocumentFormattingBlock(question);
+    return ['บทบาท', `คุณเป็นผู้ช่วยงานราชการไทยด้าน${domain}`, '', 'คำถามจากผู้ใช้', question, '', 'แนวทางเลือกเครื่องมือ', buildToolRoutingBlock(question), '', 'แนวทางตอบ', '- ตอบจากข้อเท็จจริงและหลักฐานที่มี ไม่สมมติเลขมาตรา เลขหนังสือ วันที่ ชื่อบุคคล หรือข้อเท็จจริงที่ไม่ได้ให้มา', '- หากข้อมูลสำคัญไม่ครบ ให้ตอบเบื้องต้นเท่าที่ทำได้ แล้วถามเพิ่มเฉพาะข้อมูลที่มีผลต่อคำตอบ', '- ใช้แหล่งราชการ/ต้นฉบับเป็นหลัก และตรวจสถานะความเป็นปัจจุบันก่อนฟันธง', '- แยกข้อเท็จจริง ประเด็นวิเคราะห์ ความเสี่ยง และข้อเสนอแนะเมื่อเหมาะสม', '- คำนึงถึง PDPA และหลีกเลี่ยงการขอหรือแสดงข้อมูลส่วนบุคคลที่ไม่จำเป็น', '- หากยังยืนยันฉบับล่าสุดไม่ได้ ให้ระบุชัดว่า ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง', formattingBlock ? `\n${formattingBlock}` : '', '', 'แหล่งราชการที่ GovPrompt ค้นให้', sourceBlock, '', 'หมายเหตุ', 'Prompt นี้เป็นผลลัพธ์สำหรับนำไปวิเคราะห์ต่อ ไม่รวมกฎภายใน ระบบจัดอันดับ หรือกลไกความปลอดภัยภายในของ GovPrompt'].filter(Boolean).join('\n');
   }
 
   function safeHandoff(card) {
@@ -97,8 +117,11 @@
     const section = card.querySelector('.answer-section');
     if (!section || section.querySelector('.simple-handoff-guide')) return;
     const guide = document.createElement('p');
+    const documentFormatting = isDocumentFormattingQuestion(findQuestion(card));
     guide.className = 'simple-handoff-guide';
-    guide.innerHTML = '<strong>ทำต่อแค่ 3 ขั้น:</strong> 1) กด “คัดลอกแล้วเปิดใน ChatGPT” 2) ใน ChatGPT แตะช่องข้อความแล้วกด “วาง” 3) กดส่ง<br><small>ถ้ามีไฟล์ ให้แนบไฟล์ใน ChatGPT แล้วพิมพ์ว่า “ใช้ไฟล์นี้ทำตามคำสั่งข้างบน”</small>';
+    guide.innerHTML = documentFormatting
+      ? '<strong>จัดหน้าเอกสาร 3 ขั้น:</strong> 1) กด “คัดลอกแล้วเปิดใน ChatGPT” 2) แนบไฟล์เดิม PDF/Word/PPTX ใน ChatGPT 3) วางคำสั่งแล้วกดส่ง<br><small>ถ้าต้องการไฟล์ปลายทาง ให้ระบุ Word, PDF หรือ PowerPoint ตามต้องการ และตรวจทานก่อนใช้จริง</small>'
+      : '<strong>ทำต่อแค่ 3 ขั้น:</strong> 1) กด “คัดลอกแล้วเปิดใน ChatGPT” 2) ใน ChatGPT แตะช่องข้อความแล้วกด “วาง” 3) กดส่ง<br><small>ถ้ามีไฟล์ ให้แนบไฟล์ใน ChatGPT แล้วพิมพ์ว่า “ใช้ไฟล์นี้ทำตามคำสั่งข้างบน”</small>';
     Object.assign(guide.style, { margin: '10px 0 12px', padding: '10px 12px', borderRadius: '12px', background: '#f3f7f5', lineHeight: '1.6' });
     if (heading) heading.after(guide); else section.prepend(guide);
   }
@@ -107,12 +130,12 @@
     const welcome = document.getElementById('welcome');
     if (!welcome) return;
     const intro = [...welcome.children].find(element => element.tagName === 'P' && !element.classList.contains('eyebrow'));
-    if (intro) intro.textContent = 'อ่าน · สรุป · ตรวจ · เปรียบเทียบเอกสารราชการ พร้อมวิเคราะห์และสร้าง Prompt ใช้ต่อได้';
-    const procurementAction = [...welcome.querySelectorAll('.quick-actions button')]
-      .find(button => String(button.textContent || '').trim() === 'จัดซื้อจัดจ้าง');
-    if (procurementAction) {
-      procurementAction.textContent = 'สรุปเอกสาร';
-      procurementAction.dataset.prompt = 'ช่วยสรุปเอกสารนี้แบบกระชับ แยกข้อเท็จจริง ประเด็นสำคัญ ความเสี่ยง และสิ่งที่ต้องดำเนินการต่อ โดยยึดข้อมูลในเอกสารเป็นหลัก';
+    if (intro) intro.textContent = 'อ่าน · สรุป · จัดหน้า · ตรวจ · เปรียบเทียบเอกสารราชการ พร้อมสร้าง Prompt ใช้ต่อได้';
+    const documentAction = [...welcome.querySelectorAll('.quick-actions button')]
+      .find(button => /^(?:จัดซื้อจัดจ้าง|สรุปเอกสาร|จัดหน้าเอกสาร)$/.test(String(button.textContent || '').trim()));
+    if (documentAction) {
+      documentAction.textContent = 'จัดหน้าเอกสาร';
+      documentAction.dataset.prompt = 'ช่วยจัดหน้าเอกสารที่แนบให้อ่านง่ายและเป็นทางการ โดยรักษาข้อเท็จจริง ชื่อ ตัวเลข วันที่ และสาระเดิมไว้ จัดหัวข้อหลัก/หัวข้อย่อย ใช้ Bullet Points หรือตารางเมื่อเหมาะสม หากเป็นสรุปประชุมให้แยกสาระสำคัญ มติ ผู้รับผิดชอบ และกำหนดส่ง หากเป็นสไลด์ให้แบ่งหัวข้อชัดเจนประมาณ 3–4 ประเด็นต่อสไลด์';
     }
   }
 
@@ -133,7 +156,7 @@
       actions.setAttribute('aria-label', 'เลือกวิธีนำคำสั่งไปใช้ต่อ');
     }
     const heading = card.querySelector('.answer-section > h3');
-    if (heading) heading.textContent = 'คำสั่งพร้อมแล้ว — ทำต่อใน ChatGPT';
+    if (heading) heading.textContent = isDocumentFormattingQuestion(findQuestion(card)) ? 'คำสั่งจัดหน้าเอกสารพร้อมแล้ว — ทำต่อใน ChatGPT' : 'คำสั่งพร้อมแล้ว — ทำต่อใน ChatGPT';
     addSimpleHandoffGuide(card, heading);
     const description = [...card.querySelectorAll('.answer-section > p')].find(p => p.textContent.includes('ระบบจัดคำถามไปที่')); description?.remove();
     const routeLabel = card.parentElement?.querySelector('.route-label'); if (routeLabel) routeLabel.textContent = findDomain(card);
