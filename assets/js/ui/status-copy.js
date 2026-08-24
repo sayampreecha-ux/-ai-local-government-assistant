@@ -84,7 +84,7 @@
     if (!section) return;
     [...section.children].forEach(element => {
       const text = String(element.textContent || '').trim();
-      if (element.tagName === 'P' && (/ค้นสด|live search|บริการค้นเว็บราชการสด|ยืนยันหลักฐานปัจจุบัน|ยังเชื่อมบริการค้นเว็บ/i.test(text))) element.hidden = true;
+      if (element.tagName === 'P' && (/ค้นสด|live search|บริการค้นเว็บราชการสด|ยืนยันหลักฐานปัจจุบัน|ยังเชื่อมบริการค้นเว็บราชการสด/i.test(text))) element.hidden = true;
       if (element.tagName === 'DETAILS') {
         const summary = String(element.querySelector('summary')?.textContent || '').trim();
         const hasOfficialLinks = Boolean(element.querySelector('a[href]'));
@@ -107,7 +107,13 @@
     const welcome = document.getElementById('welcome');
     if (!welcome) return;
     const intro = [...welcome.children].find(element => element.tagName === 'P' && !element.classList.contains('eyebrow'));
-    if (intro) intro.textContent = 'ใช้ง่าย 3 ขั้น: พิมพ์งาน → กด “คัดลอกแล้วเปิดใน ChatGPT” → วางใน ChatGPT แล้วกดส่ง';
+    if (intro) intro.textContent = 'อ่าน · สรุป · ตรวจ · เปรียบเทียบเอกสารราชการ พร้อมวิเคราะห์และสร้าง Prompt ใช้ต่อได้';
+    const procurementAction = [...welcome.querySelectorAll('.quick-actions button')]
+      .find(button => String(button.textContent || '').trim() === 'จัดซื้อจัดจ้าง');
+    if (procurementAction) {
+      procurementAction.textContent = 'สรุปเอกสาร';
+      procurementAction.dataset.prompt = 'ช่วยสรุปเอกสารนี้แบบกระชับ แยกข้อเท็จจริง ประเด็นสำคัญ ความเสี่ยง และสิ่งที่ต้องดำเนินการต่อ โดยยึดข้อมูลในเอกสารเป็นหลัก';
+    }
   }
 
   function simplifyAnswerCard(card) {
