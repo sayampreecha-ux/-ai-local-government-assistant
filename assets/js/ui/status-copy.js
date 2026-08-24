@@ -84,7 +84,7 @@
     if (!section) return;
     [...section.children].forEach(element => {
       const text = String(element.textContent || '').trim();
-      if (element.tagName === 'P' && (/ค้นสด|live search|บริการค้นเว็บราชการสด|ยืนยันหลักฐานปัจจุบัน|ยังเชื่อมบริการค้นเว็บราชการสด/i.test(text))) element.hidden = true;
+      if (element.tagName === 'P' && (/ค้นสด|live search|บริการค้นเว็บราชการสด|ยืนยันหลักฐานปัจจุบัน|ยังเชื่อมบริการค้นเว็บ/i.test(text))) element.hidden = true;
       if (element.tagName === 'DETAILS') {
         const summary = String(element.querySelector('summary')?.textContent || '').trim();
         const hasOfficialLinks = Boolean(element.querySelector('a[href]'));
