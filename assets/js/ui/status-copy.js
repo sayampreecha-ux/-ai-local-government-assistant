@@ -107,7 +107,13 @@
     const welcome = document.getElementById('welcome');
     if (!welcome) return;
     const intro = [...welcome.children].find(element => element.tagName === 'P' && !element.classList.contains('eyebrow'));
-    if (intro) intro.textContent = 'ใช้ง่าย 3 ขั้น: พิมพ์งาน → กด “คัดลอกแล้วเปิดใน ChatGPT” → วางใน ChatGPT แล้วกดส่ง';
+    if (intro) intro.textContent = 'อ่าน · สรุป · ตรวจ · เปรียบเทียบเอกสารราชการ พร้อมวิเคราะห์และสร้าง Prompt ใช้ต่อได้';
+    const procurementAction = [...welcome.querySelectorAll('.quick-actions button')]
+      .find(button => String(button.textContent || '').trim() === 'จัดซื้อจัดจ้าง');
+    if (procurementAction) {
+      procurementAction.textContent = 'สรุปเอกสาร';
+      procurementAction.dataset.prompt = 'ช่วยสรุปเอกสารนี้แบบกระชับ แยกข้อเท็จจริง ประเด็นสำคัญ ความเสี่ยง และสิ่งที่ต้องดำเนินการต่อ โดยยึดข้อมูลในเอกสารเป็นหลัก';
+    }
   }
 
   function simplifyAnswerCard(card) {
