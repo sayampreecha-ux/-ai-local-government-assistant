@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import worker from '../src/search-worker-v2.js';
 
 const FRONTEND_ORIGIN = 'https://sayampreecha-ux.github.io';
-const SECURITY_POLICY_VERSION = '2026-08-15.budget-reader-v2';
+const SECURITY_POLICY_VERSION = '2026-08-25.document-studio-v1';
 let lastAssetUrl = '';
 const assets = { fetch: async request => { lastAssetUrl=String(request.url); return new Response('asset',{status:200}); } };
 
@@ -15,9 +15,11 @@ assert.equal(noKey.status,503); assert.equal(noKey.headers.get('x-govprompt-secu
 const noDocumentKey = await worker.fetch(request('/api/official-document',{url:'https://dla.go.th/'}),{ASSETS:assets});
 assert.equal(noDocumentKey.status,503); assert.equal((await noDocumentKey.json()).error,'DOCUMENT_EXTRACT_PROVIDER_NOT_CONFIGURED');
 
-for (const path of ['/api/official-search','/api/official-document']) {
+for (const path of ['/api/official-search','/api/official-document','/api/document-studio/convert','/api/document-studio/compose']) {
   const preflight = await worker.fetch(new Request(`https://example.test${path}`,{method:'OPTIONS',headers:{origin:FRONTEND_ORIGIN}}),{ASSETS:assets});
   assert.equal(preflight.status,204); assert.equal(preflight.headers.get('access-control-allow-origin'),FRONTEND_ORIGIN); assert.equal(preflight.headers.get('x-govprompt-security'),SECURITY_POLICY_VERSION); assert.equal(preflight.headers.get('cache-control'),'no-store');
+}
+for (const path of ['/api/official-search','/api/official-document']) {
   const badOrigin = await worker.fetch(request(path,path.endsWith('search')?{query:'ทดสอบ'}:{url:'https://dla.go.th/'},'https://evil.example'),{ASSETS:assets});
   assert.equal(badOrigin.status,403); assert.equal((await badOrigin.json()).error,'ORIGIN_NOT_ALLOWED');
 }
@@ -52,6 +54,28 @@ try {
   assert.equal(extracted.status,200); const extractedBody=await extracted.json(); assert.equal(extractedBody.provider,'tavily-extract'); assert.equal(extractedBody.sourceUrl,'https://www.py-pao.go.th/budget.pdf'); assert.equal(extractedBody.resolvedUrl,'https://www.py-pao.go.th/budget.pdf'); assert.match(extractedBody.contentHash,/^[a-f0-9]{64}$/); assert.match(extractedBody.rawContent,/570,000,000/); assert.equal(extractedBody.governance.searchSnippetNotUsedAsDocumentContent,true);
 } finally { globalThis.fetch=originalFetch; }
 
+const aiCalls=[];
+const fakeAI={
+  toMarkdown:async input=>{ aiCalls.push({type:'convert',input}); return {format:'markdown',data:'# รายงานทดสอบ\nงบประมาณ 500,000 บาท\nกำหนดส่ง 30 กันยายน 2569',tokens:32,mimetype:'application/pdf'}; },
+  run:async (model,payload)=>{ aiCalls.push({type:'compose',model,payload}); return {response:{title:'รายงานทดสอบ',summary:'สรุปสาระสำคัญ',sections:[{heading:'สาระสำคัญ',paragraphs:['งบประมาณ 500,000 บาท'],bullets:[]}],actionItems:[{task:'ดำเนินการตามแผน',owner:'',due:'30 กันยายน 2569'}],slides:[]}}; }
+};
+const limiter={limit:async()=>({success:true})};
+const form=new FormData(); form.append('privacyConfirmed','yes'); form.append('file',new File(['mock-pdf'],'รายงาน.pdf',{type:'application/pdf'}));
+const converted=await worker.fetch(new Request('https://example.test/api/document-studio/convert',{method:'POST',headers:{origin:FRONTEND_ORIGIN},body:form}),{AI:fakeAI,ASSETS:assets,OFFICIAL_SEARCH_RATE_LIMITER:limiter});
+assert.equal(converted.status,200); const convertedBody=await converted.json(); assert.equal(convertedBody.provider,'cloudflare-workers-ai-toMarkdown'); assert.match(convertedBody.markdown,/500,000/); assert.match(convertedBody.contentHash,/^[a-f0-9]{64}$/); assert.equal(convertedBody.governance.rawDocumentNotPersistedByGovPrompt,true);
+
+const composed=await worker.fetch(request('/api/document-studio/compose',{mode:'meeting',text:convertedBody.markdown,filename:'รายงาน.pdf',privacyConfirmed:true}),{AI:fakeAI,ASSETS:assets,OFFICIAL_SEARCH_RATE_LIMITER:limiter});
+assert.equal(composed.status,200); const composedBody=await composed.json(); assert.equal(composedBody.document.title,'รายงานทดสอบ'); assert.equal(composedBody.document.actionItems[0].due,'30 กันยายน 2569'); assert.equal(composedBody.governance.promptInjectionTreatedAsDocumentData,true); assert.equal(composedBody.governance.humanReviewRequired,true); assert.equal(aiCalls.some(call=>call.type==='convert'),true); assert.equal(aiCalls.some(call=>call.type==='compose'),true);
+
+const noConsentForm=new FormData(); noConsentForm.append('file',new File(['x'],'รายงาน.pdf',{type:'application/pdf'}));
+const noConsent=await worker.fetch(new Request('https://example.test/api/document-studio/convert',{method:'POST',headers:{origin:FRONTEND_ORIGIN},body:noConsentForm}),{AI:fakeAI,ASSETS:assets});
+assert.equal(noConsent.status,428); assert.equal((await noConsent.json()).error,'PRIVACY_CONFIRMATION_REQUIRED');
+
+const sensitiveAI={toMarkdown:async()=>({format:'markdown',data:'เลขบัตร 1234567890123',tokens:4,mimetype:'application/pdf'}),run:fakeAI.run};
+const sensitiveForm=new FormData(); sensitiveForm.append('privacyConfirmed','yes'); sensitiveForm.append('file',new File(['x'],'ลับ.pdf',{type:'application/pdf'}));
+const sensitiveDocument=await worker.fetch(new Request('https://example.test/api/document-studio/convert',{method:'POST',headers:{origin:FRONTEND_ORIGIN},body:sensitiveForm}),{AI:sensitiveAI,ASSETS:assets});
+assert.equal(sensitiveDocument.status,422); const sensitiveDocumentBody=await sensitiveDocument.json(); assert.equal(sensitiveDocumentBody.error,'SENSITIVE_DOCUMENT_BLOCKED'); assert.equal(JSON.stringify(sensitiveDocumentBody).includes('1234567890123'),false);
+
 const accessEnv={ ASSETS:assets, ACCESS_CODE_SECRET:'local-test-code-key', ACCESS_ADMIN_PASSWORD_HASH:'', ACCESS_ADMIN_SESSION_SECRET:'local-test-session-key' };
 const testPassword='local-test-password';
 const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(testPassword)); accessEnv.ACCESS_ADMIN_PASSWORD_HASH=[...new Uint8Array(digest)].map(value=>value.toString(16).padStart(2,'0')).join('');
@@ -64,4 +88,4 @@ assert.equal(valid.status,200); assert.deepEqual(await valid.json(),{ok:true});
 
 const root=await worker.fetch(new Request('https://example.test/'),{ASSETS:assets}); assert.equal(root.status,200); assert.equal(await root.text(),'asset'); assert.equal(new URL(lastAssetUrl).pathname,'/index.html');
 const fallback=await worker.fetch(new Request('https://example.test/'),{}); assert.equal(fallback.status,404);
-console.log('GovPrompt v7 Worker v2 verification passed: official .go.th search, governed document extraction, privacy, rate-limit, access delegation and asset fallback.');
+console.log('GovPrompt v7 Worker v2 verification passed: official search/extraction, Document Studio convert/compose, privacy, rate-limit, access delegation and asset fallback.');
