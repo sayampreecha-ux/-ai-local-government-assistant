@@ -32,20 +32,24 @@ assert.match(verify, /Missing CLOUDFLARE_API_TOKEN/);
 assert.match(verify, /Missing CLOUDFLARE_ACCOUNT_ID/);
 assert.match(await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'), /"directory": "\.\/dist"/);
 
-// Canonical GitHub Pages production must follow approved changes on main automatically.
+// Canonical GitHub Pages production must publish the approved dist artifact on EVERY main push.
+// A restrictive paths filter can let GitHub's branch-based Pages deployment become the last writer
+// after scripts/workflow-only changes, so absence of a Pages push paths filter is a release invariant.
 assert.match(pages, /push:\s*\r?\n\s+branches:\s*\[main\]/);
 assert.match(pages, /workflow_dispatch:/);
 assert.doesNotMatch(pages, /pull_request:/);
+assert.doesNotMatch(pages, /push:\s*\r?\n\s+branches:\s*\[main\][\s\S]{0,160}\bpaths:/);
 assert.match(pages, /if:\s*github\.ref == 'refs\/heads\/main' && \(github\.event_name == 'push' \|\| github\.event_name == 'workflow_dispatch'\)/);
-assert.match(pages, /- '\*\.html'/);
-assert.match(pages, /- 'assets\/\*\*'/);
-assert.match(pages, /- 'knowledge\/\*\*'/);
 assert.match(pages, /path:\s*dist/);
+assert.match(pages, /actions\/configure-pages@v5/);
+assert.match(pages, /actions\/upload-pages-artifact@v4/);
 assert.match(pages, /actions\/deploy-pages@v4/);
 assert.match(pages, /verify-security-invariants\.mjs/);
 assert.match(pages, /verify-internal-pilot-security\.mjs/);
+assert.match(pages, /pnpm install --frozen-lockfile/);
 assert.match(pages, /pnpm test/);
 assert.match(pages, /pnpm build/);
+assert.match(pages, /concurrency:[\s\S]*group:\s*github-pages-production[\s\S]*cancel-in-progress:\s*false/);
 
 assert.match(deploy, /verify-production-security\.mjs/);
 assert.match(deploy, /permissions:\s*\r?\n\s+contents:\s*read/);
@@ -85,4 +89,4 @@ assert.match(leastPrivilegeRunbook, /Only after all prior checks pass/i);
 assert.match(leastPrivilegeRunbook, /revoke the old broad token/i);
 assert.doesNotMatch(leastPrivilegeRunbook, /(?:api[_ -]?token|secret)\s*[=:]\s*[A-Za-z0-9_-]{20,}/i);
 
-console.log('Deployment/privacy contract verified: guarded Cloudflare and canonical GitHub Pages production deploy only approved main, Workers AI is explicitly bound without adding stateful resources, static UI changes auto-publish, security/privacy gates run before Pages publication, required secret manifest and minimized observability remain enforced.');
+console.log('Deployment/privacy contract verified: guarded Cloudflare and canonical GitHub Pages production deploy only approved main, Workers AI is explicitly bound without adding stateful resources, every main push republishes the approved dist artifact, security/privacy gates run before Pages publication, required secret manifest and minimized observability remain enforced.');
