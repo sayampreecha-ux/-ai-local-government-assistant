@@ -21,14 +21,17 @@ await page.goto(url.toString(),{waitUntil:'domcontentloaded',timeout:30_000});
 await page.waitForFunction(()=>document.readyState==='complete' && document.getElementById('chatForm')?.dataset?.privacySubmitGuard==='3' && typeof window.GovPromptCore?.officialSearchConnector?.search==='function',undefined,{timeout:20_000});
 
 // Keep production verification organization-neutral: never inject a real organization/place name into the visible chat surface.
-// The short generic budget command is intentionally handled by Guided Intake first; complete that public UX before validating the governed Budget Draft Agent runtime.
+// The short generic budget command is intentionally handled by Guided Intake first. The public UI includes a deterministic
+// “ยังไม่ทราบ...ทำต่อ” path that finalizes the pending intake, preserves missing fields as explicit unknowns, and lets the governed
+// budget runtime proceed fail-closed rather than inventing facts. Exercise that exact production path here.
 const prompt='จัดทำร่างงบประมาณ';
-const intakeAnswer='ปี 2570 หน่วยงานประเภท อบจ. มีข้อมูลรายรับ รายจ่ายเดิม และข้อบัญญัติเดิม ต้องการจัดทำร่างพร้อมเอกสารและตรวจสมดุล';
 await page.locator('#promptInput').fill(prompt);
 await page.locator('#chatForm .send-button').click();
-await page.locator('.guided-intake-message').waitFor({state:'visible',timeout:10_000});
-await page.locator('#promptInput').fill(intakeAnswer);
-await page.locator('#chatForm .send-button').click();
+const intakeCard=page.locator('.guided-intake-message').last();
+await intakeCard.waitFor({state:'visible',timeout:10_000});
+const continueUnknown=intakeCard.locator('.answer-actions button');
+await continueUnknown.waitFor({state:'visible',timeout:5_000});
+await continueUnknown.click();
 await page.locator('.budget-runtime-result').waitFor({state:'visible',timeout:120_000});
 await page.waitForTimeout(1000);
 
@@ -46,8 +49,8 @@ const state=await page.evaluate(()=>({
 
 assert.equal(state.submitGuardVersion,'3','privacy submit guard must remain active');
 assert.equal(state.guidedIntakeVisible,true,'generic budget command must pass through Guided Intake before runtime execution');
-assert.ok(state.userMessages.some(message=>message.includes(prompt)),'completed budget intake did not create expected safe user message');
-assert.ok(state.userMessages.some(message=>message.includes('ปี 2570')),'completed budget intake did not preserve the neutral year/context answer');
+assert.ok(state.userMessages.some(message=>message.includes(prompt)),'guided intake continue path did not create expected safe user message');
+assert.ok(state.userMessages.some(message=>/ข้อมูลที่ผู้ใช้ยังไม่ทราบ|yearOrg|sourceData|purpose/.test(message)),'guided intake continue path did not preserve missing budget fields as explicit unknowns');
 assert.doesNotMatch(state.userMessages.join('\n'),/อบจ\.พะเยา/,'production E2E must not inject a real organization/place name');
 assert.match(state.routeLabel,/แผน โครงการ และงบประมาณ/,'completed short budget intake routed to wrong government domain');
 assert.match(state.budgetText,/Budget Draft Agent/,'Budget Draft Agent result surface missing');
@@ -69,5 +72,5 @@ if (/Working Draft พร้อมส่งออก/.test(state.budgetText)) {
   assert.doesNotMatch(state.budgetText,/Working Draft พร้อมส่งออก/,'blocked budget state must not claim export readiness');
 }
 
-console.log(JSON.stringify({frontend,releaseHomeVersion:RELEASE_HOME_VERSION,checks:{genericBudgetGuidedIntake:'PASS',guidedIntakeCompletion:'PASS',budgetDomainRouting:'PASS',privacyGuard:'PASS',budgetSurface:'PASS',governedWorkflowMarkers:'PASS',releaseCacheBust:'PASS',officialSearchWorker:'PASS',documentWorkerRouting:'PASS',officeExportOrFailClosed:'PASS'},requests,responses,pageErrors},null,2));
+console.log(JSON.stringify({frontend,releaseHomeVersion:RELEASE_HOME_VERSION,checks:{genericBudgetGuidedIntake:'PASS',guidedIntakeUnknownContinue:'PASS',budgetDomainRouting:'PASS',privacyGuard:'PASS',budgetSurface:'PASS',governedWorkflowMarkers:'PASS',releaseCacheBust:'PASS',officialSearchWorker:'PASS',documentWorkerRouting:'PASS',officeExportOrFailClosed:'PASS'},requests,responses,pageErrors},null,2));
 await browser.close();
