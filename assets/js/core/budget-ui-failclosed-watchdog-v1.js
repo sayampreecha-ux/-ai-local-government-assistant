@@ -1,8 +1,9 @@
 (() => {
   'use strict';
 
-  const WATCHDOG_VERSION = '1.1.0';
+  const WATCHDOG_VERSION = '1.2.0';
   const WATCHDOG_MS = 10_000;
+  const POLL_MS = 250;
   const BUDGET_PATTERN = /(?:จัดทำร่างงบประมาณ|ทำร่างงบ|ร่างงบประมาณ|ร่างงบ|จัดร่างงบ|ทำกรอบงบ)/i;
 
   const conversation = document.getElementById('conversation');
@@ -129,8 +130,19 @@
   conversationObserver.observe(conversation, { childList: true, subtree: true });
   inspectSafeUserBubbles();
 
+  // MutationObserver is the primary trigger. Polling is a deterministic backstop for browsers,
+  // service-worker transitions, or DOM insertion timing where an observer delivery could be missed.
+  // It scans only already-rendered safe user bubbles and never reads the composer.
+  const poller = window.setInterval(() => inspectSafeUserBubbles(conversation), POLL_MS);
+  window.addEventListener('pagehide', () => window.clearInterval(poller), { once: true });
+
   try {
     window.GovPromptCore = window.GovPromptCore || {};
-    window.GovPromptCore.BUDGET_UI_FAILCLOSED_WATCHDOG = Object.freeze({ version: WATCHDOG_VERSION, timeoutMs: WATCHDOG_MS, trigger: 'safe-user-bubble' });
+    window.GovPromptCore.BUDGET_UI_FAILCLOSED_WATCHDOG = Object.freeze({
+      version: WATCHDOG_VERSION,
+      timeoutMs: WATCHDOG_MS,
+      pollMs: POLL_MS,
+      trigger: 'safe-user-bubble-observer+poll'
+    });
   } catch {}
 })();
