@@ -46,10 +46,26 @@ test('worker converts documents and composes structured output with Workers AI',
   assert.match(source, /MAX_DOCUMENT_BYTES = 10 \* 1024 \* 1024/);
 });
 
-test('wrangler binds Workers AI and build ships the browser module', async () => {
+test('wrangler binds Workers AI and both Pages paths ship the browser module', async () => {
   const wrangler = await text('wrangler.jsonc');
   const build = await text('scripts/build-static.mjs');
+  const index = await text('index.html');
   assert.match(wrangler, /"ai"\s*:\s*\{[\s\S]*"binding"\s*:\s*"AI"/);
   assert.match(build, /document-studio-v1\.js/);
   assert.match(build, /Document Studio release script missing/);
+  assert.match(build, /serviceWorker: "6\.1\.2"/);
+  assert.match(index, /document-studio-v1\.js\?v=1\.0\.0/);
+  assert.match(index, />จัดหน้าเอกสาร<\/button>/);
+  assert.match(index, /service-worker\.js\?v=6\.1\.2/);
+});
+
+test('privacy and trust pages explicitly disclose Document Studio external processing', async () => {
+  const privacy = await text('privacy-notice.html');
+  const trust = await text('trust.html');
+  assert.match(privacy, /Document Studio และ Cloudflare Workers AI/);
+  assert.match(privacy, /external processing/);
+  assert.match(privacy, /ผู้ใช้เลือกไฟล์และยืนยันก่อนส่ง/);
+  assert.match(trust, /Document Studio Data Flow/);
+  assert.match(trust, /Cloudflare Workers AI Markdown Conversion/);
+  assert.match(trust, /เบราว์เซอร์สร้าง Word\/PDF\/PowerPoint/);
 });
