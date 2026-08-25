@@ -39,6 +39,7 @@ on:
       - 'scripts/verify-issue73-production-e2e.mjs'
       - 'scripts/verify-budget-production-e2e.mjs'
       - 'scripts/verify-three-workflows-production-e2e.mjs'
+      - '.github/workflows/deploy-github-pages.yml'
       - '.github/workflows/verify-production-surface.yml'
   workflow_dispatch:
 
@@ -58,10 +59,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Wait for deployment propagation
-        run: sleep 60
-      - name: Verify GitHub Pages production surface
-        run: node scripts/verify-frontend-production.mjs
+      - name: Wait for approved GitHub Pages artifact
+        run: |
+          for attempt in {1..12}; do
+            echo "Production sync check ${attempt}/12"
+            if node scripts/verify-frontend-production.mjs; then
+              echo "Approved dist artifact is live."
+              exit 0
+            fi
+            if [ "$attempt" -lt 12 ]; then sleep 15; fi
+          done
+          echo "Production did not converge to the approved dist artifact in time."
+          exit 1
       - name: Verify GP008 health worker toolkit on production
         run: node scripts/verify-gp008-production.mjs
       - name: Verify Cloudflare Worker production security
