@@ -3,7 +3,7 @@
 
   const core = window.GovPromptCore || {};
   const connector = core.officialSearchConnector;
-  const CLIENT_TIMEOUT_MS = 12_000;
+  const CLIENT_TIMEOUT_MS = 4_000;
   if (!connector || typeof connector.search !== 'function') return;
 
   const frozenEmpty = Object.freeze([]);
