@@ -8,7 +8,7 @@ const wranglerRaw = await readFile('wrangler.jsonc','utf8');
 const wrangler = JSON.parse(wranglerRaw);
 const forbiddenResourceKeys = [
   'routes', 'kv_namespaces', 'r2_buckets', 'd1_databases', 'queues', 'vectorize',
-  'hyperdrive', 'ai', 'browser', 'containers', 'pipelines', 'secrets_store_secrets'
+  'hyperdrive', 'browser', 'containers', 'pipelines', 'secrets_store_secrets'
 ];
 
 assert.match(deploy, /pnpm install --frozen-lockfile/);
@@ -74,6 +74,7 @@ assert.equal(wrangler?.observability?.logs?.persist, true);
 assert.equal(wrangler?.observability?.traces?.enabled, false);
 assert.equal(wrangler?.main, 'src/search-worker-v2.js');
 assert.equal(wrangler?.assets?.binding, 'ASSETS');
+assert.deepEqual(wrangler?.ai, { binding: 'AI' });
 for (const key of forbiddenResourceKeys) assert.equal(wrangler[key], undefined, `Unexpected Cloudflare resource in wrangler.jsonc: ${key}`);
 
 const leastPrivilegeRunbook = await readFile('docs/cloudflare-least-privilege-migration.md', 'utf8');
@@ -84,4 +85,4 @@ assert.match(leastPrivilegeRunbook, /Only after all prior checks pass/i);
 assert.match(leastPrivilegeRunbook, /revoke the old broad token/i);
 assert.doesNotMatch(leastPrivilegeRunbook, /(?:api[_ -]?token|secret)\s*[=:]\s*[A-Za-z0-9_-]{20,}/i);
 
-console.log('Deployment/privacy contract verified: guarded Cloudflare and canonical GitHub Pages production deploy only approved main, static UI changes auto-publish, security/privacy gates run before Pages publication, required secret manifest and minimized observability remain enforced.');
+console.log('Deployment/privacy contract verified: guarded Cloudflare and canonical GitHub Pages production deploy only approved main, Workers AI is explicitly bound without adding stateful resources, static UI changes auto-publish, security/privacy gates run before Pages publication, required secret manifest and minimized observability remain enforced.');
