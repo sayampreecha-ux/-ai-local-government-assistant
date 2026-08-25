@@ -3,26 +3,6 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: [main]
-    paths:
-      - '*.html'
-      - '*.htlm'
-      - '*.css'
-      - '*.js'
-      - '*.json'
-      - '*.webmanifest'
-      - '*.txt'
-      - '*.xml'
-      - 'assets/**'
-      - 'access-system/**'
-      - 'Plain text/**'
-      - 'knowledge/**'
-      - 'src/**'
-      - 'scripts/build-static.mjs'
-      - 'scripts/verify-security-invariants.mjs'
-      - 'scripts/verify-internal-pilot-security.mjs'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - '.github/workflows/deploy-github-pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -37,6 +17,8 @@ concurrency:
 jobs:
   deploy:
     # Production Pages may only publish the main branch, including manual fallback runs.
+    # Run on every main push so GitHub's branch-based Pages build can never remain the last deployment
+    # after a scripts/workflow-only change. This workflow always publishes the security-gated dist artifact.
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     environment:
