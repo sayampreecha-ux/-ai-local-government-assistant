@@ -11,7 +11,7 @@ const sitemapUrl = page('sitemap.xml');
 const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
-const RELEASE = Object.freeze({ home:'6.1.1', homeCss:'2.4.6', serviceWorker:'6.1.1', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0' });
+const RELEASE = Object.freeze({ home:'6.1.1', homeCss:'2.4.6', serviceWorker:'6.1.2', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0' });
 
 const runtimeSourceFiles = Object.freeze([
   'budget-balance-validator.js','budget-official-evidence-adapter.js','budget-official-document-parser.js','budget-document-content-ingestion.js',
@@ -28,7 +28,7 @@ const budgetBrowserAssets = Object.freeze([
   'assets/js/core/official-source-registry.js'
 ]);
 
-const [localIndex, localHomeSource, localPrivacyGuard, localSubmitGuard, localServiceWorker, localRuntimeBridge, localHomeCss, ...rest] = await Promise.all([
+const [localIndex, localHomeSource, localPrivacyGuard, localSubmitGuard, localServiceWorker, localRuntimeBridge, localHomeCss, localDocumentStudio, ...rest] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/home-v3.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/core/privacy-guard.js', import.meta.url),'utf8'),
@@ -36,6 +36,7 @@ const [localIndex, localHomeSource, localPrivacyGuard, localSubmitGuard, localSe
   readFile(new URL('../service-worker.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/core/government-workflow-runtime-v5.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/css/home-v3.css', import.meta.url),'utf8'),
+  readFile(new URL('../assets/js/core/document-studio-v1.js', import.meta.url),'utf8'),
   ...runtimeSourceFiles.map(file => readFile(new URL(`../src/${file}`, import.meta.url),'utf8')),
   ...budgetBrowserAssets.map(file => readFile(new URL(`../${file}`, import.meta.url),'utf8'))
 ]);
@@ -48,6 +49,7 @@ const localHome = localHomeSource
 const expectedPrivacyGuard = localIndex.match(/assets\/js\/core\/privacy-guard\.js\?v=[^"'\s<]+/)?.[0];
 const expectedSubmitGuard = localIndex.match(/assets\/js\/core\/privacy-submit-guard\.js\?v=[^"'\s<]+/)?.[0];
 const expectedHome = `assets/js/home-v3.js?v=${RELEASE.home}`;
+const expectedDocumentStudio = `assets/js/core/document-studio-v1.js?v=${RELEASE.documentStudio}`;
 assert.ok(expectedPrivacyGuard); assert.ok(expectedSubmitGuard);
 
 async function fetchText(url) {
@@ -65,12 +67,15 @@ const { response:indexResponse, text:index } = await fetchText(frontend);
 assert.equal(index.includes(expectedPrivacyGuard),true);
 assert.equal(index.includes(expectedSubmitGuard),true);
 assert.equal(index.includes(expectedHome),true);
+assert.equal(index.includes(expectedDocumentStudio),true);
 assert.match(index,/Public Beta|Internal Pilot/);
 assert.match(index,new RegExp(`assets/js/home-v3\\.js\\?v=${RELEASE.home.replaceAll('.','\\.')}`));
 assert.match(index,new RegExp(`assets/css/home-v3\\.css\\?v=${RELEASE.homeCss.replaceAll('.','\\.')}`));
 assert.match(index,/official-source-registry\.js\?v=2\.4\.0/);
 assert.match(index,new RegExp(`service-worker\\.js\\?v=${RELEASE.serviceWorker.replaceAll('.','\\.')}`));
+assert.match(index,new RegExp(`document-studio-v1\\.js\\?v=${RELEASE.documentStudio.replaceAll('.','\\.')}`));
 assert.match(index,/data-prompt="จัดทำร่างงบประมาณ"/);
+assert.match(index,/จัดหน้าเอกสาร/);
 assert.match(index,/https:\/\/www\.facebook\.com\/GovPromptThailandAI/);
 assert.match(index,/privacy-notice\.html/);
 assert.equal(indexResponse.url.startsWith('https://'),true);
@@ -81,6 +86,7 @@ const home = await exactProduction(expectedHome,localHome);
 const css = await exactProduction(`assets/css/home-v3.css?v=${RELEASE.homeCss}`,localHomeCss);
 const sw = await exactProduction(`service-worker.js?v=${RELEASE.serviceWorker}`,localServiceWorker);
 const runtimeBridge = await exactProduction('assets/js/core/government-workflow-runtime-v5.js?v=5.1.0',localRuntimeBridge);
+const documentStudio = await exactProduction(expectedDocumentStudio,localDocumentStudio);
 
 assert.match(privacy.text,/sanitizeExternalContent/);
 assert.match(privacy.text,/รหัสผู้ป่วย\/HN\/AN/);
@@ -106,6 +112,11 @@ assert.match(runtimeBridge.text,/WORKFLOW_RUNTIME_BRIDGE_VERSION = '5\.3'/);
 assert.match(runtimeBridge.text,/rawEvidenceValuesReturned: false/);
 assert.match(runtimeBridge.text,/autoApprovalAllowed: false/);
 assert.match(runtimeBridge.text,/gov\.citizen-service/);
+assert.match(documentStudio.text,/\/api\/document-studio\/convert/);
+assert.match(documentStudio.text,/\/api\/document-studio\/compose/);
+assert.match(documentStudio.text,/Word \(\.docx\)/);
+assert.match(documentStudio.text,/PowerPoint \(\.pptx\)/);
+assert.match(documentStudio.text,/Privacy Checkpoint/);
 
 const runtimeProduction = {};
 for (let i=0;i<runtimeSourceFiles.length;i+=1) {
@@ -126,9 +137,9 @@ assert.equal(/privacy-(?:submit-)?guard\.js/i.test(sw.text),false);
 assert.equal(/budget-browser-(?:input|review)|budget-file-parser/i.test(sw.text),false);
 
 const { response:trustResponse,text:trust } = await fetchText(trustUrl);
-assert.match(trust,/Internal Pilot|Public Beta/); assert.match(trust,/ผู้ให้บริการค้นเว็บภายนอก|search provider|Tavily/i); assert.match(trust,/data-minimized|Data minimization|ลดข้อมูล/i); assert.equal(trustResponse.url.startsWith('https://'),true);
+assert.match(trust,/Internal Pilot|Public Beta/); assert.match(trust,/ผู้ให้บริการค้นเว็บภายนอก|search provider|Tavily/i); assert.match(trust,/Workers AI|Document Studio/i); assert.match(trust,/data-minimized|Data minimization|ลดข้อมูล/i); assert.equal(trustResponse.url.startsWith('https://'),true);
 const { response:privacyResponse,text:privacyNotice } = await fetchText(privacyNoticeUrl);
-assert.match(privacyNotice,/ประกาศความเป็นส่วนตัว/); assert.match(privacyNotice,/Cloudflare Worker/); assert.match(privacyNotice,/ผู้ให้บริการค้นเว็บภายนอก|search provider|Tavily/i); assert.match(privacyNotice,/ChatGPT/); assert.equal(privacyResponse.url.startsWith('https://'),true);
+assert.match(privacyNotice,/ประกาศความเป็นส่วนตัว/); assert.match(privacyNotice,/Cloudflare Worker/); assert.match(privacyNotice,/Workers AI|Document Studio/i); assert.match(privacyNotice,/ผู้ให้บริการค้นเว็บภายนอก|search provider|Tavily/i); assert.match(privacyNotice,/ChatGPT/); assert.equal(privacyResponse.url.startsWith('https://'),true);
 const { text:robots } = await fetchText(robotsUrl);
 assert.match(robots,/User-agent:\s*\*/i); assert.match(robots,/Disallow:\s*\/admin\.html/i); assert.match(robots,/Disallow:\s*\/api\//i); assert.match(robots,/Disallow:\s*\/uploads\//i);
 const { text:sitemap } = await fetchText(sitemapUrl);
@@ -144,8 +155,8 @@ console.log(JSON.stringify({
   release:RELEASE,
   checks:{
     https:'PASS', privacyBoundary:'PASS', issue73FailClosedMarkers:'PASS', homeBudgetRuntime:'PASS', officeExports:'PASS', editableBudgetReview:'PASS',
-    workflowRuntimeBridge:'PASS', workflowRuntimeModules:`${runtimeSourceFiles.length} PASS`, budgetBrowserAssets:`${budgetBrowserAssets.length} PASS`,
+    workflowRuntimeBridge:'PASS', workflowRuntimeModules:`${runtimeSourceFiles.length} PASS`, budgetBrowserAssets:`${budgetBrowserAssets.length} PASS`, documentStudio:'PASS',
     releaseCacheBust:'PASS', serviceWorkerNetworkFirst:'PASS', trustPage:'PASS', privacyNotice:'PASS', robotsPolicy:'PASS', sitemapBoundary:'PASS', llmsPolicy:'PASS', adminNoindexShell:'PASS'
   },
-  production:{ runtimeProduction, budgetProduction, etag:{privacy:privacy.response.headers.get('etag'),submit:submit.response.headers.get('etag'),home:home.response.headers.get('etag'),css:css.response.headers.get('etag'),serviceWorker:sw.response.headers.get('etag')} }
+  production:{ runtimeProduction, budgetProduction, etag:{privacy:privacy.response.headers.get('etag'),submit:submit.response.headers.get('etag'),home:home.response.headers.get('etag'),css:css.response.headers.get('etag'),serviceWorker:sw.response.headers.get('etag'),documentStudio:documentStudio.response.headers.get('etag')} }
 },null,2));
