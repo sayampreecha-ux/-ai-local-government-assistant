@@ -2,7 +2,7 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 
 const output = "dist";
-const RELEASE_VERSIONS = Object.freeze({ home: "6.1.1", homeCss: "2.4.6", serviceWorker: "6.1.2", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0", documentStudio: "1.0.0", caseList: "1.0.0" });
+const RELEASE_VERSIONS = Object.freeze({ home: "6.1.1", homeCss: "2.4.6", serviceWorker: "6.1.2", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0", documentStudio: "1.0.0", caseList: "1.0.0", searchTimeoutGuard: "1.0.0" });
 const publicExtensions = new Set([
   ".html", ".htlm", ".css", ".js", ".json", ".webmanifest", ".txt", ".xml"
 ]);
@@ -61,6 +61,11 @@ if (!distIndex.includes(outcomeSearchScript)) {
   if (!distIndex.includes(officialSearchScript)) throw new Error("Official search connector script marker not found in dist/index.html");
   distIndex = distIndex.replace(officialSearchScript, `${officialSearchScript}${outcomeSearchScript}`);
 }
+const searchTimeoutScript = `<script src="assets/js/core/official-search-timeout-guard-v1.js?v=${RELEASE_VERSIONS.searchTimeoutGuard}" defer></script>`;
+if (!distIndex.includes(searchTimeoutScript)) {
+  if (!distIndex.includes(outcomeSearchScript)) throw new Error("Outcome-first search policy marker not found in dist/index.html");
+  distIndex = distIndex.replace(outcomeSearchScript, `${outcomeSearchScript}${searchTimeoutScript}`);
+}
 
 const documentStudioScript = `<script type="module" src="assets/js/core/document-studio-v1.js?v=${RELEASE_VERSIONS.documentStudio}"></script>`;
 if (!distIndex.includes(documentStudioScript)) {
@@ -90,6 +95,7 @@ await writeFile(distHomePath, distHome);
 if (!distIndex.includes(`assets/js/home-v3.js?v=${RELEASE_VERSIONS.home}`)) throw new Error("Home release cache-bust version missing from dist/index.html");
 if (!distIndex.includes(`assets/css/home-v3.css?v=${RELEASE_VERSIONS.homeCss}`)) throw new Error("Home CSS release cache-bust version missing from dist/index.html");
 if (!distIndex.includes(`service-worker.js?v=${RELEASE_VERSIONS.serviceWorker}`)) throw new Error("Service worker release cache-bust version missing from dist/index.html");
+if (!distIndex.includes(`assets/js/core/official-search-timeout-guard-v1.js?v=${RELEASE_VERSIONS.searchTimeoutGuard}`)) throw new Error("Official-search timeout guard missing from dist/index.html");
 if (!distIndex.includes(`assets/js/core/document-studio-v1.js?v=${RELEASE_VERSIONS.documentStudio}`)) throw new Error("Document Studio release script missing from dist/index.html");
 if (!distIndex.includes(`assets/js/ui/case-list-bootstrap-v1.js?v=${RELEASE_VERSIONS.caseList}`)) throw new Error("Case list bootstrap release script missing from dist/index.html");
 if (!distHome.includes(`budget-browser-input-runtime-v1.js?v=${RELEASE_VERSIONS.budgetInputRuntime}`)) throw new Error("Budget input runtime release version missing from dist Home asset");
