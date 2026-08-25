@@ -1,14 +1,19 @@
 (() => {
   'use strict';
 
-  const WATCHDOG_VERSION = '1.0.0';
+  const WATCHDOG_VERSION = '1.1.0';
   const WATCHDOG_MS = 10_000;
   const BUDGET_PATTERN = /(?:จัดทำร่างงบประมาณ|ทำร่างงบ|ร่างงบประมาณ|ร่างงบ|จัดร่างงบ|ทำกรอบงบ)/i;
 
-  const form = document.getElementById('chatForm');
-  const input = document.getElementById('promptInput');
   const conversation = document.getElementById('conversation');
-  if (!form || !input || !conversation) return;
+  if (!conversation) return;
+
+  document.documentElement.dataset.budgetWatchdogVersion = WATCHDOG_VERSION;
+  document.documentElement.dataset.budgetWatchdogReady = 'true';
+
+  const observedUserBodies = new WeakSet();
+  let lastBudgetText = '';
+  let lastBudgetStartedAt = 0;
 
   function realBudgetResultCount() {
     return document.querySelectorAll('.budget-runtime-result:not([data-budget-watchdog-fallback="true"])').length;
@@ -66,35 +71,66 @@
     content.append(label, card);
     article.append(mark, content);
     conversation.append(article);
+    document.documentElement.dataset.budgetWatchdogFallback = 'visible';
     article.scrollIntoView?.({ behavior: 'smooth', block: 'end' });
     return article;
   }
 
   function watchBudgetSubmission(text) {
-    if (!BUDGET_PATTERN.test(String(text || ''))) return;
+    const normalized = String(text || '').trim();
+    if (!BUDGET_PATTERN.test(normalized)) return;
+
+    const now = Date.now();
+    if (normalized === lastBudgetText && now - lastBudgetStartedAt < 2_000) return;
+    lastBudgetText = normalized;
+    lastBudgetStartedAt = now;
+    document.documentElement.dataset.budgetWatchdogTriggered = 'true';
+
     const initialRealCount = realBudgetResultCount();
     let fallbackArticle = null;
     const timer = window.setTimeout(() => {
       fallbackArticle = appendFailClosedFallback(initialRealCount);
     }, WATCHDOG_MS);
 
-    const observer = new MutationObserver(() => {
+    const resultObserver = new MutationObserver(() => {
       if (realBudgetResultCount() <= initialRealCount) return;
       window.clearTimeout(timer);
       if (fallbackArticle?.isConnected) fallbackArticle.remove();
-      observer.disconnect();
+      document.documentElement.dataset.budgetWatchdogFallback = 'replaced-by-runtime';
+      resultObserver.disconnect();
     });
-    observer.observe(conversation, { childList: true, subtree: true });
-    window.setTimeout(() => observer.disconnect(), 180_000);
+    resultObserver.observe(conversation, { childList: true, subtree: true });
+    window.setTimeout(() => resultObserver.disconnect(), 180_000);
   }
 
-  // Capture phase runs after the privacy guard for safe requests and before Home clears the input.
-  // If the privacy guard blocks the request with stopImmediatePropagation(), this listener never receives raw restricted data.
-  form.addEventListener('submit', () => {
-    const safeCandidate = input.value.trim();
-    if (safeCandidate) watchBudgetSubmission(safeCandidate);
-  }, true);
+  function inspectSafeUserBubbles(root = conversation) {
+    const bodies = [];
+    if (root?.matches?.('.message.user .message-body')) bodies.push(root);
+    if (root?.querySelectorAll) bodies.push(...root.querySelectorAll('.message.user .message-body'));
+    if (root === conversation) bodies.push(...conversation.querySelectorAll('.message.user .message-body'));
 
-  window.GovPromptCore = window.GovPromptCore || {};
-  window.GovPromptCore.BUDGET_UI_FAILCLOSED_WATCHDOG = Object.freeze({ version: WATCHDOG_VERSION, timeoutMs: WATCHDOG_MS });
+    for (const body of bodies) {
+      if (observedUserBodies.has(body)) continue;
+      observedUserBodies.add(body);
+      const safeRenderedText = String(body.textContent || '').trim();
+      if (safeRenderedText) watchBudgetSubmission(safeRenderedText);
+    }
+  }
+
+  // Privacy boundary: only observe user bubbles already rendered by Home after the capture-phase
+  // privacy/data gate has allowed the request. Raw composer text is never read by this watchdog.
+  const conversationObserver = new MutationObserver(records => {
+    for (const record of records) {
+      for (const node of record.addedNodes || []) {
+        if (node.nodeType === 1) inspectSafeUserBubbles(node);
+      }
+    }
+  });
+  conversationObserver.observe(conversation, { childList: true, subtree: true });
+  inspectSafeUserBubbles();
+
+  try {
+    window.GovPromptCore = window.GovPromptCore || {};
+    window.GovPromptCore.BUDGET_UI_FAILCLOSED_WATCHDOG = Object.freeze({ version: WATCHDOG_VERSION, timeoutMs: WATCHDOG_MS, trigger: 'safe-user-bubble' });
+  } catch {}
 })();
