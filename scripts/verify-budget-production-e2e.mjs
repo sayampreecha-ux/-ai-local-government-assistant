@@ -29,7 +29,7 @@ await page.locator('#promptInput').fill(prompt);
 await page.locator('#chatForm .send-button').click();
 const intakeCard=page.locator('.guided-intake-message').last();
 await intakeCard.waitFor({state:'visible',timeout:10_000});
-const continueUnknown=intakeCard.locator('.answer-actions button');
+const continueUnknown=intakeCard.getByRole('button',{name:'ยังไม่ทราบบางข้อ — ทำต่อ',exact:true});
 await continueUnknown.waitFor({state:'visible',timeout:5_000});
 await continueUnknown.click();
 await page.locator('.budget-runtime-result').waitFor({state:'visible',timeout:120_000});
