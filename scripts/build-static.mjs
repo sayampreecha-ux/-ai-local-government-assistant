@@ -2,7 +2,7 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 
 const output = "dist";
-const RELEASE_VERSIONS = Object.freeze({ home: "6.1.1", homeCss: "2.4.6", serviceWorker: "6.1.2", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0", documentStudio: "1.0.0", caseList: "1.0.0", searchTimeoutGuard: "1.1.0" });
+const RELEASE_VERSIONS = Object.freeze({ home: "6.1.1", homeCss: "2.4.6", serviceWorker: "6.1.2", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0", documentStudio: "1.0.0", caseList: "1.0.0", searchTimeoutGuard: "1.1.0", budgetUiWatchdog: "1.0.0" });
 const publicExtensions = new Set([
   ".html", ".htlm", ".css", ".js", ".json", ".webmanifest", ".txt", ".xml"
 ]);
@@ -83,6 +83,13 @@ distIndex = distIndex
   .replace(/assets\/css\/home-v3\.css\?v=[^"'\s<]+/g, `assets/css/home-v3.css?v=${RELEASE_VERSIONS.homeCss}`)
   .replace(/assets\/js\/home-v3\.js\?v=[^"'\s<]+/g, `assets/js/home-v3.js?v=${RELEASE_VERSIONS.home}`)
   .replace(/service-worker\.js\?v=[^"'\s<)]+/g, `service-worker.js?v=${RELEASE_VERSIONS.serviceWorker}`);
+
+const normalizedHomeScript = `<script src="assets/js/home-v3.js?v=${RELEASE_VERSIONS.home}" defer></script>`;
+const budgetWatchdogScript = `<script src="assets/js/core/budget-ui-failclosed-watchdog-v1.js?v=${RELEASE_VERSIONS.budgetUiWatchdog}" defer></script>`;
+if (!distIndex.includes(budgetWatchdogScript)) {
+  if (!distIndex.includes(normalizedHomeScript)) throw new Error("Home script marker not found for Budget UI watchdog injection");
+  distIndex = distIndex.replace(normalizedHomeScript, `${normalizedHomeScript}${budgetWatchdogScript}`);
+}
 await writeFile(distIndexPath, distIndex);
 
 const distHomePath = join(output, "assets/js/home-v3.js");
@@ -96,6 +103,7 @@ if (!distIndex.includes(`assets/js/home-v3.js?v=${RELEASE_VERSIONS.home}`)) thro
 if (!distIndex.includes(`assets/css/home-v3.css?v=${RELEASE_VERSIONS.homeCss}`)) throw new Error("Home CSS release cache-bust version missing from dist/index.html");
 if (!distIndex.includes(`service-worker.js?v=${RELEASE_VERSIONS.serviceWorker}`)) throw new Error("Service worker release cache-bust version missing from dist/index.html");
 if (!distIndex.includes(`assets/js/core/official-search-timeout-guard-v1.js?v=${RELEASE_VERSIONS.searchTimeoutGuard}`)) throw new Error("Official-search timeout guard missing from dist/index.html");
+if (!distIndex.includes(`assets/js/core/budget-ui-failclosed-watchdog-v1.js?v=${RELEASE_VERSIONS.budgetUiWatchdog}`)) throw new Error("Budget UI fail-closed watchdog missing from dist/index.html");
 if (!distIndex.includes(`assets/js/core/document-studio-v1.js?v=${RELEASE_VERSIONS.documentStudio}`)) throw new Error("Document Studio release script missing from dist/index.html");
 if (!distIndex.includes(`assets/js/ui/case-list-bootstrap-v1.js?v=${RELEASE_VERSIONS.caseList}`)) throw new Error("Case list bootstrap release script missing from dist/index.html");
 if (!distHome.includes(`budget-browser-input-runtime-v1.js?v=${RELEASE_VERSIONS.budgetInputRuntime}`)) throw new Error("Budget input runtime release version missing from dist Home asset");
