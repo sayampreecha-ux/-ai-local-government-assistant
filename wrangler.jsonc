@@ -3,6 +3,9 @@
   "name": "ai-local-government-assistant",
   "main": "src/search-worker-v2.js",
   "compatibility_date": "2026-08-10",
+  "ai": {
+    "binding": "AI"
+  },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
