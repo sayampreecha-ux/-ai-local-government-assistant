@@ -455,7 +455,7 @@
   const panels = {
     history: ['ประวัติ', 'บทสนทนาล่าสุด', historyPanel],
     knowledge: ['คลังความรู้', 'Knowledge Engine', () => '<div class="empty-panel"><strong>คลังความรู้แบบ Metadata + Index</strong><p>GovPrompt จะใช้คลังเบาเป็นตัวชี้ไปยังต้นฉบับราชการ และตรวจความใหม่ก่อนนำข้อมูลมาใช้</p></div>'],
-    profile: ['โปรไฟล์', 'บริบทการทำงาน', () => '<div class="empty-panel"><strong>พื้นที่องค์กรนำร่อง</strong><p>หน้า Home ไม่ส่งหรือจัดเก็บข้อมูลโปรไฟล์ ส่วนงานองค์กรใช้บัญชีและสิทธิ์แยกตามหน่วยงาน</p></div><div class="tool-list"><a href="automation-pilot.html"><strong>ศูนย์งานอัตโนมัติ</strong><small>ตั้งเวลาสรุปงานและตรวจอนุมัติฉบับร่าง · บัญชีองค์กรเท่านั้น</small></a></div>'],
+    profile: ['โปรไฟล์', 'บริบทการทำงาน', () => '<div class="empty-panel"><strong>พื้นที่องค์กรนำร่อง</strong><p>หน้า Home ไม่ส่งหรือจัดเก็บข้อมูลโปรไฟล์ ส่วนงานองค์กรใช้บัญชีและสิทธิ์แยกตามหน่วยงาน</p></div><div class="tool-list"><a href="https://sayampreecha-ux.github.io/govprompt-thailand-v6/pilot/"><strong>Workspace องค์กร</strong><small>ติดตามโครงการ · ศูนย์สั่งการ · งานย่อย · งานอัตโนมัติ · บัญชีองค์กรเท่านั้น</small></a></div>'],
     tools: ['เครื่องมือ', 'ADVANCED USERS', toolsPanel]
   };
 
