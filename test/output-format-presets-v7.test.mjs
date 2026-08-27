@@ -86,7 +86,9 @@ test('home exposes the presets as a composer choice without adding a homepage ca
   assert.ok(index.indexOf('output-format-presets-v1.js') < index.indexOf('prompt-orchestrator.js'));
   assert.ok(index.indexOf('prompt-orchestrator.js') < index.indexOf('home-v3.js'));
   assert.match(home, /outputFormatId: outputFormatSelect\?\.value \|\| 'auto'/);
-  assert.match(home, /automation-pilot\.html/);
+  assert.match(home, /Workspace องค์กร/);
+  assert.match(home, /govprompt-thailand-v6\/pilot\//);
+  assert.doesNotMatch(home, /<strong>ศูนย์งานอัตโนมัติ<\/strong>/);
 
   const bottomNav = index.match(/<nav class="bottom-nav"[\s\S]*?<\/nav>/)?.[0] || '';
   assert.doesNotMatch(bottomNav, /automation-pilot|งานอัตโนมัติ/);
