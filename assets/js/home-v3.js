@@ -7,6 +7,7 @@
   const attachmentInput = document.getElementById('attachmentInput');
   const cameraInput = document.getElementById('cameraInput');
   const attachmentStatus = document.getElementById('attachmentStatus');
+  const outputFormatSelect = document.getElementById('outputFormatSelect');
   const dialog = document.getElementById('appDialog');
   const legacyHistoryKey = 'govprompt-v3-history';
   const history = [];
@@ -79,6 +80,7 @@
       || typeof core.createSharedContext !== 'function'
       || typeof core.routeTransaction !== 'function'
       || typeof core.createGovernmentPrompt !== 'function'
+      || typeof core.resolveOutputFormatPreset !== 'function'
       || typeof core.officialSearchConnector?.search !== 'function') {
       throw new Error('GovPrompt Core is unavailable');
     }
@@ -194,7 +196,13 @@
     const workflowRuntimePromise = prepareWorkflowRuntime(text);
     const context = core.createSharedContext({ facts: text, desiredOutput: text, documents: safeAttachments.map(file => file.name).join(', ') });
     const route = core.routeTransaction(context);
-    const promptBundle = core.createGovernmentPrompt({ question: text, route, context, attachments: safeAttachments });
+    const promptBundle = core.createGovernmentPrompt({
+      question: text,
+      route,
+      context,
+      attachments: safeAttachments,
+      outputFormatId: outputFormatSelect?.value || 'auto'
+    });
     const [searchResult, initialWorkflowRuntime] = await Promise.all([
       core.officialSearchConnector.search(text, { limitSources: 6, count: 10 }),
       workflowRuntimePromise
@@ -326,9 +334,10 @@
     label.textContent = `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
     heading.textContent = budgetSourceRuntime ? 'GovPrompt ดำเนินงานร่างงบประมาณให้แล้ว' : 'GovPrompt เตรียมคำสั่งงานและแหล่งค้นให้แล้ว';
     const workflowSummary = workflowRuntime?.primary?.currentStage?.title ? ` · Workflow: ${workflowRuntime.primary.currentStage.title} → ${workflowRuntime.primary.actionLabel}` : '';
+    const presentationSummary = promptBundle.presentationPreset ? ` · การนำเสนอ: ${promptBundle.presentationPreset.label}` : '';
     description.textContent = budgetSourceRuntime
-      ? `ระบบค้นและอ่านต้นฉบับราชการ ตรวจข้อมูล คำนวณ และเตรียม Working Draft พร้อมหลักฐาน${workflowSummary}`
-      : `ระบบจัดคำถามไปที่ ${route.assistant.title} พร้อมค้น Primary Source ตรวจความใหม่ และส่งแหล่งอ้างอิงเข้า Prompt สำหรับวิเคราะห์ต่อ${workflowSummary}`;
+      ? `ระบบค้นและอ่านต้นฉบับราชการ ตรวจข้อมูล คำนวณ และเตรียม Working Draft พร้อมหลักฐาน${workflowSummary}${presentationSummary}`
+      : `ระบบจัดคำถามไปที่ ${route.assistant.title} พร้อมค้น Primary Source ตรวจความใหม่ และส่งแหล่งอ้างอิงเข้า Prompt สำหรับวิเคราะห์ต่อ${workflowSummary}${presentationSummary}`;
 
     if (budgetSourceRuntime && structuredBudgetArtifact(budgetSourceRuntime)) status.textContent = '✅ ร่างงบประมาณผ่านการตรวจสมดุลและพร้อมส่งออกเป็น Working Draft';
     else if (searchResult?.mode === 'live' && searchResult?.evidence?.conclusionEligible) status.textContent = '✅ ค้นสดและยืนยันหลักฐานปัจจุบันได้ตาม metadata ที่มี';
@@ -446,7 +455,7 @@
   const panels = {
     history: ['ประวัติ', 'บทสนทนาล่าสุด', historyPanel],
     knowledge: ['คลังความรู้', 'Knowledge Engine', () => '<div class="empty-panel"><strong>คลังความรู้แบบ Metadata + Index</strong><p>GovPrompt จะใช้คลังเบาเป็นตัวชี้ไปยังต้นฉบับราชการ และตรวจความใหม่ก่อนนำข้อมูลมาใช้</p></div>'],
-    profile: ['โปรไฟล์', 'บริบทการทำงาน', () => '<div class="empty-panel"><strong>บริบทส่วนตัวจะมาในรุ่นถัดไป</strong><p>ขณะนี้ระบบไม่ส่งหรือจัดเก็บข้อมูลโปรไฟล์จากหน้านี้</p></div>'],
+    profile: ['โปรไฟล์', 'บริบทการทำงาน', () => '<div class="empty-panel"><strong>พื้นที่องค์กรนำร่อง</strong><p>หน้า Home ไม่ส่งหรือจัดเก็บข้อมูลโปรไฟล์ ส่วนงานองค์กรใช้บัญชีและสิทธิ์แยกตามหน่วยงาน</p></div><div class="tool-list"><a href="automation-pilot.html"><strong>ศูนย์งานอัตโนมัติ</strong><small>ตั้งเวลาสรุปงานและตรวจอนุมัติฉบับร่าง · บัญชีองค์กรเท่านั้น</small></a></div>'],
     tools: ['เครื่องมือ', 'ADVANCED USERS', toolsPanel]
   };
 

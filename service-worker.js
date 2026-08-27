@@ -1,10 +1,11 @@
-const APP_VERSION = '1.4';
+const APP_VERSION = '1.5';
 const CACHE = `lg-assistant-ready-v${APP_VERSION.replace('.', '-')}`;
 const ASSETS = [
   './',
   './index.html',
   './assets/css/govprompt.css',
   './assets/css/home-v3.css',
+  './assets/js/core/output-format-presets-v1.js',
   './assets/js/home-v3.js',
   './manifest.webmanifest',
 ];
@@ -45,11 +46,11 @@ self.addEventListener('fetch', event => {
         .then(response => {
           if (response.ok) {
             const copy = response.clone();
-            event.waitUntil(caches.open(CACHE).then(cache => cache.put('./index.html', copy)));
+            event.waitUntil(caches.open(CACHE).then(cache => cache.put(request, copy)));
           }
           return response;
         })
-        .catch(() => caches.match('./index.html'))
+        .catch(() => caches.match(request).then(cached => cached || caches.match('./index.html')))
     );
     return;
   }
