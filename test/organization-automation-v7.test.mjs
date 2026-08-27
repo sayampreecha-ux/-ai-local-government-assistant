@@ -58,7 +58,12 @@ test('pilot login is organization-only and contains no prefilled identity or pub
   assert.doesNotMatch(html, /id="loginEmail"[^>]*\svalue=/);
   assert.doesNotMatch(html, /id="signup|data-action="signup|>\s*(?:สมัครสมาชิก|สร้างบัญชี)\s*</i);
   assert.doesNotMatch(moduleSource, /auth\.signUp\s*\(/);
-  assert.match(home, /automation-pilot\.html/);
+  assert.match(home, /Workspace องค์กร/);
+  assert.match(home, /https:\/\/sayampreecha-ux\.github\.io\/govprompt-thailand-v6\/pilot\//);
+  assert.doesNotMatch(home, /<strong>ศูนย์งานอัตโนมัติ<\/strong>/);
+  assert.match(html, /GovPrompt · Workspace องค์กร/);
+  assert.match(html, />งานอัตโนมัติ<\/h1>/);
+  assert.match(html, /govprompt-thailand-v6\/pilot\//);
   assert.match(serviceWorker, /cache\.put\(request, copy\)/);
   assert.doesNotMatch(serviceWorker, /cache\.put\('\.\/index\.html', copy\)/);
 });
