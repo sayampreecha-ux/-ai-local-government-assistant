@@ -1,8 +1,67 @@
 (() => {
   'use strict';
 
+  if (window.__GOVPROMPT_STATUS_COPY_V14__) return;
+  window.__GOVPROMPT_STATUS_COPY_V14__ = true;
+
   const CURRENT_TEXT = '✅ ค้นสดและยืนยันหลักฐานปัจจุบันได้ตาม metadata ที่มี';
   const SAFER_TEXT = '✅ พบแหล่งราชการที่มีข้อมูลวันที่/การปรับปรุงล่าสุด — โปรดตรวจสอบสถานะการใช้บังคับของเอกสารก่อนนำไปอ้างอิง';
+  const GENERIC_EVIDENCE_TEXT = 'ข้อมูล/หลักฐานเพิ่มเติมตามขั้นตอนนี้';
+  const TECHNICAL_LABELS = Object.freeze({
+    currentBudgetRule: 'หลักเกณฑ์งบประมาณฉบับปัจจุบัน',
+    baselineBudgetSource: 'แหล่งข้อมูลงบประมาณปีเดิม',
+    latestRevenueActualsSource: 'แหล่งข้อมูลรายรับจริงล่าสุด',
+    targetYearPlanSource: 'แหล่งข้อมูลแผนพัฒนาปีเป้าหมาย',
+    organizationContext: 'ชื่อและประเภทหน่วยงาน',
+    targetBudgetYear: 'ปีงบประมาณที่จัดทำ',
+    baselineBudget: 'ข้อมูลงบประมาณปีเดิม',
+    latestRevenueActuals: 'รายรับจริงล่าสุด',
+    revenueForecastBasis: 'หลักเกณฑ์และฐานประมาณการรายรับ',
+    targetYearPlan: 'แผนพัฒนาปีเป้าหมาย',
+    projectRequests: 'คำของบและโครงการที่จะบรรจุในงบประมาณ',
+    personnelObligations: 'ภาระบุคลากรและภาระผูกพัน',
+    allocationDraft: 'ร่างการจัดสรรวงเงิน',
+    priorityReadiness: 'ผลจัดลำดับความสำคัญและความพร้อม',
+    budgetRiskReview: 'ผลทบทวนความเสี่ยงงบประมาณ',
+    budgetTotals: 'ยอดรวมรายรับและรายจ่าย',
+    budgetSourceRegister: 'ทะเบียนแหล่งข้อมูลประกอบงบประมาณ',
+    'gov.budget-draft': 'งานร่างงบประมาณ',
+    'gov.procurement': 'งานจัดซื้อจัดจ้าง',
+    'gov.finance': 'งานการเงินและการคลัง',
+    'gov.project': 'งานแผนและโครงการ',
+    'gov.legal': 'งานกฎหมาย',
+    'gov.correspondence': 'งานสารบรรณ',
+    'gov.hr': 'งานบุคคล',
+    'gov.engineering': 'งานช่างและวิศวกรรม',
+    'gov.health': 'งานสาธารณสุข',
+    'gov.education': 'งานการศึกษา',
+    'gov.internal-audit': 'งานตรวจสอบภายใน',
+    'gov.executive': 'งานบริหาร',
+    'gov.public-relations': 'งานประชาสัมพันธ์',
+    'gov.council': 'งานสภาท้องถิ่น',
+    'gov.citizen-service': 'งานบริการประชาชน',
+    'Budget Draft Agent': 'ผู้ช่วยจัดทำร่างงบประมาณ',
+    'Working Draft': 'ร่างทำงาน'
+  });
+  const TECHNICAL_KEYS = Object.keys(TECHNICAL_LABELS).sort((a, b) => b.length - a.length);
+
+  function humanizeTechnicalCopy(root = document) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+    textNodes.forEach(node => {
+      let value = String(node.nodeValue || '');
+      TECHNICAL_KEYS.forEach(key => { if (value.includes(key)) value = value.split(key).join(TECHNICAL_LABELS[key]); });
+      const repeatedGeneric = new RegExp(`(?:${GENERIC_EVIDENCE_TEXT.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*·\\s*)+${GENERIC_EVIDENCE_TEXT.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g');
+      value = value.replace(repeatedGeneric, 'ข้อมูล/หลักฐานเพิ่มเติมที่ต้องใช้ในขั้นตอนนี้');
+      if (value !== node.nodeValue) node.nodeValue = value;
+    });
+    root.querySelectorAll?.('.workflow-progress-item span').forEach(element => {
+      const parts = String(element.textContent || '').split('·').map(part => part.trim()).filter(Boolean);
+      const unique = [...new Set(parts)];
+      if (unique.length && unique.length !== parts.length) element.textContent = unique.join(' · ');
+    });
+  }
 
   function softenFreshnessCopy(root = document) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -164,12 +223,14 @@
     const detailsBlocks = [...card.querySelectorAll('.answer-section > details')];
     const promptDetails = detailsBlocks.find(details => details.querySelector('pre'));
     if (promptDetails) { promptDetails.open = false; const summary = promptDetails.querySelector('summary'); const preview = promptDetails.querySelector('pre'); if (summary) summary.textContent = 'ดูคำสั่งที่ GovPrompt เตรียมไว้'; if (preview) preview.textContent = buildHandoffPrompt(card); }
+    humanizeTechnicalCopy(card);
     card.dataset.leanModeReady = 'true';
   }
 
   function enforceLeanMode(root = document) {
     simplifyWelcome();
     root.querySelectorAll?.('.answer-card').forEach(simplifyAnswerCard);
+    humanizeTechnicalCopy(root);
     document.querySelector('.bottom-nav [data-panel="tools"]')?.remove();
   }
 
@@ -184,8 +245,16 @@
 
   softenFreshnessCopy(); enforceLeanMode();
   const observer = new MutationObserver(mutations => mutations.forEach(mutation => mutation.addedNodes.forEach(node => {
-    if (node.nodeType === Node.TEXT_NODE) { if (node.nodeValue?.includes(CURRENT_TEXT)) node.nodeValue = node.nodeValue.replace(CURRENT_TEXT, SAFER_TEXT); return; }
-    if (node.nodeType === Node.ELEMENT_NODE) { softenFreshnessCopy(node); enforceLeanMode(node.matches?.('.answer-card') ? node.parentElement || node : node); }
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (node.nodeValue?.includes(CURRENT_TEXT)) node.nodeValue = node.nodeValue.replace(CURRENT_TEXT, SAFER_TEXT);
+      humanizeTechnicalCopy(node.parentElement || document);
+      return;
+    }
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      softenFreshnessCopy(node);
+      humanizeTechnicalCopy(node);
+      enforceLeanMode(node.matches?.('.answer-card') ? node.parentElement || node : node);
+    }
   })));
   observer.observe(document.documentElement, { childList: true, subtree: true });
 })();
