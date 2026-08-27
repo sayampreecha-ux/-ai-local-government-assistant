@@ -53,10 +53,10 @@ test('wrangler binds Workers AI and both Pages paths ship the browser module', a
   assert.match(wrangler, /"ai"\s*:\s*\{[\s\S]*"binding"\s*:\s*"AI"/);
   assert.match(build, /document-studio-v1\.js/);
   assert.match(build, /Document Studio release script missing/);
-  assert.match(build, /serviceWorker: "6\.2\.0"/);
+  assert.match(build, /serviceWorker: "6\.2\.1"/);
   assert.match(index, /document-studio-v1\.js\?v=1\.0\.0/);
   assert.match(index, />จัดหน้าเอกสาร<\/button>/);
-  assert.match(index, /service-worker\.js\?v=6\.2\.0/);
+  assert.match(index, /service-worker\.js\?v=6\.2\.1/);
 });
 
 test('privacy and trust pages explicitly disclose Document Studio external processing', async () => {
