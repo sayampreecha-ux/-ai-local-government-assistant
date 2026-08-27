@@ -149,7 +149,7 @@
     });
   }
 
-  function createGovernmentPrompt({ question, route, context, attachments = [] } = {}) {
+  function createGovernmentPrompt({ question, route, context, attachments = [], outputFormatId = 'auto' } = {}) {
     const userQuestion = normalizeText(question);
     if (!userQuestion) throw new TypeError('question must be a non-empty string');
 
@@ -163,6 +163,12 @@
     const outputPlan = typeof window.GovPromptCore.routeOutput === 'function'
       ? window.GovPromptCore.routeOutput(userQuestion, activeRoute, normalizedContext)
       : Object.freeze({ id: 'default', label: 'คำตอบพร้อมใช้', format: 'answer-first', instructions: Object.freeze([]), confidence: 0.5, reason: 'fallback' });
+    const presentationPreset = typeof window.GovPromptCore.resolveOutputFormatPreset === 'function'
+      ? window.GovPromptCore.resolveOutputFormatPreset(outputFormatId)
+      : null;
+    const presentationBlock = presentationPreset && typeof window.GovPromptCore.buildOutputFormatPresetBlock === 'function'
+      ? window.GovPromptCore.buildOutputFormatPresetBlock(presentationPreset.id)
+      : '';
     const governancePlan = typeof window.GovPromptCore.evaluateAgentGovernance === 'function'
       ? window.GovPromptCore.evaluateAgentGovernance(userQuestion)
       : Object.freeze({ requestedLevel: 'L3', effectiveLevel: 'L3', allowed: true, requiresHumanApproval: false, blockers: Object.freeze([]) });
@@ -218,15 +224,17 @@
       `- แหล่งเงิน: ${normalizedContext.fundingSource || '[ยังไม่ได้ระบุ]'}`,
       `- เอกสารแนบ: ${attachmentNames.length ? attachmentNames.join(', ') : '[ไม่มี/ยังไม่ได้แนบ]'}`,
       `- ผลลัพธ์ที่ต้องการ: ${normalizedContext.desiredOutput || userQuestion}`,
-      '', 'รูปแบบผลลัพธ์ที่ GovPrompt เลือกให้อัตโนมัติ',
+      '', presentationPreset ? 'ชิ้นงานหลักที่ Output Router เลือก' : 'รูปแบบผลลัพธ์ที่ GovPrompt เลือกให้อัตโนมัติ',
       `- ประเภท: ${outputPlan.label}`, `- รูปแบบ: ${outputPlan.format}`, `- เหตุผลการเลือก: ${outputPlan.reason}`,
       ...(outputPlan.instructions || []).map((item, index) => `${index + 1}. ${item}`),
+      ...(presentationBlock ? ['', 'รูปแบบการนำเสนอที่ผู้ใช้เลือก', ...presentationBlock.split('\n')] : []),
       '', 'ขอบเขต AI Agent Governance',
       `- ระดับที่ผู้ใช้ร้องขอโดยพฤติกรรม: ${governancePlan.requestedLevel}`,
       `- ระดับที่อนุญาตในรอบนี้: ${governancePlan.effectiveLevel}`,
       '- Technical Permission ไม่เท่ากับ Legal Authority',
       '- ห้าม AI อนุมัติ ลงนาม สั่งจ่าย ลงมติ หรือตัดสินแทนผู้มีอำนาจตามกฎหมาย',
       '- หากคำขอมีผลต่อระบบจริง ให้หยุดที่ Draft/Recommendation เว้นแต่มี Human Approval, ขอบเขตชัด, rollback, audit trail และยืนยันฐานอำนาจครบ',
+      '- งานกฎหมาย การเงิน พัสดุ และการเผยแพร่ทุกชิ้นต้องหยุดที่ฉบับร่างและผ่าน Human Approval ก่อนใช้จริง',
       ...(governancePlan.blockers || []).map(item => `- Governance blocker: ${item}`),
       '', 'หลักการวิเคราะห์ที่ต้องปฏิบัติ',
       '1. อ่านข้อเท็จจริงและเอกสารแนบทั้งหมดก่อนวิเคราะห์ และห้ามถามซ้ำในสิ่งที่มีอยู่แล้ว',
@@ -250,13 +258,26 @@
       riskFlags.length ? riskFlags.map(flag => `- ${flag}`).join('\n') : '- ไม่พบสัญญาณความเสี่ยงจากข้อความเบื้องต้น แต่ยังต้องตรวจทานก่อนใช้จริง',
       '', 'ข้อกำหนดผลลัพธ์',
       `- ส่งผลลัพธ์หลักในรูปแบบ “${outputPlan.label}” ตามที่ Output Router เลือก เว้นแต่ผู้ใช้สั่งรูปแบบอื่นชัดเจน`,
+      ...(presentationPreset ? [`- จัดการนำเสนอชิ้นงานด้วย “${presentationPreset.label}” ตามที่ผู้ใช้เลือก โดยไม่ลดทอนโครงสร้างบังคับของชิ้นงานหลัก`] : []),
       '- ใช้ภาษาไทยชัดเจน กระชับ และเหมาะกับการปฏิบัติราชการ',
       '- อ้างแหล่งที่มาต่อข้อความสำคัญเมื่อสามารถตรวจสอบต้นฉบับได้',
       '- แยกสิ่งที่ยืนยันแล้วออกจากข้อวิเคราะห์หรือสิ่งที่ยังต้องตรวจสอบ',
       '- AI ช่วยค้น ช่วยคิด ช่วยร่าง แต่ผู้ใช้เป็นผู้ตรวจสอบและตัดสินใจก่อนนำไปใช้จริง'
     ].join('\n');
 
-    return Object.freeze({ prompt, riskFlags, route: activeRoute, taskPlan, outputPlan, governancePlan, qualityGates: gates, context: normalizedContext, attachmentNames: Object.freeze(attachmentNames) });
+    return Object.freeze({
+      prompt,
+      riskFlags,
+      route: activeRoute,
+      taskPlan,
+      outputPlan,
+      outputFormatId: presentationPreset?.id || 'auto',
+      presentationPreset,
+      governancePlan,
+      qualityGates: gates,
+      context: normalizedContext,
+      attachmentNames: Object.freeze(attachmentNames)
+    });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};

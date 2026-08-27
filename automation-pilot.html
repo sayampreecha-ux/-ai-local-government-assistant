@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#12372a">
+  <meta name="description" content="พื้นที่องค์กรนำร่องสำหรับตั้งเวลาสรุปงานและตรวจอนุมัติรายงานฉบับร่างใน GovPrompt v7">
+  <title>ศูนย์งานอัตโนมัติ — GovPrompt v7</title>
+  <link rel="stylesheet" href="assets/css/automation-pilot-v1.css?v=1.0.0">
+</head>
+<body>
+  <header class="pilot-header">
+    <a class="pilot-brand" href="index.html" aria-label="กลับหน้า GovPrompt v7">
+      <span class="pilot-brand-mark" aria-hidden="true">GP</span>
+      <span><strong>GovPrompt v7</strong><small>Organization Automation Pilot</small></span>
+    </a>
+    <nav aria-label="ลิงก์ที่เกี่ยวข้อง">
+      <a href="trust.html">ความปลอดภัย</a>
+      <a href="index.html">กลับหน้าหลัก</a>
+    </nav>
+  </header>
+
+  <main class="pilot-wrap">
+    <section class="pilot-hero">
+      <div>
+        <p class="eyebrow">INTERNAL PILOT · SCHEDULE · HUMAN APPROVAL</p>
+        <h1>ศูนย์งานอัตโนมัติ</h1>
+        <p>สร้างรายงานจากข้อมูลติดตามงานขององค์กรตามเวลาที่กำหนด สำหรับบัญชีองค์กรที่ได้รับสิทธิ์เท่านั้น</p>
+      </div>
+      <div class="safe-note"><strong>หลักควบคุม</strong><br>ระบบสร้างเฉพาะฉบับร่างและหยุดรอเจ้าหน้าที่ตรวจ ไม่มีการส่งอีเมล เชื่อม Drive/Sheets/Calendar เผยแพร่ หรืออนุมัติแทนผู้มีอำนาจ</div>
+    </section>
+
+    <section id="authCard" class="card">
+      <div class="grid">
+        <div>
+          <h2>เข้าสู่ระบบองค์กร</h2>
+          <label class="field" for="loginEmail">อีเมล
+            <input id="loginEmail" type="email" autocomplete="email" inputmode="email" required>
+          </label>
+          <label class="field" for="loginPassword">รหัสผ่าน
+            <input id="loginPassword" type="password" autocomplete="current-password" required>
+          </label>
+          <button id="loginBtn" class="btn" type="button">เข้าสู่ระบบ</button>
+        </div>
+        <div>
+          <h2>ใช้บัญชี Pilot ที่ได้รับสิทธิ์</h2>
+          <p class="muted">สิทธิ์องค์กร กอง/หน่วย และบทบาทแยกตามข้อมูลสมาชิกในระบบ ไม่มีการเปิดสมัครสมาชิกสาธารณะจากหน้านี้</p>
+          <p>ผู้ดูแลระบบและผู้อำนวยการกำหนดงานได้ ผู้บริหารตรวจอนุมัติได้ และผู้ตรวจสอบอ่านประวัติได้ตามสิทธิ์ขององค์กร</p>
+        </div>
+      </div>
+      <div id="authStatus" class="status" role="status" aria-live="polite">ยังไม่ได้เข้าสู่ระบบ</div>
+    </section>
+
+    <section id="app" class="hidden" aria-label="ระบบงานอัตโนมัติขององค์กร">
+      <section class="card">
+        <div class="row-actions">
+          <button id="reloadBtn" class="btn" type="button">โหลดข้อมูลใหม่</button>
+          <button id="logoutBtn" class="btn secondary" type="button">ออกจากระบบ</button>
+        </div>
+        <div id="whoami" class="status" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="kpis" aria-label="ภาพรวมงานอัตโนมัติ">
+        <article class="kpi"><small>งานอัตโนมัติ</small><strong id="kTotal">0</strong></article>
+        <article class="kpi"><small>กำลังทำงาน</small><strong id="kActive">0</strong></article>
+        <article class="kpi"><small>รออนุมัติ</small><strong id="kWaiting">0</strong></article>
+        <article class="kpi"><small>อนุมัติแล้ว</small><strong id="kApproved">0</strong></article>
+      </section>
+
+      <section id="createCard" class="card">
+        <div class="section-title"><h2>เพิ่มงานอัตโนมัติ</h2><span class="badge">Asia/Bangkok</span></div>
+        <div class="grid-3">
+          <label class="field" for="automationName">ชื่องาน
+            <input id="automationName" maxlength="120" placeholder="เช่น สรุปโครงการทุกเช้า">
+          </label>
+          <label class="field" for="department">ขอบเขตข้อมูล
+            <select id="department"></select>
+          </label>
+          <label class="field" for="workflowType">ประเภทงาน
+            <select id="workflowType"></select>
+          </label>
+          <label class="field" for="cadence">รอบการทำงาน
+            <select id="cadence"></select>
+          </label>
+          <label id="dayField" class="field hidden" for="dayOfWeek">วันประจำสัปดาห์
+            <select id="dayOfWeek"><option value="1">จันทร์</option><option value="2">อังคาร</option><option value="3">พุธ</option><option value="4">พฤหัสบดี</option><option value="5">ศุกร์</option><option value="6">เสาร์</option><option value="7">อาทิตย์</option></select>
+          </label>
+          <label class="field" for="runTime">เวลาเริ่มทำงาน
+            <input id="runTime" type="time" value="07:30">
+          </label>
+          <label class="field" for="outputFormat">รูปแบบรายงาน
+            <select id="outputFormat"></select>
+          </label>
+        </div>
+        <label class="check"><input id="activeNow" type="checkbox"> เปิดใช้งานทันทีหลังบันทึก</label>
+        <label class="check"><input type="checkbox" checked disabled> บังคับให้เจ้าหน้าที่ตรวจและอนุมัติก่อนนำรายงานไปใช้</label>
+        <button id="createBtn" class="btn" type="button">บันทึกงานอัตโนมัติ</button>
+        <div id="createStatus" class="status" role="status" aria-live="polite">ยังไม่มีการบันทึก</div>
+      </section>
+
+      <section class="card">
+        <div class="section-title"><h2>งานที่ตั้งไว้</h2><span class="muted">“ทดลองรันทันที” จะสร้างฉบับร่างโดยไม่รอเวลา</span></div>
+        <div class="table-wrap"><table><thead><tr><th scope="col">ชื่องาน</th><th scope="col">ประเภท</th><th scope="col">กำหนดเวลา</th><th scope="col">ครั้งถัดไป</th><th scope="col">สถานะ</th><th scope="col">คำสั่ง</th></tr></thead><tbody id="automationRows"></tbody></table></div>
+      </section>
+
+      <section class="card">
+        <div class="section-title"><h2>รายงานฉบับรอตรวจ</h2><span class="muted">ย้อนหลัง 50 รายการ</span></div>
+        <div class="table-wrap"><table><thead><tr><th scope="col">รายงาน</th><th scope="col">เวลาสร้าง</th><th scope="col">รูปแบบ</th><th scope="col">สถานะ</th><th scope="col">ตรวจสอบ</th></tr></thead><tbody id="runRows"></tbody></table></div>
+      </section>
+    </section>
+
+    <p class="pilot-foot">งานอัตโนมัติเป็นพื้นที่นำร่องภายในองค์กร · อ่าน <a href="privacy-notice.html">ประกาศความเป็นส่วนตัว</a> ก่อนใช้งาน</p>
+  </main>
+
+  <dialog id="reviewDialog" aria-labelledby="reviewTitle">
+    <div class="dialog-head">
+      <div><strong id="reviewTitle">รายงานฉบับร่าง</strong><div id="reviewMeta" class="muted"></div></div>
+      <button id="closeDialog" class="dialog-close" type="button" aria-label="ปิด">×</button>
+    </div>
+    <div class="dialog-body">
+      <pre id="reviewDraft" class="draft"></pre>
+      <label class="field" for="reviewNote">หมายเหตุการตรวจ
+        <textarea id="reviewNote" placeholder="ระบุเหตุผลเมื่อต้องส่งกลับแก้ไข"></textarea>
+      </label>
+      <div class="row-actions">
+        <button id="approveBtn" class="btn approve" type="button">อนุมัติรายงาน</button>
+        <button id="rejectBtn" class="btn reject" type="button">ส่งกลับแก้ไข</button>
+        <button id="downloadRunBtn" class="btn secondary" type="button">ดาวน์โหลด .txt</button>
+      </div>
+      <div id="reviewStatus" class="status" role="status" aria-live="polite">กรุณาตรวจชื่อ วันที่ ตัวเลข และข้อเท็จจริงก่อนอนุมัติ</div>
+    </div>
+  </dialog>
+
+  <script src="assets/js/core/output-format-presets-v1.js?v=1.0.0"></script>
+  <script src="assets/js/core/automation-pilot-config-v1.js?v=1.0.0"></script>
+  <script type="module" src="assets/js/organization-automation-v1.js?v=1.0.0"></script>
+</body>
+</html>
