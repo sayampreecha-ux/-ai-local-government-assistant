@@ -53,8 +53,9 @@ assert.ok(state.userMessages.some(message=>message.includes(prompt)),'guided int
 assert.ok(state.userMessages.some(message=>/ข้อมูลที่ผู้ใช้ยังไม่ทราบ|yearOrg|sourceData|purpose/.test(message)),'guided intake continue path did not preserve missing budget fields as explicit unknowns');
 assert.doesNotMatch(state.userMessages.join('\n'),/อบจ\.พะเยา/,'production E2E must not inject a real organization/place name');
 assert.match(state.routeLabel,/แผน โครงการ และงบประมาณ/,'completed short budget intake routed to wrong government domain');
-assert.match(state.budgetText,/Budget Draft Agent/,'Budget Draft Agent result surface missing');
-assert.match(state.assistantText,/Workflow:\s*บริบทและกรอบการจัดทำงบประมาณ|Budget Draft Agent/,'governed budget workflow markers missing');
+assert.match(state.budgetText,/ผู้ช่วยจัดทำร่างงบประมาณ/,'humanized Budget Draft Agent result surface missing');
+assert.doesNotMatch(state.budgetText,/currentBudgetRule|baselineBudgetSource|latestRevenueActualsSource|targetYearPlanSource|baselineBudget|latestRevenueActuals/,'technical budget evidence keys leaked into user-facing production copy');
+assert.match(state.assistantText,/Workflow:\s*บริบทและกรอบการจัดทำงบประมาณ|ผู้ช่วยจัดทำร่างงบประมาณ/,'governed budget workflow markers missing');
 assert.match(state.homeScript,new RegExp(`home-v3\\.js\\?v=${RELEASE_HOME_VERSION.replaceAll('.','\\.')}`),'production home asset is stale');
 assert.equal(pageErrors.length,0,`page errors: ${JSON.stringify(pageErrors)}`);
 assert.ok(requests.some(item=>/\/api\/official-search/.test(item.url)),'budget workflow did not call official search Worker');
@@ -64,13 +65,13 @@ for (const item of requests.filter(item=>/\/api\/official-document/.test(item.ur
   assert.match(item.url,/ai-local-government-assistant\.sayampreecha\.workers\.dev\/api\/official-document/,'document read used a non-production endpoint');
 }
 
-if (/Working Draft พร้อมส่งออก/.test(state.budgetText)) {
+if (/ร่างทำงาน พร้อมส่งออก/.test(state.budgetText)) {
   assert.equal(state.excelButton,true,'ready budget artifact missing Excel download');
   assert.equal(state.wordButton,true,'ready budget artifact missing Word download');
 } else {
   assert.match(state.budgetText,/ยังไม่พร้อมส่งออก|ต้องยืนยัน|สถานะ/,'blocked budget state did not explain its evidence gate');
-  assert.doesNotMatch(state.budgetText,/Working Draft พร้อมส่งออก/,'blocked budget state must not claim export readiness');
+  assert.doesNotMatch(state.budgetText,/ร่างทำงาน พร้อมส่งออก/,'blocked budget state must not claim export readiness');
 }
 
-console.log(JSON.stringify({frontend,releaseHomeVersion:RELEASE_HOME_VERSION,checks:{genericBudgetGuidedIntake:'PASS',guidedIntakeUnknownContinue:'PASS',budgetDomainRouting:'PASS',privacyGuard:'PASS',budgetSurface:'PASS',governedWorkflowMarkers:'PASS',releaseCacheBust:'PASS',officialSearchWorker:'PASS',documentWorkerRouting:'PASS',officeExportOrFailClosed:'PASS'},requests,responses,pageErrors},null,2));
+console.log(JSON.stringify({frontend,releaseHomeVersion:RELEASE_HOME_VERSION,checks:{genericBudgetGuidedIntake:'PASS',guidedIntakeUnknownContinue:'PASS',budgetDomainRouting:'PASS',privacyGuard:'PASS',budgetSurface:'PASS',humanizedBudgetCopy:'PASS',governedWorkflowMarkers:'PASS',releaseCacheBust:'PASS',officialSearchWorker:'PASS',documentWorkerRouting:'PASS',officeExportOrFailClosed:'PASS'},requests,responses,pageErrors},null,2));
 await browser.close();
