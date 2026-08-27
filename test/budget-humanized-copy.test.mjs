@@ -36,7 +36,7 @@ test('status-copy is idempotent and deduplicates repeated fallback evidence copy
 });
 
 test('service worker fetches status-copy network fresh', () => {
-  assert.match(serviceWorker, /APP_VERSION = '1\.5'/);
+  assert.match(serviceWorker, /APP_VERSION = '1\.6'/);
   assert.match(serviceWorker, /\/assets\/js\/ui\/status-copy\.js/);
   assert.match(serviceWorker, /cache: 'no-store'/);
 });
