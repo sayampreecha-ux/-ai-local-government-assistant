@@ -49,3 +49,7 @@ Operational signals and Sprint 1 acceptance evidence are documented in
 Sprint 2 GP001 migration is documented in
 [`docs/modules/gp001.md`](docs/modules/gp001.md). Run the executable example with
 `node demo/gp001-demo.js`.
+
+## Organization Workspace
+
+เมนูองค์กรในหน้า GovPrompt ใช้ทางเข้าเดียวคือ **Workspace องค์กร** สำหรับ Work Tracking, Command Center และงานอัตโนมัติ โดยข้อมูลภายในยังคงควบคุมสิทธิ์ด้วยบัญชีองค์กรและ RLS แยกจากเครื่องมือสาธารณะของ GP.
