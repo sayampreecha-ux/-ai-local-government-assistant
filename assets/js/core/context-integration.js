@@ -76,6 +76,7 @@
     if (!window.GovPromptTempStaffPlan) {
       appendScript('tempStaffMaintenanceFundFeatureScript', 'assets/js/features/temp-staff-maintenance-fund-v1.js?v=1.0.0');
     }
+    appendScript('tempStaffMaintenanceFundExportScript', 'assets/js/features/temp-staff-export-fallback-v1.js?v=1.0.0');
   }
 
   window.GovPromptCore.FIELD_MAP = FIELD_MAP;
