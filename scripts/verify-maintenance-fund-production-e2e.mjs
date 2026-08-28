@@ -32,7 +32,8 @@ assert.match(tabText, /จัดทำแผน.*ติดตามการใ�
 assert.doesNotMatch(tabText, /Dashboard|Audit Pack|Plan vs Actual|Version Control/);
 await page.locator('#mfpPersistentNav').waitFor({ state: 'visible', timeout: 10_000 });
 assert.equal(await page.locator('#mfpPersistentNav [data-persistent-view]').count(), 5);
-assert.match(await page.locator('#mfpPersistentNav').innerText(), /แผน.*ใช้เงินจริง.*ปรับแผน.*ภาพรวม.*ตรวจเอกสาร/);
+const persistentNavText = (await page.locator('#mfpPersistentNav').innerText()).replace(/\s+/g, ' ');
+assert.match(persistentNavText, /แผน.*ใช้เงินจริง.*ปรับแผน.*ภาพรวม.*ตรวจเอกสาร/);
 assert.match(await page.locator('#mfpPersistentNavStatus').innerText(), /อยู่ที่: จัดทำแผน/);
 await page.locator('#mfpPopulation').waitFor({ state: 'visible', timeout: 10_000 });
 
