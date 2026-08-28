@@ -74,11 +74,27 @@ test('GP008 loader includes maintenance-fund staff planner and safe in-browser e
   assert.match(exportFallback, /ต้องตรวจหลักเกณฑ์/);
 });
 
-test('GP008 exposes a visible maintenance-fund staff planner entry and loads feature scripts directly', async () => {
+test('GP008 exposes a visible planner and directly loads guided workflow v2', async () => {
   const gp008 = await readFile('gp008.html', 'utf8');
+  const guided = await readFile('assets/js/features/temp-staff-guided-workflow-v2.js', 'utf8');
   assert.match(gp008, /id=["']tempStaffMaintenanceFundEntry["']/);
   assert.match(gp008, />👥 แผนลูกจ้างเงินบำรุง</);
   assert.match(gp008, /temp-staff-maintenance-fund-v1\.js\?v=1\.0\.1/);
   assert.match(gp008, /temp-staff-export-fallback-v1\.js\?v=1\.0\.1/);
+  assert.match(gp008, /temp-staff-guided-workflow-v2\.js\?v=2\.0\.0/);
   assert.match(gp008, /tempStaffMaintenanceFundTab/);
+
+  assert.match(guided, /STEP_LABELS/);
+  assert.match(guided, /หน่วยบริการ/);
+  assert.match(guided, /Workload \/ FTE/);
+  assert.match(guided, /เหตุผลและทางเลือก/);
+  assert.match(guided, /วงเงินและเงินบำรุง/);
+  assert.match(guided, /ตรวจและสร้างเอกสาร/);
+  assert.match(guided, /tsmfNeedReason/);
+  assert.match(guided, /tsmfImpactNoHire/);
+  assert.match(guided, /ร่างบันทึกเสนอ/);
+  assert.match(guided, /application\/msword/);
+  assert.match(guided, /text\/csv/);
+  assert.match(guided, /ตรวจหลักเกณฑ์\/อัตรา\/ผู้มีอำนาจฉบับล่าสุด/);
+  assert.doesNotMatch(guided, /const\s+netHours\s*=\s*1400/);
 });
