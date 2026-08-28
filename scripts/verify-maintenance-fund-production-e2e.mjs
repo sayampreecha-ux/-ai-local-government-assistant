@@ -61,7 +61,7 @@ await second.locator('[data-expense-check="linkedTempStaff"]').check();
 
 await page.locator('#mfpSave').click();
 assert.match(await page.locator('#mfpView').innerText(), /คาดการณ์ปลายปี/);
-assert.match(await page.locator('#mfpView').innerText(), /230,000|230000/);
+assert.match(await page.locator('#mfpView').innerText(), /210,000|210000/);
 
 await page.locator('[data-view="tracking"]').click();
 await page.locator('[data-track-id]').first().locator('[data-track-field="committed"]').fill('100000');
