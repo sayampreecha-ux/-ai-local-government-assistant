@@ -28,8 +28,20 @@ await page.waitForURL(/maintenance-fund-plan\.html$/, { timeout: 15_000 });
 await page.locator('#maintenanceFundApp .mfp-tabs').waitFor({ state: 'visible', timeout: 15_000 });
 assert.equal(await page.locator('.mfp-tab').count(), 5);
 assert.match((await page.locator('.mfp-tab').allTextContents()).join(' '), /จัดทำแผน.*ติดตามผล.*ปรับแผน.*Dashboard.*Audit Pack/);
+await page.locator('#mfpPopulation').waitFor({ state: 'visible', timeout: 10_000 });
+
+const thresholds = await page.evaluate(() => ({
+  s: window.GovPromptMaintenanceFundSML?.classifyPopulation(2500)?.code,
+  mLow: window.GovPromptMaintenanceFundSML?.classifyPopulation(3000)?.code,
+  mHigh: window.GovPromptMaintenanceFundSML?.classifyPopulation(8000)?.code,
+  l: window.GovPromptMaintenanceFundSML?.classifyPopulation(8001)?.code
+}));
+assert.deepEqual(thresholds, { s: 'S', mLow: 'M', mHigh: 'M', l: 'L' });
 
 await page.locator('#mfpFacility').fill('รพ.สต.ทดสอบระบบ');
+await page.locator('#mfpPopulation').fill('5500');
+assert.match(await page.locator('#mfpFacilitySizeLabel').inputValue(), /M/);
+assert.match(await page.locator('#mfpFacilitySizeBadge').innerText(), /ขนาด M/);
 await page.locator('#mfpFiscalYear').fill('2570');
 await page.locator('#mfpOpening').fill('300000');
 await page.locator('#mfpCommitments').fill('20000');
@@ -62,6 +74,13 @@ await second.locator('[data-expense-check="linkedTempStaff"]').check();
 await page.locator('#mfpSave').click();
 assert.match(await page.locator('#mfpView').innerText(), /คาดการณ์ปลายปี/);
 assert.match(await page.locator('#mfpView').innerText(), /210,000|210000/);
+const savedMeta = await page.evaluate(() => {
+  const current = localStorage.getItem('govprompt.maintenanceFundPlan.current.v1');
+  const map = JSON.parse(localStorage.getItem('govprompt.maintenanceFundFacilityMeta.v1') || '{}');
+  return current ? map[current] : null;
+});
+assert.equal(savedMeta?.population, 5500);
+assert.equal(savedMeta?.size, 'M');
 
 await page.locator('[data-view="tracking"]').click();
 await page.locator('[data-track-id]').first().locator('[data-track-field="committed"]').fill('100000');
@@ -84,19 +103,30 @@ await page.locator('#mfpSaveAudit').click();
 assert.match(await page.locator('#mfpView').innerText(), /ครบแล้ว 5\/14 รายการ/);
 
 await page.locator('[data-view="dashboard"]').click();
+await page.locator('#mfpSmlDashboard').waitFor({ state: 'visible', timeout: 10_000 });
 assert.match(await page.locator('#mfpView').innerText(), /รพ\.สต\.ทดสอบระบบ/);
 assert.match(await page.locator('#mfpView').innerText(), /จำนวนแผน/);
+assert.match(await page.locator('#mfpSmlDashboard').innerText(), /เปรียบเทียบตามขนาด S \/ M \/ L/);
+assert.match(await page.locator('#mfpSmlDashboard').innerText(), /M 1/);
+assert.match(await page.locator('.mfp-facility').first().innerText(), /ขนาด M/);
+await page.locator('[data-sml-filter="M"]').click();
+assert.equal(await page.locator('.mfp-facility:not([hidden])').count(), 1);
+await page.locator('[data-sml-filter="S"]').click();
+assert.equal(await page.locator('.mfp-facility:not([hidden])').count(), 0);
 assert.deepEqual(errors, [], `page errors: ${JSON.stringify(errors)}`);
 
 console.log(JSON.stringify({
   checks: {
     homeShortcutVisible: 'PASS',
     maintenanceFundWorkspaceVisible: 'PASS',
+    smlClassifier: 'S/M/L boundaries PASS',
+    smlPopulationPersistence: 'PASS',
     elevenCategoryPlanFlow: 'PASS',
     financeForecast: 'PASS',
     planVsActual: 'PASS',
     versionControl: 'PASS',
     auditPack: 'PASS',
+    smlDashboardAndFilter: 'PASS',
     dashboard: 'PASS',
     mobileViewport: '390x844 PASS'
   }
