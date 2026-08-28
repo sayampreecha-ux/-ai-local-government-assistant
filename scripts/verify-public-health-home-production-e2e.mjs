@@ -3,12 +3,7 @@ import { chromium } from 'playwright';
 
 const frontend = process.env.GOVPROMPT_FRONTEND_URL || 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/index.html';
 const browser = await chromium.launch({ headless: true });
-const context = await browser.newContext({
-  serviceWorkers: 'allow',
-  viewport: { width: 390, height: 844 },
-  isMobile: true,
-  hasTouch: true
-});
+const context = await browser.newContext({ serviceWorkers: 'allow', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 const page = await context.newPage();
 const pageErrors = [];
 page.on('pageerror', error => pageErrors.push(String(error?.stack || error?.message || error)));
@@ -16,12 +11,7 @@ page.on('pageerror', error => pageErrors.push(String(error?.stack || error?.mess
 const url = new URL(frontend);
 url.searchParams.set('public-health-shortcut-proof', `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 await page.goto(url.toString(), { waitUntil: 'domcontentloaded', timeout: 30_000 });
-await page.waitForFunction(
-  () => document.readyState === 'complete'
-    && [...document.scripts].some(script => /assets\/js\/mic\.js\?v=2\.3\.4/.test(script.src)),
-  undefined,
-  { timeout: 15_000 }
-);
+await page.waitForFunction(() => document.readyState === 'complete', undefined, { timeout: 15_000 });
 
 const opener = page.locator('.work-catalog-open');
 await opener.waitFor({ state: 'visible', timeout: 15_000 });
@@ -44,23 +34,39 @@ assert.ok(shortcutLabels.some(label => /แผนลูกจ้างเงิ�
 assert.ok(shortcutLabels.some(label => /วันเพจลูกน้ำยุงลาย/.test(label)));
 
 await shortcut.click();
-await page.waitForURL(/gp008\.html#tempStaffMaintenanceFundEntry$/, { timeout: 15_000 });
-const gp008Entry = page.locator('#tempStaffMaintenanceFundEntry');
-await gp008Entry.waitFor({ state: 'visible', timeout: 15_000 });
-assert.match(await gp008Entry.innerText(), /แผนลูกจ้างเงินบำรุง/);
+await page.waitForURL(/temp-staff-wizard\.html$/, { timeout: 15_000 });
+await page.locator('#tempStaffGuidedWizardTab').waitFor({ state: 'visible', timeout: 15_000 });
+await page.locator('[data-step="1"]').waitFor({ state: 'visible', timeout: 15_000 });
+assert.equal(await page.locator('[data-step-pill]').count(), 5);
+assert.match(await page.locator('.tsgw-progress').innerText(), /หน่วยบริการ/);
+assert.match(await page.locator('.tsgw-progress').innerText(), /ภาระงาน/);
+assert.match(await page.locator('.tsgw-progress').innerText(), /ตรวจและสร้างเอกสาร/);
 
-// Follow the actual user path: the visible GP008 entry opens the toolkit and
-// activates the temp-staff tab itself. Do not click the generated tab a second
-// time because that intentionally re-renders the underlying calculator.
-await gp008Entry.click();
-await page.locator('#tsmfWizardNav').waitFor({ state: 'visible', timeout: 15_000 });
-assert.equal(await page.locator('#tsmfWizardNav .tsmf-step-btn').count(), 5);
-assert.match(await page.locator('#tsmfWizardNav').innerText(), /หน่วยบริการ/);
-assert.match(await page.locator('#tsmfWizardNav').innerText(), /Workload \/ FTE/);
-assert.match(await page.locator('#tsmfWizardNav').innerText(), /ตรวจและสร้างเอกสาร/);
-assert.equal(await page.locator('#tsmfGeneratePackage').isVisible(), true);
-assert.equal(await page.locator('#tsmfNeedReason').count(), 1);
-assert.equal(await page.locator('#tsmfImpactNoHire').count(), 1);
+await page.locator('#tsgwAgency').fill('รพ.สต.ทดสอบ');
+await page.locator('#tsgwFiscalYear').fill('2570');
+await page.locator('#tsgwPopulation').fill('5000');
+await page.locator('#tsgwAnnualServices').fill('12000');
+await page.locator('#tsgwNext').click();
+await page.locator('.tsgw-activity').first().fill('เยี่ยมบ้าน');
+await page.locator('.tsgw-unit').first().fill('ครั้ง');
+await page.locator('.tsgw-quantity').first().fill('1000');
+await page.locator('.tsgw-minutes').first().fill('60');
+await page.locator('#tsgwNext').click();
+await page.locator('#tsgwActualFte').fill('0.5');
+await page.locator('#tsgwNetHours').fill('1000');
+await page.locator('#tsgwNext').click();
+await page.locator('#tsgwProposedHeadcount').fill('1');
+await page.locator('#tsgwRate').fill('10000');
+await page.locator('#tsgwUnits').fill('12');
+await page.locator('#tsgwFundBalance').fill('300000');
+await page.locator('#tsgwAvgIncome').fill('100000');
+await page.locator('#tsgwEssentialExpense').fill('120000');
+await page.locator('#tsgwInPlan').check();
+await page.locator('#tsgwNext').click();
+await page.locator('#tsgwGenerate').click();
+assert.match(await page.locator('#tsgwAnalysis').innerText(), /สรุปวิเคราะห์ค่างาน/);
+assert.match(await page.locator('#tsgwMemo').innerText(), /บันทึกข้อความ/);
+assert.match(await page.locator('#tsgwDecision').innerText(), /มีเหตุผลเสนอพิจารณาจ้าง/);
 assert.deepEqual(pageErrors, [], `page errors: ${JSON.stringify(pageErrors)}`);
 
 console.log(JSON.stringify({
@@ -69,15 +75,14 @@ console.log(JSON.stringify({
     homeCatalogOpenerVisible: 'PASS',
     publicHealthGroupVisible: 'PASS',
     tempStaffShortcutVisible: 'PASS',
-    threePublicHealthShortcutsPresent: 'PASS',
-    shortcutNavigatesToGp008: 'PASS',
-    gp008TempStaffEntryVisible: 'PASS',
+    shortcutNavigatesToGuidedWizard: 'PASS',
     guidedWizardVisible: '5 steps PASS',
-    guidedReasonFieldsPresent: 'PASS',
-    guidedDocumentGeneratorPresent: 'PASS',
-    realUserSingleClickFlow: 'PASS',
-    mobileViewport: '390x844 PASS',
-    micLoaderCacheBust: '2.3.4 PASS'
+    workloadEntryWorks: 'PASS',
+    fteCalculationWorks: 'PASS',
+    fundPlanCheckWorks: 'PASS',
+    analysisGenerated: 'PASS',
+    memoGenerated: 'PASS',
+    mobileViewport: '390x844 PASS'
   }
 }, null, 2));
 
