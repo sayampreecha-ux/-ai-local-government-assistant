@@ -47,6 +47,18 @@ await shortcut.click();
 await page.waitForURL(/gp008\.html#tempStaffMaintenanceFundEntry$/, { timeout: 15_000 });
 await page.locator('#tempStaffMaintenanceFundEntry').waitFor({ state: 'visible', timeout: 15_000 });
 assert.match(await page.locator('#tempStaffMaintenanceFundEntry').innerText(), /แผนลูกจ้างเงินบำรุง/);
+
+await page.locator('#tempStaffMaintenanceFundEntry').click();
+await page.locator('#tempStaffMaintenanceFundTab').waitFor({ state: 'visible', timeout: 15_000 });
+await page.locator('#tempStaffMaintenanceFundTab').click();
+await page.locator('#tsmfWizardNav').waitFor({ state: 'visible', timeout: 15_000 });
+assert.equal(await page.locator('#tsmfWizardNav .tsmf-step-btn').count(), 5);
+assert.match(await page.locator('#tsmfWizardNav').innerText(), /หน่วยบริการ/);
+assert.match(await page.locator('#tsmfWizardNav').innerText(), /Workload \/ FTE/);
+assert.match(await page.locator('#tsmfWizardNav').innerText(), /ตรวจและสร้างเอกสาร/);
+assert.equal(await page.locator('#tsmfGeneratePackage').isVisible(), true);
+assert.equal(await page.locator('#tsmfNeedReason').count(), 1);
+assert.equal(await page.locator('#tsmfImpactNoHire').count(), 1);
 assert.deepEqual(pageErrors, [], `page errors: ${JSON.stringify(pageErrors)}`);
 
 console.log(JSON.stringify({
@@ -58,6 +70,9 @@ console.log(JSON.stringify({
     threePublicHealthShortcutsPresent: 'PASS',
     shortcutNavigatesToGp008: 'PASS',
     gp008TempStaffEntryVisible: 'PASS',
+    guidedWizardVisible: '5 steps PASS',
+    guidedReasonFieldsPresent: 'PASS',
+    guidedDocumentGeneratorPresent: 'PASS',
     mobileViewport: '390x844 PASS',
     micLoaderCacheBust: '2.3.4 PASS'
   }
