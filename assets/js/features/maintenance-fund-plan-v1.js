@@ -27,361 +27,96 @@
     ['announced', 'ประกาศใช้'], ['closed', 'ปิดปี']
   ]);
   const OFFICIAL_SOURCES = Object.freeze([
-    {
-      label: 'ระเบียบกระทรวงมหาดไทยว่าด้วยเงินบำรุงฯ พ.ศ. 2560',
-      url: 'https://ratchakitcha.soc.go.th/documents/2120194.pdf'
-    },
-    {
-      label: 'แนวทาง/แบบแผนการใช้จ่ายเงินบำรุงของกรมส่งเสริมการปกครองท้องถิ่น',
-      url: 'https://www.dla.go.th/download/upload/document/type2/2022/10/28144_1_1664856215948.pdf?notDownload=Y'
-    },
-    {
-      label: 'ตัวอย่างข้อหารือ สถ. เรื่องการใช้เงินบำรุงและค่าตอบแทน',
-      url: 'https://www.dla.go.th/download/upload/document/type2/2023/2/28940_2_1677142283102.pdf?notDownload=Y'
-    }
+    { label: 'ระเบียบกระทรวงมหาดไทยว่าด้วยเงินบำรุงฯ พ.ศ. 2560', url: 'https://ratchakitcha.soc.go.th/documents/2120194.pdf' },
+    { label: 'แนวทาง/แบบแผนการใช้จ่ายเงินบำรุงของกรมส่งเสริมการปกครองท้องถิ่น', url: 'https://www.dla.go.th/download/upload/document/type2/2022/10/28144_1_1664856215948.pdf?notDownload=Y' },
+    { label: 'ตัวอย่างข้อหารือ สถ. เรื่องการใช้เงินบำรุงและค่าตอบแทน', url: 'https://www.dla.go.th/download/upload/document/type2/2023/2/28940_2_1677142283102.pdf?notDownload=Y' }
   ]);
   const AUDIT_ITEMS = Object.freeze([
-    ['planApproved', 'แผนการใช้จ่ายเงินบำรุงที่ผ่านการพิจารณา/เห็นชอบ'],
-    ['amendments', 'แผนเพิ่มเติม/เปลี่ยนแปลงและเหตุผล (ถ้ามี)'],
-    ['announcement', 'หลักฐานประกาศใช้แผน/แจ้งเวียน'],
-    ['committeeOrder', 'คำสั่งแต่งตั้งคณะกรรมการ/คณะกลั่นกรอง'],
-    ['delegation', 'คำสั่งมอบอำนาจที่เกี่ยวข้องและยังมีผลใช้'],
-    ['dailyFinance', 'รายงานสถานะการเงินประจำวัน/ทะเบียนคุม'],
-    ['bankStatement', 'Bank statement / หนังสือรับรองยอดเงินฝาก'],
-    ['reconciliation', 'กระทบยอดเงินฝากธนาคาร (Bank reconciliation)'],
-    ['receipts', 'หลักฐานการรับเงิน/แหล่งที่มาของเงินบำรุง'],
-    ['vouchers', 'ฎีกา/หลักฐานการเบิกจ่าย/อนุมัติจ่าย'],
-    ['procurement', 'เอกสารจัดซื้อจัดจ้าง/ตรวจรับสำหรับรายการที่เกี่ยวข้อง'],
-    ['councilApproval', 'หลักฐานความเห็นชอบผู้บริหารและอนุมัติสภา สำหรับครุภัณฑ์ ที่ดิน สิ่งก่อสร้าง'],
-    ['tempStaff', 'เอกสารวิเคราะห์ Workload/FTE และหลักเกณฑ์ลูกจ้างชั่วคราว (ถ้ามี)'],
-    ['yearEnd', 'รายงานสรุปผล Plan vs Actual และยอดคงเหลือสิ้นปี']
+    ['planApproved', 'แผนการใช้จ่ายเงินบำรุงที่ผ่านการพิจารณา/เห็นชอบ'], ['amendments', 'แผนเพิ่มเติม/เปลี่ยนแปลงและเหตุผล (ถ้ามี)'],
+    ['announcement', 'หลักฐานประกาศใช้แผน/แจ้งเวียน'], ['committeeOrder', 'คำสั่งแต่งตั้งคณะกรรมการ/คณะกลั่นกรอง'],
+    ['delegation', 'คำสั่งมอบอำนาจที่เกี่ยวข้องและยังมีผลใช้'], ['dailyFinance', 'รายงานสถานะการเงินประจำวัน/ทะเบียนคุม'],
+    ['bankStatement', 'Bank statement / หนังสือรับรองยอดเงินฝาก'], ['reconciliation', 'กระทบยอดเงินฝากธนาคาร (Bank reconciliation)'],
+    ['receipts', 'หลักฐานการรับเงิน/แหล่งที่มาของเงินบำรุง'], ['vouchers', 'ฎีกา/หลักฐานการเบิกจ่าย/อนุมัติจ่าย'],
+    ['procurement', 'เอกสารจัดซื้อจัดจ้าง/ตรวจรับสำหรับรายการที่เกี่ยวข้อง'], ['councilApproval', 'หลักฐานความเห็นชอบผู้บริหารและอนุมัติสภา สำหรับครุภัณฑ์ ที่ดิน สิ่งก่อสร้าง'],
+    ['tempStaff', 'เอกสารวิเคราะห์ Workload/FTE และหลักเกณฑ์ลูกจ้างชั่วคราว (ถ้ามี)'], ['yearEnd', 'รายงานสรุปผล Plan vs Actual และยอดคงเหลือสิ้นปี']
   ]);
 
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-  const parseNumber = value => {
-    const cleaned = String(value ?? '').replace(/,/g, '').trim();
-    if (!cleaned) return 0;
-    const number = Number(cleaned);
-    return Number.isFinite(number) ? number : 0;
-  };
+  const parseNumber = value => { const cleaned = String(value ?? '').replace(/,/g, '').trim(); if (!cleaned) return 0; const number = Number(cleaned); return Number.isFinite(number) ? number : 0; };
   const round = value => Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
   const money = value => new Intl.NumberFormat('th-TH', { maximumFractionDigits: 2 }).format(Number(value || 0));
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[char]));
   const uid = prefix => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
   const categoryById = id => CATEGORIES.find(item => item.id === Number(id)) || CATEGORIES[0];
 
-  function blankIncome() {
-    return { id: uid('inc'), source: '', amount: '', month: 'oct', restriction: '' };
-  }
-  function blankExpense() {
-    return {
-      id: uid('exp'), category: 1, item: '', fundingSource: 'maintenance', amount: '', month: 'oct',
-      committed: '', actual: '', procurementRequired: false, procurementPlan: false,
-      councilApproved: false, linkedTempStaff: false, justification: '', note: ''
-    };
-  }
-  function createBlankPlan() {
-    return {
-      id: uid('plan'), facility: '', facilityType: 'รพ.สต.', fiscalYear: '', status: 'draft', version: 1,
-      openingBalance: '', existingCommitments: '', reserveAmount: '',
-      incomes: [blankIncome()], expenses: [blankExpense()], audit: {},
-      revisionReason: '', history: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
-    };
-  }
-
-  function normalizePlan(raw = {}) {
-    const base = createBlankPlan();
-    return {
-      ...base,
-      ...raw,
-      incomes: Array.isArray(raw.incomes) && raw.incomes.length ? raw.incomes.map(item => ({ ...blankIncome(), ...item })) : [blankIncome()],
-      expenses: Array.isArray(raw.expenses) && raw.expenses.length ? raw.expenses.map(item => ({ ...blankExpense(), ...item })) : [blankExpense()],
-      audit: raw.audit && typeof raw.audit === 'object' ? { ...raw.audit } : {},
-      history: Array.isArray(raw.history) ? raw.history : []
-    };
-  }
+  function blankIncome() { return { id: uid('inc'), source: '', amount: '', month: 'oct', restriction: '' }; }
+  function blankExpense() { return { id: uid('exp'), category: 1, item: '', fundingSource: 'maintenance', amount: '', month: 'oct', committed: '', actual: '', procurementRequired: false, procurementPlan: false, councilApproved: false, linkedTempStaff: false, justification: '', note: '' }; }
+  function createBlankPlan() { return { id: uid('plan'), facility: '', facilityType: 'รพ.สต.', fiscalYear: '', status: 'draft', version: 1, openingBalance: '', existingCommitments: '', reserveAmount: '', incomes: [blankIncome()], expenses: [blankExpense()], audit: {}, revisionReason: '', history: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }; }
+  function normalizePlan(raw = {}) { const base = createBlankPlan(); return { ...base, ...raw, incomes: Array.isArray(raw.incomes) && raw.incomes.length ? raw.incomes.map(item => ({ ...blankIncome(), ...item })) : [blankIncome()], expenses: Array.isArray(raw.expenses) && raw.expenses.length ? raw.expenses.map(item => ({ ...blankExpense(), ...item })) : [blankExpense()], audit: raw.audit && typeof raw.audit === 'object' ? { ...raw.audit } : {}, history: Array.isArray(raw.history) ? raw.history : [] }; }
 
   function summarize(planInput = {}) {
-    const plan = normalizePlan(planInput);
-    const opening = parseNumber(plan.openingBalance);
-    const income = round(plan.incomes.reduce((sum, item) => sum + parseNumber(item.amount), 0));
-    const commitments = parseNumber(plan.existingCommitments);
-    const reserve = parseNumber(plan.reserveAmount);
-    const maintenanceExpenses = plan.expenses.filter(item => item.fundingSource === 'maintenance');
-    const localExpenses = plan.expenses.filter(item => item.fundingSource === 'local');
-    const plannedMaintenance = round(maintenanceExpenses.reduce((sum, item) => sum + parseNumber(item.amount), 0));
-    const plannedLocal = round(localExpenses.reduce((sum, item) => sum + parseNumber(item.amount), 0));
-    const committed = round(maintenanceExpenses.reduce((sum, item) => sum + parseNumber(item.committed), 0));
-    const actual = round(maintenanceExpenses.reduce((sum, item) => sum + parseNumber(item.actual), 0));
-    const availableForPlan = round(opening + income - commitments - reserve);
-    const forecastClosing = round(availableForPlan - plannedMaintenance);
-    const cashAfterActual = round(opening + income - commitments - reserve - actual);
-    const utilization = plannedMaintenance > 0 ? round(actual / plannedMaintenance * 100) : 0;
-    const auditDone = AUDIT_ITEMS.filter(([key]) => Boolean(plan.audit?.[key])).length;
-    const monthProjection = [];
-    let running = opening - commitments - reserve;
-    MONTHS.forEach(month => {
-      const monthIncome = plan.incomes.filter(item => item.month === month.key).reduce((sum, item) => sum + parseNumber(item.amount), 0);
-      const monthPlan = maintenanceExpenses.filter(item => item.month === month.key).reduce((sum, item) => sum + parseNumber(item.amount), 0);
-      running += monthIncome - monthPlan;
-      monthProjection.push({ month: month.key, label: month.label, income: round(monthIncome), planned: round(monthPlan), balance: round(running) });
-    });
-    return Object.freeze({
-      opening, income, commitments, reserve, plannedMaintenance, plannedLocal, committed, actual,
-      availableForPlan, forecastClosing, cashAfterActual, utilization,
-      auditDone, auditTotal: AUDIT_ITEMS.length, monthProjection
-    });
+    const plan = normalizePlan(planInput); const opening = parseNumber(plan.openingBalance); const income = round(plan.incomes.reduce((sum, item) => sum + parseNumber(item.amount), 0));
+    const commitments = parseNumber(plan.existingCommitments); const reserve = parseNumber(plan.reserveAmount); const maintenanceExpenses = plan.expenses.filter(item => item.fundingSource === 'maintenance'); const localExpenses = plan.expenses.filter(item => item.fundingSource === 'local');
+    const plannedMaintenance = round(maintenanceExpenses.reduce((sum, item) => sum + parseNumber(item.amount), 0)); const plannedLocal = round(localExpenses.reduce((sum, item) => sum + parseNumber(item.amount), 0));
+    const committed = round(maintenanceExpenses.reduce((sum, item) => sum + parseNumber(item.committed), 0)); const actual = round(maintenanceExpenses.reduce((sum, item) => sum + parseNumber(item.actual), 0));
+    const availableForPlan = round(opening + income - commitments - reserve); const forecastClosing = round(availableForPlan - plannedMaintenance); const cashAfterActual = round(opening + income - commitments - reserve - actual); const utilization = plannedMaintenance > 0 ? round(actual / plannedMaintenance * 100) : 0;
+    const auditDone = AUDIT_ITEMS.filter(([key]) => Boolean(plan.audit?.[key])).length; const monthProjection = []; let running = opening - commitments - reserve;
+    MONTHS.forEach(month => { const monthIncome = plan.incomes.filter(item => item.month === month.key).reduce((sum, item) => sum + parseNumber(item.amount), 0); const monthPlan = maintenanceExpenses.filter(item => item.month === month.key).reduce((sum, item) => sum + parseNumber(item.amount), 0); running += monthIncome - monthPlan; monthProjection.push({ month: month.key, label: month.label, income: round(monthIncome), planned: round(monthPlan), balance: round(running) }); });
+    return Object.freeze({ opening, income, commitments, reserve, plannedMaintenance, plannedLocal, committed, actual, availableForPlan, forecastClosing, cashAfterActual, utilization, auditDone, auditTotal: AUDIT_ITEMS.length, monthProjection });
   }
 
   function validatePlan(planInput = {}) {
-    const plan = normalizePlan(planInput);
-    const summary = summarize(plan);
-    const alerts = [];
-    const push = (level, code, message, action = '') => alerts.push({ level, code, message, action });
-    if (!String(plan.facility || '').trim()) push('red', 'facility-missing', 'ยังไม่ได้ระบุชื่อ รพ.สต./สอน.');
-    if (!String(plan.fiscalYear || '').trim()) push('red', 'year-missing', 'ยังไม่ได้ระบุปีงบประมาณ');
-    if (summary.forecastClosing < 0) push('red', 'fund-negative', `แผนเงินบำรุงเกินฐานเงินที่คาดว่าจะรองรับ ${money(Math.abs(summary.forecastClosing))} บาท`, 'ลด/เลื่อนรายการหรือทบทวนรายรับและภาระผูกพัน');
-    const negativeMonth = summary.monthProjection.find(item => item.balance < 0);
-    if (negativeMonth) push('red', 'monthly-negative', `กระแสเงินตามแผนติดลบตั้งแต่เดือน ${negativeMonth.label}`, 'เลื่อนจังหวะจ่ายหรือยืนยันรายรับก่อนก่อภาระ');
+    const plan = normalizePlan(planInput); const summary = summarize(plan); const alerts = []; const push = (level, code, message, action = '') => alerts.push({ level, code, message, action });
+    if (!String(plan.facility || '').trim()) push('red', 'facility-missing', 'ยังไม่ได้ระบุชื่อ รพ.สต./สอน.'); if (!String(plan.fiscalYear || '').trim()) push('red', 'year-missing', 'ยังไม่ได้ระบุปีงบประมาณ');
+    if (summary.forecastClosing < 0) push('red', 'fund-negative', `แผนเงินบำรุงเกินฐานเงินที่คาดว่าจะรองรับ ${money(Math.abs(summary.forecastClosing))} บาท`, 'ลด/เลื่อนรายการหรือทบทวนรายรับและภาระผูกพัน'); const negativeMonth = summary.monthProjection.find(item => item.balance < 0); if (negativeMonth) push('red', 'monthly-negative', `กระแสเงินตามแผนติดลบตั้งแต่เดือน ${negativeMonth.label}`, 'เลื่อนจังหวะจ่ายหรือยืนยันรายรับก่อนก่อภาระ');
     plan.incomes.filter(item => String(item.restriction || '').trim()).forEach(item => push('yellow', `income-restricted-${item.id}`, `รายรับ “${item.source || 'ไม่ระบุแหล่ง'}” มีเงื่อนไขการใช้: ${item.restriction}`, 'ต้องรักษาวัตถุประสงค์ของแหล่งเงิน'));
-    plan.expenses.forEach(item => {
-      const cat = categoryById(item.category);
-      const amount = parseNumber(item.amount);
-      if (!String(item.item || '').trim() && amount > 0) push('yellow', `item-name-${item.id}`, `หมวด ${cat.id} มีวงเงินแต่ยังไม่ระบุรายการ`);
-      if (cat.rule === 'capital' && amount > 0 && !item.councilApproved) push('red', `capital-council-${item.id}`, `รายการครุภัณฑ์/ที่ดิน/สิ่งก่อสร้าง “${item.item || 'ไม่ระบุรายการ'}” ยังไม่ยืนยันขั้นความเห็นชอบผู้บริหารและอนุมัติสภา`, 'ห้ามถือว่าอนุมัติครบจากแผนเพียงอย่างเดียว');
-      if ((item.procurementRequired || ['drug','procurement','capital'].includes(cat.rule)) && amount > 0 && !item.procurementPlan) push('yellow', `procurement-${item.id}`, `รายการ “${item.item || cat.label}” ยังไม่ยืนยันความพร้อมด้านจัดซื้อจัดจ้าง/แผนจัดหา`, 'ตรวจ พ.ร.บ.จัดซื้อจัดจ้างและระเบียบที่ใช้ปัจจุบัน');
-      if (cat.rule === 'tempstaff' && amount > 0 && !item.linkedTempStaff) push('yellow', `tempstaff-${item.id}`, 'มีค่าจ้างลูกจ้างชั่วคราว แต่ยังไม่ยืนยันเอกสารวิเคราะห์ Workload/FTE และหลักเกณฑ์ตำแหน่ง/อัตราค่าจ้าง', 'เปิดโมดูลแผนลูกจ้างเงินบำรุงประกอบ');
-      if (cat.rule === 'other' && amount > 0 && !String(item.justification || '').trim()) push('red', `other-justification-${item.id}`, 'หมวดค่าใช้จ่ายอื่นที่จำเป็นยังไม่มีเหตุผลเชื่อมโยงกับภารกิจสาธารณสุข', 'กรอกเหตุผลความจำเป็นและฐานอำนาจ');
-      if (parseNumber(item.actual) > amount && amount > 0) push('red', `overspend-${item.id}`, `จ่ายจริงของ “${item.item || cat.label}” เกินแผน ${money(parseNumber(item.actual) - amount)} บาท`, 'ตรวจการปรับแผน/อนุมัติก่อนรับรองผล');
-      if (parseNumber(item.committed) > amount && amount > 0) push('yellow', `overcommit-${item.id}`, `ยอดผูกพันของ “${item.item || cat.label}” สูงกว่าแผน`, 'ตรวจวงเงินและปรับแผนก่อนก่อหนี้เพิ่ม');
-    });
-    if (plan.status === 'announced' && !plan.audit?.planApproved) push('red', 'approved-plan-proof', 'สถานะแผนเป็น “ประกาศใช้” แต่ Audit Pack ยังไม่ยืนยันหลักฐานแผนที่ผ่านการพิจารณา');
-    if (summary.auditDone < 5 && ['committee','announced','closed'].includes(plan.status)) push('yellow', 'audit-low', `Audit Pack ยืนยันแล้ว ${summary.auditDone}/${summary.auditTotal} รายการ`, 'แนบ/ตรวจหลักฐานก่อนปิดขั้นตอน');
-    const severity = alerts.some(item => item.level === 'red') ? 'red' : alerts.some(item => item.level === 'yellow') ? 'yellow' : 'green';
-    return Object.freeze({ severity, alerts, summary });
+    plan.expenses.forEach(item => { const cat = categoryById(item.category); const amount = parseNumber(item.amount); if (!String(item.item || '').trim() && amount > 0) push('yellow', `item-name-${item.id}`, `หมวด ${cat.id} มีวงเงินแต่ยังไม่ระบุรายการ`); if (cat.rule === 'capital' && amount > 0 && !item.councilApproved) push('red', `capital-council-${item.id}`, `รายการครุภัณฑ์/ที่ดิน/สิ่งก่อสร้าง “${item.item || 'ไม่ระบุรายการ'}” ยังไม่ยืนยันขั้นความเห็นชอบผู้บริหารและอนุมัติสภา`, 'ห้ามถือว่าอนุมัติครบจากแผนเพียงอย่างเดียว'); if ((item.procurementRequired || ['drug','procurement','capital'].includes(cat.rule)) && amount > 0 && !item.procurementPlan) push('yellow', `procurement-${item.id}`, `รายการ “${item.item || cat.label}” ยังไม่ยืนยันความพร้อมด้านจัดซื้อจัดจ้าง/แผนจัดหา`, 'ตรวจ พ.ร.บ.จัดซื้อจัดจ้างและระเบียบที่ใช้ปัจจุบัน'); if (cat.rule === 'tempstaff' && amount > 0 && !item.linkedTempStaff) push('yellow', `tempstaff-${item.id}`, 'มีค่าจ้างลูกจ้างชั่วคราว แต่ยังไม่ยืนยันเอกสารวิเคราะห์ Workload/FTE และหลักเกณฑ์ตำแหน่ง/อัตราค่าจ้าง', 'เปิดโมดูลแผนลูกจ้างเงินบำรุงประกอบ'); if (cat.rule === 'other' && amount > 0 && !String(item.justification || '').trim()) push('red', `other-justification-${item.id}`, 'หมวดค่าใช้จ่ายอื่นที่จำเป็นยังไม่มีเหตุผลเชื่อมโยงกับภารกิจสาธารณสุข', 'กรอกเหตุผลความจำเป็นและฐานอำนาจ'); if (parseNumber(item.actual) > amount && amount > 0) push('red', `overspend-${item.id}`, `จ่ายจริงของ “${item.item || cat.label}” เกินแผน ${money(parseNumber(item.actual) - amount)} บาท`, 'ตรวจการปรับแผน/อนุมัติก่อนรับรองผล'); if (parseNumber(item.committed) > amount && amount > 0) push('yellow', `overcommit-${item.id}`, `ยอดผูกพันของ “${item.item || cat.label}” สูงกว่าแผน`, 'ตรวจวงเงินและปรับแผนก่อนก่อหนี้เพิ่ม'); });
+    if (plan.status === 'announced' && !plan.audit?.planApproved) push('red', 'approved-plan-proof', 'สถานะแผนเป็น “ประกาศใช้” แต่ Audit Pack ยังไม่ยืนยันหลักฐานแผนที่ผ่านการพิจารณา'); if (summary.auditDone < 5 && ['committee','announced','closed'].includes(plan.status)) push('yellow', 'audit-low', `Audit Pack ยืนยันแล้ว ${summary.auditDone}/${summary.auditTotal} รายการ`, 'แนบ/ตรวจหลักฐานก่อนปิดขั้นตอน'); const severity = alerts.some(item => item.level === 'red') ? 'red' : alerts.some(item => item.level === 'yellow') ? 'yellow' : 'green'; return Object.freeze({ severity, alerts, summary });
   }
 
-  function buildOfficialMatrix(planInput = {}) {
-    const plan = normalizePlan(planInput);
-    return CATEGORIES.map(cat => {
-      const rows = plan.expenses.filter(item => Number(item.category) === cat.id);
-      const localTotal = rows.filter(item => item.fundingSource === 'local').reduce((sum, item) => sum + parseNumber(item.amount), 0);
-      const maintenanceTotal = rows.filter(item => item.fundingSource === 'maintenance').reduce((sum, item) => sum + parseNumber(item.amount), 0);
-      const months = Object.fromEntries(MONTHS.map(month => [month.key, round(rows.reduce((sum, item) => sum + (item.month === month.key ? parseNumber(item.amount) : 0), 0))]));
-      return { category: cat.id, label: cat.label, localTotal: round(localTotal), maintenanceTotal: round(maintenanceTotal), months, total: round(localTotal + maintenanceTotal) };
-    });
-  }
+  function buildOfficialMatrix(planInput = {}) { const plan = normalizePlan(planInput); return CATEGORIES.map(cat => { const rows = plan.expenses.filter(item => Number(item.category) === cat.id); const localTotal = rows.filter(item => item.fundingSource === 'local').reduce((sum, item) => sum + parseNumber(item.amount), 0); const maintenanceTotal = rows.filter(item => item.fundingSource === 'maintenance').reduce((sum, item) => sum + parseNumber(item.amount), 0); const months = Object.fromEntries(MONTHS.map(month => [month.key, round(rows.reduce((sum, item) => sum + (item.month === month.key ? parseNumber(item.amount) : 0), 0))])); return { category: cat.id, label: cat.label, localTotal: round(localTotal), maintenanceTotal: round(maintenanceTotal), months, total: round(localTotal + maintenanceTotal) }; }); }
 
-  function loadAllPlans() {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      return Array.isArray(parsed) ? parsed.map(normalizePlan) : [];
-    } catch { return []; }
-  }
-  function saveAllPlans(plans) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(plans));
-  }
-  function upsertPlan(planInput) {
-    const plan = normalizePlan({ ...planInput, updatedAt: new Date().toISOString() });
-    const plans = loadAllPlans();
-    const index = plans.findIndex(item => item.id === plan.id);
-    if (index >= 0) plans[index] = plan; else plans.push(plan);
-    saveAllPlans(plans);
-    localStorage.setItem(CURRENT_KEY, plan.id);
-    return plan;
-  }
-  function deletePlan(id) {
-    const plans = loadAllPlans().filter(item => item.id !== id);
-    saveAllPlans(plans);
-    if (localStorage.getItem(CURRENT_KEY) === id) localStorage.removeItem(CURRENT_KEY);
-  }
-  function loadCurrentPlan() {
-    const plans = loadAllPlans();
-    const currentId = localStorage.getItem(CURRENT_KEY);
-    return plans.find(item => item.id === currentId) || plans.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))[0] || createBlankPlan();
-  }
-
-  function download(name, type, content) {
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1200);
-  }
+  function loadAllPlans() { try { const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); return Array.isArray(parsed) ? parsed.map(normalizePlan) : []; } catch { return []; } }
+  function saveAllPlans(plans) { localStorage.setItem(STORAGE_KEY, JSON.stringify(plans)); }
+  function upsertPlan(planInput) { const plan = normalizePlan({ ...planInput, updatedAt: new Date().toISOString() }); const plans = loadAllPlans(); const index = plans.findIndex(item => item.id === plan.id); if (index >= 0) plans[index] = plan; else plans.push(plan); saveAllPlans(plans); localStorage.setItem(CURRENT_KEY, plan.id); return plan; }
+  function deletePlan(id) { const plans = loadAllPlans().filter(item => item.id !== id); saveAllPlans(plans); if (localStorage.getItem(CURRENT_KEY) === id) localStorage.removeItem(CURRENT_KEY); }
+  function loadCurrentPlan() { const plans = loadAllPlans(); const currentId = localStorage.getItem(CURRENT_KEY); return plans.find(item => item.id === currentId) || plans.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))[0] || createBlankPlan(); }
+  function download(name, type, content) { const blob = new Blob([content], { type }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1200); }
   function csvCell(value) { return `"${String(value ?? '').replace(/"/g, '""')}"`; }
-  function exportOfficialCsv(plan) {
-    const matrix = buildOfficialMatrix(plan);
-    const header = ['ลำดับ','รายการ','งบประมาณ อปท.','เงินบำรุง',...MONTHS.map(m => m.label),'รวม'];
-    const rows = matrix.map(row => [row.category,row.label,row.localTotal,row.maintenanceTotal,...MONTHS.map(m => row.months[m.key]),row.total]);
-    const total = ['','รวม',...Array(14).fill('')];
-    total[2] = matrix.reduce((s,r)=>s+r.localTotal,0);
-    total[3] = matrix.reduce((s,r)=>s+r.maintenanceTotal,0);
-    MONTHS.forEach((m,i)=>{ total[4+i] = matrix.reduce((s,r)=>s+r.months[m.key],0); });
-    total[16] = matrix.reduce((s,r)=>s+r.total,0);
-    const meta = [[`แผนการใช้จ่ายเงินบำรุง ${plan.facility || ''}`],[`ปีงบประมาณ ${plan.fiscalYear || ''}`],[]];
-    const content = '\ufeff' + [...meta, header, ...rows, total].map(row => row.map(csvCell).join(',')).join('\r\n');
-    download(`แผนเงินบำรุง_${plan.facility || 'หน่วยบริการ'}_${plan.fiscalYear || ''}.csv`, 'text/csv;charset=utf-8', content);
-  }
-  function buildWordHtml(plan) {
-    const summary = summarize(plan); const validation = validatePlan(plan); const matrix = buildOfficialMatrix(plan);
-    const statusLabel = STATUS.find(([key]) => key === plan.status)?.[1] || plan.status;
-    const rows = matrix.map(row => `<tr><td>${row.category}</td><td>${esc(row.label)}</td><td>${money(row.localTotal)}</td><td>${money(row.maintenanceTotal)}</td>${MONTHS.map(m => `<td>${money(row.months[m.key])}</td>`).join('')}<td>${money(row.total)}</td></tr>`).join('');
-    const auditRows = AUDIT_ITEMS.map(([key,label]) => `<tr><td>${plan.audit?.[key] ? '✓' : '☐'}</td><td>${esc(label)}</td></tr>`).join('');
-    const alerts = validation.alerts.length ? validation.alerts.map(a => `<li>${a.level === 'red' ? '🔴' : '🟡'} ${esc(a.message)}</li>`).join('') : '<li>🟢 ไม่พบข้อเตือนจากกฎตรวจเบื้องต้นของระบบ</li>';
-    return `<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:"TH Sarabun New",Arial,sans-serif;font-size:16pt;margin:28px;color:#111}h1,h2{text-align:center}table{border-collapse:collapse;width:100%;font-size:11pt}td,th{border:1px solid #555;padding:4px;vertical-align:top}.right{text-align:right}.small{font-size:11pt}.sign{margin-top:34px;display:flex;justify-content:space-between}.sign div{width:46%;text-align:center}</style></head><body>
-      <h1>แผนการใช้จ่ายเงินบำรุงโรงพยาบาล/หน่วยบริการสาธารณสุข</h1>
-      <p style="text-align:center">${esc(plan.facility || '[ชื่อหน่วยบริการ]')} (${esc(plan.facilityType || '')}) ประจำปีงบประมาณ พ.ศ. ${esc(plan.fiscalYear || '....')}</p>
-      <p><b>สถานะ:</b> ${esc(statusLabel)} | <b>ฉบับที่:</b> ${plan.version}</p>
-      <h2>สรุปฐานะเงิน</h2>
-      <table><tr><th>เงินต้นปี</th><th>รายรับคาดการณ์</th><th>ภาระผูกพันเดิม</th><th>เงินกันสำรอง</th><th>แผนเงินบำรุง</th><th>คาดการณ์ปลายปี</th></tr><tr><td>${money(summary.opening)}</td><td>${money(summary.income)}</td><td>${money(summary.commitments)}</td><td>${money(summary.reserve)}</td><td>${money(summary.plannedMaintenance)}</td><td>${money(summary.forecastClosing)}</td></tr></table>
-      <h2>ตารางแผนการใช้จ่าย (ต.ค.–ก.ย.)</h2>
-      <table><thead><tr><th>ลำดับ</th><th>รายการ</th><th>งบ อปท.</th><th>เงินบำรุง</th>${MONTHS.map(m=>`<th>${m.label}</th>`).join('')}<th>รวม</th></tr></thead><tbody>${rows}</tbody></table>
-      <h2>ข้อเตือนก่อนอนุมัติ/ดำเนินการ</h2><ul>${alerts}</ul>
-      <h2>Audit Pack</h2><table>${auditRows}</table>
-      <p class="small"><b>หมายเหตุ:</b> เอกสารนี้สร้างจาก GovPrompt เพื่อช่วยจัดทำและติดตามแผน ต้องตรวจระเบียบ/หนังสือสั่งการฉบับล่าสุด อำนาจอนุมัติ เงื่อนไขแหล่งเงิน และหลักฐานต้นฉบับก่อนลงนามจริง</p>
-      <div class="sign"><div>ลงชื่อ ........................................ ผู้รายงาน<br>(........................................)<br>ตำแหน่ง ........................................</div><div>ลงชื่อ ........................................ หัวหน้าหน่วยงาน<br>(........................................)<br>ตำแหน่ง ........................................</div></div>
-      </body></html>`;
-  }
-  function exportWord(plan) {
-    download(`แผนเงินบำรุง_${plan.facility || 'หน่วยบริการ'}_${plan.fiscalYear || ''}.doc`, 'application/msword;charset=utf-8', '\ufeff' + buildWordHtml(plan));
-  }
+  function exportOfficialCsv(plan) { const matrix = buildOfficialMatrix(plan); const header = ['ลำดับ','รายการ','งบประมาณ อปท.','เงินบำรุง',...MONTHS.map(m => m.label),'รวม']; const rows = matrix.map(row => [row.category,row.label,row.localTotal,row.maintenanceTotal,...MONTHS.map(m => row.months[m.key]),row.total]); const total = ['','รวม',...Array(14).fill('')]; total[2] = matrix.reduce((s,r)=>s+r.localTotal,0); total[3] = matrix.reduce((s,r)=>s+r.maintenanceTotal,0); MONTHS.forEach((m,i)=>{ total[4+i] = matrix.reduce((s,r)=>s+r.months[m.key],0); }); total[16] = matrix.reduce((s,r)=>s+r.total,0); const meta = [[`แผนการใช้จ่ายเงินบำรุง ${plan.facility || ''}`],[`ปีงบประมาณ ${plan.fiscalYear || ''}`],[]]; const content = '\ufeff' + [...meta, header, ...rows, total].map(row => row.map(csvCell).join(',')).join('\r\n'); download(`แผนเงินบำรุง_${plan.facility || 'หน่วยบริการ'}_${plan.fiscalYear || ''}.csv`, 'text/csv;charset=utf-8', content); }
+  function buildWordHtml(plan) { const summary = summarize(plan); const validation = validatePlan(plan); const matrix = buildOfficialMatrix(plan); const statusLabel = STATUS.find(([key]) => key === plan.status)?.[1] || plan.status; const rows = matrix.map(row => `<tr><td>${row.category}</td><td>${esc(row.label)}</td><td>${money(row.localTotal)}</td><td>${money(row.maintenanceTotal)}</td>${MONTHS.map(m => `<td>${money(row.months[m.key])}</td>`).join('')}<td>${money(row.total)}</td></tr>`).join(''); const auditRows = AUDIT_ITEMS.map(([key,label]) => `<tr><td>${plan.audit?.[key] ? '✓' : '☐'}</td><td>${esc(label)}</td></tr>`).join(''); const alerts = validation.alerts.length ? validation.alerts.map(a => `<li>${a.level === 'red' ? '🔴' : '🟡'} ${esc(a.message)}</li>`).join('') : '<li>🟢 ไม่พบข้อเตือนจากกฎตรวจเบื้องต้นของระบบ</li>'; return `<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:"TH Sarabun New",Arial,sans-serif;font-size:16pt;margin:28px;color:#111}h1,h2{text-align:center}table{border-collapse:collapse;width:100%;font-size:11pt}td,th{border:1px solid #555;padding:4px;vertical-align:top}.right{text-align:right}.small{font-size:11pt}.sign{margin-top:34px;display:flex;justify-content:space-between}.sign div{width:46%;text-align:center}</style></head><body><h1>แผนการใช้จ่ายเงินบำรุงโรงพยาบาล/หน่วยบริการสาธารณสุข</h1><p style="text-align:center">${esc(plan.facility || '[ชื่อหน่วยบริการ]')} (${esc(plan.facilityType || '')}) ประจำปีงบประมาณ พ.ศ. ${esc(plan.fiscalYear || '....')}</p><p><b>สถานะ:</b> ${esc(statusLabel)} | <b>ฉบับที่:</b> ${plan.version}</p><h2>สรุปฐานะเงิน</h2><table><tr><th>เงินต้นปี</th><th>รายรับคาดการณ์</th><th>ภาระผูกพันเดิม</th><th>เงินกันสำรอง</th><th>แผนเงินบำรุง</th><th>คาดการณ์ปลายปี</th></tr><tr><td>${money(summary.opening)}</td><td>${money(summary.income)}</td><td>${money(summary.commitments)}</td><td>${money(summary.reserve)}</td><td>${money(summary.plannedMaintenance)}</td><td>${money(summary.forecastClosing)}</td></tr></table><h2>ตารางแผนการใช้จ่าย (ต.ค.–ก.ย.)</h2><table><thead><tr><th>ลำดับ</th><th>รายการ</th><th>งบ อปท.</th><th>เงินบำรุง</th>${MONTHS.map(m=>`<th>${m.label}</th>`).join('')}<th>รวม</th></tr></thead><tbody>${rows}</tbody></table><h2>ข้อเตือนก่อนอนุมัติ/ดำเนินการ</h2><ul>${alerts}</ul><h2>Audit Pack</h2><table>${auditRows}</table><p class="small"><b>หมายเหตุ:</b> เอกสารนี้สร้างจาก GovPrompt เพื่อช่วยจัดทำและติดตามแผน ต้องตรวจระเบียบ/หนังสือสั่งการฉบับล่าสุด อำนาจอนุมัติ เงื่อนไขแหล่งเงิน และหลักฐานต้นฉบับก่อนลงนามจริง</p><div class="sign"><div>ลงชื่อ ........................................ ผู้รายงาน<br>(........................................)<br>ตำแหน่ง ........................................</div><div>ลงชื่อ ........................................ หัวหน้าหน่วยงาน<br>(........................................)<br>ตำแหน่ง ........................................</div></div></body></html>`; }
+  function exportWord(plan) { download(`แผนเงินบำรุง_${plan.facility || 'หน่วยบริการ'}_${plan.fiscalYear || ''}.doc`, 'application/msword;charset=utf-8', '\ufeff' + buildWordHtml(plan)); }
 
-  function installStyles() {
-    if ($('#maintenanceFundPlanStyles')) return;
-    const style = document.createElement('style'); style.id = 'maintenanceFundPlanStyles'; style.textContent = `
-      .mfp-shell{display:grid;gap:14px}.mfp-tabs{display:flex;gap:7px;flex-wrap:wrap;position:sticky;top:48px;z-index:10;background:#f7f9fc;padding:6px 0}.mfp-tab{border:1px solid #cfdbea;background:#fff;border-radius:999px;padding:9px 12px;font:inherit;font-weight:800;cursor:pointer}.mfp-tab.active{background:#0b3b75;color:#fff;border-color:#0b3b75}.mfp-card{background:#fff;border:1px solid #dde6f0;border-radius:14px;padding:14px}.mfp-card h2,.mfp-card h3{margin:0 0 10px}.mfp-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.mfp-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.mfp-field label{display:block;font-weight:800;margin-bottom:5px}.mfp-field input,.mfp-field select,.mfp-field textarea{width:100%;border:1px solid #d4dfeb;border-radius:10px;padding:10px;font:inherit;background:#fff}.mfp-field textarea{min-height:76px}.mfp-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.mfp-btn{border:0;border-radius:10px;padding:10px 13px;font:inherit;font-weight:800;cursor:pointer;background:#eaf0f6;color:#17314f}.mfp-btn.primary{background:#0b3b75;color:#fff}.mfp-btn.danger{background:#fdecec;color:#8b2020}.mfp-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}.mfp-kpi{border:1px solid #dfe7ef;border-radius:12px;padding:10px;background:#fbfdff}.mfp-kpi small{display:block;color:#627286}.mfp-kpi strong{display:block;font-size:1.12rem;margin-top:4px}.mfp-row{border:1px solid #e1e8ef;border-radius:12px;padding:11px;margin-top:8px;background:#fff}.mfp-row-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.mfp-row-grid{display:grid;grid-template-columns:1.4fr 1fr .8fr .8fr;gap:8px;margin-top:8px}.mfp-row-extra{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}.mfp-check{display:flex;align-items:flex-start;gap:7px;font-size:.9rem}.mfp-check input{margin-top:3px}.mfp-alert{border-radius:10px;padding:10px 12px;margin:7px 0}.mfp-alert.red{background:#fff0f0;border:1px solid #f0bcbc}.mfp-alert.yellow{background:#fff9e8;border:1px solid #efd997}.mfp-alert.green{background:#effaf4;border:1px solid #b9dfc8}.mfp-table-wrap{overflow:auto}.mfp-table{width:100%;border-collapse:collapse;min-width:780px}.mfp-table th,.mfp-table td{border-bottom:1px solid #e4eaf0;padding:8px;text-align:left}.mfp-table input{width:110px;border:1px solid #d4dfeb;border-radius:8px;padding:7px}.mfp-badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:.8rem;font-weight:800}.mfp-badge.green{background:#e7f7ed;color:#17663a}.mfp-badge.yellow{background:#fff3cc;color:#7b5b00}.mfp-badge.red{background:#fde8e8;color:#8b2020}.mfp-source{font-size:.84rem;color:#5d6e80;margin:3px 0}.mfp-muted{color:#637387;font-size:.9rem}.mfp-progress{height:10px;background:#e8eef4;border-radius:999px;overflow:hidden}.mfp-progress span{display:block;height:100%;background:#0b3b75}.mfp-facility-list{display:grid;gap:8px}.mfp-facility{border:1px solid #dde6f0;border-radius:12px;padding:10px;display:grid;grid-template-columns:1.5fr .7fr .7fr .7fr auto;gap:8px;align-items:center}.mfp-empty{padding:22px;text-align:center;color:#66768a}.mfp-hidden{display:none!important}.mfp-note{background:#f2f6fb;border-radius:10px;padding:10px;font-size:.9rem}.mfp-audit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.mfp-audit label{border:1px solid #e0e7ef;border-radius:10px;padding:9px;display:flex;gap:8px}.mfp-sources a{display:block;margin:5px 0;color:#0b3b75}.mfp-month-risk{font-size:.82rem;margin-top:6px}.mfp-month-risk strong{color:#a12a2a}@media(max-width:850px){.mfp-grid,.mfp-grid.two,.mfp-row-grid,.mfp-row-extra{grid-template-columns:1fr 1fr}.mfp-kpis{grid-template-columns:repeat(2,1fr)}.mfp-facility{grid-template-columns:1fr 1fr}.mfp-facility>*:first-child{grid-column:1/-1}}@media(max-width:560px){.mfp-tabs{top:44px;overflow:auto;flex-wrap:nowrap}.mfp-tab{white-space:nowrap}.mfp-grid,.mfp-grid.two,.mfp-row-grid,.mfp-row-extra,.mfp-audit{grid-template-columns:1fr}.mfp-kpis{grid-template-columns:1fr 1fr}.mfp-facility{grid-template-columns:1fr}.mfp-row-head{align-items:flex-start}.mfp-card{padding:11px}}
-    `; document.head.appendChild(style);
-  }
+  function installStyles() { if ($('#maintenanceFundPlanStyles')) return; const style = document.createElement('style'); style.id = 'maintenanceFundPlanStyles'; style.textContent = `.mfp-shell{display:grid;gap:14px}.mfp-tabs{display:flex;gap:7px;flex-wrap:wrap;position:sticky;top:48px;z-index:10;background:#f7f9fc;padding:6px 0}.mfp-tab{border:1px solid #cfdbea;background:#fff;border-radius:999px;padding:9px 12px;font:inherit;font-weight:800;cursor:pointer}.mfp-tab.active{background:#0b3b75;color:#fff;border-color:#0b3b75}.mfp-card{background:#fff;border:1px solid #dde6f0;border-radius:14px;padding:14px}.mfp-card h2,.mfp-card h3{margin:0 0 10px}.mfp-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.mfp-grid.two{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.mfp-field label{display:block;font-weight:800;margin-bottom:5px}.mfp-field input,.mfp-field select,.mfp-field textarea{width:100%;border:1px solid #d4dfeb;border-radius:10px;padding:10px;font:inherit;background:#fff}.mfp-field textarea{min-height:76px}.mfp-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.mfp-btn{border:0;border-radius:10px;padding:10px 13px;font:inherit;font-weight:800;cursor:pointer;background:#eaf0f6;color:#17314f}.mfp-btn.primary{background:#0b3b75;color:#fff}.mfp-btn.danger{background:#fdecec;color:#8b2020}.mfp-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}.mfp-kpi{border:1px solid #dfe7ef;border-radius:12px;padding:10px;background:#fbfdff}.mfp-kpi small{display:block;color:#627286}.mfp-kpi strong{display:block;font-size:1.12rem;margin-top:4px}.mfp-row{border:1px solid #e1e8ef;border-radius:12px;padding:11px;margin-top:8px;background:#fff}.mfp-row-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.mfp-row-grid{display:grid;grid-template-columns:1.4fr 1fr .8fr .8fr;gap:8px;margin-top:8px}.mfp-row-extra{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}.mfp-check{display:flex;align-items:flex-start;gap:7px;font-size:.9rem}.mfp-check input{margin-top:3px}.mfp-alert{border-radius:10px;padding:10px 12px;margin:7px 0}.mfp-alert.red{background:#fff0f0;border:1px solid #f0bcbc}.mfp-alert.yellow{background:#fff9e8;border:1px solid #efd997}.mfp-alert.green{background:#effaf4;border:1px solid #b9dfc8}.mfp-table-wrap{overflow:auto}.mfp-table{width:100%;border-collapse:collapse;min-width:780px}.mfp-table th,.mfp-table td{border-bottom:1px solid #e4eaf0;padding:8px;text-align:left}.mfp-table input{width:110px;border:1px solid #d4dfeb;border-radius:8px;padding:7px}.mfp-badge{display:inline-block;border-radius:999px;padding:4px 8px;font-size:.8rem;font-weight:800}.mfp-badge.green{background:#e7f7ed;color:#17663a}.mfp-badge.yellow{background:#fff3cc;color:#7b5b00}.mfp-badge.red{background:#fde8e8;color:#8b2020}.mfp-muted{color:#637387;font-size:.9rem}.mfp-progress{height:10px;background:#e8eef4;border-radius:999px;overflow:hidden}.mfp-progress span{display:block;height:100%;background:#0b3b75}.mfp-facility-list{display:grid;gap:8px}.mfp-facility{border:1px solid #dde6f0;border-radius:12px;padding:10px;display:grid;grid-template-columns:1.5fr .7fr .7fr .7fr auto;gap:8px;align-items:center}.mfp-empty{padding:22px;text-align:center;color:#66768a}.mfp-note{background:#f2f6fb;border-radius:10px;padding:10px;font-size:.9rem}.mfp-audit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.mfp-audit label{border:1px solid #e0e7ef;border-radius:10px;padding:9px;display:flex;gap:8px}.mfp-sources a{display:block;margin:5px 0;color:#0b3b75}.mfp-month-risk{font-size:.82rem;margin-top:6px}.mfp-month-risk strong{color:#a12a2a}@media(max-width:850px){.mfp-grid,.mfp-grid.two,.mfp-row-grid,.mfp-row-extra{grid-template-columns:1fr 1fr}.mfp-kpis{grid-template-columns:repeat(2,1fr)}.mfp-facility{grid-template-columns:1fr 1fr}.mfp-facility>*:first-child{grid-column:1/-1}}@media(max-width:560px){.mfp-tabs{top:44px;overflow:auto;flex-wrap:nowrap}.mfp-tab{white-space:nowrap}.mfp-grid,.mfp-grid.two,.mfp-row-grid,.mfp-row-extra,.mfp-audit{grid-template-columns:1fr}.mfp-kpis{grid-template-columns:1fr 1fr}.mfp-facility{grid-template-columns:1fr}.mfp-row-head{align-items:flex-start}.mfp-card{padding:11px}}`; document.head.appendChild(style); }
 
   let state = null; let activeView = 'plan';
   function currentValidation() { return validatePlan(state); }
-  function renderKpis() {
-    const s = summarize(state); const v = validatePlan(state);
-    return `<div class="mfp-kpis">
-      <div class="mfp-kpi"><small>เงินต้นปี</small><strong>${money(s.opening)}</strong></div>
-      <div class="mfp-kpi"><small>รายรับคาดการณ์</small><strong>${money(s.income)}</strong></div>
-      <div class="mfp-kpi"><small>แผนเงินบำรุง</small><strong>${money(s.plannedMaintenance)}</strong></div>
-      <div class="mfp-kpi"><small>ผูกพันแล้ว</small><strong>${money(s.committed)}</strong></div>
-      <div class="mfp-kpi"><small>จ่ายจริง</small><strong>${money(s.actual)}</strong></div>
-      <div class="mfp-kpi"><small>คาดการณ์ปลายปี</small><strong>${money(s.forecastClosing)}</strong><span class="mfp-badge ${v.severity}">${v.severity === 'green' ? 'ปกติ' : v.severity === 'yellow' ? 'ติดตาม' : 'เสี่ยง'}</span></div>
-    </div>`;
-  }
+  function renderKpis() { const s = summarize(state); const v = validatePlan(state); return `<div class="mfp-kpis"><div class="mfp-kpi"><small>เงินต้นปี</small><strong>${money(s.opening)}</strong></div><div class="mfp-kpi"><small>รายรับคาดการณ์</small><strong>${money(s.income)}</strong></div><div class="mfp-kpi"><small>แผนเงินบำรุง</small><strong>${money(s.plannedMaintenance)}</strong></div><div class="mfp-kpi"><small>ผูกพันแล้ว</small><strong>${money(s.committed)}</strong></div><div class="mfp-kpi"><small>จ่ายจริง</small><strong>${money(s.actual)}</strong></div><div class="mfp-kpi"><small>คาดการณ์ปลายปี</small><strong>${money(s.forecastClosing)}</strong><span class="mfp-badge ${v.severity}">${v.severity === 'green' ? 'ปกติ' : v.severity === 'yellow' ? 'ติดตาม' : 'เสี่ยง'}</span></div></div>`; }
   function statusOptions(selected) { return STATUS.map(([key,label]) => `<option value="${key}" ${key===selected?'selected':''}>${label}</option>`).join(''); }
   function monthOptions(selected) { return MONTHS.map(m => `<option value="${m.key}" ${m.key===selected?'selected':''}>${m.label}</option>`).join(''); }
   function categoryOptions(selected) { return CATEGORIES.map(c => `<option value="${c.id}" ${Number(selected)===c.id?'selected':''}>${c.id}. ${esc(c.label)}</option>`).join(''); }
 
   function renderPlanView() {
-    const incomeRows = state.incomes.map(item => `<div class="mfp-row" data-income-id="${item.id}"><div class="mfp-row-head"><strong>แหล่งรายรับ</strong><button class="mfp-btn danger" data-remove-income="${item.id}">ลบ</button></div><div class="mfp-row-grid"><div class="mfp-field"><label>แหล่งรายรับ</label><input data-income-field="source" value="${esc(item.source)}" placeholder="เช่น ค่าบริการ/เงินจัดสรร/ดอกเบี้ย"></div><div class="mfp-field"><label>จำนวนเงิน</label><input inputmode="decimal" data-income-field="amount" value="${esc(item.amount)}"></div><div class="mfp-field"><label>คาดรับเดือน</label><select data-income-field="month">${monthOptions(item.month)}</select></div><div class="mfp-field"><label>เงื่อนไขการใช้ (ถ้ามี)</label><input data-income-field="restriction" value="${esc(item.restriction)}" placeholder="เช่น ใช้เฉพาะ... "></div></div></div>`).join('');
-    const expenseRows = state.expenses.map(item => {
-      const cat = categoryById(item.category);
-      return `<div class="mfp-row" data-expense-id="${item.id}"><div class="mfp-row-head"><strong>รายการใช้จ่าย</strong><button class="mfp-btn danger" data-remove-expense="${item.id}">ลบ</button></div>
-        <div class="mfp-row-grid"><div class="mfp-field"><label>หมวด</label><select data-expense-field="category">${categoryOptions(item.category)}</select></div><div class="mfp-field"><label>รายการ</label><input data-expense-field="item" value="${esc(item.item)}" placeholder="ระบุสิ่งที่จะใช้จ่ายจริง"></div><div class="mfp-field"><label>แหล่งเงิน</label><select data-expense-field="fundingSource"><option value="maintenance" ${item.fundingSource==='maintenance'?'selected':''}>เงินบำรุง</option><option value="local" ${item.fundingSource==='local'?'selected':''}>งบประมาณ อปท.</option></select></div><div class="mfp-field"><label>เดือน</label><select data-expense-field="month">${monthOptions(item.month)}</select></div></div>
-        <div class="mfp-row-extra"><div class="mfp-field"><label>วงเงินตามแผน</label><input inputmode="decimal" data-expense-field="amount" value="${esc(item.amount)}"></div><div class="mfp-field"><label>ยอดผูกพัน</label><input inputmode="decimal" data-expense-field="committed" value="${esc(item.committed)}"></div><div class="mfp-field"><label>จ่ายจริง</label><input inputmode="decimal" data-expense-field="actual" value="${esc(item.actual)}"></div></div>
-        <div class="mfp-row-extra">
-          <label class="mfp-check"><input type="checkbox" data-expense-check="procurementRequired" ${item.procurementRequired?'checked':''}> รายการนี้ต้องดำเนินการจัดซื้อจัดจ้าง/จัดหา</label>
-          <label class="mfp-check"><input type="checkbox" data-expense-check="procurementPlan" ${item.procurementPlan?'checked':''}> ตรวจความพร้อมด้านพัสดุ/แผนจัดหาแล้ว</label>
-          ${cat.rule==='capital'?`<label class="mfp-check"><input type="checkbox" data-expense-check="councilApproved" ${item.councilApproved?'checked':''}> มีหลักฐานความเห็นชอบผู้บริหารและอนุมัติสภา</label>`:''}
-          ${cat.rule==='tempstaff'?`<label class="mfp-check"><input type="checkbox" data-expense-check="linkedTempStaff" ${item.linkedTempStaff?'checked':''}> มี Workload/FTE และเอกสารลูกจ้างประกอบ <a href="temp-staff-wizard.html" target="_blank">เปิดเครื่องมือ</a></label>`:''}
-        </div>
-        <div class="mfp-grid two" style="margin-top:8px"><div class="mfp-field"><label>${cat.rule==='other'?'เหตุผลความจำเป็น/เชื่อมโยงภารกิจ':'เหตุผล/รายละเอียดประกอบ'}</label><textarea data-expense-field="justification">${esc(item.justification)}</textarea></div><div class="mfp-field"><label>หมายเหตุ/ฐานอ้างอิงภายใน</label><textarea data-expense-field="note">${esc(item.note)}</textarea></div></div>
-      </div>`;
-    }).join('');
-    return `<section class="mfp-card"><h2>1) ข้อมูลหน่วยบริการและฐานะเงิน</h2><div class="mfp-grid"><div class="mfp-field"><label>ชื่อ รพ.สต./สอน.</label><input id="mfpFacility" value="${esc(state.facility)}"></div><div class="mfp-field"><label>ประเภทหน่วย</label><select id="mfpFacilityType"><option ${state.facilityType==='รพ.สต.'?'selected':''}>รพ.สต.</option><option ${state.facilityType==='สอน.'?'selected':''}>สอน.</option><option ${state.facilityType==='หน่วยบริการอื่น'?'selected':''}>หน่วยบริการอื่น</option></select></div><div class="mfp-field"><label>ปีงบประมาณ พ.ศ.</label><input id="mfpFiscalYear" value="${esc(state.fiscalYear)}" inputmode="numeric"></div><div class="mfp-field"><label>สถานะแผน</label><select id="mfpStatus">${statusOptions(state.status)}</select></div><div class="mfp-field"><label>เงินบำรุงคงเหลือต้นปี</label><input id="mfpOpening" value="${esc(state.openingBalance)}" inputmode="decimal"></div><div class="mfp-field"><label>ภาระผูกพันเดิม/รายจ่ายจำเป็นเดิม</label><input id="mfpCommitments" value="${esc(state.existingCommitments)}" inputmode="decimal"></div><div class="mfp-field"><label>เงินกันสำรองภารกิจจำเป็น/ฉุกเฉิน</label><input id="mfpReserve" value="${esc(state.reserveAmount)}" inputmode="decimal"></div><div class="mfp-field"><label>ฉบับแผน</label><input value="${state.version}" disabled></div></div></section>
-      <section class="mfp-card"><div class="mfp-row-head"><h2>2) ประมาณการรายรับเงินบำรุง</h2><button class="mfp-btn" id="mfpAddIncome">+ เพิ่มแหล่งรายรับ</button></div><p class="mfp-muted">หากเงินมีเงื่อนไข/วัตถุประสงค์เฉพาะ ให้ระบุไว้เพื่อเตือนก่อนนำไปใช้</p>${incomeRows}</section>
-      <section class="mfp-card"><div class="mfp-row-head"><h2>3) แผนรายจ่ายรายรายการ</h2><button class="mfp-btn" id="mfpAddExpense">+ เพิ่มรายการ</button></div><p class="mfp-muted">ระบบจะรวมเป็น 11 หมวดและ ต.ค.–ก.ย. ให้อัตโนมัติ รายการหมวด 5, 8 และ 11 จะมีจุดตรวจเฉพาะ</p>${expenseRows}</section>
-      <section class="mfp-card"><h2>4) ตรวจแผนก่อนเสนอ</h2>${renderKpis()}${renderAlerts()}<div class="mfp-actions"><button class="mfp-btn primary" id="mfpSave">💾 บันทึกแผน</button><button class="mfp-btn" id="mfpExportWord">📄 Word</button><button class="mfp-btn" id="mfpExportCsv">📊 แบบแผน CSV</button><button class="mfp-btn" id="mfpBackup">💾 สำรอง JSON</button><label class="mfp-btn" style="cursor:pointer">📥 นำเข้า JSON<input id="mfpImport" type="file" accept="application/json" hidden></label><button class="mfp-btn" id="mfpPrint">🖨️ พิมพ์</button></div></section>`;
+    const incomeRows = state.incomes.map(item => `<div class="mfp-row" data-income-id="${item.id}"><div class="mfp-row-head"><strong>แหล่งรายรับ</strong><button class="mfp-btn danger" data-remove-income="${item.id}">ลบ</button></div><div class="mfp-row-grid"><div class="mfp-field"><label>แหล่งรายรับ</label><input data-income-field="source" value="${esc(item.source)}" placeholder="เช่น ค่าบริการ/เงินจัดสรร/ดอกเบี้ย"></div><div class="mfp-field"><label>จำนวนเงิน</label><input inputmode="decimal" data-income-field="amount" value="${esc(item.amount)}"></div><div class="mfp-field"><label>คาดรับเดือน</label><select data-income-field="month">${monthOptions(item.month)}</select></div><div class="mfp-field"><label>เงื่อนไขการใช้ (ถ้ามี)</label><input data-income-field="restriction" value="${esc(item.restriction)}" placeholder="เช่น ใช้เฉพาะ..."></div></div></div>`).join('');
+    const expenseRows = state.expenses.map(item => { const cat = categoryById(item.category); return `<div class="mfp-row" data-expense-id="${item.id}"><div class="mfp-row-head"><strong>รายการใช้จ่าย</strong><button class="mfp-btn danger" data-remove-expense="${item.id}">ลบ</button></div><div class="mfp-row-grid"><div class="mfp-field"><label>หมวด</label><select data-expense-field="category">${categoryOptions(item.category)}</select></div><div class="mfp-field"><label>รายการ</label><input data-expense-field="item" value="${esc(item.item)}" placeholder="ระบุสิ่งที่จะใช้จ่ายจริง"></div><div class="mfp-field"><label>แหล่งเงิน</label><select data-expense-field="fundingSource"><option value="maintenance" ${item.fundingSource==='maintenance'?'selected':''}>เงินบำรุง</option><option value="local" ${item.fundingSource==='local'?'selected':''}>งบประมาณ อปท.</option></select></div><div class="mfp-field"><label>เดือน</label><select data-expense-field="month">${monthOptions(item.month)}</select></div></div><div class="mfp-row-extra"><div class="mfp-field"><label>วงเงินตามแผน</label><input inputmode="decimal" data-expense-field="amount" value="${esc(item.amount)}"></div><div class="mfp-field"><label>ยอดผูกพัน</label><input inputmode="decimal" data-expense-field="committed" value="${esc(item.committed)}"></div><div class="mfp-field"><label>จ่ายจริง</label><input inputmode="decimal" data-expense-field="actual" value="${esc(item.actual)}"></div></div><div class="mfp-row-extra"><label class="mfp-check"><input type="checkbox" data-expense-check="procurementRequired" ${item.procurementRequired?'checked':''}> รายการนี้ต้องดำเนินการจัดซื้อจัดจ้าง/จัดหา</label><label class="mfp-check"><input type="checkbox" data-expense-check="procurementPlan" ${item.procurementPlan?'checked':''}> ตรวจความพร้อมด้านพัสดุ/แผนจัดหาแล้ว</label>${cat.rule==='capital'?`<label class="mfp-check"><input type="checkbox" data-expense-check="councilApproved" ${item.councilApproved?'checked':''}> มีหลักฐานความเห็นชอบผู้บริหารและอนุมัติสภา</label>`:''}${cat.rule==='tempstaff'?`<label class="mfp-check"><input type="checkbox" data-expense-check="linkedTempStaff" ${item.linkedTempStaff?'checked':''}> มี Workload/FTE และเอกสารลูกจ้างประกอบ <a href="temp-staff-wizard.html" target="_blank" rel="noopener">เปิดเครื่องมือ</a></label>`:''}</div><div class="mfp-grid two" style="margin-top:8px"><div class="mfp-field"><label>${cat.rule==='other'?'เหตุผลความจำเป็น/เชื่อมโยงภารกิจ':'เหตุผล/รายละเอียดประกอบ'}</label><textarea data-expense-field="justification">${esc(item.justification)}</textarea></div><div class="mfp-field"><label>หมายเหตุ/ฐานอ้างอิงภายใน</label><textarea data-expense-field="note">${esc(item.note)}</textarea></div></div></div>`; }).join('');
+    return `<section class="mfp-card"><h2>1) ข้อมูลหน่วยบริการและฐานะเงิน</h2><div class="mfp-grid"><div class="mfp-field"><label>ชื่อ รพ.สต./สอน.</label><input id="mfpFacility" value="${esc(state.facility)}"></div><div class="mfp-field"><label>ประเภทหน่วย</label><select id="mfpFacilityType"><option ${state.facilityType==='รพ.สต.'?'selected':''}>รพ.สต.</option><option ${state.facilityType==='สอน.'?'selected':''}>สอน.</option><option ${state.facilityType==='หน่วยบริการอื่น'?'selected':''}>หน่วยบริการอื่น</option></select></div><div class="mfp-field"><label>ปีงบประมาณ พ.ศ.</label><input id="mfpFiscalYear" value="${esc(state.fiscalYear)}" inputmode="numeric"></div><div class="mfp-field"><label>สถานะแผน</label><select id="mfpStatus">${statusOptions(state.status)}</select></div><div class="mfp-field"><label>เงินบำรุงคงเหลือต้นปี</label><input id="mfpOpening" value="${esc(state.openingBalance)}" inputmode="decimal"></div><div class="mfp-field"><label>ภาระผูกพันเดิม/รายจ่ายจำเป็นเดิม</label><input id="mfpCommitments" value="${esc(state.existingCommitments)}" inputmode="decimal"></div><div class="mfp-field"><label>เงินกันสำรองภารกิจจำเป็น/ฉุกเฉิน</label><input id="mfpReserve" value="${esc(state.reserveAmount)}" inputmode="decimal"></div><div class="mfp-field"><label>ฉบับแผน</label><input value="${state.version}" disabled></div></div></section><section class="mfp-card"><div class="mfp-row-head"><h2>2) ประมาณการรายรับเงินบำรุง</h2><button class="mfp-btn" id="mfpAddIncome">+ เพิ่มแหล่งรายรับ</button></div><p class="mfp-muted">หากเงินมีเงื่อนไข/วัตถุประสงค์เฉพาะ ให้ระบุไว้เพื่อเตือนก่อนนำไปใช้</p>${incomeRows}</section><section class="mfp-card"><div class="mfp-row-head"><h2>3) แผนรายจ่ายรายรายการ</h2><button class="mfp-btn" id="mfpAddExpense">+ เพิ่มรายการ</button></div><p class="mfp-muted">ระบบจะรวมเป็น 11 หมวดและ ต.ค.–ก.ย. ให้อัตโนมัติ รายการหมวด 5, 8 และ 11 จะมีจุดตรวจเฉพาะ</p>${expenseRows}</section><section class="mfp-card"><h2>4) ตรวจแผนก่อนเสนอ</h2>${renderKpis()}${renderAlerts()}<div class="mfp-actions"><button class="mfp-btn primary" id="mfpSave">💾 บันทึกแผน</button><button class="mfp-btn" id="mfpExportWord">📄 Word</button><button class="mfp-btn" id="mfpExportCsv">📊 แบบแผน CSV</button><button class="mfp-btn" id="mfpBackup">💾 สำรอง JSON</button><label class="mfp-btn" style="cursor:pointer">📥 นำเข้า JSON<input id="mfpImport" type="file" accept="application/json" hidden></label><button class="mfp-btn" id="mfpPrint">🖨️ พิมพ์</button></div></section>`;
   }
-
-  function renderAlerts() {
-    const validation = currentValidation();
-    if (!validation.alerts.length) return '<div class="mfp-alert green">🟢 ไม่พบข้อเตือนจากข้อมูลที่กรอกในขณะนี้ ทั้งนี้ยังต้องตรวจหลักเกณฑ์/อำนาจฉบับล่าสุดและเอกสารต้นฉบับก่อนอนุมัติ</div>';
-    return `<div style="margin-top:10px">${validation.alerts.map(a => `<div class="mfp-alert ${a.level}">${a.level==='red'?'🔴':'🟡'} <b>${esc(a.message)}</b>${a.action?`<div class="mfp-muted">${esc(a.action)}</div>`:''}</div>`).join('')}</div>`;
-  }
-
-  function renderTrackingView() {
-    const summary = summarize(state);
-    const rows = state.expenses.map(item => { const planAmt=parseNumber(item.amount), actual=parseNumber(item.actual), pct=planAmt>0?Math.min(100,Math.round(actual/planAmt*100)):0; return `<tr data-track-id="${item.id}"><td>${categoryById(item.category).id}</td><td>${esc(item.item||categoryById(item.category).label)}</td><td>${item.fundingSource==='maintenance'?'เงินบำรุง':'งบ อปท.'}</td><td>${money(planAmt)}</td><td><input data-track-field="committed" value="${esc(item.committed)}" inputmode="decimal"></td><td><input data-track-field="actual" value="${esc(item.actual)}" inputmode="decimal"></td><td>${money(planAmt-actual)}</td><td><div class="mfp-progress"><span style="width:${pct}%"></span></div>${pct}%</td></tr>`; }).join('');
-    const risky = summary.monthProjection.filter(m=>m.balance<0);
-    return `<section class="mfp-card"><h2>ติดตามผล Plan vs Actual</h2>${renderKpis()}<div class="mfp-month-risk">${risky.length?`⚠️ เดือนที่คาดว่ายอดตามแผนติดลบ: <strong>${risky.map(m=>m.label).join(', ')}</strong>`:'🟢 ไม่พบเดือนที่กระแสเงินตามแผนติดลบ'}</div><div class="mfp-table-wrap" style="margin-top:12px"><table class="mfp-table"><thead><tr><th>หมวด</th><th>รายการ</th><th>แหล่ง</th><th>แผน</th><th>ผูกพัน</th><th>จ่ายจริง</th><th>เหลือ</th><th>ความก้าวหน้า</th></tr></thead><tbody>${rows||'<tr><td colspan="8">ยังไม่มีรายการ</td></tr>'}</tbody></table></div><div class="mfp-actions"><button class="mfp-btn primary" id="mfpSaveTracking">💾 บันทึกผลติดตาม</button><button class="mfp-btn" id="mfpExportTracking">📄 ส่งออกรายงาน</button></div>${renderAlerts()}</section>`;
-  }
-
-  function renderAdjustmentView() {
-    const history = (state.history||[]).slice().reverse().map(item => `<div class="mfp-row"><b>ฉบับ ${item.version}</b> — ${esc(item.reason||'ไม่มีเหตุผลระบุ')}<div class="mfp-muted">${new Date(item.savedAt).toLocaleString('th-TH')} | แผนเงินบำรุง ${money(item.summary?.plannedMaintenance)} | คงเหลือคาดการณ์ ${money(item.summary?.forecastClosing)}</div></div>`).join('');
-    return `<section class="mfp-card"><h2>ปรับแผน / Version Control</h2><p>ฉบับปัจจุบัน <b>${state.version}</b> — การสร้างฉบับใหม่จะเก็บ snapshot ของฉบับเดิมไว้ เพื่อให้ตรวจย้อนหลังได้</p><div class="mfp-field"><label>เหตุผลการเพิ่มเติม/เปลี่ยนแปลงแผน</label><textarea id="mfpRevisionReason" placeholder="ระบุเหตุผล ความจำเป็น รายการที่เปลี่ยน และผลกระทบต่อฐานะเงิน">${esc(state.revisionReason)}</textarea></div><div class="mfp-actions"><button class="mfp-btn primary" id="mfpCreateRevision">สร้างฉบับปรับแผน ${state.version+1}</button></div></section><section class="mfp-card"><h3>ประวัติฉบับก่อนหน้า</h3>${history||'<div class="mfp-empty">ยังไม่มีการปรับแผน</div>'}</section>`;
-  }
-
+  function renderAlerts() { const validation = currentValidation(); if (!validation.alerts.length) return '<div class="mfp-alert green">🟢 ไม่พบข้อเตือนจากข้อมูลที่กรอกในขณะนี้ ทั้งนี้ยังต้องตรวจหลักเกณฑ์/อำนาจฉบับล่าสุดและเอกสารต้นฉบับก่อนอนุมัติ</div>'; return `<div style="margin-top:10px">${validation.alerts.map(a => `<div class="mfp-alert ${a.level}">${a.level==='red'?'🔴':'🟡'} <b>${esc(a.message)}</b>${a.action?`<div class="mfp-muted">${esc(a.action)}</div>`:''}</div>`).join('')}</div>`; }
+  function renderTrackingView() { const summary = summarize(state); const rows = state.expenses.map(item => { const planAmt=parseNumber(item.amount), actual=parseNumber(item.actual), pct=planAmt>0?Math.min(100,Math.round(actual/planAmt*100)):0; return `<tr data-track-id="${item.id}"><td>${categoryById(item.category).id}</td><td>${esc(item.item||categoryById(item.category).label)}</td><td>${item.fundingSource==='maintenance'?'เงินบำรุง':'งบ อปท.'}</td><td>${money(planAmt)}</td><td><input data-track-field="committed" value="${esc(item.committed)}" inputmode="decimal"></td><td><input data-track-field="actual" value="${esc(item.actual)}" inputmode="decimal"></td><td>${money(planAmt-actual)}</td><td><div class="mfp-progress"><span style="width:${pct}%"></span></div>${pct}%</td></tr>`; }).join(''); const risky = summary.monthProjection.filter(m=>m.balance<0); return `<section class="mfp-card"><h2>ติดตามผล Plan vs Actual</h2>${renderKpis()}<div class="mfp-month-risk">${risky.length?`⚠️ เดือนที่คาดว่ายอดตามแผนติดลบ: <strong>${risky.map(m=>m.label).join(', ')}</strong>`:'🟢 ไม่พบเดือนที่กระแสเงินตามแผนติดลบ'}</div><div class="mfp-table-wrap" style="margin-top:12px"><table class="mfp-table"><thead><tr><th>หมวด</th><th>รายการ</th><th>แหล่ง</th><th>แผน</th><th>ผูกพัน</th><th>จ่ายจริง</th><th>เหลือ</th><th>ความก้าวหน้า</th></tr></thead><tbody>${rows||'<tr><td colspan="8">ยังไม่มีรายการ</td></tr>'}</tbody></table></div><div class="mfp-actions"><button class="mfp-btn primary" id="mfpSaveTracking">💾 บันทึกผลติดตาม</button><button class="mfp-btn" id="mfpExportTracking">📄 ส่งออกรายงาน</button></div>${renderAlerts()}</section>`; }
+  function renderAdjustmentView() { const history = (state.history||[]).slice().reverse().map(item => `<div class="mfp-row"><b>ฉบับ ${item.version}</b> — ${esc(item.reason||'ไม่มีเหตุผลระบุ')}<div class="mfp-muted">${new Date(item.savedAt).toLocaleString('th-TH')} | แผนเงินบำรุง ${money(item.summary?.plannedMaintenance)} | คงเหลือคาดการณ์ ${money(item.summary?.forecastClosing)}</div></div>`).join(''); return `<section class="mfp-card"><h2>ปรับแผน / Version Control</h2><p>ฉบับปัจจุบัน <b>${state.version}</b> — การสร้างฉบับใหม่จะเก็บ snapshot ของฉบับเดิมไว้ เพื่อให้ตรวจย้อนหลังได้</p><div class="mfp-field"><label>เหตุผลการเพิ่มเติม/เปลี่ยนแปลงแผน</label><textarea id="mfpRevisionReason" placeholder="ระบุเหตุผล ความจำเป็น รายการที่เปลี่ยน และผลกระทบต่อฐานะเงิน">${esc(state.revisionReason)}</textarea></div><div class="mfp-actions"><button class="mfp-btn primary" id="mfpCreateRevision">สร้างฉบับปรับแผน ${state.version+1}</button></div></section><section class="mfp-card"><h3>ประวัติฉบับก่อนหน้า</h3>${history||'<div class="mfp-empty">ยังไม่มีการปรับแผน</div>'}</section>`; }
   function riskLabel(plan) { const v=validatePlan(plan); return `<span class="mfp-badge ${v.severity}">${v.severity==='green'?'ปกติ':v.severity==='yellow'?'ติดตาม':'เสี่ยง'}</span>`; }
-  function renderDashboardView() {
-    const plans = loadAllPlans();
-    const agg = plans.reduce((acc,p)=>{const s=summarize(p);acc.opening+=s.opening;acc.income+=s.income;acc.plan+=s.plannedMaintenance;acc.actual+=s.actual;acc.closing+=s.forecastClosing;return acc;},{opening:0,income:0,plan:0,actual:0,closing:0});
-    const list = plans.sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt))).map(plan=>{const s=summarize(plan);return `<div class="mfp-facility" data-plan-id="${plan.id}"><div><b>${esc(plan.facility||'ยังไม่ระบุหน่วย')}</b><div class="mfp-muted">${esc(plan.facilityType)} | ปี ${esc(plan.fiscalYear||'-')} | ฉบับ ${plan.version}</div></div><div>แผน<br><b>${money(s.plannedMaintenance)}</b></div><div>จ่ายจริง<br><b>${money(s.actual)}</b></div><div>ปลายปี<br><b>${money(s.forecastClosing)}</b> ${riskLabel(plan)}</div><div><button class="mfp-btn" data-open-plan="${plan.id}">เปิด</button><button class="mfp-btn danger" data-delete-plan="${plan.id}">ลบ</button></div></div>`;}).join('');
-    return `<section class="mfp-card"><h2>Dashboard แผนเงินบำรุงในอุปกรณ์นี้</h2><div class="mfp-note">ข้อมูล Dashboard เก็บในเบราว์เซอร์ของอุปกรณ์นี้เท่านั้น เหมาะสำหรับนำร่อง/ทำงานส่วนบุคคล ยังไม่ใช่ฐานข้อมูลส่วนกลางขององค์กร และไม่ควรกรอกข้อมูลผู้ป่วยหรือข้อมูลส่วนบุคคล</div><div class="mfp-kpis" style="margin-top:10px"><div class="mfp-kpi"><small>จำนวนแผน</small><strong>${plans.length}</strong></div><div class="mfp-kpi"><small>เงินต้นปีรวม</small><strong>${money(agg.opening)}</strong></div><div class="mfp-kpi"><small>รายรับคาดการณ์รวม</small><strong>${money(agg.income)}</strong></div><div class="mfp-kpi"><small>แผนเงินบำรุงรวม</small><strong>${money(agg.plan)}</strong></div><div class="mfp-kpi"><small>จ่ายจริงรวม</small><strong>${money(agg.actual)}</strong></div><div class="mfp-kpi"><small>คาดการณ์คงเหลือรวม</small><strong>${money(agg.closing)}</strong></div></div></section><section class="mfp-card"><div class="mfp-row-head"><h3>หน่วยบริการ/แผนที่บันทึก</h3><button class="mfp-btn primary" id="mfpNewPlan">+ แผนใหม่</button></div><div class="mfp-facility-list">${list||'<div class="mfp-empty">ยังไม่มีแผนที่บันทึก</div>'}</div></section>`;
-  }
+  function renderDashboardView() { const plans = loadAllPlans(); const agg = plans.reduce((acc,p)=>{const s=summarize(p);acc.opening+=s.opening;acc.income+=s.income;acc.plan+=s.plannedMaintenance;acc.actual+=s.actual;acc.closing+=s.forecastClosing;return acc;},{opening:0,income:0,plan:0,actual:0,closing:0}); const list = plans.sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt))).map(plan=>{const s=summarize(plan);return `<div class="mfp-facility" data-plan-id="${plan.id}"><div><b>${esc(plan.facility||'ยังไม่ระบุหน่วย')}</b><div class="mfp-muted">${esc(plan.facilityType)} | ปี ${esc(plan.fiscalYear||'-')} | ฉบับ ${plan.version}</div></div><div>แผน<br><b>${money(s.plannedMaintenance)}</b></div><div>จ่ายจริง<br><b>${money(s.actual)}</b></div><div>ปลายปี<br><b>${money(s.forecastClosing)}</b> ${riskLabel(plan)}</div><div><button class="mfp-btn" data-open-plan="${plan.id}">เปิด</button><button class="mfp-btn danger" data-delete-plan="${plan.id}">ลบ</button></div></div>`;}).join(''); return `<section class="mfp-card"><h2>Dashboard แผนเงินบำรุงในอุปกรณ์นี้</h2><div class="mfp-note">ข้อมูล Dashboard เก็บในเบราว์เซอร์ของอุปกรณ์นี้เท่านั้น เหมาะสำหรับนำร่อง/ทำงานส่วนบุคคล ยังไม่ใช่ฐานข้อมูลส่วนกลางขององค์กร และไม่ควรกรอกข้อมูลผู้ป่วยหรือข้อมูลส่วนบุคคล</div><div class="mfp-kpis" style="margin-top:10px"><div class="mfp-kpi"><small>จำนวนแผน</small><strong>${plans.length}</strong></div><div class="mfp-kpi"><small>เงินต้นปีรวม</small><strong>${money(agg.opening)}</strong></div><div class="mfp-kpi"><small>รายรับคาดการณ์รวม</small><strong>${money(agg.income)}</strong></div><div class="mfp-kpi"><small>แผนเงินบำรุงรวม</small><strong>${money(agg.plan)}</strong></div><div class="mfp-kpi"><small>จ่ายจริงรวม</small><strong>${money(agg.actual)}</strong></div><div class="mfp-kpi"><small>คาดการณ์คงเหลือรวม</small><strong>${money(agg.closing)}</strong></div></div></section><section class="mfp-card"><div class="mfp-row-head"><h3>หน่วยบริการ/แผนที่บันทึก</h3><button class="mfp-btn primary" id="mfpNewPlan">+ แผนใหม่</button></div><div class="mfp-facility-list">${list||'<div class="mfp-empty">ยังไม่มีแผนที่บันทึก</div>'}</div></section>`; }
+  function renderAuditView() { const checks = AUDIT_ITEMS.map(([key,label])=>`<label><input type="checkbox" data-audit-key="${key}" ${state.audit?.[key]?'checked':''}> <span>${esc(label)}</span></label>`).join(''); const s=summarize(state); return `<section class="mfp-card"><h2>Audit Pack / แฟ้มพร้อมตรวจ</h2><p>ยืนยันเฉพาะเอกสารที่มีอยู่จริงและตรวจฉบับแล้ว ระบบไม่ถือเครื่องหมาย ✓ เป็นการรับรองความถูกต้องทางกฎหมายแทนเจ้าหน้าที่</p><div class="mfp-audit">${checks}</div><div class="mfp-actions"><button class="mfp-btn primary" id="mfpSaveAudit">💾 บันทึก Checklist</button><button class="mfp-btn" id="mfpExportAudit">📄 ส่งออก Audit Pack</button></div><p class="mfp-muted">ครบแล้ว ${s.auditDone}/${s.auditTotal} รายการ</p></section><section class="mfp-card mfp-sources"><h3>ฐานอ้างอิงทางการที่ระบบใช้เตือน</h3>${OFFICIAL_SOURCES.map(src=>`<a href="${src.url}" target="_blank" rel="noopener">↗ ${esc(src.label)}</a>`).join('')}<p class="mfp-muted">ก่อนอนุมัติ/เบิกจ่ายจริง ให้ตรวจฉบับล่าสุดของระเบียบ หนังสือสั่งการ หลักเกณฑ์กระทรวงสาธารณสุข และคำสั่งมอบอำนาจของหน่วยงานทุกครั้ง</p></section>`; }
 
-  function renderAuditView() {
-    const checks = AUDIT_ITEMS.map(([key,label])=>`<label><input type="checkbox" data-audit-key="${key}" ${state.audit?.[key]?'checked':''}> <span>${esc(label)}</span></label>`).join('');
-    const s=summarize(state);
-    return `<section class="mfp-card"><h2>Audit Pack / แฟ้มพร้อมตรวจ</h2><p>ยืนยันเฉพาะเอกสารที่มีอยู่จริงและตรวจฉบับแล้ว ระบบไม่ถือเครื่องหมาย ✓ เป็นการรับรองความถูกต้องทางกฎหมายแทนเจ้าหน้าที่</p><div class="mfp-audit">${checks}</div><div class="mfp-actions"><button class="mfp-btn primary" id="mfpSaveAudit">💾 บันทึก Checklist</button><button class="mfp-btn" id="mfpExportAudit">📄 ส่งออก Audit Pack</button></div><p class="mfp-muted">ครบแล้ว ${s.auditDone}/${s.auditTotal} รายการ</p></section><section class="mfp-card mfp-sources"><h3>ฐานอ้างอิงทางการที่ระบบใช้เตือน</h3>${OFFICIAL_SOURCES.map(src=>`<a href="${src.url}" target="_blank" rel="noopener">↗ ${esc(src.label)}</a>`).join('')}<p class="mfp-muted">ก่อนอนุมัติ/เบิกจ่ายจริง ให้ตรวจฉบับล่าสุดของระเบียบ หนังสือสั่งการ หลักเกณฑ์กระทรวงสาธารณสุข และคำสั่งมอบอำนาจของหน่วยงานทุกครั้ง</p></section>`;
-  }
-
-  function collectStaticFields() {
-    if ($('#mfpFacility')) state.facility=$('#mfpFacility').value.trim();
-    if ($('#mfpFacilityType')) state.facilityType=$('#mfpFacilityType').value;
-    if ($('#mfpFiscalYear')) state.fiscalYear=$('#mfpFiscalYear').value.trim();
-    if ($('#mfpStatus')) state.status=$('#mfpStatus').value;
-    if ($('#mfpOpening')) state.openingBalance=$('#mfpOpening').value;
-    if ($('#mfpCommitments')) state.existingCommitments=$('#mfpCommitments').value;
-    if ($('#mfpReserve')) state.reserveAmount=$('#mfpReserve').value;
-  }
-  function collectRows() {
-    $$('[data-income-id]').forEach(row=>{const item=state.incomes.find(x=>x.id===row.dataset.incomeId);if(!item)return;$$('[data-income-field]',row).forEach(input=>item[input.dataset.incomeField]=input.value);});
-    $$('[data-expense-id]').forEach(row=>{const item=state.expenses.find(x=>x.id===row.dataset.expenseId);if(!item)return;$$('[data-expense-field]',row).forEach(input=>item[input.dataset.expenseField]=input.value);$$('[data-expense-check]',row).forEach(input=>item[input.dataset.expenseCheck]=input.checked);});
-  }
+  function collectStaticFields() { if ($('#mfpFacility')) state.facility=$('#mfpFacility').value.trim(); if ($('#mfpFacilityType')) state.facilityType=$('#mfpFacilityType').value; if ($('#mfpFiscalYear')) state.fiscalYear=$('#mfpFiscalYear').value.trim(); if ($('#mfpStatus')) state.status=$('#mfpStatus').value; if ($('#mfpOpening')) state.openingBalance=$('#mfpOpening').value; if ($('#mfpCommitments')) state.existingCommitments=$('#mfpCommitments').value; if ($('#mfpReserve')) state.reserveAmount=$('#mfpReserve').value; }
+  function collectRows() { $$('[data-income-id]').forEach(row=>{const item=state.incomes.find(x=>x.id===row.dataset.incomeId);if(!item)return;$$('[data-income-field]',row).forEach(input=>item[input.dataset.incomeField]=input.value);}); $$('[data-expense-id]').forEach(row=>{const item=state.expenses.find(x=>x.id===row.dataset.expenseId);if(!item)return;$$('[data-expense-field]',row).forEach(input=>item[input.dataset.expenseField]=input.value);$$('[data-expense-check]',row).forEach(input=>item[input.dataset.expenseCheck]=input.checked);}); }
   function collectTracking() { $$('[data-track-id]').forEach(row=>{const item=state.expenses.find(x=>x.id===row.dataset.trackId);if(!item)return;$$('[data-track-field]',row).forEach(input=>item[input.dataset.trackField]=input.value);}); }
   function persistCurrent(showToast=true) { collectStaticFields(); collectRows(); collectTracking(); state=upsertPlan(state); if(showToast) toast('บันทึกแผนแล้ว'); }
   function toast(message){ if(window.GovPrompt?.toast) return window.GovPrompt.toast(message); const el=document.createElement('div');el.textContent=message;el.style.cssText='position:fixed;right:14px;bottom:14px;background:#153d6b;color:white;padding:10px 14px;border-radius:10px;z-index:99999';document.body.appendChild(el);setTimeout(()=>el.remove(),1800); }
-
-  function render() {
-    const root = $('#maintenanceFundApp'); if (!root) return;
-    installStyles();
-    root.innerHTML = `<div class="mfp-shell"><nav class="mfp-tabs" aria-label="เมนูแผนเงินบำรุง"><button class="mfp-tab ${activeView==='plan'?'active':''}" data-view="plan">📝 จัดทำแผน</button><button class="mfp-tab ${activeView==='tracking'?'active':''}" data-view="tracking">📈 ติดตามผล</button><button class="mfp-tab ${activeView==='adjust'?'active':''}" data-view="adjust">🔄 ปรับแผน</button><button class="mfp-tab ${activeView==='dashboard'?'active':''}" data-view="dashboard">📊 Dashboard</button><button class="mfp-tab ${activeView==='audit'?'active':''}" data-view="audit">🗂️ Audit Pack</button></nav><div id="mfpView">${activeView==='plan'?renderPlanView():activeView==='tracking'?renderTrackingView():activeView==='adjust'?renderAdjustmentView():activeView==='dashboard'?renderDashboardView():renderAuditView()}</div></div>`;
-    bind();
-  }
-
-  function bind() {
-    $$('[data-view]').forEach(btn=>btn.addEventListener('click',()=>{if(activeView==='plan'){collectStaticFields();collectRows();}if(activeView==='tracking')collectTracking();activeView=btn.dataset.view;render();}));
-    $('#mfpAddIncome')?.addEventListener('click',()=>{collectStaticFields();collectRows();state.incomes.push(blankIncome());render();});
-    $('#mfpAddExpense')?.addEventListener('click',()=>{collectStaticFields();collectRows();state.expenses.push(blankExpense());render();});
-    $$('[data-remove-income]').forEach(btn=>btn.addEventListener('click',()=>{collectRows();state.incomes=state.incomes.filter(x=>x.id!==btn.dataset.removeIncome);if(!state.incomes.length)state.incomes=[blankIncome()];render();}));
-    $$('[data-remove-expense]').forEach(btn=>btn.addEventListener('click',()=>{collectRows();state.expenses=state.expenses.filter(x=>x.id!==btn.dataset.removeExpense);if(!state.expenses.length)state.expenses=[blankExpense()];render();}));
-    $$('[data-expense-field="category"]').forEach(select=>select.addEventListener('change',()=>{collectStaticFields();collectRows();render();}));
-    $('#mfpSave')?.addEventListener('click',()=>{persistCurrent();render();});
-    $('#mfpSaveTracking')?.addEventListener('click',()=>{collectTracking();state=upsertPlan(state);toast('บันทึกผลติดตามแล้ว');render();});
-    $('#mfpExportWord')?.addEventListener('click',()=>{collectStaticFields();collectRows();exportWord(state);});
-    $('#mfpExportCsv')?.addEventListener('click',()=>{collectStaticFields();collectRows();exportOfficialCsv(state);});
-    $('#mfpExportTracking')?.addEventListener('click',()=>{collectTracking();exportWord(state);});
-    $('#mfpExportAudit')?.addEventListener('click',()=>exportWord(state));
-    $('#mfpBackup')?.addEventListener('click',()=>{collectStaticFields();collectRows();download(`backup_แผนเงินบำรุง_${state.facility||'หน่วยบริการ'}.json`,'application/json;charset=utf-8',JSON.stringify(state,null,2));});
-    $('#mfpImport')?.addEventListener('change',event=>{const file=event.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{state=normalizePlan(JSON.parse(reader.result));state=upsertPlan(state);activeView='plan';render();toast('นำเข้าแผนแล้ว');}catch{alert('ไฟล์ JSON ไม่ถูกต้อง');}};reader.readAsText(file,'utf-8');});
-    $('#mfpPrint')?.addEventListener('click',()=>{collectStaticFields();collectRows();const w=window.open('','_blank');w.document.write(buildWordHtml(state));w.document.close();setTimeout(()=>w.print(),200);});
-    $('#mfpRevisionReason')?.addEventListener('input',e=>state.revisionReason=e.target.value);
-    $('#mfpCreateRevision')?.addEventListener('click',()=>{const reason=$('#mfpRevisionReason')?.value.trim();if(!reason)return alert('กรุณาระบุเหตุผลการปรับแผน');const snapshot={version:state.version,reason,savedAt:new Date().toISOString(),summary:summarize(state),plan:JSON.parse(JSON.stringify({...state,history:undefined}))};state.history=[...(state.history||[]),snapshot];state.version=Number(state.version||1)+1;state.status='draft';state.revisionReason='';state=upsertPlan(state);activeView='plan';render();toast(`สร้างฉบับปรับแผน ${state.version} แล้ว`);});
-    $$('[data-audit-key]').forEach(input=>input.addEventListener('change',()=>{state.audit[input.dataset.auditKey]=input.checked;}));
-    $('#mfpSaveAudit')?.addEventListener('click',()=>{state=upsertPlan(state);toast('บันทึก Audit Pack แล้ว');render();});
-    $('#mfpNewPlan')?.addEventListener('click',()=>{state=createBlankPlan();localStorage.removeItem(CURRENT_KEY);activeView='plan';render();});
-    $$('[data-open-plan]').forEach(btn=>btn.addEventListener('click',()=>{const plan=loadAllPlans().find(p=>p.id===btn.dataset.openPlan);if(plan){state=normalizePlan(plan);localStorage.setItem(CURRENT_KEY,state.id);activeView='plan';render();}}));
-    $$('[data-delete-plan]').forEach(btn=>btn.addEventListener('click',()=>{if(confirm('ลบแผนนี้ออกจากอุปกรณ์นี้หรือไม่?')){deletePlan(btn.dataset.deletePlan);if(state.id===btn.dataset.deletePlan)state=createBlankPlan();render();}}));
-  }
-
-  function init() {
-    const root = $('#maintenanceFundApp'); if (!root) return false;
-    state = loadCurrentPlan(); installStyles(); render(); return true;
-  }
-
-  window.GovPromptMaintenanceFundPlan = Object.freeze({
-    STORAGE_KEY, MONTHS, CATEGORIES, AUDIT_ITEMS, OFFICIAL_SOURCES,
-    parseNumber, createBlankPlan, normalizePlan, summarize, validatePlan, buildOfficialMatrix,
-    loadAllPlans, upsertPlan, init
-  });
+  function render() { const root = $('#maintenanceFundApp'); if (!root) return; installStyles(); root.innerHTML = `<div class="mfp-shell"><nav class="mfp-tabs" aria-label="เมนูแผนเงินบำรุง"><button class="mfp-tab ${activeView==='plan'?'active':''}" data-view="plan">📝 จัดทำแผน</button><button class="mfp-tab ${activeView==='tracking'?'active':''}" data-view="tracking">📈 ติดตามผล</button><button class="mfp-tab ${activeView==='adjust'?'active':''}" data-view="adjust">🔄 ปรับแผน</button><button class="mfp-tab ${activeView==='dashboard'?'active':''}" data-view="dashboard">📊 Dashboard</button><button class="mfp-tab ${activeView==='audit'?'active':''}" data-view="audit">🗂️ Audit Pack</button></nav><div id="mfpView">${activeView==='plan'?renderPlanView():activeView==='tracking'?renderTrackingView():activeView==='adjust'?renderAdjustmentView():activeView==='dashboard'?renderDashboardView():renderAuditView()}</div></div>`; bind(); }
+  function bind() { $$('[data-view]').forEach(btn=>btn.addEventListener('click',()=>{if(activeView==='plan'){collectStaticFields();collectRows();}if(activeView==='tracking')collectTracking();activeView=btn.dataset.view;render();})); $('#mfpAddIncome')?.addEventListener('click',()=>{collectStaticFields();collectRows();state.incomes.push(blankIncome());render();}); $('#mfpAddExpense')?.addEventListener('click',()=>{collectStaticFields();collectRows();state.expenses.push(blankExpense());render();}); $$('[data-remove-income]').forEach(btn=>btn.addEventListener('click',()=>{collectRows();state.incomes=state.incomes.filter(x=>x.id!==btn.dataset.removeIncome);if(!state.incomes.length)state.incomes=[blankIncome()];render();})); $$('[data-remove-expense]').forEach(btn=>btn.addEventListener('click',()=>{collectRows();state.expenses=state.expenses.filter(x=>x.id!==btn.dataset.removeExpense);if(!state.expenses.length)state.expenses=[blankExpense()];render();})); $$('[data-expense-field="category"]').forEach(select=>select.addEventListener('change',()=>{collectStaticFields();collectRows();render();})); $('#mfpSave')?.addEventListener('click',()=>{persistCurrent();render();}); $('#mfpSaveTracking')?.addEventListener('click',()=>{collectTracking();state=upsertPlan(state);toast('บันทึกผลติดตามแล้ว');render();}); $('#mfpExportWord')?.addEventListener('click',()=>{collectStaticFields();collectRows();exportWord(state);}); $('#mfpExportCsv')?.addEventListener('click',()=>{collectStaticFields();collectRows();exportOfficialCsv(state);}); $('#mfpExportTracking')?.addEventListener('click',()=>{collectTracking();exportWord(state);}); $('#mfpExportAudit')?.addEventListener('click',()=>exportWord(state)); $('#mfpBackup')?.addEventListener('click',()=>{collectStaticFields();collectRows();download(`backup_แผนเงินบำรุง_${state.facility||'หน่วยบริการ'}.json`,'application/json;charset=utf-8',JSON.stringify(state,null,2));}); $('#mfpImport')?.addEventListener('change',event=>{const file=event.target.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{state=normalizePlan(JSON.parse(reader.result));state=upsertPlan(state);activeView='plan';render();toast('นำเข้าแผนแล้ว');}catch{alert('ไฟล์ JSON ไม่ถูกต้อง');}};reader.readAsText(file,'utf-8');}); $('#mfpPrint')?.addEventListener('click',()=>{collectStaticFields();collectRows();const w=window.open('','_blank');w.document.write(buildWordHtml(state));w.document.close();setTimeout(()=>w.print(),200);}); $('#mfpRevisionReason')?.addEventListener('input',e=>state.revisionReason=e.target.value); $('#mfpCreateRevision')?.addEventListener('click',()=>{const reason=$('#mfpRevisionReason')?.value.trim();if(!reason)return alert('กรุณาระบุเหตุผลการปรับแผน');const snapshot={version:state.version,reason,savedAt:new Date().toISOString(),summary:summarize(state),plan:JSON.parse(JSON.stringify({...state,history:undefined}))};state.history=[...(state.history||[]),snapshot];state.version=Number(state.version||1)+1;state.status='draft';state.revisionReason='';state=upsertPlan(state);activeView='plan';render();toast(`สร้างฉบับปรับแผน ${state.version} แล้ว`);}); $$('[data-audit-key]').forEach(input=>input.addEventListener('change',()=>{state.audit[input.dataset.auditKey]=input.checked;})); $('#mfpSaveAudit')?.addEventListener('click',()=>{state=upsertPlan(state);toast('บันทึก Audit Pack แล้ว');render();}); $('#mfpNewPlan')?.addEventListener('click',()=>{state=createBlankPlan();localStorage.removeItem(CURRENT_KEY);activeView='plan';render();}); $$('[data-open-plan]').forEach(btn=>btn.addEventListener('click',()=>{const plan=loadAllPlans().find(p=>p.id===btn.dataset.openPlan);if(plan){state=normalizePlan(plan);localStorage.setItem(CURRENT_KEY,state.id);activeView='plan';render();}})); $$('[data-delete-plan]').forEach(btn=>btn.addEventListener('click',()=>{if(confirm('ลบแผนนี้ออกจากอุปกรณ์นี้หรือไม่?')){deletePlan(btn.dataset.deletePlan);if(state.id===btn.dataset.deletePlan)state=createBlankPlan();render();}})); }
+  function init() { const root = $('#maintenanceFundApp'); if (!root) return false; state = loadCurrentPlan(); installStyles(); render(); return true; }
+  window.GovPromptMaintenanceFundPlan = Object.freeze({ STORAGE_KEY, MONTHS, CATEGORIES, AUDIT_ITEMS, OFFICIAL_SOURCES, parseNumber, createBlankPlan, normalizePlan, summarize, validatePlan, buildOfficialMatrix, loadAllPlans, upsertPlan, init });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true }); else init();
 })();
