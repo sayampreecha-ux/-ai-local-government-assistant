@@ -74,16 +74,19 @@ test('GP008 loader includes maintenance-fund staff planner and safe in-browser e
   assert.match(exportFallback, /ต้องตรวจหลักเกณฑ์/);
 });
 
-test('GP008 exposes a visible planner and directly loads guided workflow v2', async () => {
+test('GP008 exposes guided temp-staff workflow and v2.1 script is syntactically valid and re-installable', async () => {
   const gp008 = await readFile('gp008.html', 'utf8');
   const guided = await readFile('assets/js/features/temp-staff-guided-workflow-v2.js', 'utf8');
+  assert.doesNotThrow(() => new vm.Script(guided));
   assert.match(gp008, /id=["']tempStaffMaintenanceFundEntry["']/);
   assert.match(gp008, />👥 แผนลูกจ้างเงินบำรุง</);
   assert.match(gp008, /temp-staff-maintenance-fund-v1\.js\?v=1\.0\.1/);
-  assert.match(gp008, /temp-staff-export-fallback-v1\.js\?v=1\.0\.1/);
   assert.match(gp008, /temp-staff-guided-workflow-v2\.js\?v=2\.0\.0/);
-  assert.match(gp008, /tempStaffMaintenanceFundTab/);
-
+  assert.match(guided, /version: '2\.1\.0'/);
+  assert.match(guided, /install: enhance/);
+  assert.match(guided, /MutationObserver/);
+  assert.match(guided, /#tempStaffMaintenanceFundEntry,#tempStaffMaintenanceFundTab/);
+  assert.doesNotMatch(guided, /root\.dataset\[FEATURE_FLAG\]/);
   assert.match(guided, /STEP_LABELS/);
   assert.match(guided, /หน่วยบริการ/);
   assert.match(guided, /Workload \/ FTE/);
