@@ -14,6 +14,8 @@ on:
       - 'admin.html'
       - 'service-worker.js'
       - 'assets/js/home-v3.js'
+      - 'assets/js/mic.js'
+      - 'assets/js/ui/assistant-catalog-accordion-v1.js'
       - 'assets/js/core/context-integration.js'
       - 'assets/js/core/privacy-guard.js'
       - 'assets/js/core/privacy-submit-guard.js'
@@ -27,6 +29,7 @@ on:
       - 'src/government-workflow-*.js'
       - 'src/government-task-router-v5.js'
       - 'assets/js/features/public-health-worker-toolkit-v1.js'
+      - 'assets/js/features/temp-staff-maintenance-fund-v1.js'
       - 'assets/js/features/mosquito-public-health-placement-v1.js'
       - 'assets/js/features/mosquito-survey-onepage-v1.js'
       - 'src/search-worker.js'
@@ -35,6 +38,7 @@ on:
       - 'scripts/build-static.mjs'
       - 'scripts/verify-frontend-production.mjs'
       - 'scripts/verify-gp008-production.mjs'
+      - 'scripts/verify-public-health-home-production-e2e.mjs'
       - 'scripts/verify-production-security.mjs'
       - 'scripts/verify-issue73-production-e2e.mjs'
       - 'scripts/verify-budget-production-e2e.mjs'
@@ -79,6 +83,8 @@ jobs:
         run: |
           npm install --no-save --package-lock=false playwright@1.55.0
           npx playwright install --with-deps chromium
+      - name: Verify public-health Home shortcut in real browser
+        run: node scripts/verify-public-health-home-production-e2e.mjs
       - name: Verify Issue 73 privacy boundary in real browser
         run: node scripts/verify-issue73-production-e2e.mjs
       - name: Verify Budget Draft Agent short-command workflow in real browser
@@ -103,6 +109,7 @@ jobs:
               '## Production checks',
               '- GitHub Pages production surface: PASS',
               '- GP008 production surface: PASS',
+              '- Public Health Home shortcut real-browser check: PASS',
               '- Cloudflare Worker production security: PASS',
               '- Issue #73 privacy boundary in real browser: PASS',
               '- Budget Draft Agent real-browser E2E: PASS',
