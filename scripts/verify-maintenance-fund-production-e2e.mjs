@@ -27,7 +27,9 @@ await page.waitForURL(/maintenance-fund-plan\.html$/, { timeout: 15_000 });
 
 await page.locator('#maintenanceFundApp .mfp-tabs').waitFor({ state: 'visible', timeout: 15_000 });
 assert.equal(await page.locator('.mfp-tab').count(), 5);
-assert.match((await page.locator('.mfp-tab').allTextContents()).join(' '), /จัดทำแผน.*ติดตามผล.*ปรับแผน.*Dashboard.*Audit Pack/);
+const tabText = (await page.locator('.mfp-tab').allTextContents()).join(' ');
+assert.match(tabText, /จัดทำแผน.*ติดตามการใช้เงิน.*ปรับแผน.*ภาพรวม.*เอกสารตรวจสอบ/);
+assert.doesNotMatch(tabText, /Dashboard|Audit Pack|Plan vs Actual|Version Control/);
 await page.locator('#mfpPopulation').waitFor({ state: 'visible', timeout: 10_000 });
 
 const thresholds = await page.evaluate(() => ({
@@ -40,8 +42,9 @@ assert.deepEqual(thresholds, { s: 'S', mLow: 'M', mHigh: 'M', l: 'L' });
 
 await page.locator('#mfpFacility').fill('รพ.สต.ทดสอบระบบ');
 await page.locator('#mfpPopulation').fill('5500');
-assert.match(await page.locator('#mfpFacilitySizeLabel').inputValue(), /M/);
-assert.match(await page.locator('#mfpFacilitySizeBadge').innerText(), /ขนาด M/);
+await page.waitForTimeout(50);
+assert.match(await page.locator('#mfpFacilitySizeLabel').inputValue(), /ขนาดกลาง \(M\)/);
+assert.match(await page.locator('#mfpFacilitySizeBadge').innerText(), /ขนาดกลาง \(M\)/);
 await page.locator('#mfpFiscalYear').fill('2570');
 await page.locator('#mfpOpening').fill('300000');
 await page.locator('#mfpCommitments').fill('20000');
@@ -83,6 +86,7 @@ assert.equal(savedMeta?.population, 5500);
 assert.equal(savedMeta?.size, 'M');
 
 await page.locator('[data-view="tracking"]').click();
+assert.match(await page.locator('#mfpView').innerText(), /ติดตามการใช้เงินจริงเทียบแผน/);
 await page.locator('[data-track-id]').first().locator('[data-track-field="committed"]').fill('100000');
 await page.locator('[data-track-id]').first().locator('[data-track-field="actual"]').fill('60000');
 await page.locator('[data-track-id]').nth(1).locator('[data-track-field="committed"]').fill('120000');
@@ -91,11 +95,13 @@ await page.locator('#mfpSaveTracking').click();
 assert.match(await page.locator('#mfpView').innerText(), /จ่ายจริง/);
 
 await page.locator('[data-view="adjust"]').click();
+assert.match(await page.locator('#mfpView').innerText(), /ปรับแผน \/ ประวัติฉบับ/);
 await page.locator('#mfpRevisionReason').fill('ปรับจังหวะการใช้จ่ายให้สอดคล้องกับแผนจัดหาและผลดำเนินงานจริง');
 await page.locator('#mfpCreateRevision').click();
 assert.equal(await page.locator('#mfpView input[disabled]').first().inputValue(), '2');
 
 await page.locator('[data-view="audit"]').click();
+assert.match(await page.locator('#mfpView').innerText(), /แฟ้มเอกสารพร้อมตรวจสอบ/);
 const auditChecks = page.locator('[data-audit-key]');
 assert.equal(await auditChecks.count(), 14);
 for (let i = 0; i < 5; i += 1) await auditChecks.nth(i).check();
@@ -106,9 +112,9 @@ await page.locator('[data-view="dashboard"]').click();
 await page.locator('#mfpSmlDashboard').waitFor({ state: 'visible', timeout: 10_000 });
 assert.match(await page.locator('#mfpView').innerText(), /รพ\.สต\.ทดสอบระบบ/);
 assert.match(await page.locator('#mfpView').innerText(), /จำนวนแผน/);
-assert.match(await page.locator('#mfpSmlDashboard').innerText(), /เปรียบเทียบตามขนาด S \/ M \/ L/);
-assert.match(await page.locator('#mfpSmlDashboard').innerText(), /M 1/);
-assert.match(await page.locator('.mfp-facility').first().innerText(), /ขนาด M/);
+assert.match(await page.locator('#mfpSmlDashboard').innerText(), /เปรียบเทียบตามขนาดหน่วยบริการ/);
+assert.match(await page.locator('#mfpSmlDashboard').innerText(), /ขนาดกลาง \(M\) 1/);
+assert.match(await page.locator('.mfp-facility').first().innerText(), /ขนาดกลาง \(M\)/);
 await page.locator('[data-sml-filter="M"]').click();
 assert.equal(await page.locator('.mfp-facility:not([hidden])').count(), 1);
 await page.locator('[data-sml-filter="S"]').click();
@@ -119,7 +125,9 @@ console.log(JSON.stringify({
   checks: {
     homeShortcutVisible: 'PASS',
     maintenanceFundWorkspaceVisible: 'PASS',
+    plainThaiMenuLabels: 'PASS',
     smlClassifier: 'S/M/L boundaries PASS',
+    smlThaiSizeLabels: 'PASS',
     smlPopulationPersistence: 'PASS',
     elevenCategoryPlanFlow: 'PASS',
     financeForecast: 'PASS',
