@@ -6,6 +6,13 @@
     M: 'ขนาดกลาง (M)',
     L: 'ขนาดใหญ่ (L)'
   });
+  const VIEW_LABELS = Object.freeze({
+    plan: { full: 'จัดทำแผน', dock: 'แผน', icon: '📝' },
+    tracking: { full: 'ติดตามการใช้เงิน', dock: 'ใช้เงินจริง', icon: '📈' },
+    adjust: { full: 'ปรับแผน', dock: 'ปรับแผน', icon: '🔄' },
+    dashboard: { full: 'ภาพรวม', dock: 'ภาพรวม', icon: '📊' },
+    audit: { full: 'เอกสารตรวจสอบ', dock: 'ตรวจเอกสาร', icon: '🗂️' }
+  });
 
   const setText = (selector, text) => {
     const el = document.querySelector(selector);
@@ -69,18 +76,90 @@
     });
   }
 
+  function installPersistentNavStyles() {
+    if (document.getElementById('mfpPersistentNavStyles')) return;
+    const style = document.createElement('style');
+    style.id = 'mfpPersistentNavStyles';
+    style.textContent = `
+      .mfp-persistent-nav{position:fixed;left:50%;bottom:max(10px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:80;width:min(720px,calc(100% - 20px));display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;padding:7px;background:rgba(255,255,255,.97);border:1px solid #d9e2ef;border-radius:16px;box-shadow:0 10px 32px rgba(16,35,63,.18);backdrop-filter:blur(12px)}
+      .mfp-persistent-nav button{min-width:0;border:0;background:transparent;border-radius:11px;padding:7px 4px;color:#52657d;font:inherit;font-size:12px;line-height:1.15;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;touch-action:manipulation}
+      .mfp-persistent-nav button .mfp-nav-icon{font-size:18px;line-height:1}.mfp-persistent-nav button.active{background:#0b3b75;color:#fff;font-weight:800}.mfp-persistent-nav button:focus-visible{outline:3px solid #8db8ef;outline-offset:1px}
+      .mfp-persistent-nav-status{position:fixed;right:12px;bottom:calc(max(10px,env(safe-area-inset-bottom)) + 70px);z-index:79;border:1px solid #d9e2ef;background:#fff;color:#31445c;border-radius:999px;padding:6px 10px;font-size:12px;box-shadow:0 5px 16px rgba(16,35,63,.12)}
+      body{padding-bottom:92px!important}
+      @media(min-width:760px){.mfp-persistent-nav{bottom:14px;width:min(760px,calc(100% - 32px))}.mfp-persistent-nav button{flex-direction:row;font-size:13px;padding:9px 7px}.mfp-persistent-nav-status{right:18px;bottom:78px}}
+      @media print{.mfp-persistent-nav,.mfp-persistent-nav-status{display:none!important}body{padding-bottom:0!important}}
+    `;
+    document.head.appendChild(style);
+  }
+
+  function detectActiveView() {
+    const candidates = [...document.querySelectorAll('#maintenanceFundApp [data-view]')];
+    const active = candidates.find(el => el.classList.contains('active') || el.getAttribute('aria-selected') === 'true' || el.dataset.active === 'true');
+    if (active?.dataset?.view && VIEW_LABELS[active.dataset.view]) return active.dataset.view;
+    const text = document.getElementById('mfpView')?.innerText || '';
+    if (/ติดตามการใช้เงินจริงเทียบแผน|ติดตามผล/.test(text)) return 'tracking';
+    if (/ปรับแผน \/ ประวัติฉบับ|ปรับแผน \/ Version/.test(text)) return 'adjust';
+    if (/แฟ้มเอกสารพร้อมตรวจสอบ|Audit Pack/.test(text)) return 'audit';
+    if (/ภาพรวมแผนเงินบำรุง|จำนวนแผน|เปรียบเทียบตามขนาดหน่วยบริการ/.test(text)) return 'dashboard';
+    return 'plan';
+  }
+
+  function updatePersistentNavState(view = detectActiveView()) {
+    const nav = document.getElementById('mfpPersistentNav');
+    if (!nav) return;
+    nav.querySelectorAll('[data-persistent-view]').forEach(button => {
+      const selected = button.dataset.persistentView === view;
+      button.classList.toggle('active', selected);
+      button.setAttribute('aria-current', selected ? 'page' : 'false');
+    });
+    const status = document.getElementById('mfpPersistentNavStatus');
+    if (status) status.textContent = `อยู่ที่: ${VIEW_LABELS[view]?.full || 'จัดทำแผน'}`;
+  }
+
+  function openView(view) {
+    const target = [...document.querySelectorAll('#maintenanceFundApp [data-view]')].find(el => el.dataset.view === view);
+    if (!target) return;
+    target.click();
+    requestAnimationFrame(() => {
+      updatePersistentNavState(view);
+      window.scrollTo({ top: Math.max(0, document.getElementById('maintenanceFundApp')?.offsetTop - 66), behavior: 'smooth' });
+    });
+  }
+
+  function ensurePersistentNav() {
+    installPersistentNavStyles();
+    if (!document.getElementById('mfpPersistentNav')) {
+      const nav = document.createElement('nav');
+      nav.id = 'mfpPersistentNav';
+      nav.className = 'mfp-persistent-nav';
+      nav.setAttribute('aria-label', 'เมนูหลักแผนเงินบำรุง');
+      nav.innerHTML = Object.entries(VIEW_LABELS).map(([view, info]) => `<button type="button" data-persistent-view="${view}" title="${info.full}"><span class="mfp-nav-icon" aria-hidden="true">${info.icon}</span><span>${info.dock}</span></button>`).join('');
+      document.body.appendChild(nav);
+      nav.addEventListener('click', event => {
+        const button = event.target.closest('[data-persistent-view]');
+        if (button) openView(button.dataset.persistentView);
+      });
+    }
+    if (!document.getElementById('mfpPersistentNavStatus')) {
+      const status = document.createElement('div');
+      status.id = 'mfpPersistentNavStatus';
+      status.className = 'mfp-persistent-nav-status';
+      status.setAttribute('aria-live', 'polite');
+      document.body.appendChild(status);
+    }
+    document.querySelectorAll('#maintenanceFundApp [data-view]').forEach(tab => {
+      if (tab.dataset.persistentNavBound === '1') return;
+      tab.dataset.persistentNavBound = '1';
+      tab.addEventListener('click', () => setTimeout(() => updatePersistentNavState(tab.dataset.view), 0));
+    });
+    updatePersistentNavState();
+  }
+
   function applyThaiLabels() {
     const root = document.getElementById('maintenanceFundApp');
     if (!root) return;
 
-    const tabLabels = {
-      plan: '📝 จัดทำแผน',
-      tracking: '📈 ติดตามการใช้เงิน',
-      adjust: '🔄 ปรับแผน',
-      dashboard: '📊 ภาพรวม',
-      audit: '🗂️ เอกสารตรวจสอบ'
-    };
-    Object.entries(tabLabels).forEach(([view, label]) => setText(`[data-view="${view}"]`, label));
+    Object.entries(VIEW_LABELS).forEach(([view, info]) => setText(`[data-view="${view}"]`, `${info.icon} ${info.full}`));
 
     setText('#mfpExportWord', '📄 ดาวน์โหลดเอกสาร Word');
     setText('#mfpExportCsv', '📊 ดาวน์โหลดตารางแผน');
@@ -96,6 +175,7 @@
 
     translateHeadings(root);
     translateSize(root);
+    ensurePersistentNav();
   }
 
   let scheduled = false;
