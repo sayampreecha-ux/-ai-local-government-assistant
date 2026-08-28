@@ -11,7 +11,7 @@ const sitemapUrl = page('sitemap.xml');
 const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
-const RELEASE = Object.freeze({ home:'6.2.1', homeCss:'2.5.0', serviceWorker:'6.2.1', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
+const RELEASE = Object.freeze({ home:'6.2.1', homeCss:'2.5.0', serviceWorker:'6.2.1', mic:'2.3.4', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
 
 const runtimeSourceFiles = Object.freeze([
   'budget-balance-validator.js','budget-official-evidence-adapter.js','budget-official-document-parser.js','budget-document-content-ingestion.js',
@@ -52,6 +52,7 @@ const localHome = localHomeSource
 const expectedPrivacyGuard = localIndex.match(/assets\/js\/core\/privacy-guard\.js\?v=[^"'\s<]+/)?.[0];
 const expectedSubmitGuard = localIndex.match(/assets\/js\/core\/privacy-submit-guard\.js\?v=[^"'\s<]+/)?.[0];
 const expectedHome = `assets/js/home-v3.js?v=${RELEASE.home}`;
+const expectedMic = `assets/js/mic.js?v=${RELEASE.mic}`;
 const expectedDocumentStudio = `assets/js/core/document-studio-v1.js?v=${RELEASE.documentStudio}`;
 const expectedCaseListBootstrap = `assets/js/ui/case-list-bootstrap-v1.js?v=${RELEASE.caseList}`;
 assert.ok(expectedPrivacyGuard); assert.ok(expectedSubmitGuard);
@@ -71,11 +72,13 @@ const { response:indexResponse, text:index } = await fetchText(frontend);
 assert.equal(index.includes(expectedPrivacyGuard),true);
 assert.equal(index.includes(expectedSubmitGuard),true);
 assert.equal(index.includes(expectedHome),true);
+assert.equal(index.includes(expectedMic),true);
 assert.equal(index.includes(expectedDocumentStudio),true);
 assert.equal(index.includes(expectedCaseListBootstrap),true);
 assert.match(index,/Public Beta|Internal Pilot/);
 assert.match(index,new RegExp(`assets/js/home-v3\\.js\\?v=${RELEASE.home.replaceAll('.','\\.')}`));
 assert.match(index,new RegExp(`assets/css/home-v3\\.css\\?v=${RELEASE.homeCss.replaceAll('.','\\.')}`));
+assert.match(index,new RegExp(`assets/js/mic\\.js\\?v=${RELEASE.mic.replaceAll('.','\\.')}`));
 assert.match(index,/official-source-registry\.js\?v=2\.4\.0/);
 assert.match(index,new RegExp(`service-worker\\.js\\?v=${RELEASE.serviceWorker.replaceAll('.','\\.')}`));
 assert.match(index,new RegExp(`document-studio-v1\\.js\\?v=${RELEASE.documentStudio.replaceAll('.','\\.')}`));
@@ -168,7 +171,7 @@ console.log(JSON.stringify({
   checks:{
     https:'PASS', privacyBoundary:'PASS', issue73FailClosedMarkers:'PASS', homeBudgetRuntime:'PASS', officeExports:'PASS', editableBudgetReview:'PASS',
     workflowRuntimeBridge:'PASS', workflowRuntimeModules:`${runtimeSourceFiles.length} PASS`, budgetBrowserAssets:`${budgetBrowserAssets.length} PASS`, documentStudio:'PASS', caseListRuntime:'PASS',
-    releaseCacheBust:'PASS', serviceWorkerNetworkFirst:'PASS', trustPage:'PASS', privacyNotice:'PASS', robotsPolicy:'PASS', sitemapBoundary:'PASS', llmsPolicy:'PASS', adminNoindexShell:'PASS'
+    releaseCacheBust:'PASS', micCacheBust:'PASS', serviceWorkerNetworkFirst:'PASS', trustPage:'PASS', privacyNotice:'PASS', robotsPolicy:'PASS', sitemapBoundary:'PASS', llmsPolicy:'PASS', adminNoindexShell:'PASS'
   },
   production:{ runtimeProduction, budgetProduction, etag:{privacy:privacy.response.headers.get('etag'),submit:submit.response.headers.get('etag'),home:home.response.headers.get('etag'),css:css.response.headers.get('etag'),serviceWorker:sw.response.headers.get('etag'),documentStudio:documentStudio.response.headers.get('etag'),caseListBootstrap:caseListBootstrap.response.headers.get('etag'),caseListUi:caseListUi.response.headers.get('etag')} }
 },null,2));
