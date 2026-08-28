@@ -91,11 +91,19 @@ test('official matrix separates local budget and maintenance fund and keeps mont
   assert.equal(materials.total, 350);
 });
 
-test('feature keeps latest-rule checks and official sources visible', async () => {
+test('feature keeps latest-rule checks, privacy and official sources visible', async () => {
   const { api, source } = await loadApi();
+  const page = await readFile('maintenance-fund-plan.html', 'utf8');
+  const catalog = await readFile('assets/js/ui/assistant-catalog-accordion-v1.js', 'utf8');
+  const mic = await readFile('assets/js/mic.js', 'utf8');
   assert.ok(api.OFFICIAL_SOURCES.some(item => item.url.includes('ratchakitcha.soc.go.th')));
   assert.ok(api.OFFICIAL_SOURCES.some(item => item.url.includes('dla.go.th')));
   assert.match(source, /ตรวจระเบียบ\/หนังสือสั่งการฉบับล่าสุด/);
-  assert.match(source, /ไม่ใช่การอนุมัติ/);
-  assert.match(source, /ห้ามกรอกชื่อผู้ป่วย|ไม่ควรกรอกข้อมูลผู้ป่วย/);
+  assert.match(page, /ไม่ใช่การอนุมัติ/);
+  assert.match(page, /ห้ามกรอกชื่อผู้ป่วย/);
+  assert.match(source, /ไม่ควรกรอกข้อมูลผู้ป่วย/);
+  assert.match(page, /id="maintenanceFundApp"/);
+  assert.match(catalog, /แผนและติดตามเงินบำรุง รพ\.สต\.\/สอน\./);
+  assert.match(catalog, /maintenance-fund-plan\.html/);
+  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.3/);
 });
