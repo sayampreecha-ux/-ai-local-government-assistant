@@ -61,9 +61,15 @@ test('planner exposes all public-health staff groups and a safe official-work pr
   assert.match(prompt, /PDPA/);
 });
 
-test('GP008 loader includes maintenance-fund staff planner only on the public-health module', async () => {
+test('GP008 loader includes maintenance-fund staff planner and safe in-browser exports', async () => {
   const integration = await readFile('assets/js/core/context-integration.js', 'utf8');
+  const exportFallback = await readFile('assets/js/features/temp-staff-export-fallback-v1.js', 'utf8');
   assert.match(integration, /temp-staff-maintenance-fund-v1\.js\?v=1\.0\.0/);
+  assert.match(integration, /temp-staff-export-fallback-v1\.js\?v=1\.0\.0/);
   assert.match(integration, /GovPromptTempStaffPlan/);
   assert.match(integration, /isPublicHealthPage/);
+  assert.match(exportFallback, /event\.preventDefault\(\)/);
+  assert.match(exportFallback, /application\/msword/);
+  assert.match(exportFallback, /text\/csv/);
+  assert.match(exportFallback, /ต้องตรวจหลักเกณฑ์/);
 });
