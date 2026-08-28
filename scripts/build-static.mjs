@@ -3,7 +3,7 @@ import { extname, join } from "node:path";
 import { build as bundle } from "esbuild";
 
 const output = "dist";
-const RELEASE_VERSIONS = Object.freeze({ home: "6.2.1", homeCss: "2.5.0", serviceWorker: "6.2.1", outputFormats: "1.0.0", promptOrchestrator: "2.6.0", automationPilot: "1.0.0", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0", documentStudio: "1.0.0", caseList: "1.0.0", searchTimeoutGuard: "1.1.0", budgetUiWatchdog: "1.2.0" });
+const RELEASE_VERSIONS = Object.freeze({ home: "6.2.1", homeCss: "2.5.0", serviceWorker: "6.2.1", mic: "2.3.4", outputFormats: "1.0.0", promptOrchestrator: "2.6.0", automationPilot: "1.0.0", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0", documentStudio: "1.0.0", caseList: "1.0.0", searchTimeoutGuard: "1.1.0", budgetUiWatchdog: "1.2.0" });
 const publicExtensions = new Set([
   ".html", ".htlm", ".css", ".js", ".json", ".webmanifest", ".txt", ".xml"
 ]);
@@ -98,6 +98,7 @@ distIndex = distIndex
   .replace(/assets\/js\/core\/output-format-presets-v1\.js\?v=[^"'\s<]+/g, `assets/js/core/output-format-presets-v1.js?v=${RELEASE_VERSIONS.outputFormats}`)
   .replace(/assets\/js\/core\/prompt-orchestrator\.js\?v=[^"'\s<]+/g, `assets/js/core/prompt-orchestrator.js?v=${RELEASE_VERSIONS.promptOrchestrator}`)
   .replace(/assets\/js\/home-v3\.js\?v=[^"'\s<]+/g, `assets/js/home-v3.js?v=${RELEASE_VERSIONS.home}`)
+  .replace(/assets\/js\/mic\.js\?v=[^"'\s<]+/g, `assets/js/mic.js?v=${RELEASE_VERSIONS.mic}`)
   .replace(/service-worker\.js\?v=[^"'\s<)]+/g, `service-worker.js?v=${RELEASE_VERSIONS.serviceWorker}`);
 
 const normalizedHomeScript = `<script src="assets/js/home-v3.js?v=${RELEASE_VERSIONS.home}" defer></script>`;
@@ -117,6 +118,7 @@ await writeFile(distHomePath, distHome);
 
 if (!distIndex.includes(`assets/js/home-v3.js?v=${RELEASE_VERSIONS.home}`)) throw new Error("Home release cache-bust version missing from dist/index.html");
 if (!distIndex.includes(`assets/css/home-v3.css?v=${RELEASE_VERSIONS.homeCss}`)) throw new Error("Home CSS release cache-bust version missing from dist/index.html");
+if (!distIndex.includes(`assets/js/mic.js?v=${RELEASE_VERSIONS.mic}`)) throw new Error("Mic loader release cache-bust version missing from dist/index.html");
 if (!distIndex.includes(`assets/js/core/output-format-presets-v1.js?v=${RELEASE_VERSIONS.outputFormats}`)) throw new Error("Output-format presets release script missing from dist/index.html");
 if (!distIndex.includes(`assets/js/core/prompt-orchestrator.js?v=${RELEASE_VERSIONS.promptOrchestrator}`)) throw new Error("Prompt orchestrator release version missing from dist/index.html");
 if (!distIndex.includes(`service-worker.js?v=${RELEASE_VERSIONS.serviceWorker}`)) throw new Error("Service worker release cache-bust version missing from dist/index.html");
