@@ -6,6 +6,7 @@ on:
     paths:
       - 'index.html'
       - 'gp008.html'
+      - 'maintenance-fund-plan.html'
       - 'trust.html'
       - 'privacy-notice.html'
       - 'robots.txt'
@@ -31,6 +32,7 @@ on:
       - 'assets/js/features/public-health-worker-toolkit-v1.js'
       - 'assets/js/features/temp-staff-maintenance-fund-v1.js'
       - 'assets/js/features/temp-staff-guided-workflow-v2.js'
+      - 'assets/js/features/maintenance-fund-plan-v1.js'
       - 'assets/js/features/mosquito-public-health-placement-v1.js'
       - 'assets/js/features/mosquito-survey-onepage-v1.js'
       - 'src/search-worker.js'
@@ -40,6 +42,7 @@ on:
       - 'scripts/verify-frontend-production.mjs'
       - 'scripts/verify-gp008-production.mjs'
       - 'scripts/verify-public-health-home-production-e2e.mjs'
+      - 'scripts/verify-maintenance-fund-production-e2e.mjs'
       - 'scripts/verify-production-security.mjs'
       - 'scripts/verify-issue73-production-e2e.mjs'
       - 'scripts/verify-budget-production-e2e.mjs'
@@ -86,6 +89,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify public-health Home shortcut in real browser
         run: node scripts/verify-public-health-home-production-e2e.mjs
+      - name: Verify maintenance-fund plan workflow in real browser
+        run: node scripts/verify-maintenance-fund-production-e2e.mjs
       - name: Verify Issue 73 privacy boundary in real browser
         run: node scripts/verify-issue73-production-e2e.mjs
       - name: Verify Budget Draft Agent short-command workflow in real browser
@@ -111,6 +116,7 @@ jobs:
               '- GitHub Pages production surface: PASS',
               '- GP008 production surface: PASS',
               '- Public Health Home shortcut real-browser check: PASS',
+              '- Maintenance-fund plan real-browser E2E: PASS',
               '- Cloudflare Worker production security: PASS',
               '- Issue #73 privacy boundary in real browser: PASS',
               '- Budget Draft Agent real-browser E2E: PASS',
@@ -139,10 +145,5 @@ jobs:
                 state: 'open'
               });
             } else {
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title,
-                body
-              });
+              await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body });
             }
