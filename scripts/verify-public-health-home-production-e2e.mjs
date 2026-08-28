@@ -37,10 +37,12 @@ await shortcut.click();
 await page.waitForURL(/temp-staff-wizard\.html$/, { timeout: 15_000 });
 await page.locator('#tempStaffGuidedWizardTab').waitFor({ state: 'visible', timeout: 15_000 });
 await page.locator('[data-step="1"]').waitFor({ state: 'visible', timeout: 15_000 });
-assert.equal(await page.locator('[data-step-pill]').count(), 5);
-assert.match(await page.locator('.tsgw-progress').innerText(), /หน่วยบริการ/);
-assert.match(await page.locator('.tsgw-progress').innerText(), /ภาระงาน/);
-assert.match(await page.locator('.tsgw-progress').innerText(), /ตรวจและสร้างเอกสาร/);
+const stepPills = page.locator('[data-step-pill]');
+assert.equal(await stepPills.count(), 5);
+const stepLabels = await stepPills.allTextContents();
+assert.ok(stepLabels.some(label => /หน่วยบริการ/.test(label)));
+assert.ok(stepLabels.some(label => /ภาระงาน/.test(label)));
+assert.ok(stepLabels.some(label => /ตรวจและสร้างเอกสาร/.test(label)));
 
 await page.locator('#tsgwAgency').fill('รพ.สต.ทดสอบ');
 await page.locator('#tsgwFiscalYear').fill('2570');
