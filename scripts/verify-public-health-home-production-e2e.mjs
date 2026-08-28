@@ -45,12 +45,14 @@ assert.ok(shortcutLabels.some(label => /วันเพจลูกน้ำย�
 
 await shortcut.click();
 await page.waitForURL(/gp008\.html#tempStaffMaintenanceFundEntry$/, { timeout: 15_000 });
-await page.locator('#tempStaffMaintenanceFundEntry').waitFor({ state: 'visible', timeout: 15_000 });
-assert.match(await page.locator('#tempStaffMaintenanceFundEntry').innerText(), /แผนลูกจ้างเงินบำรุง/);
+const gp008Entry = page.locator('#tempStaffMaintenanceFundEntry');
+await gp008Entry.waitFor({ state: 'visible', timeout: 15_000 });
+assert.match(await gp008Entry.innerText(), /แผนลูกจ้างเงินบำรุง/);
 
-await page.locator('#tempStaffMaintenanceFundEntry').click();
-await page.locator('#tempStaffMaintenanceFundTab').waitFor({ state: 'visible', timeout: 15_000 });
-await page.locator('#tempStaffMaintenanceFundTab').click();
+// Follow the actual user path: the visible GP008 entry opens the toolkit and
+// activates the temp-staff tab itself. Do not click the generated tab a second
+// time because that intentionally re-renders the underlying calculator.
+await gp008Entry.click();
 await page.locator('#tsmfWizardNav').waitFor({ state: 'visible', timeout: 15_000 });
 assert.equal(await page.locator('#tsmfWizardNav .tsmf-step-btn').count(), 5);
 assert.match(await page.locator('#tsmfWizardNav').innerText(), /หน่วยบริการ/);
@@ -73,6 +75,7 @@ console.log(JSON.stringify({
     guidedWizardVisible: '5 steps PASS',
     guidedReasonFieldsPresent: 'PASS',
     guidedDocumentGeneratorPresent: 'PASS',
+    realUserSingleClickFlow: 'PASS',
     mobileViewport: '390x844 PASS',
     micLoaderCacheBust: '2.3.4 PASS'
   }
