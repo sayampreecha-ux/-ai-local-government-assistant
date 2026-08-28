@@ -73,6 +73,9 @@
     if (!window.GovPromptPublicHealthToolkit) {
       appendScript('publicHealthWorkerToolkitScript', 'assets/js/features/public-health-worker-toolkit-v1.js?v=1.0.1');
     }
+    if (!window.GovPromptTempStaffPlan) {
+      appendScript('tempStaffMaintenanceFundFeatureScript', 'assets/js/features/temp-staff-maintenance-fund-v1.js?v=1.0.0');
+    }
   }
 
   window.GovPromptCore.FIELD_MAP = FIELD_MAP;
