@@ -30,6 +30,10 @@ assert.equal(await page.locator('.mfp-tab').count(), 5);
 const tabText = (await page.locator('.mfp-tab').allTextContents()).join(' ');
 assert.match(tabText, /จัดทำแผน.*ติดตามการใช้เงิน.*ปรับแผน.*ภาพรวม.*เอกสารตรวจสอบ/);
 assert.doesNotMatch(tabText, /Dashboard|Audit Pack|Plan vs Actual|Version Control/);
+await page.locator('#mfpPersistentNav').waitFor({ state: 'visible', timeout: 10_000 });
+assert.equal(await page.locator('#mfpPersistentNav [data-persistent-view]').count(), 5);
+assert.match(await page.locator('#mfpPersistentNav').innerText(), /แผน.*ใช้เงินจริง.*ปรับแผน.*ภาพรวม.*ตรวจเอกสาร/);
+assert.match(await page.locator('#mfpPersistentNavStatus').innerText(), /อยู่ที่: จัดทำแผน/);
 await page.locator('#mfpPopulation').waitFor({ state: 'visible', timeout: 10_000 });
 
 const thresholds = await page.evaluate(() => ({
@@ -85,8 +89,10 @@ const savedMeta = await page.evaluate(() => {
 assert.equal(savedMeta?.population, 5500);
 assert.equal(savedMeta?.size, 'M');
 
-await page.locator('[data-view="tracking"]').click();
+await page.locator('#mfpPersistentNav [data-persistent-view="tracking"]').click();
 assert.match(await page.locator('#mfpView').innerText(), /ติดตามการใช้เงินจริงเทียบแผน/);
+assert.match(await page.locator('#mfpPersistentNavStatus').innerText(), /อยู่ที่: ติดตามการใช้เงิน/);
+assert.equal(await page.locator('#mfpPersistentNav').isVisible(), true);
 await page.locator('[data-track-id]').first().locator('[data-track-field="committed"]').fill('100000');
 await page.locator('[data-track-id]').first().locator('[data-track-field="actual"]').fill('60000');
 await page.locator('[data-track-id]').nth(1).locator('[data-track-field="committed"]').fill('120000');
@@ -94,22 +100,25 @@ await page.locator('[data-track-id]').nth(1).locator('[data-track-field="actual"
 await page.locator('#mfpSaveTracking').click();
 assert.match(await page.locator('#mfpView').innerText(), /จ่ายจริง/);
 
-await page.locator('[data-view="adjust"]').click();
+await page.locator('#mfpPersistentNav [data-persistent-view="adjust"]').click();
 assert.match(await page.locator('#mfpView').innerText(), /ปรับแผน \/ ประวัติฉบับ/);
+assert.equal(await page.locator('#mfpPersistentNav').isVisible(), true);
 await page.locator('#mfpRevisionReason').fill('ปรับจังหวะการใช้จ่ายให้สอดคล้องกับแผนจัดหาและผลดำเนินงานจริง');
 await page.locator('#mfpCreateRevision').click();
 assert.equal(await page.locator('#mfpView input[disabled]').first().inputValue(), '2');
 
-await page.locator('[data-view="audit"]').click();
+await page.locator('#mfpPersistentNav [data-persistent-view="audit"]').click();
 assert.match(await page.locator('#mfpView').innerText(), /แฟ้มเอกสารพร้อมตรวจสอบ/);
+assert.equal(await page.locator('#mfpPersistentNav').isVisible(), true);
 const auditChecks = page.locator('[data-audit-key]');
 assert.equal(await auditChecks.count(), 14);
 for (let i = 0; i < 5; i += 1) await auditChecks.nth(i).check();
 await page.locator('#mfpSaveAudit').click();
 assert.match(await page.locator('#mfpView').innerText(), /ครบแล้ว 5\/14 รายการ/);
 
-await page.locator('[data-view="dashboard"]').click();
+await page.locator('#mfpPersistentNav [data-persistent-view="dashboard"]').click();
 await page.locator('#mfpSmlDashboard').waitFor({ state: 'visible', timeout: 10_000 });
+assert.equal(await page.locator('#mfpPersistentNav').isVisible(), true);
 assert.match(await page.locator('#mfpView').innerText(), /รพ\.สต\.ทดสอบระบบ/);
 assert.match(await page.locator('#mfpView').innerText(), /จำนวนแผน/);
 assert.match(await page.locator('#mfpSmlDashboard').innerText(), /เปรียบเทียบตามขนาดหน่วยบริการ/);
@@ -119,6 +128,11 @@ await page.locator('[data-sml-filter="M"]').click();
 assert.equal(await page.locator('.mfp-facility:not([hidden])').count(), 1);
 await page.locator('[data-sml-filter="S"]').click();
 assert.equal(await page.locator('.mfp-facility:not([hidden])').count(), 0);
+
+await page.locator('#mfpPersistentNav [data-persistent-view="plan"]').click();
+await page.locator('#mfpFacility').waitFor({ state: 'visible', timeout: 10_000 });
+assert.match(await page.locator('#mfpPersistentNavStatus').innerText(), /อยู่ที่: จัดทำแผน/);
+assert.equal(await page.locator('#mfpPersistentNav [data-persistent-view="plan"]').getAttribute('aria-current'), 'page');
 assert.deepEqual(errors, [], `page errors: ${JSON.stringify(errors)}`);
 
 console.log(JSON.stringify({
@@ -126,6 +140,8 @@ console.log(JSON.stringify({
     homeShortcutVisible: 'PASS',
     maintenanceFundWorkspaceVisible: 'PASS',
     plainThaiMenuLabels: 'PASS',
+    persistentNavigationAlwaysVisible: 'PASS',
+    persistentNavigationRoundTrip: 'PASS',
     smlClassifier: 'S/M/L boundaries PASS',
     smlThaiSizeLabels: 'PASS',
     smlPopulationPersistence: 'PASS',
