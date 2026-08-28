@@ -11,6 +11,7 @@ const files = Object.freeze([
   ['assets/js/core/context-integration.js', new URL('../assets/js/core/context-integration.js', import.meta.url)],
   ['assets/js/features/public-health-worker-toolkit-v1.js', new URL('../assets/js/features/public-health-worker-toolkit-v1.js', import.meta.url)],
   ['assets/js/features/temp-staff-maintenance-fund-v1.js', new URL('../assets/js/features/temp-staff-maintenance-fund-v1.js', import.meta.url)],
+  ['assets/js/features/temp-staff-guided-workflow-v2.js', new URL('../assets/js/features/temp-staff-guided-workflow-v2.js', import.meta.url)],
   ['assets/js/features/mosquito-public-health-placement-v1.js', new URL('../assets/js/features/mosquito-public-health-placement-v1.js', import.meta.url)]
 ]);
 
@@ -43,10 +44,12 @@ const catalog = await readFile(new URL('../assets/js/ui/assistant-catalog-accord
 const context = await readFile(new URL('../assets/js/core/context-integration.js', import.meta.url), 'utf8');
 const toolkit = await readFile(new URL('../assets/js/features/public-health-worker-toolkit-v1.js', import.meta.url), 'utf8');
 const tempStaff = await readFile(new URL('../assets/js/features/temp-staff-maintenance-fund-v1.js', import.meta.url), 'utf8');
+const guided = await readFile(new URL('../assets/js/features/temp-staff-guided-workflow-v2.js', import.meta.url), 'utf8');
 
 assert.match(gp008, /assets\/js\/core\/context-integration\.js/);
 assert.match(gp008, /id=["']tempStaffMaintenanceFundEntry["']/);
 assert.match(gp008, /👥 แผนลูกจ้างเงินบำรุง/);
+assert.match(gp008, /temp-staff-guided-workflow-v2\.js\?v=2\.0\.0/);
 assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.1/);
 assert.match(catalog, /👥 แผนลูกจ้างเงินบำรุง/);
 assert.match(catalog, /gp008\.html#tempStaffMaintenanceFundEntry/);
@@ -62,5 +65,11 @@ assert.match(toolkit, /PDPA/);
 assert.match(tempStaff, /แผนลูกจ้างเงินบำรุง/);
 assert.match(tempStaff, /Workload/);
 assert.match(tempStaff, /FTE/);
+assert.match(guided, /STEP_LABELS/);
+assert.match(guided, /tsmfWizardNav/);
+assert.match(guided, /tsmfGeneratePackage/);
+assert.match(guided, /ร่างบันทึกเสนอ/);
+assert.match(guided, /ดาวน์โหลดชุด Word/);
+assert.match(guided, /Workload CSV/);
 
-console.log('GP008 production proof passed: live public-health page, home shortcut and temp-staff planner match main exactly.');
+console.log('GP008 production proof passed: live public-health page, Home shortcut, temp-staff planner and guided workflow match main exactly.');

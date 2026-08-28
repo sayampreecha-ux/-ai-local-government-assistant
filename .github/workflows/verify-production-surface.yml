@@ -30,6 +30,7 @@ on:
       - 'src/government-task-router-v5.js'
       - 'assets/js/features/public-health-worker-toolkit-v1.js'
       - 'assets/js/features/temp-staff-maintenance-fund-v1.js'
+      - 'assets/js/features/temp-staff-guided-workflow-v2.js'
       - 'assets/js/features/mosquito-public-health-placement-v1.js'
       - 'assets/js/features/mosquito-survey-onepage-v1.js'
       - 'src/search-worker.js'
