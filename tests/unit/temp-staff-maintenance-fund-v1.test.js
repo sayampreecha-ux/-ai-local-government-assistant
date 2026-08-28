@@ -73,3 +73,12 @@ test('GP008 loader includes maintenance-fund staff planner and safe in-browser e
   assert.match(exportFallback, /text\/csv/);
   assert.match(exportFallback, /ต้องตรวจหลักเกณฑ์/);
 });
+
+test('GP008 exposes a visible maintenance-fund staff planner entry and loads feature scripts directly', async () => {
+  const gp008 = await readFile('gp008.html', 'utf8');
+  assert.match(gp008, /id=["']tempStaffMaintenanceFundEntry["']/);
+  assert.match(gp008, />👥 แผนลูกจ้างเงินบำรุง</);
+  assert.match(gp008, /temp-staff-maintenance-fund-v1\.js\?v=1\.0\.1/);
+  assert.match(gp008, /temp-staff-export-fallback-v1\.js\?v=1\.0\.1/);
+  assert.match(gp008, /tempStaffMaintenanceFundTab/);
+});

@@ -7,7 +7,7 @@ test('GovPrompt home does not expose mosquito one-page as a global quick action'
   assert.doesNotMatch(source, /mosquitoOnepageQuickAction/);
 });
 
-test('GP008 exposes mosquito one-page as a permanent sixteenth public-health task', async () => {
+test('GP008 exposes mosquito one-page as a permanent public-health task alongside the temp-staff planner', async () => {
   const integration = await readFile('assets/js/core/context-integration.js', 'utf8');
   const feature = await readFile('assets/js/features/mosquito-survey-onepage-v1.js', 'utf8');
   const placement = await readFile('assets/js/features/mosquito-public-health-placement-v1.js', 'utf8');
@@ -21,6 +21,7 @@ test('GP008 exposes mosquito one-page as a permanent sixteenth public-health tas
   assert.match(gp008, /data-module-id=["']GP008["']/i);
   assert.match(gp008, /id=["']publicHealthOtherToolsHeading["']/i);
   assert.match(gp008, /id=["']healthWorkerToolkitTask["']/i);
+  assert.match(gp008, /id=["']tempStaffMaintenanceFundEntry["']/i);
   assert.match(gp008, /id=["']mosquitoOnepageTask["']/i);
   assert.match(gp008, /href=["']mosquito-onepage\.html["']/i);
   assert.match(gp008, /วันเพจลูกน้ำยุงลาย HI CI/);
@@ -28,7 +29,7 @@ test('GP008 exposes mosquito one-page as a permanent sixteenth public-health tas
   assert.match(gp008, /mosquito-public-health-placement-v1\.js\?v=1\.0\.2/);
 
   const staticTaskCount = (gp008.match(/class=["'][^"']*\btask\b[^"']*["']/g) || []).length;
-  assert.equal(staticTaskCount, 16, 'GP008 must contain exactly 16 static task entries');
+  assert.equal(staticTaskCount, 17, 'GP008 must contain exactly 17 static task entries');
 
   assert.match(placement, /STATIC_MOSQUITO_ID = 'mosquitoOnepageTask'/);
   assert.match(placement, /querySelectorAll\('\.mosq-task'\)/);
