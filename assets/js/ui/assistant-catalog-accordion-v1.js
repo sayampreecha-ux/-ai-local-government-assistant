@@ -48,6 +48,7 @@
 
     const shortcuts = [
       { label: '🩺 เครื่องมือหมออนามัย', href: 'gp008.html#healthWorkerToolkitTask' },
+      { label: '👥 แผนลูกจ้างเงินบำรุง', href: 'gp008.html#tempStaffMaintenanceFundEntry' },
       { label: '🦟 วันเพจลูกน้ำยุงลาย HI / CI', href: 'mosquito-onepage.html' }
     ];
 
