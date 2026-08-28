@@ -17,20 +17,22 @@
     const label = input?.closest('label');
     if (!label) return;
     const textNode = [...label.childNodes].find(node => node.nodeType === Node.TEXT_NODE);
-    if (textNode) textNode.nodeValue = '📥 นำเข้าข้อมูล ';
+    if (textNode && textNode.nodeValue !== '📥 นำเข้าข้อมูล ') textNode.nodeValue = '📥 นำเข้าข้อมูล ';
   }
 
   function translateHeadings(root) {
     root.querySelectorAll('h2,h3,p,.mfp-muted,.mfp-note').forEach(el => {
       const text = (el.textContent || '').trim();
-      if (text === 'ติดตามผล Plan vs Actual') el.textContent = 'ติดตามการใช้เงินจริงเทียบแผน';
-      else if (text === 'ปรับแผน / Version Control') el.textContent = 'ปรับแผน / ประวัติฉบับ';
-      else if (text === 'Dashboard แผนเงินบำรุงในอุปกรณ์นี้') el.textContent = 'ภาพรวมแผนเงินบำรุงในอุปกรณ์นี้';
-      else if (text === 'Audit Pack / แฟ้มพร้อมตรวจ') el.textContent = 'แฟ้มเอกสารพร้อมตรวจสอบ';
-      else if (text === 'เปรียบเทียบตามขนาด S / M / L') el.textContent = 'เปรียบเทียบตามขนาดหน่วยบริการ';
-      else if (text.includes('Plan vs Actual')) el.textContent = text.replaceAll('Plan vs Actual', 'แผนเทียบผลใช้จริง');
-      else if (text.includes('Audit Pack')) el.textContent = text.replaceAll('Audit Pack', 'แฟ้มเอกสารตรวจสอบ');
-      else if (text.includes('Version')) el.textContent = text.replaceAll('Version', 'ฉบับ');
+      let replacement = '';
+      if (text === 'ติดตามผล Plan vs Actual') replacement = 'ติดตามการใช้เงินจริงเทียบแผน';
+      else if (text === 'ปรับแผน / Version Control') replacement = 'ปรับแผน / ประวัติฉบับ';
+      else if (text === 'Dashboard แผนเงินบำรุงในอุปกรณ์นี้') replacement = 'ภาพรวมแผนเงินบำรุงในอุปกรณ์นี้';
+      else if (text === 'Audit Pack / แฟ้มพร้อมตรวจ') replacement = 'แฟ้มเอกสารพร้อมตรวจสอบ';
+      else if (text === 'เปรียบเทียบตามขนาด S / M / L') replacement = 'เปรียบเทียบตามขนาดหน่วยบริการ';
+      else if (text.includes('Plan vs Actual')) replacement = text.replaceAll('Plan vs Actual', 'แผนเทียบผลใช้จริง');
+      else if (text.includes('Audit Pack')) replacement = text.replaceAll('Audit Pack', 'แฟ้มเอกสารตรวจสอบ');
+      else if (text.includes('Version')) replacement = text.replaceAll('Version', 'ฉบับ');
+      if (replacement && replacement !== text) el.textContent = replacement;
     });
   }
 
@@ -39,22 +41,31 @@
     const result = window.GovPromptMaintenanceFundSML?.classifyPopulation?.(population?.value || 0);
     const sizeInput = document.getElementById('mfpFacilitySizeLabel');
     const badge = document.getElementById('mfpFacilitySizeBadge');
-    if (result?.code && sizeInput) sizeInput.value = SIZE_LABELS[result.code] || result.label;
-    if (result?.code && badge) badge.textContent = SIZE_LABELS[result.code] || result.label;
+    if (result?.code && sizeInput) {
+      const value = SIZE_LABELS[result.code] || result.label;
+      if (sizeInput.value !== value) sizeInput.value = value;
+    }
+    if (result?.code && badge) {
+      const value = SIZE_LABELS[result.code] || result.label;
+      if (badge.textContent !== value) badge.textContent = value;
+    }
 
     root.querySelectorAll('.mfp-sml-badge').forEach(el => {
       const code = el.dataset.size || (el.textContent.match(/\b([SML])\b/) || [])[1] || '';
-      if (SIZE_LABELS[code]) el.textContent = SIZE_LABELS[code];
+      const value = SIZE_LABELS[code];
+      if (value && el.textContent !== value) el.textContent = value;
     });
 
     root.querySelectorAll('[data-sml-filter]').forEach(button => {
       const code = button.dataset.smlFilter;
       const count = (button.textContent.match(/(\d+)\s*$/) || [])[1] || '0';
-      if (code === 'ALL') button.textContent = `ทั้งหมด ${count}`;
-      if (code === 'S') button.textContent = `ขนาดเล็ก (S) ${count}`;
-      if (code === 'M') button.textContent = `ขนาดกลาง (M) ${count}`;
-      if (code === 'L') button.textContent = `ขนาดใหญ่ (L) ${count}`;
-      if (code === 'U') button.textContent = `ยังไม่ระบุขนาด ${count}`;
+      let value = '';
+      if (code === 'ALL') value = `ทั้งหมด ${count}`;
+      if (code === 'S') value = `ขนาดเล็ก (S) ${count}`;
+      if (code === 'M') value = `ขนาดกลาง (M) ${count}`;
+      if (code === 'L') value = `ขนาดใหญ่ (L) ${count}`;
+      if (code === 'U') value = `ยังไม่ระบุขนาด ${count}`;
+      if (value && button.textContent !== value) button.textContent = value;
     });
   }
 
