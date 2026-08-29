@@ -71,12 +71,8 @@
     }
     appendScript('mosquitoPublicHealthPlacementScript', 'assets/js/features/mosquito-public-health-placement-v1.js?v=1.0.1');
     if (!window.GovPromptPublicHealthToolkit) {
-      appendScript('publicHealthWorkerToolkitScript', 'assets/js/features/public-health-worker-toolkit-v1.js?v=1.0.1');
+      appendScript('publicHealthWorkerToolkitScript', 'assets/js/features/public-health-worker-toolkit-v1.js?v=1.0.2');
     }
-    if (!window.GovPromptTempStaffPlan) {
-      appendScript('tempStaffMaintenanceFundFeatureScript', 'assets/js/features/temp-staff-maintenance-fund-v1.js?v=1.0.0');
-    }
-    appendScript('tempStaffMaintenanceFundExportScript', 'assets/js/features/temp-staff-export-fallback-v1.js?v=1.0.0');
   }
 
   window.GovPromptCore.FIELD_MAP = FIELD_MAP;
