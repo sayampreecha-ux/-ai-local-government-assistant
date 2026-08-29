@@ -225,6 +225,7 @@
         '- ตรวจ PDPA ข้อมูลส่วนบุคคล สิทธิการใช้ภาพ/สื่อ และความเหมาะสมก่อนเผยแพร่',
         '- ใช้ภาษาไทยอ่านง่าย กระชับ น่าเชื่อถือ เหมาะกับการสื่อสารของหน่วยงานราชการ',
         '- ไม่ดึงกฎ TOR พัสดุ การเงิน บุคคล หรือกฎหมายมาปน เว้นแต่ผู้ใช้ร้องขอเรื่องนั้นโดยตรง',
+        '- หาก Route ขัดกับเจตนาของผู้ใช้ ให้ยึดเจตนา ชิ้นงาน และหลักฐานที่งานนั้นต้องใช้เป็นหลัก',
         ...(isVideo ? [
           '',
           'ถ้าเป็นวิดีโอ',
@@ -364,6 +365,6 @@
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.1';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();
