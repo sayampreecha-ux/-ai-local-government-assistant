@@ -69,7 +69,7 @@
       }
       kept.add(matched);
       if (matched === 2) {
-        button.textContent = '🏥 งาน รพ.สต. / สุขภาพชุมชน';
+        button.textContent = '🏥 งาน รพ.สต. / งานสุขภาพทั้งหมด';
         button.dataset.healthGateway = 'true';
         button.addEventListener('click', event => {
           event.preventDefault();
