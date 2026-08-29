@@ -127,7 +127,7 @@ for (let index = 1; index <= 13; index += 1) {
     assert.match(current, /data-module-id=["']GP008["']/i, `${file}: GP008 module marker missing`);
     assert.match(current, /id=["']publicHealthOtherToolsHeading["'][^>]*>\s*อื่นๆ\s*</i, `${file}: Other heading missing`);
     assert.match(current, /id=["']healthWorkerToolkitTask["']/i, `${file}: static health toolkit entry missing`);
-    assert.match(current, /public-health-worker-toolkit-v1\.js\?v=1\.0\.1/i, `${file}: health toolkit cache-busted script missing`);
+    assert.match(current, /public-health-worker-toolkit-v1\.js\?v=1\.0\.2/i, `${file}: health toolkit cache-busted script missing`);
     assert.match(current, /mosquito-survey-onepage-v1\.js\?v=1\.0\.1/i, `${file}: mosquito tool cache-busted script missing`);
     assert.match(current, /หลีกเลี่ยงชื่อผู้ป่วย เลขบัตรประชาชน/i, `${file}: PDPA warning missing`);
     continue;
