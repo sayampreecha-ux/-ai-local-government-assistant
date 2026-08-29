@@ -2,7 +2,7 @@ import {
   runGovernmentWorkflow,
   runGovernmentCaseByDetectedWorkflowsV4,
   DEEP_WORKFLOWS
-} from '../../../src/government-workflow-suite.js';
+} from '../../../src/government-workflow-suite.js?v=5.4.1';
 import {
   detectCitizenServiceIntent,
   runCitizenServiceWorkflow,
@@ -19,7 +19,7 @@ import {
 } from '../../../src/government-case-memory-v1.js';
 import { publishWorkflowProgressView } from '../ui/workflow-progress-ui-v1.js';
 
-export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.4';
+export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.4.1';
 
 const ACTION_LABELS = Object.freeze({
   'repair-workflow-classification': 'ยืนยันประเภทงาน',
