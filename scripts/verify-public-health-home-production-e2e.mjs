@@ -22,8 +22,8 @@ const healthGroup = page.locator('.work-catalog-group').filter({ hasText: /ส�
 await healthGroup.waitFor({ state: 'visible', timeout: 10_000 });
 const healthToggle = healthGroup.locator('.assistant-catalog-toggle');
 await healthToggle.waitFor({ state: 'visible', timeout: 10_000 });
-assert.match(await healthToggle.locator('.assistant-task-count').innerText(), /8\s*เมนูเด่น/);
-assert.doesNotMatch(await healthToggle.locator('.assistant-task-count').innerText(), /8\s*งาน/);
+assert.match(await healthToggle.locator('.assistant-task-count').innerText(), /6\s*เมนูเด่น/);
+assert.doesNotMatch(await healthToggle.locator('.assistant-task-count').innerText(), /6\s*งาน/);
 await healthToggle.click();
 
 const shortcut = healthGroup.locator('[data-health-shortcut="true"]').filter({ hasText: 'แผนลูกจ้างเงินบำรุง' }).first();
