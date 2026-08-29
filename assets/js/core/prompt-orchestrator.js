@@ -176,9 +176,9 @@
     const isPrMediaText = /(?:ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์(?:โซเชียล)?|อินโฟกราฟิก|โปสเตอร์|สคริปต์|คำกล่าว|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|แนะนำองค์กร|แนะนำหน่วยงาน)/i.test(String(userQuestion || ''));
     const isVideoCreation = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
       && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|แนะนำองค์กร|แนะนำหน่วยงาน|ประชาสัมพันธ์)/i.test(String(userQuestion || ''));
+    const isCreationAction = /^(?:create|draft|plan|summarize)$/.test(String(taskPlan.action || ''));
     const isPrCreation = isVideoCreation
-      || taskPlan.deliverable === 'public-content'
-      || taskPlan.deliverable === 'speech'
+      || (isCreationAction && (taskPlan.deliverable === 'public-content' || taskPlan.deliverable === 'speech'))
       || (isPrMediaText && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|วางข้อความ|ทำโพสต์)/i.test(String(userQuestion || '')));
     const isPrRoute = activeRoute?.moduleId === 'GP012'
       || /ประชาสัมพันธ์/.test(String(activeRoute?.label || activeRoute?.title || activeRoute?.assistant?.title || ''))
@@ -374,6 +374,6 @@
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.3';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.4';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();
