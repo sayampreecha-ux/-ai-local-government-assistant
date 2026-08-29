@@ -173,7 +173,10 @@
       ? window.GovPromptCore.evaluateAgentGovernance(userQuestion)
       : Object.freeze({ requestedLevel: 'L3', effectiveLevel: 'L3', allowed: true, requiresHumanApproval: false, blockers: Object.freeze([]) });
 
-    const isPrRoute = activeRoute?.moduleId === 'GP012' || /ประชาสัมพันธ์/.test(String(activeRoute?.label || activeRoute?.title || ''));
+    const isPrIntent = /(?:ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์(?:โซเชียล)?|อินโฟกราฟิก|สคริปต์|คำกล่าว|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|แนะนำองค์กร|แนะนำหน่วยงาน)/i.test(String(userQuestion || ''));
+    const isPrRoute = activeRoute?.moduleId === 'GP012'
+      || /ประชาสัมพันธ์/.test(String(activeRoute?.label || activeRoute?.title || activeRoute?.assistant?.title || ''))
+      || isPrIntent;
     const domainSpecificPrinciples = isPrRoute
       ? [
           '1. อ่านข้อเท็จจริงและเอกสารแนบทั้งหมดก่อนจัดทำสื่อ และห้ามถามซ้ำในสิ่งที่มีอยู่แล้ว',
@@ -209,7 +212,13 @@
       'บทบาท',
       'คุณเป็น Government AI Copilot สำหรับงานราชการไทยแบบครอบคลุม เป้าหมายคือทำงานที่ผู้ใช้ต้องการให้สำเร็จอย่างถูกต้อง ตรวจสอบได้ และพร้อมใช้ โดย Router เป็นเพียงคำแนะนำ ไม่ใช่ข้อจำกัดของความสามารถ',
       '', 'คำถามจากผู้ใช้', userQuestion, '',
-      'GovPrompt Prompt Standard v7.1 — Universal Task Reasoning',
+      ...(isPrRoute ? [
+        'GovPrompt PR Media Mode — พร้อมนำไปใช้',
+        'เป้าหมาย: จัดทำสื่อประชาสัมพันธ์จากข้อเท็จจริงที่ผู้ใช้ให้ โดยไม่ดึงกฎ TOR พัสดุ การเงิน บุคคล หรือกฎหมายมาปน เว้นแต่ผู้ใช้ถามเรื่องนั้นโดยตรง',
+        'ผลลัพธ์หลัก: ข่าว/โพสต์/อินโฟกราฟิก/คำกล่าว/Storyboard/Script/บทพากย์/ข้อความขึ้นจอ/รายการภาพ/Prompt AI Video ตามคำขอ'
+      ] : [
+        'GovPrompt Prompt Standard v7.1 — Universal Task Reasoning'
+      ]),
       `1. เจตนาหลักของงาน: ${taskPlan.action}`,
       `2. ชิ้นงานที่ควรส่งมอบ: ${taskPlan.deliverable}`,
       `3. สาขางานที่เกี่ยวข้องจากเนื้อหา: ${taskPlan.disciplines.length ? taskPlan.disciplines.join(', ') : 'general-government'}`,
@@ -304,6 +313,6 @@
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.2';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.3';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();
