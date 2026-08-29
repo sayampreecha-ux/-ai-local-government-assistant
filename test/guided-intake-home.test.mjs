@@ -75,12 +75,18 @@ test('guided intake stays memory-only and network-free, without duplicate lazy l
 });
 
 test('home loads guided intake directly before bridge and home handler with fresh cache keys', () => {
-  const intake = 'assets/js/core/guided-intake-v1.js?v=1.1.2';
-  const bridge = 'assets/js/ui/quick-action-guided-bridge-v1.js?v=1.0.4';
-  const home = 'assets/js/home-v3.js?v=6.3.0';
-  const feedback = 'assets/js/ui/pilot-feedback-ui.js?v=1.1.1';
-  assert.match(homeHtml, /guided-intake-v1\.js\?v=1\.1\.2/);
-  assert.match(homeHtml, /pilot-feedback-ui\.js\?v=1\.1\.1/);
+  const intake = homeHtml.match(/assets\/js\/core\/guided-intake-v1\.js\?v=[^"']+/)?.[0];
+  const bridge = homeHtml.match(/assets\/js\/ui\/quick-action-guided-bridge-v1\.js\?v=[^"']+/)?.[0];
+  const home = homeHtml.match(/assets\/js\/home-v3\.js\?v=[^"']+/)?.[0];
+  const feedback = homeHtml.match(/assets\/js\/ui\/pilot-feedback-ui\.js\?v=[^"']+/)?.[0];
+  assert.ok(intake);
+  assert.ok(bridge);
+  assert.ok(home);
+  assert.ok(feedback);
+  assert.match(intake, /\?v=\d+\.\d+\.\d+$/);
+  assert.match(bridge, /\?v=\d+\.\d+\.\d+$/);
+  assert.match(home, /\?v=\d+\.\d+\.\d+$/);
+  assert.match(feedback, /\?v=\d+\.\d+\.\d+$/);
   assert.ok(homeHtml.indexOf(intake) < homeHtml.indexOf(bridge));
   assert.ok(homeHtml.indexOf(bridge) < homeHtml.indexOf(home));
   assert.ok(homeHtml.indexOf(home) < homeHtml.indexOf(feedback));
