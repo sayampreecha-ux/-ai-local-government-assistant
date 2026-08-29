@@ -17,7 +17,7 @@ test('public-health assistant keeps a clean five-entry landing menu', async () =
   const wizard = await readFile('temp-staff-wizard.html', 'utf8');
   assert.match(source, /เมนูเด่น/);
   assert.match(source, /keepPatterns/);
-  assert.match(source, /งาน รพ\.สต\. \/ สุขภาพชุมชน/);
+  assert.match(source, /งาน รพ\.สต\. \/ งานสุขภาพทั้งหมด/);
   assert.match(source, /data\.healthGateway|healthGateway/);
   assert.match(source, /window\.location\.href = 'gp008\.html'/);
   assert.match(source, /แผนเงินบำรุง รพ\.สต\.\/สอน\./);
