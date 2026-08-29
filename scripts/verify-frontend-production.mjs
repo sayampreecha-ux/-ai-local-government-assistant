@@ -11,7 +11,7 @@ const sitemapUrl = page('sitemap.xml');
 const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
-const RELEASE = Object.freeze({ home:'6.2.1', homeCss:'2.5.0', serviceWorker:'6.2.2', mic:'2.3.6', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
+const RELEASE = Object.freeze({ home:'6.2.1', homeCss:'2.5.0', serviceWorker:'6.2.2', mic:'2.3.7', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
 
 const runtimeSourceFiles = Object.freeze([
   'budget-balance-validator.js','budget-official-evidence-adapter.js','budget-official-document-parser.js','budget-document-content-ingestion.js',
