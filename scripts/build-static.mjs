@@ -62,10 +62,11 @@ await bundle({
 
 const distIndexPath = join(output, "index.html");
 let distIndex = await readFile(distIndexPath, "utf8");
-const hybridScript = '<script src="assets/js/core/hybrid-intent-classifier.js?v=2.4.1" defer></script>';
+const hybridScriptMatch = distIndex.match(/<script src="assets\/js\/core\/hybrid-intent-classifier\.js\?v=[^"]+" defer><\/script>/);
+const hybridScript = hybridScriptMatch?.[0] || '';
 const hotfixScript = '<script src="assets/js/core/router-real-query-hotfix.js?v=2.4.5" defer></script>';
 if (!distIndex.includes(hotfixScript)) {
-  if (!distIndex.includes(hybridScript)) throw new Error("Hybrid intent router script marker not found in dist/index.html");
+  if (!hybridScript) throw new Error("Hybrid intent router script marker not found in dist/index.html");
   distIndex = distIndex.replace(hybridScript, `${hybridScript}${hotfixScript}`);
 }
 
