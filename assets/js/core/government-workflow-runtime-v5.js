@@ -14,13 +14,14 @@ import {
   buildCaseTitle,
   buildResumableWorkflowState,
   generateCaseId,
+  isResumeIntent,
   resolveResumeCase,
   sanitizeCaseRecord,
   upsertCaseMemory
 } from '../../../src/government-case-memory-v1.js';
 import { publishWorkflowProgressView } from '../ui/workflow-progress-ui-v1.js?v=1.3.0';
 
-export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.6.1';
+export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.6.2';
 
 const ACTION_LABELS = Object.freeze({
   'repair-workflow-classification': 'ยืนยันประเภทงาน',
@@ -285,10 +286,11 @@ function resolveCaseContext(query, explicitState, explicitCaseId, explicitCitize
 
   const stored = readCaseMemory();
   const detectedIds = detectIntentIds(query);
-  // A newly classified request must start a fresh workflow. Case memory is only
-  // eligible when the current query has no detectable workflow intent.
-  // This prevents an old procurement case from contaminating a new PR/video job.
-  if (detectedIds.length) {
+  // A newly classified request starts a fresh workflow, except when the user
+  // explicitly asks to continue/resume an existing case. This prevents an old
+  // procurement case from contaminating a new PR/video job while preserving
+  // deliberate Case Memory continuation.
+  if (detectedIds.length && !isResumeIntent(query)) {
     return { caseId: generateCaseId(), workflowState: {}, citizenServiceState: null, resumed: false, memoryRecord: null, effectiveQuery: query };
   }
   const record = resolveResumeCase(stored, query, detectedIds);
