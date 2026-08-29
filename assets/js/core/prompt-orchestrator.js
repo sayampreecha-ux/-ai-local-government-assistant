@@ -208,6 +208,57 @@
           '15. เมื่อมีหลายทางเลือก ให้สรุปทางเลือกที่เหมาะที่สุดพร้อมเงื่อนไขและความเสี่ยง ไม่โยนภาระให้ผู้ใช้ตัดสินจากข้อมูลดิบเอง'
         ];
 
+    if (isPrRoute) {
+      const isVideo = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(userQuestion);
+      const prPrompt = [
+        'บทบาท',
+        'คุณเป็นผู้ช่วยงานประชาสัมพันธ์ของหน่วยงานราชการไทย',
+        '',
+        'งานที่ผู้ใช้ต้องการ',
+        userQuestion,
+        attachmentNames.length ? `เอกสาร/ไฟล์ประกอบ: ${attachmentNames.join(', ')}` : '',
+        '',
+        'วิธีทำงาน',
+        '- ใช้ข้อเท็จจริงจากข้อมูลที่ผู้ใช้ให้เป็นหลัก',
+        '- ห้ามแต่งชื่อบุคคล ตำแหน่ง วันที่ ตัวเลข สถานที่ ผลงาน หรือเหตุการณ์',
+        '- ถ้าข้อมูลสำคัญขัดแย้ง ให้ชี้จุดขัดแย้งก่อนและใช้เฉพาะข้อมูลที่ยืนยันได้',
+        '- ตรวจ PDPA ข้อมูลส่วนบุคคล สิทธิการใช้ภาพ/สื่อ และความเหมาะสมก่อนเผยแพร่',
+        '- ใช้ภาษาไทยอ่านง่าย กระชับ น่าเชื่อถือ เหมาะกับการสื่อสารของหน่วยงานราชการ',
+        '- ไม่ดึงกฎ TOR พัสดุ การเงิน บุคคล หรือกฎหมายมาปน เว้นแต่ผู้ใช้ร้องขอเรื่องนั้นโดยตรง',
+        ...(isVideo ? [
+          '',
+          'ถ้าเป็นวิดีโอ',
+          '- แนะนำความยาวที่เหมาะสมตามวัตถุประสงค์ หากผู้ใช้ยังไม่ได้กำหนด',
+          '- จัดผลลัพธ์เป็น 1) ลำดับฉาก/Storyboard 2) บทพากย์ 3) ข้อความขึ้นจอ/ซับ 4) รายการภาพหรือคลิปที่ควรใช้ 5) Prompt พร้อมคัดลอกไปใช้กับ AI Video ภายนอก',
+          '- ให้แต่ละฉากระบุช่วงเวลาโดยประมาณและสารสำคัญ',
+          '- ถ้ามีภาพหรือเอกสารประกอบ ให้บอกว่าจะใช้ช่วงใดของวิดีโอ'
+        ] : [
+          '',
+          'ผลลัพธ์',
+          '- จัดชิ้นงานประชาสัมพันธ์พร้อมคัดลอกไปใช้ตามรูปแบบที่ผู้ใช้ขอ'
+        ]),
+        '',
+        'ก่อนส่ง',
+        '- ตรวจชื่อ ตำแหน่ง วันที่ ตัวเลข และสารสำคัญอีกครั้ง',
+        '- ถ้าข้อมูลพอ ให้ทำชิ้นงานทันที ไม่ถามคำถามเพิ่มโดยไม่จำเป็น'
+      ].filter(Boolean).join('\n');
+
+      return Object.freeze({
+        prompt: prPrompt,
+        riskFlags,
+        route: activeRoute,
+        taskPlan,
+        outputPlan,
+        outputFormatId: presentationPreset?.id || 'auto',
+        presentationPreset,
+        governancePlan,
+        qualityGates: gates,
+        context: normalizedContext,
+        attachmentNames: Object.freeze(attachmentNames),
+        prMode: true
+      });
+    }
+
     const prompt = [
       'บทบาท',
       'คุณเป็น Government AI Copilot สำหรับงานราชการไทยแบบครอบคลุม เป้าหมายคือทำงานที่ผู้ใช้ต้องการให้สำเร็จอย่างถูกต้อง ตรวจสอบได้ และพร้อมใช้ โดย Router เป็นเพียงคำแนะนำ ไม่ใช่ข้อจำกัดของความสามารถ',
@@ -313,6 +364,6 @@
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.3';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();
