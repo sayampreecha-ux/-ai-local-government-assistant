@@ -73,6 +73,22 @@ export function detectGovernmentWorkflows(input = {}) {
   if (text.includes("เงินกู้") || text.includes("กู้เงิน")) { ids.add("gov.finance"); ids.add("gov.legal"); }
 
   const primaryId = resolvePrimaryWorkflowId(text, directIds, matched);
+
+  // PR/content creation is a self-contained workflow by default.
+  // Generic words inside a PR brief (organization, position, project, budget, etc.)
+  // must not fan out into procurement/HR/finance/project workflows unless the user
+  // explicitly asks for those tasks as separate substantive actions.
+  if (primaryId === 'gov.public-relations') {
+    const explicitCrossDomain = [
+      ['gov.procurement', /(?:พร้อม|และ|รวมทั้ง|จากนั้น).{0,18}(?:ร่าง\s*tor|ตรวจ\s*tor|จัดซื้อ|จัดจ้าง|ราคากลาง)/i],
+      ['gov.finance', /(?:พร้อม|และ|รวมทั้ง|จากนั้น).{0,18}(?:เบิกจ่าย|ขอเบิก|วิเคราะห์การเงิน|ตรวจงบ)/i],
+      ['gov.hr', /(?:พร้อม|และ|รวมทั้ง|จากนั้น).{0,18}(?:งานบุคคล|อัตรากำลัง|บรรจุ|แต่งตั้ง|โอนย้าย)/i],
+      ['gov.project', /(?:พร้อม|และ|รวมทั้ง|จากนั้น).{0,18}(?:ร่างโครงการ|จัดทำโครงการ|วิเคราะห์โครงการ)/i]
+    ].filter(([, pattern]) => pattern.test(text)).map(([id]) => id);
+    const orderedIds = ['gov.public-relations', ...explicitCrossDomain];
+    return orderedIds.map((workflowId) => all.find((workflow) => workflow.id === workflowId)).filter(Boolean);
+  }
+
   const orderedIds = [];
   if (primaryId) orderedIds.push(primaryId);
   for (const workflow of matched) if (!orderedIds.includes(workflow.id)) orderedIds.push(workflow.id);
