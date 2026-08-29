@@ -18,12 +18,12 @@ test('public-health assistant clearly separates featured menus from all public-h
   assert.match(source, /ดูงานสาธารณสุขทั้งหมด 17 งาน/);
   assert.match(source, /เมนูเด่น/);
   assert.match(source, /gp008\.html#healthWorkerToolkitTask/);
-  assert.match(source, /แผนและติดตามเงินบำรุง รพ\.สต\.\/สอน\./);
+  assert.match(source, /แผนเงินบำรุง รพ\.สต\.\/สอน\./);
   assert.match(source, /maintenance-fund-plan\.html/);
   assert.match(source, /แผนลูกจ้างเงินบำรุง/);
   assert.match(source, /temp-staff-wizard\.html/);
-  assert.match(source, /วันเพจลูกน้ำยุงลาย HI \/ CI/);
-  assert.match(source, /mosquito-onepage\.html/);
+  assert.match(source, /healthFeaturedCurated/);
+  assert.doesNotMatch(source, /mosquito-onepage\.html/);
   assert.match(wizard, /temp-staff-guided-wizard-v1\.js\?v=1\.0\.0/);
   assert.match(wizard, /แผนลูกจ้างชั่วคราวเงินบำรุง/);
 });
@@ -32,5 +32,5 @@ test('existing mic asset loads the fresh accordion only on the home quick-action
   const mic = await readFile('assets/js/mic.js', 'utf8');
   assert.match(mic, /document\.querySelector\('\.quick-actions'\)/);
   assert.match(mic, /assistantCatalogAccordionScript/);
-  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.4/);
+  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.5/);
 });
