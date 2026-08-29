@@ -128,7 +128,7 @@
           choices: Object.freeze([
             Object.freeze({ label: '🎤 คำกล่าว', prompt: 'ร่างคำกล่าว' }),
             Object.freeze({ label: '📝 สคริปต์', prompt: 'ร่างสคริปต์' }),
-            Object.freeze({ label: '🎬 วิดีโอ', prompt: 'ทำวิดีโอประชาสัมพันธ์' })
+            Object.freeze({ label: '🎬 วิดีโอ', prompt: 'ทำวิดีโอประชาสัมพันธ์', intake: 'pr-video' })
           ])
         })
       ])
@@ -161,7 +161,16 @@
       .work-catalog-task:hover,.work-catalog-task:focus-visible{background:#edf6f1;outline:2px solid #12372a;outline-offset:1px}
       .work-catalog-empty{padding:18px;text-align:center;border:1px dashed #cbd7d1;border-radius:14px;color:#59665f}
       @media(max-width:620px){.work-catalog-group{padding:10px}.work-catalog-task{width:100%;border-radius:12px;padding:10px 11px}.work-catalog-search{font-size:16px}}
-    `;
+    
+      .pr-video-intake{display:grid;gap:12px}
+      .pr-video-label{font-weight:800;color:#12372a}
+      .pr-video-topic{width:100%;box-sizing:border-box;border:1px solid #c8d7d0;border-radius:14px;padding:12px;font:inherit;resize:vertical;min-height:120px}
+      .pr-video-topic:focus{outline:2px solid #12372a;outline-offset:1px}
+      .pr-video-row{display:flex;flex-wrap:wrap;gap:7px}
+      .pr-video-row .is-selected{background:#12372a;color:#fff}
+      .pr-video-help{margin:0;color:#617068;font-size:.92rem}
+      .pr-video-create{border:0;border-radius:14px;padding:12px 16px;background:#12372a;color:#fff;font:inherit;font-weight:800;cursor:pointer}
+`;
     document.head.append(style);
   }
 
@@ -271,6 +280,7 @@
       item.type = 'button';
       item.className = 'work-catalog-task';
       item.dataset.prompt = String(choice.prompt || '').trim();
+      if (choice.intake) item.dataset.localIntake = String(choice.intake);
       item.textContent = String(choice.label || choice.prompt || 'เลือก');
       root.append(item);
     });
@@ -278,6 +288,62 @@
     dialogEyebrow.textContent = 'เลือกอย่างเดียว แล้วบอกเรื่องหรือแนบข้อมูลได้เลย';
     dialogContent.replaceChildren(root);
     if (!dialog.open) dialog.showModal();
+    return true;
+  }
+
+  function openPrVideoIntake() {
+    if (!dialog || !dialogTitle || !dialogEyebrow || !dialogContent) return false;
+
+    const root = document.createElement('div');
+    root.className = 'pr-video-intake';
+    root.innerHTML = `
+      <label class="pr-video-label" for="prVideoTopic">เรื่องที่จะทำ</label>
+      <textarea id="prVideoTopic" class="pr-video-topic" rows="5" placeholder="วางรายละเอียดข่าว กิจกรรม หรือเรื่องที่ต้องการทำวิดีโอ..."></textarea>
+      <div class="pr-video-row">
+        <button type="button" class="work-catalog-task" data-pr-video-duration="auto">✨ ให้ GP แนะนำความยาว</button>
+        <button type="button" class="work-catalog-task" data-pr-video-duration="30 วินาที">30 วิ</button>
+        <button type="button" class="work-catalog-task" data-pr-video-duration="1 นาที">1 นาที</button>
+        <button type="button" class="work-catalog-task" data-pr-video-duration="3–5 นาที">3–5 นาที</button>
+        <button type="button" class="work-catalog-task" data-pr-video-duration="5–7 นาที">5–7 นาที</button>
+      </div>
+      <p class="pr-video-help">แนบรูปหรือเอกสารได้จากช่องถามหลักหลังเลือกเมนูนี้</p>
+      <button type="button" class="pr-video-create">สร้างชุดทำวิดีโอ</button>
+    `;
+
+    let duration = 'ให้ GP แนะนำ';
+    root.querySelector('[data-pr-video-duration="auto"]')?.classList.add('is-selected');
+    root.querySelectorAll('[data-pr-video-duration]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        root.querySelectorAll('[data-pr-video-duration]').forEach(x => x.classList.remove('is-selected'));
+        btn.classList.add('is-selected');
+        duration = btn.dataset.prVideoDuration === 'auto' ? 'ให้ GP แนะนำ' : btn.dataset.prVideoDuration;
+      });
+    });
+
+    root.querySelector('.pr-video-create')?.addEventListener('click', () => {
+      const topic = String(root.querySelector('#prVideoTopic')?.value || '').trim();
+      if (!topic) {
+        root.querySelector('#prVideoTopic')?.focus();
+        return;
+      }
+      const prompt = [
+        'ทำวิดีโอประชาสัมพันธ์',
+        'เรื่อง: ' + topic,
+        'ความยาว: ' + duration,
+        'จัดผลลัพธ์เป็น: 1) ลำดับฉาก/Storyboard 2) บทพากย์ 3) ข้อความขึ้นจอและซับ 4) รายการภาพหรือคลิปที่ควรใช้ 5) Prompt พร้อมคัดลอกไปใช้กับ AI Video ภายนอก',
+        'ยึดเฉพาะข้อเท็จจริงจากข้อมูลที่ให้ หากข้อมูลสำคัญขัดแย้งให้เตือนก่อน และห้ามแต่งข้อมูลบุคคล ตำแหน่ง วันที่ ตัวเลข หรือเหตุการณ์'
+      ].join('\\n');
+      if (dialog?.open) dialog.close();
+      input.value = prompt;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      form.requestSubmit();
+    });
+
+    dialogTitle.textContent = '🎬 ทำวิดีโอประชาสัมพันธ์';
+    dialogEyebrow.textContent = 'บอกเรื่องที่ต้องการทำ — ที่เหลือให้ GP จัดให้';
+    dialogContent.replaceChildren(root);
+    if (!dialog.open) dialog.showModal();
+    queueMicrotask(() => root.querySelector('#prVideoTopic')?.focus());
     return true;
   }
 
@@ -292,6 +358,13 @@
 
     const button = event.target.closest?.('[data-prompt]');
     if (!button) return;
+
+    if (button.dataset.localIntake === 'pr-video') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openPrVideoIntake();
+      return;
+    }
 
     if (button.dataset.taskChoices) {
       event.preventDefault();
