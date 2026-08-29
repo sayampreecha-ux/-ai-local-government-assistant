@@ -1,4 +1,4 @@
-const APP_VERSION = '1.7';
+const APP_VERSION = '1.8';
 const CACHE = `lg-assistant-ready-v${APP_VERSION.replace('.', '-')}`;
 const ASSETS = [
   './',
@@ -12,6 +12,7 @@ const ASSETS = [
 const PRECACHE_URLS = new Set(ASSETS.map(asset => new URL(asset, self.registration.scope).href));
 const NETWORK_FRESH_MODULES = Object.freeze([
   '/assets/js/core/government-workflow-runtime-v5.js',
+  '/src/government-workflow-suite.js',
   '/assets/js/ui/workflow-progress-ui-v1.js',
   '/assets/js/ui/status-copy.js'
 ]);
