@@ -21,7 +21,7 @@
 
   const ACTIONS = Object.freeze([
     ['draft', /(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ|บันทึก|โครงการ|tor|คำกล่าว|ข่าว|โพสต์|แผน|รายงาน|คำสั่ง|ประกาศ|mou|วิสัยทัศน์)/i],
-    ['create', /(?:ทำ|สร้าง|ออกแบบ|จัดทำ)\s*(?:ปก|โปสเตอร์|อินโฟ|อินโฟกราฟิก|ภาพ|สื่อ|ตาราง|checklist|เช็กลิสต์|แบบฟอร์ม)/i],
+    ['create', /(?:ทำ|สร้าง|ออกแบบ|จัดทำ)\s*(?:ปก|โปสเตอร์|อินโฟ|อินโฟกราฟิก|ภาพ|สื่อ|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|ตาราง|checklist|เช็กลิสต์|แบบฟอร์ม)/i],
     ['verify', /(?:ตรวจ|เช็ก|เช็ค|ตรวจสอบ|ทบทวน|ประเมินความเสี่ยง)/i],
     ['summarize', /(?:สรุป|ย่อ|executive summary)/i],
     ['plan', /(?:วางแผน|แผนงาน|ขั้นตอน|workflow|roadmap|แนวทางดำเนินการ|จัดการแข่งขัน|จัดงาน|จัดกิจกรรม|ดำเนินโครงการ)/i],
@@ -35,7 +35,7 @@
     ['procurement', /(?:tor|ขอบเขตของงาน|จัดซื้อ|จัดจ้าง|ราคากลาง|สัญญา)/i],
     ['finance', /(?:เบิก|เบิกจ่าย|ฎีกา|ค่าใช้จ่าย|เงินสะสม|เงินสำรองจ่าย|งบประมาณ|โบนัส|ประโยชน์ตอบแทน)/i],
     ['legal-analysis', /(?:กฎหมาย|ระเบียบ|ข้อหารือ|หนังสือเวียน|หนังสือสั่งการ|อำนาจ|คำพิพากษา|มีสิทธิ)/i],
-    ['public-content', /(?:โปสเตอร์|โพสต์|ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|อินโฟ|อินโฟกราฟิก|การ์ด|แคปชัน|ปก)/i],
+    ['public-content', /(?:โปสเตอร์|โพสต์|ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|อินโฟ|อินโฟกราฟิก|การ์ด|แคปชัน|ปก|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i],
     ['speech', /(?:คำกล่าว|กล่าวเปิด|กล่าวปิด|สุนทรพจน์|โอวาท)/i],
     ['table', /(?:ตาราง|csv|json|รายการ|เปรียบเทียบ)/i],
     ['general-answer', /.+/]
@@ -53,7 +53,7 @@
     ['education', /(?:การศึกษา|โรงเรียน|เด็ก|เยาวชน|นักเรียน|กีฬา|วิทยาศาสตร์|สามเณร|บรรพชา|คุณธรรม)/i],
     ['audit', /(?:ตรวจสอบภายใน|สตง|ป\.ป\.ช|ความเสี่ยง|ควบคุมภายใน)/i],
     ['executive', /(?:ผู้บริหาร|สรุปผู้บริหาร|executive summary|briefing|คำกล่าว|วิสัยทัศน์)/i],
-    ['public-relations', /(?:ประชาสัมพันธ์|โปสเตอร์|โพสต์|ข่าว|อินโฟ|การ์ด|ปก|แคปชัน)/i],
+    ['public-relations', /(?:ประชาสัมพันธ์|โปสเตอร์|โพสต์|ข่าว|อินโฟ|การ์ด|ปก|แคปชัน|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i],
     ['council', /(?:สภาท้องถิ่น|สภา อบจ|สภาเทศบาล|ประชุมสภา|ญัตติ|ข้อบัญญัติ)/i]
   ]);
 
@@ -174,8 +174,8 @@
       : Object.freeze({ requestedLevel: 'L3', effectiveLevel: 'L3', allowed: true, requiresHumanApproval: false, blockers: Object.freeze([]) });
 
     const isPrMediaText = /(?:ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์(?:โซเชียล)?|อินโฟกราฟิก|โปสเตอร์|สคริปต์|คำกล่าว|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|แนะนำองค์กร|แนะนำหน่วยงาน)/i.test(String(userQuestion || ''));
-    const isVideoCreation = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
-      && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|แนะนำองค์กร|แนะนำหน่วยงาน|ประชาสัมพันธ์)/i.test(String(userQuestion || ''));
+    const isVideoCreation = /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ)?\s*(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
+      && /(?:ประชาสัมพันธ์|แนะนำ\s*(?:อบจ\.?|อบต\.?|เทศบาล|องค์กร|หน่วยงาน)|เรื่อง\s*:\s*แนะนำ)/i.test(String(userQuestion || ''));
     const isCreationAction = /^(?:create|draft|plan|summarize)$/.test(String(taskPlan.action || ''));
     const isPrCreation = isVideoCreation
       || (isCreationAction && (taskPlan.deliverable === 'public-content' || taskPlan.deliverable === 'speech'))
@@ -222,6 +222,8 @@
         '',
         'งานที่ผู้ใช้ต้องการ',
         userQuestion,
+        '',
+        'โหมดงาน: PR Media / Video Creation',
         '',
         'Answer First: ให้ส่งชิ้นงานที่ผู้ใช้ต้องการก่อน แล้วค่อยระบุข้อควรตรวจหรือข้อมูลที่ยังขาดเฉพาะที่จำเป็น',
         attachmentNames.length ? `เอกสาร/ไฟล์ประกอบ: ${attachmentNames.join(', ')}` : '',
@@ -375,6 +377,6 @@
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.5';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.6';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();
