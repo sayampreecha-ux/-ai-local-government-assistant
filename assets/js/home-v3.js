@@ -204,10 +204,7 @@
       outputFormatId: outputFormatSelect?.value || 'auto'
     });
 
-    const isPr = Boolean(promptBundle?.prMode)
-      || route?.moduleId === 'GP012'
-      || route?.transactionType === 'public-relations'
-      || /(?:ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์|อินโฟกราฟิก|สคริปต์|คำกล่าว|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|แนะนำองค์กร|แนะนำหน่วยงาน)/i.test(text);
+    const isPr = Boolean(promptBundle?.prMode);
 
     if (isPr) {
       const workflowRuntime = await workflowRuntimePromise;
@@ -351,7 +348,7 @@
 
     article.className = 'message assistant'; content.className = 'assistant-content'; label.className = 'route-label'; card.className = 'answer-card'; section.className = 'answer-section'; actions.className = 'answer-actions'; mark.className = 'assistant-mark'; mark.setAttribute('aria-hidden', 'true'); mark.textContent = 'กพ';
     label.textContent = `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
-    const isPrResult = Boolean(promptBundle?.prMode) || route?.moduleId === 'GP012' || route?.transactionType === 'public-relations';
+    const isPrResult = Boolean(promptBundle?.prMode);
     heading.textContent = budgetSourceRuntime
       ? 'GovPrompt ดำเนินงานร่างงบประมาณให้แล้ว'
       : isPrResult
