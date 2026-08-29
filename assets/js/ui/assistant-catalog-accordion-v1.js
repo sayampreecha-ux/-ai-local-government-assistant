@@ -46,7 +46,7 @@
     const title = String(group.querySelector('h3')?.textContent || group.textContent || '');
     if (!/สาธารณสุข|รพ\.สต/i.test(title) || tasks.dataset.healthFeaturedCurated === 'true') return;
 
-    // หน้าแรกควรมีเฉพาะงานเด่นที่ไม่ซ้ำกัน งานเฉพาะทางอื่นยังอยู่ในหน้า “17 งานทั้งหมด”
+    // หน้าแรกควรมีเฉพาะงานเด่นที่ไม่ซ้ำกัน งานเฉพาะทางอื่นอยู่ในหน้า “งานสาธารณสุขอื่น ๆ”
     [...tasks.querySelectorAll('.work-catalog-task')].forEach(button => {
       const label = String(button.textContent || '').trim();
       if (/PDPA|ข้อมูลสุขภาพ/i.test(label)) button.remove();
@@ -55,7 +55,7 @@
     const shortcuts = [
       { label: '💰 แผนเงินบำรุง รพ.สต./สอน.', href: 'maintenance-fund-plan.html' },
       { label: '👥 แผนลูกจ้างเงินบำรุง', href: 'temp-staff-wizard.html' },
-      { label: '🩺 ดูงานสาธารณสุขทั้งหมด 17 งาน', href: 'gp008.html#healthWorkerToolkitTask' }
+      { label: '🩺 งานสาธารณสุขอื่น ๆ', href: 'gp008.html' }
     ];
 
     shortcuts.forEach(item => {
