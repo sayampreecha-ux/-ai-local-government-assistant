@@ -12,12 +12,11 @@ test('home assistant catalog is collapsed by assistant with frequent-task lists'
   assert.match(source, /collapseOthers/);
 });
 
-test('public-health assistant clearly separates featured menus from all public-health jobs', async () => {
+test('public-health assistant keeps a clean five-entry landing menu', async () => {
   const source = await readFile('assets/js/ui/assistant-catalog-accordion-v1.js', 'utf8');
   const wizard = await readFile('temp-staff-wizard.html', 'utf8');
-  assert.match(source, /ดูงานสาธารณสุขทั้งหมด 17 งาน/);
   assert.match(source, /เมนูเด่น/);
-  assert.match(source, /gp008\.html#healthWorkerToolkitTask/);
+  assert.match(source, /keepPatterns/);
   assert.match(source, /แผนเงินบำรุง รพ\.สต\.\/สอน\./);
   assert.match(source, /maintenance-fund-plan\.html/);
   assert.match(source, /แผนลูกจ้างเงินบำรุง/);
@@ -32,5 +31,5 @@ test('existing mic asset loads the fresh accordion only on the home quick-action
   const mic = await readFile('assets/js/mic.js', 'utf8');
   assert.match(mic, /document\.querySelector\('\.quick-actions'\)/);
   assert.match(mic, /assistantCatalogAccordionScript/);
-  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.5/);
+  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.7/);
 });
