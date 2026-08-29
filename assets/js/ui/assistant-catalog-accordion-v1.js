@@ -47,7 +47,7 @@
     if (!/สาธารณสุข|รพ\.สต/i.test(title) || tasks.querySelector('[data-health-shortcut]')) return;
 
     const shortcuts = [
-      { label: '🩺 เครื่องมือหมออนามัย', href: 'gp008.html#healthWorkerToolkitTask' },
+      { label: '🩺 ดูงานสาธารณสุขทั้งหมด 17 งาน', href: 'gp008.html#healthWorkerToolkitTask' },
       { label: '💰 แผนและติดตามเงินบำรุง รพ.สต./สอน.', href: 'maintenance-fund-plan.html' },
       { label: '👥 แผนลูกจ้างเงินบำรุง', href: 'temp-staff-wizard.html' },
       { label: '🦟 วันเพจลูกน้ำยุงลาย HI / CI', href: 'mosquito-onepage.html' }
@@ -71,16 +71,19 @@
     if (!heading || !tasks) return;
 
     const title = String(heading.textContent || '').trim();
+    const isHealthGroup = /สาธารณสุข|รพ\.สต/i.test(title);
     const controlsId = `assistantCatalogTasks${index}`;
     tasks.id = tasks.id || controlsId;
     appendHealthShortcuts(group, tasks);
+    const visibleCount = tasks.querySelectorAll('.work-catalog-task').length;
+    const countLabel = isHealthGroup ? `${visibleCount} เมนูเด่น` : `${visibleCount} งาน`;
 
     const toggle = document.createElement('button');
     toggle.type = 'button';
     toggle.className = 'assistant-catalog-toggle';
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-controls', tasks.id);
-    toggle.innerHTML = `<span class="assistant-catalog-icon" aria-hidden="true">${iconFor(title)}</span><span class="assistant-catalog-name">${title}</span><span class="assistant-task-count">${tasks.querySelectorAll('.work-catalog-task').length} งาน</span><span class="assistant-catalog-caret" aria-hidden="true">⌄</span>`;
+    toggle.innerHTML = `<span class="assistant-catalog-icon" aria-hidden="true">${iconFor(title)}</span><span class="assistant-catalog-name">${title}</span><span class="assistant-task-count">${countLabel}</span><span class="assistant-catalog-caret" aria-hidden="true">⌄</span>`;
     toggle.addEventListener('click', () => {
       const willOpen = toggle.getAttribute('aria-expanded') !== 'true';
       collapseOthers(group);
