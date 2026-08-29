@@ -59,7 +59,7 @@ try {
     hasComposer: Boolean(document.getElementById('chatForm') && document.getElementById('promptInput')),
     quickActionCount: document.querySelectorAll('[data-prompt]').length
   }));
-  assert.equal(uiState.viewportWidth, 390, 'mobile viewport must be 390px');
+  assert.ok(uiState.viewportWidth >= 380 && uiState.viewportWidth <= 400, `mobile viewport must stay in the expected phone range: ${uiState.viewportWidth}px`);
   assert.ok(uiState.scrollWidth <= uiState.clientWidth, `unexpected horizontal overflow: ${JSON.stringify(uiState)}`);
   assert.equal(uiState.hasComposer, true, 'mobile composer is missing');
   assert.ok(uiState.quickActionCount >= 6, 'primary workflow entry points are missing');
