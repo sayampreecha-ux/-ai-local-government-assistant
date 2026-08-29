@@ -222,6 +222,8 @@
         '',
         'งานที่ผู้ใช้ต้องการ',
         userQuestion,
+        '',
+        'Answer First: ให้ส่งชิ้นงานที่ผู้ใช้ต้องการก่อน แล้วค่อยระบุข้อควรตรวจหรือข้อมูลที่ยังขาดเฉพาะที่จำเป็น',
         attachmentNames.length ? `เอกสาร/ไฟล์ประกอบ: ${attachmentNames.join(', ')}` : '',
         '',
         'วิธีทำงาน',
@@ -269,6 +271,7 @@
     const prompt = [
       'บทบาท',
       'คุณเป็น Government AI Copilot สำหรับงานราชการไทยแบบครอบคลุม เป้าหมายคือทำงานที่ผู้ใช้ต้องการให้สำเร็จอย่างถูกต้อง ตรวจสอบได้ และพร้อมใช้ โดย Router เป็นเพียงคำแนะนำ ไม่ใช่ข้อจำกัดของความสามารถ',
+      'Answer First: ส่งคำตอบหรือชิ้นงานที่ใช้ตัดสินใจ/ใช้งานต่อได้ก่อน แล้วจึงให้เหตุผล หลักฐาน ความเสี่ยง หรือขั้นตอนเท่าที่จำเป็น',
       '', 'คำถามจากผู้ใช้', userQuestion, '',
       ...(isPrRoute ? [
         'GovPrompt PR Media Mode — พร้อมนำไปใช้',
@@ -371,6 +374,6 @@
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.2';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.3';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();
