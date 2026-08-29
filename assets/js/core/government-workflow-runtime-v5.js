@@ -1,6 +1,7 @@
 import {
   runGovernmentWorkflow,
   runGovernmentCaseByDetectedWorkflowsV4,
+  runGovernmentWorkflowByIdV4,
   DEEP_WORKFLOWS
 } from '../../../src/government-workflow-suite.js?v=5.5.0';
 import {
@@ -19,7 +20,7 @@ import {
 } from '../../../src/government-case-memory-v1.js';
 import { publishWorkflowProgressView } from '../ui/workflow-progress-ui-v1.js';
 
-export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.5';
+export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.6';
 
 const ACTION_LABELS = Object.freeze({
   'repair-workflow-classification': 'ยืนยันประเภทงาน',
@@ -371,6 +372,53 @@ export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts 
     workflowStateV4: caseContext.workflowState
   };
   const citizenIntent = detectCitizenServiceIntent(input);
+  const isPrMediaRequest = /(?:วิดีโอ|วีดีโอ|คลิป|video).{0,40}(?:ประชาสัมพันธ์|แนะนำองค์กร|แนะนำหน่วยงาน|องค์กร|หน่วยงาน)|(?:ทำ|สร้าง|ร่าง|เขียน|ออกแบบ).{0,24}(?:วิดีโอ|วีดีโอ|คลิป|video)/i.test(caseContext.effectiveQuery);
+
+  // PR media jobs are intentionally isolated from the generic cross-workflow detector.
+  // Generic wording inside a media brief (บุคคล/ตำแหน่ง/โครงการ/องค์กร) must not open
+  // procurement, HR, finance, or project workflows unless the user explicitly starts them.
+  if (isPrMediaRequest && !citizenIntent.matched) {
+    const execution = runGovernmentWorkflowByIdV4('gov.public-relations', input);
+    const primary = safeWorkOrder(execution);
+    const prAction = primary?.action || 'acquire-evidence';
+    const view = Object.freeze({
+      bridgeVersion: WORKFLOW_RUNTIME_BRIDGE_VERSION,
+      status: safeText(execution?.workflowStatus || 'workflow-ready', 80),
+      orchestration: 'single-workflow',
+      workflowIds: Object.freeze(['gov.public-relations']),
+      caseId: caseContext.caseId,
+      resumedCase: false,
+      resumeLabel: 'เริ่มเรื่องใหม่',
+      caseStatus: execution?.workflowStatus === 'complete' ? 'complete' : 'active',
+      primary,
+      workflows: Object.freeze(primary ? [primary] : []),
+      nextActions: Object.freeze(primary ? [Object.freeze({
+        workflowId: 'gov.public-relations',
+        stageId: safeText(primary.currentStage?.id, 100),
+        action: prAction,
+        actionLabel: primary.actionLabel || ACTION_LABELS[prAction] || 'ดำเนินการตามขั้นตอนประชาสัมพันธ์'
+      })] : []),
+      caseMemory: Object.freeze({
+        enabled: Boolean(safeStorage()),
+        resumed: false,
+        storesRawPrompt: false,
+        storesRawEvidence: false,
+        storesPersonalData: false
+      }),
+      governance: Object.freeze({
+        rawEvidenceValuesReturned: false,
+        autoApprovalAllowed: false,
+        failClosed: Boolean(primary?.qualityGate?.status === 'BLOCKED'),
+        noFabrication: true,
+        humanApprovalRequiredWhenDeclared: true,
+        deliverableContractsRequired: true
+      })
+    });
+    persistCaseView(view);
+    publishWorkflowProgressView(view);
+    return view;
+  }
+
   const result = runGovernmentWorkflow(input);
   const caseView = runGovernmentCaseByDetectedWorkflowsV4(input);
   const coreWorkflows = (caseView.workflows || []).map(safeWorkOrder);
