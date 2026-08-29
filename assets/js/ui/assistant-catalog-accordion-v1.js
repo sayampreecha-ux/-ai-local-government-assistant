@@ -46,16 +46,30 @@
     const title = String(group.querySelector('h3')?.textContent || group.textContent || '');
     if (!/สาธารณสุข|รพ\.สต/i.test(title) || tasks.dataset.healthFeaturedCurated === 'true') return;
 
-    // หน้าแรกควรมีเฉพาะงานเด่นที่ไม่ซ้ำกัน งานเฉพาะทางอื่นอยู่ในหน้า “งานสาธารณสุขอื่น ๆ”
+    // Keep the public-health landing surface to five clear entry points.
+    // Existing project/fund/general-health tasks stay; overlapping specialist tasks are hidden here.
     [...tasks.querySelectorAll('.work-catalog-task')].forEach(button => {
       const label = String(button.textContent || '').trim();
       if (/PDPA|ข้อมูลสุขภาพ/i.test(label)) button.remove();
     });
 
+    const existing = [...tasks.querySelectorAll('.work-catalog-task')];
+    const keepPatterns = [
+      /โครงการ.*สุขภาพ|สุขภาพ.*NCD|NCD/i,
+      /กองทุน.*สปสช|สปสช/i,
+      /งาน.*รพ\.สต|แผนสุขภาพ|สุขภาพชุมชน/i
+    ];
+    const kept = new Set();
+    existing.forEach(button => {
+      const label = String(button.textContent || '').trim();
+      const matched = keepPatterns.findIndex(pattern => pattern.test(label));
+      if (matched < 0 || kept.has(matched)) button.remove();
+      else kept.add(matched);
+    });
+
     const shortcuts = [
       { label: '💰 แผนเงินบำรุง รพ.สต./สอน.', href: 'maintenance-fund-plan.html' },
-      { label: '👥 แผนลูกจ้างเงินบำรุง', href: 'temp-staff-wizard.html' },
-      { label: '🩺 งานสาธารณสุขอื่น ๆ', href: 'gp008.html' }
+      { label: '👥 แผนลูกจ้างเงินบำรุง', href: 'temp-staff-wizard.html' }
     ];
 
     shortcuts.forEach(item => {
