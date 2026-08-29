@@ -203,6 +203,24 @@
       attachments: safeAttachments,
       outputFormatId: outputFormatSelect?.value || 'auto'
     });
+
+    const isPr = Boolean(promptBundle?.prMode)
+      || route?.moduleId === 'GP012'
+      || route?.transactionType === 'public-relations'
+      || /(?:ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์|อินโฟกราฟิก|สคริปต์|คำกล่าว|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|แนะนำองค์กร|แนะนำหน่วยงาน)/i.test(text);
+
+    if (isPr) {
+      const workflowRuntime = await workflowRuntimePromise;
+      return Object.freeze({
+        route,
+        promptBundle: Object.freeze({ ...promptBundle, workflowRuntime: workflowRuntime.view }),
+        searchResult: Object.freeze({ mode: 'skipped-pr', results: [], evidence: { primaryResults: [], conclusionEligible: false }, warning: '' }),
+        workflowRuntime: workflowRuntime.view,
+        workflowRuntimeStatus: workflowRuntime.status,
+        budgetSourceRuntime: null
+      });
+    }
+
     const [searchResult, initialWorkflowRuntime] = await Promise.all([
       core.officialSearchConnector.search(text, { limitSources: 6, count: 10 }),
       workflowRuntimePromise
@@ -239,6 +257,7 @@
   }
 
   function appendSearchDetails(section, searchResult) {
+    if (searchResult?.mode === 'skipped-pr') return;
     const details = document.createElement('details');
     const summary = document.createElement('summary');
     const results = (searchResult?.results || []).filter(result => result.official);
@@ -332,14 +351,22 @@
 
     article.className = 'message assistant'; content.className = 'assistant-content'; label.className = 'route-label'; card.className = 'answer-card'; section.className = 'answer-section'; actions.className = 'answer-actions'; mark.className = 'assistant-mark'; mark.setAttribute('aria-hidden', 'true'); mark.textContent = 'กพ';
     label.textContent = `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
-    heading.textContent = budgetSourceRuntime ? 'GovPrompt ดำเนินงานร่างงบประมาณให้แล้ว' : 'GovPrompt เตรียมคำสั่งงานและแหล่งค้นให้แล้ว';
+    const isPrResult = Boolean(promptBundle?.prMode) || route?.moduleId === 'GP012' || route?.transactionType === 'public-relations';
+    heading.textContent = budgetSourceRuntime
+      ? 'GovPrompt ดำเนินงานร่างงบประมาณให้แล้ว'
+      : isPrResult
+        ? 'คำสั่งประชาสัมพันธ์พร้อมแล้ว — ทำต่อใน AI ได้ทันที'
+        : 'GovPrompt เตรียมคำสั่งงานและแหล่งค้นให้แล้ว';
     const workflowSummary = workflowRuntime?.primary?.currentStage?.title ? ` · Workflow: ${workflowRuntime.primary.currentStage.title} → ${workflowRuntime.primary.actionLabel}` : '';
     const presentationSummary = promptBundle.presentationPreset ? ` · การนำเสนอ: ${promptBundle.presentationPreset.label}` : '';
     description.textContent = budgetSourceRuntime
       ? `ระบบค้นและอ่านต้นฉบับราชการ ตรวจข้อมูล คำนวณ และเตรียม Working Draft พร้อมหลักฐาน${workflowSummary}${presentationSummary}`
-      : `ระบบจัดคำถามไปที่ ${route.assistant.title} พร้อมค้น Primary Source ตรวจความใหม่ และส่งแหล่งอ้างอิงเข้า Prompt สำหรับวิเคราะห์ต่อ${workflowSummary}${presentationSummary}`;
+      : isPrResult
+        ? `GP จัดคำสั่งเฉพาะงานประชาสัมพันธ์ให้แล้ว พร้อมตรวจข้อเท็จจริง PDPA และรูปแบบสื่อ${workflowSummary}${presentationSummary}`
+        : `ระบบจัดคำถามไปที่ ${route.assistant.title} พร้อมค้น Primary Source ตรวจความใหม่ และส่งแหล่งอ้างอิงเข้า Prompt สำหรับวิเคราะห์ต่อ${workflowSummary}${presentationSummary}`;
 
-    if (budgetSourceRuntime && structuredBudgetArtifact(budgetSourceRuntime)) status.textContent = '✅ ร่างงบประมาณผ่านการตรวจสมดุลและพร้อมส่งออกเป็น Working Draft';
+    if (isPrResult) status.textContent = '✅ พร้อมทำสื่อประชาสัมพันธ์ — ไม่ดึงกฎงานอื่นมาปน';
+    else if (budgetSourceRuntime && structuredBudgetArtifact(budgetSourceRuntime)) status.textContent = '✅ ร่างงบประมาณผ่านการตรวจสมดุลและพร้อมส่งออกเป็น Working Draft';
     else if (searchResult?.mode === 'live' && searchResult?.evidence?.conclusionEligible) status.textContent = '✅ ค้นสดและยืนยันหลักฐานปัจจุบันได้ตาม metadata ที่มี';
     else if (searchResult?.mode === 'live') status.textContent = `⚠️ ค้นสดแล้ว แต่ ${searchResult.warning || 'ยังยืนยันฉบับปัจจุบันล่าสุดไม่ได้'}`;
     else status.textContent = `ℹ️ ${searchResult?.warning || 'ยังเชื่อมบริการค้นเว็บราชการสดไม่ได้'}`;
