@@ -32,7 +32,6 @@
     <button class="task" data-task="ตรวจ PDPA ข้อมูลสุขภาพ">🔒 PDPA สุขภาพ</button>
     <div id="publicHealthOtherToolsHeading" class="other-heading" role="heading" aria-level="2">อื่นๆ</div>
     <button id="healthWorkerToolkitTask" class="task health-worker-toolkit-task" type="button" data-task="เครื่องมือหมออนามัยและ รพ.สต." aria-controls="healthWorkerToolkitPanel">🩺 เครื่องมือหมออนามัย</button>
-    <button id="tempStaffMaintenanceFundEntry" class="task temp-staff-static-entry" type="button" data-task="วิเคราะห์และจัดทำแผนลูกจ้างชั่วคราวเงินบำรุง" data-search="ลูกจ้างชั่วคราว เงินบำรุง Workload FTE อัตรากำลัง รพ.สต.">👥 แผนลูกจ้างเงินบำรุง</button>
     <a id="mosquitoOnepageTask" class="task mosquito-static-entry" href="mosquito-onepage.html" data-task="วันเพจลูกน้ำยุงลาย HI CI" data-search="ลูกน้ำ ยุงลาย HI CI House Index Container Index" aria-controls="mosquitoOnepageTool">🦟 วันเพจลูกน้ำยุงลาย</a>
   </section>
 
@@ -63,7 +62,7 @@
 
   tasksEl.addEventListener('click', event => {
     const button = event.target.closest('.task');
-    if (!button || button.classList.contains('health-worker-toolkit-task') || button.classList.contains('temp-staff-static-entry') || button.classList.contains('mosq-task') || button.classList.contains('mosquito-static-entry')) return;
+    if (!button || button.classList.contains('health-worker-toolkit-task') || button.classList.contains('mosq-task') || button.classList.contains('mosquito-static-entry')) return;
     task = button.dataset.task || '';
     document.querySelectorAll('.task').forEach(item => item.classList.remove('active'));
     button.classList.add('active');
@@ -106,28 +105,7 @@
 
 <script id="mosquitoOnepageFeatureScript" src="assets/js/features/mosquito-survey-onepage-v1.js?v=1.0.1"></script>
 <script id="publicHealthWorkerToolkitScript" src="assets/js/features/public-health-worker-toolkit-v1.js?v=1.0.1"></script>
-<script id="tempStaffMaintenanceFundFeatureScript" src="assets/js/features/temp-staff-maintenance-fund-v1.js?v=1.0.1"></script>
-<script id="tempStaffMaintenanceFundExportScript" src="assets/js/features/temp-staff-export-fallback-v1.js?v=1.0.1"></script>
-<script id="tempStaffGuidedWorkflowScript" src="assets/js/features/temp-staff-guided-workflow-v2.js?v=2.0.0"></script>
 <script id="mosquitoPublicHealthPlacementScript" src="assets/js/features/mosquito-public-health-placement-v1.js?v=1.0.2"></script>
-<script>
-(() => {
-  const entry = document.getElementById('tempStaffMaintenanceFundEntry');
-  if (!entry) return;
-  entry.addEventListener('click', event => {
-    event.preventDefault();
-    event.stopPropagation();
-    document.getElementById('healthWorkerToolkitTask')?.click();
-    let attempts = 0;
-    const openPlanner = () => {
-      const tab = document.getElementById('tempStaffMaintenanceFundTab');
-      if (tab) return tab.click();
-      if (attempts++ < 20) window.setTimeout(openPlanner, 50);
-    };
-    openPlanner();
-  });
-})();
-</script>
 <script src="assets/js/core/shared-context.js"></script>
 <script src="assets/js/core/prompt-registry.js"></script>
 <script src="assets/js/core/transaction-router.js"></script>
