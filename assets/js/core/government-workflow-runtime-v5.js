@@ -19,7 +19,7 @@ import {
 } from '../../../src/government-case-memory-v1.js';
 import { publishWorkflowProgressView } from '../ui/workflow-progress-ui-v1.js';
 
-export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.3';
+export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.4';
 
 const ACTION_LABELS = Object.freeze({
   'repair-workflow-classification': 'ยืนยันประเภทงาน',
