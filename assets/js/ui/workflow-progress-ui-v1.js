@@ -1,4 +1,4 @@
-export const WORKFLOW_PROGRESS_UI_VERSION = '1.2';
+export const WORKFLOW_PROGRESS_UI_VERSION = '1.3';
 
 let latestView = null;
 let observerStarted = false;
@@ -74,7 +74,25 @@ const KEY_LABELS = Object.freeze({
   'decision-pack': 'ชุดเอกสารเสนอผู้มีอำนาจพิจารณา',
   'decision-notification': 'หนังสือ/ข้อความแจ้งผลการพิจารณา',
   'service-status-timeline': 'สถานะและลำดับเวลาการดำเนินงาน',
-  'service-audit-trail': 'บันทึกหลักฐานและประวัติการดำเนินงาน'
+  'service-audit-trail': 'บันทึกหลักฐานและประวัติการดำเนินงาน',
+  communicationObjective: 'วัตถุประสงค์ของการสื่อสาร',
+  targetAudience: 'กลุ่มเป้าหมายหลัก',
+  verifiedFacts: 'ข้อเท็จจริงที่ตรวจสอบแล้ว',
+  mediaRights: 'สิทธิการใช้ภาพ/สื่อ',
+  privacyBasis: 'ฐานการใช้ข้อมูลส่วนบุคคล/PDPA',
+  contentBrief: 'สารสำคัญและแนวทางเนื้อหา',
+  channel: 'ช่องทางเผยแพร่',
+  format: 'รูปแบบสื่อ',
+  approvalAuthority: 'ผู้ตรวจ/ผู้อนุมัติก่อนเผยแพร่',
+  publicationEvidence: 'หลักฐานการเผยแพร่',
+  'pr-communication-brief': 'สรุปวัตถุประสงค์และกลุ่มเป้าหมาย',
+  'pr-fact-check': 'ผลตรวจข้อเท็จจริง',
+  'pr-privacy-rights-check': 'ผลตรวจ PDPA/สิทธิภาพ',
+  'pr-content-draft': 'ร่างเนื้อหาประชาสัมพันธ์',
+  'pr-channel-format-check': 'ชุดสื่อและรูปแบบช่องทาง',
+  'pr-approval-check': 'รายการตรวจอนุมัติก่อนเผยแพร่',
+  'pr-publication-record': 'บันทึกการเผยแพร่',
+  'pr-correction-archive': 'ประวัติการแก้ไขและจัดเก็บ'
 });
 
 function isThaiText(value = '') {
@@ -128,6 +146,41 @@ export function buildWorkflowProgressPanelModel(view) {
   });
 }
 
+const PR_PHASES = Object.freeze([
+  Object.freeze({ id: 1, label: 'วัตถุประสงค์และกลุ่มเป้าหมาย', stages: ['objective-audience'] }),
+  Object.freeze({ id: 2, label: 'ข้อเท็จจริงและสารสำคัญ', stages: ['facts-verification'] }),
+  Object.freeze({ id: 3, label: 'ร่างเนื้อหา / Storyboard / Script', stages: ['privacy-rights', 'content-draft'] }),
+  Object.freeze({ id: 4, label: 'ตรวจรูปแบบและอนุมัติ', stages: ['channel-format', 'approval'] }),
+  Object.freeze({ id: 5, label: 'เผยแพร่และเก็บหลักฐาน', stages: ['publication', 'correction-archive'] })
+]);
+
+function prPhaseFor(stageId = '', status = '') {
+  if (status === 'complete') return 5;
+  const match = PR_PHASES.find(phase => phase.stages.includes(String(stageId || '')));
+  return match?.id || 1;
+}
+
+function renderPrPhaseStrip(model) {
+  const wrap = document.createElement('section');
+  wrap.className = 'pr-phase-strip';
+  const title = textNode('strong', '🎯 ขั้นตอนงานประชาสัมพันธ์');
+  const row = document.createElement('div');
+  row.className = 'pr-phase-row';
+  const current = prPhaseFor(model.stageId, model.status);
+  PR_PHASES.forEach(phase => {
+    const item = document.createElement('div');
+    item.className = 'pr-phase-item';
+    if (phase.id < current || model.status === 'complete') item.classList.add('done');
+    if (phase.id === current && model.status !== 'complete') item.classList.add('current');
+    const num = textNode('span', String(phase.id), 'pr-phase-num');
+    const label = textNode('span', phase.label, 'pr-phase-label');
+    item.append(num, label);
+    row.append(item);
+  });
+  wrap.append(title, row);
+  return wrap;
+}
+
 function installStyles() {
   if (document.getElementById('workflow-progress-ui-styles')) return;
   const style = document.createElement('style');
@@ -139,6 +192,8 @@ function installStyles() {
 .workflow-progress-meta{margin-top:5px;color:var(--gdl-muted,#4f5e56);font-size:12px;line-height:1.55}.workflow-progress-track{height:7px;margin:11px 0 8px;border-radius:999px;background:#e2e9e4;overflow:hidden}.workflow-progress-track>span{display:block;height:100%;min-width:8%;border-radius:inherit;background:var(--gdl-primary,#12372a)}
 .workflow-progress-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}.workflow-progress-item{padding:9px 10px;border:1px solid #dde5df;border-radius:11px;background:#fff}.workflow-progress-item b{display:block;margin-bottom:3px;font-size:11px;color:#506158}.workflow-progress-item span{display:block;font-size:12px;line-height:1.5;overflow-wrap:anywhere}.workflow-progress-next{margin-top:10px;padding:9px 10px;border-radius:11px;background:#eef5f0;font-size:12px;line-height:1.55}.workflow-progress-next strong{color:var(--gdl-primary,#12372a)}
 .workflow-progress-more{margin-top:9px}.workflow-progress-more summary{cursor:pointer;color:var(--gdl-primary,#12372a);font-size:12px;font-weight:700}.workflow-progress-more ul{margin:7px 0 0;padding-left:20px;color:#46564e;font-size:12px;line-height:1.6}
+.pr-phase-strip{margin-top:12px;padding:12px;border:1px solid #d7e4dc;border-radius:14px;background:#fbfdfb}.pr-phase-strip>strong{display:block;margin-bottom:10px;color:#12372a;font-size:13px}.pr-phase-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.pr-phase-item{display:flex;align-items:center;gap:7px;padding:8px;border-radius:11px;background:#f1f5f2;color:#5a6a61;min-width:0}.pr-phase-item.current{background:#e4f2e9;color:#12372a;font-weight:800}.pr-phase-item.done{background:#edf7f0;color:#1b5a3d}.pr-phase-num{display:inline-flex;align-items:center;justify-content:center;flex:0 0 24px;width:24px;height:24px;border-radius:50%;border:1px solid currentColor;font-size:11px;font-weight:800}.pr-phase-label{font-size:11px;line-height:1.35;overflow-wrap:anywhere}
+@media(max-width:760px){.pr-phase-row{grid-template-columns:1fr}.pr-phase-item{padding:9px 10px}}
 @media(max-width:620px){.workflow-progress-grid{grid-template-columns:1fr}.workflow-progress-head{display:block}.workflow-progress-badge{display:inline-block;margin-top:7px}}
 `;
   document.head.appendChild(style);
@@ -165,7 +220,12 @@ function renderInto(card, view) {
   head.className = 'workflow-progress-head';
   const headText = document.createElement('div');
   headText.append(textNode('strong', `ขั้นปัจจุบัน: ${model.stageTitle}`));
-  headText.append(textNode('div', `${model.workflowId}${model.workflowCount > 1 ? ` · ทำงานร่วม ${model.workflowCount} ขั้นตอนงาน` : ''}`, 'workflow-progress-meta'));
+  const isPr = model.workflowId === 'gov.public-relations';
+  headText.append(textNode('div',
+    isPr
+      ? `งานประชาสัมพันธ์ · ขั้นที่ ${prPhaseFor(model.stageId, model.status)} จาก 5`
+      : `${model.workflowId}${model.workflowCount > 1 ? ` · ทำงานร่วม ${model.workflowCount} ขั้นตอนงาน` : ''}`,
+    'workflow-progress-meta'));
   const badge = textNode('span', model.statusLabel, 'workflow-progress-badge');
   if (model.failClosed || model.missing.length || model.riskReviewRequired) badge.classList.add('blocked');
   if (model.approvalRequired) badge.classList.add('approval');
@@ -209,7 +269,10 @@ function renderInto(card, view) {
   next.append(textNode('strong', 'ทำต่อ: '), document.createTextNode(nextText));
 
   panel.append(head, track, grid, next);
-  if (model.crossWorkflows.length > 1 || model.missingOfficial.length) {
+  if (model.workflowId === 'gov.public-relations') {
+    panel.append(renderPrPhaseStrip(model));
+  }
+  if ((model.workflowId !== 'gov.public-relations' && model.crossWorkflows.length > 1) || model.missingOfficial.length) {
     const details = document.createElement('details');
     details.className = 'workflow-progress-more';
     const summary = document.createElement('summary');
