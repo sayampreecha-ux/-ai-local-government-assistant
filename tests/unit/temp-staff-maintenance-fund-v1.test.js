@@ -61,28 +61,17 @@ test('planner exposes all public-health staff groups and a safe official-work pr
   assert.match(prompt, /PDPA/);
 });
 
-test('GP008 loader includes maintenance-fund staff planner and safe in-browser exports', async () => {
+test('GP008 does not auto-load the temp-staff planner; the standalone wizard remains the single entry point', async () => {
   const integration = await readFile('assets/js/core/context-integration.js', 'utf8');
-  const exportFallback = await readFile('assets/js/features/temp-staff-export-fallback-v1.js', 'utf8');
-  assert.match(integration, /temp-staff-maintenance-fund-v1\.js\?v=1\.0\.0/);
-  assert.match(integration, /temp-staff-export-fallback-v1\.js\?v=1\.0\.0/);
-  assert.match(integration, /GovPromptTempStaffPlan/);
-  assert.match(integration, /isPublicHealthPage/);
-  assert.match(exportFallback, /event\.preventDefault\(\)/);
-  assert.match(exportFallback, /application\/msword/);
-  assert.match(exportFallback, /text\/csv/);
-  assert.match(exportFallback, /ต้องตรวจหลักเกณฑ์/);
-});
-
-test('GP008 exposes a visible planner and directly loads guided workflow v2', async () => {
   const gp008 = await readFile('gp008.html', 'utf8');
+  const wizard = await readFile('temp-staff-wizard.html', 'utf8');
   const guided = await readFile('assets/js/features/temp-staff-guided-workflow-v2.js', 'utf8');
-  assert.match(gp008, /id=["']tempStaffMaintenanceFundEntry["']/);
-  assert.match(gp008, />👥 แผนลูกจ้างเงินบำรุง</);
-  assert.match(gp008, /temp-staff-maintenance-fund-v1\.js\?v=1\.0\.1/);
-  assert.match(gp008, /temp-staff-export-fallback-v1\.js\?v=1\.0\.1/);
-  assert.match(gp008, /temp-staff-guided-workflow-v2\.js\?v=2\.0\.0/);
-  assert.match(gp008, /tempStaffMaintenanceFundTab/);
+
+  assert.doesNotMatch(integration, /tempStaffMaintenanceFundFeatureScript|tempStaffMaintenanceFundExportScript|GovPromptTempStaffPlan/);
+  assert.match(integration, /isPublicHealthPage/);
+  assert.doesNotMatch(gp008, /tempStaffMaintenanceFundEntry|>👥 แผนลูกจ้างเงินบำรุง</);
+  assert.doesNotMatch(gp008, /temp-staff-maintenance-fund-v1|temp-staff-export-fallback-v1|temp-staff-guided-workflow-v2/);
+  assert.match(wizard, /temp-staff-guided-wizard-v1\.js\?v=1\.0\.0/);
 
   assert.match(guided, /STEP_LABELS/);
   assert.match(guided, /หน่วยบริการ/);
@@ -90,11 +79,5 @@ test('GP008 exposes a visible planner and directly loads guided workflow v2', as
   assert.match(guided, /เหตุผลและทางเลือก/);
   assert.match(guided, /วงเงินและเงินบำรุง/);
   assert.match(guided, /ตรวจและสร้างเอกสาร/);
-  assert.match(guided, /tsmfNeedReason/);
-  assert.match(guided, /tsmfImpactNoHire/);
-  assert.match(guided, /ร่างบันทึกเสนอ/);
-  assert.match(guided, /application\/msword/);
-  assert.match(guided, /text\/csv/);
-  assert.match(guided, /ตรวจหลักเกณฑ์\/อัตรา\/ผู้มีอำนาจฉบับล่าสุด/);
   assert.doesNotMatch(guided, /const\s+netHours\s*=\s*1400/);
 });
