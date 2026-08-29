@@ -19,7 +19,7 @@ test('public-health assistant keeps a clean five-entry landing menu', async () =
   assert.match(source, /keepPatterns/);
   assert.match(source, /งาน รพ\.สต\. \/ งานสุขภาพทั้งหมด/);
   assert.match(source, /data\.healthGateway|healthGateway/);
-  assert.match(source, /window\.location\.href = 'gp008\.html'/);
+  assert.match(source, /window\.location\.assign\('gp008\.html'\)/);
   assert.match(source, /แผนเงินบำรุง รพ\.สต\.\/สอน\./);
   assert.match(source, /maintenance-fund-plan\.html/);
   assert.match(source, /แผนลูกจ้างเงินบำรุง/);
@@ -34,5 +34,5 @@ test('existing mic asset loads the fresh accordion only on the home quick-action
   const mic = await readFile('assets/js/mic.js', 'utf8');
   assert.match(mic, /document\.querySelector\('\.quick-actions'\)/);
   assert.match(mic, /assistantCatalogAccordionScript/);
-  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.9/);
+  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.10/);
 });
