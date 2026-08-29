@@ -6,7 +6,7 @@ import {
 } from '../../assets/js/ui/workflow-progress-ui-v1.js';
 
 test('workflow progress UI exposes Thai labels for HR missing evidence', () => {
-  assert.equal(WORKFLOW_PROGRESS_UI_VERSION, '1.2');
+  assert.equal(WORKFLOW_PROGRESS_UI_VERSION, '1.3');
   assert.equal(humanizeWorkflowKey('hrIntent'), 'วัตถุประสงค์และประเภทงานบุคคลที่ต้องการ');
   assert.equal(humanizeWorkflowKey('facts'), 'ข้อเท็จจริงและข้อมูลพื้นฐานที่เกี่ยวข้อง');
   assert.equal(humanizeWorkflowKey('missionAuthority'), 'ภารกิจและอำนาจหน้าที่ของหน่วยงาน');
