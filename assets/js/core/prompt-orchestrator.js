@@ -183,7 +183,7 @@
     const isPrRoute = activeRoute?.moduleId === 'GP012'
       || /ประชาสัมพันธ์/.test(String(activeRoute?.label || activeRoute?.title || activeRoute?.assistant?.title || ''))
       || isPrMediaText;
-    const domainSpecificPrinciples = isPrRoute
+    const domainSpecificPrinciples = isPrCreation
       ? [
           '1. อ่านข้อเท็จจริงและเอกสารแนบทั้งหมดก่อนจัดทำสื่อ และห้ามถามซ้ำในสิ่งที่มีอยู่แล้ว',
           '2. ส่งชิ้นงานประชาสัมพันธ์ที่ใช้ต่อได้ทันทีตามคำขอ เช่น ข่าว โพสต์ อินโฟกราฟิก สคริปต์ หรือวิดีโอ',
@@ -273,7 +273,7 @@
       'คุณเป็น Government AI Copilot สำหรับงานราชการไทยแบบครอบคลุม เป้าหมายคือทำงานที่ผู้ใช้ต้องการให้สำเร็จอย่างถูกต้อง ตรวจสอบได้ และพร้อมใช้ โดย Router เป็นเพียงคำแนะนำ ไม่ใช่ข้อจำกัดของความสามารถ',
       'Answer First: ส่งคำตอบหรือชิ้นงานที่ใช้ตัดสินใจ/ใช้งานต่อได้ก่อน แล้วจึงให้เหตุผล หลักฐาน ความเสี่ยง หรือขั้นตอนเท่าที่จำเป็น',
       '', 'คำถามจากผู้ใช้', userQuestion, '',
-      ...(isPrRoute ? [
+      ...(isPrCreation ? [
         'GovPrompt PR Media Mode — พร้อมนำไปใช้',
         'เป้าหมาย: จัดทำสื่อประชาสัมพันธ์จากข้อเท็จจริงที่ผู้ใช้ให้ โดยไม่ดึงกฎ TOR พัสดุ การเงิน บุคคล หรือกฎหมายมาปน เว้นแต่ผู้ใช้ถามเรื่องนั้นโดยตรง',
         'ผลลัพธ์หลัก: ข่าว/โพสต์/อินโฟกราฟิก/คำกล่าว/Storyboard/Script/บทพากย์/ข้อความขึ้นจอ/รายการภาพ/Prompt AI Video ตามคำขอ'
@@ -374,6 +374,6 @@
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.4';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.5';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();
