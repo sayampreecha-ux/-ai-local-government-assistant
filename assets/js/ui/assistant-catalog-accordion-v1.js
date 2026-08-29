@@ -69,13 +69,17 @@
       }
       kept.add(matched);
       if (matched === 2) {
-        button.textContent = '🏥 งาน รพ.สต. / งานสุขภาพทั้งหมด';
-        button.dataset.healthGateway = 'true';
-        button.addEventListener('click', event => {
+        const gateway = document.createElement('button');
+        gateway.type = 'button';
+        gateway.className = button.className;
+        gateway.textContent = '🏥 งาน รพ.สต. / งานสุขภาพทั้งหมด';
+        gateway.dataset.healthGateway = 'true';
+        gateway.addEventListener('click', event => {
           event.preventDefault();
-          event.stopImmediatePropagation();
-          window.location.href = 'gp008.html';
-        }, true);
+          event.stopPropagation();
+          window.location.assign('gp008.html');
+        });
+        button.replaceWith(gateway);
       }
     });
 
