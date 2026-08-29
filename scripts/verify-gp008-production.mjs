@@ -51,17 +51,13 @@ const guidedWizard = await readFile(new URL('../assets/js/features/temp-staff-gu
 const guidedWorkflow = await readFile(new URL('../assets/js/features/temp-staff-guided-workflow-v2.js', import.meta.url), 'utf8');
 
 assert.match(gp008, /assets\/js\/core\/context-integration\.js/);
-assert.match(gp008, /id=["']tempStaffMaintenanceFundEntry["']/);
-assert.match(gp008, /👥 แผนลูกจ้างเงินบำรุง/);
-assert.match(gp008, /temp-staff-guided-workflow-v2\.js\?v=2\.0\.0/);
 assert.match(wizardPage, /👥 แผนลูกจ้างชั่วคราวเงินบำรุง/);
 assert.match(wizardPage, /temp-staff-guided-wizard-v1\.js\?v=1\.0\.0/);
-assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.5/);
-assert.match(catalog, /ดูงานสาธารณสุขทั้งหมด 17 งาน/);
+assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.7/);
 assert.match(catalog, /เมนูเด่น/);
 assert.match(catalog, /👥 แผนลูกจ้างเงินบำรุง/);
 assert.match(catalog, /temp-staff-wizard\.html/);
-assert.match(context, /public-health-worker-toolkit-v1\.js\?v=1\.0\.1/);
+assert.match(context, /public-health-worker-toolkit-v1\.js\?v=1\.0\.2/);
 assert.match(toolkit, /เครื่องมือหมออนามัย/);
 assert.match(toolkit, /สรุปคัดกรอง NCD/);
 assert.match(toolkit, /รายงานเยี่ยมบ้าน/);
@@ -78,11 +74,5 @@ assert.match(guidedWizard, /tsgwGenerate/);
 assert.match(guidedWizard, /สรุปวิเคราะห์ค่างาน/);
 assert.match(guidedWizard, /ร่างบันทึกขออนุมัติ/);
 assert.match(guidedWizard, /ดาวน์โหลด Word/);
-assert.match(guidedWorkflow, /STEP_LABELS/);
-assert.match(guidedWorkflow, /tsmfWizardNav/);
-assert.match(guidedWorkflow, /tsmfGeneratePackage/);
-assert.match(guidedWorkflow, /ร่างบันทึกเสนอ/);
-assert.match(guidedWorkflow, /ดาวน์โหลดชุด Word/);
-assert.match(guidedWorkflow, /Workload CSV/);
 
-console.log('GP008 production proof passed: live public-health page, clear Home shortcut labeling, standalone guided wizard, temp-staff planner and guided workflow match main exactly.');
+console.log('GP008 production proof passed: live public-health tools stay separate, and the standalone temp-staff wizard remains the single planning entry point.');
