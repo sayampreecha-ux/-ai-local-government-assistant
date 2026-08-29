@@ -122,7 +122,15 @@
         Object.freeze({ label: 'เขียนข่าวประชาสัมพันธ์', prompt: 'ช่วยเขียนข่าวประชาสัมพันธ์ราชการจากข้อเท็จจริงที่ให้' }),
         Object.freeze({ label: 'ทำโพสต์โซเชียล', prompt: 'ทำโพสต์ประชาสัมพันธ์' }),
         Object.freeze({ label: 'วางข้อความอินโฟกราฟิก', prompt: 'ช่วยจัดข้อความสำหรับอินโฟกราฟิกให้สั้น ชัด เข้าใจง่าย และไม่เกินจริง' }),
-        Object.freeze({ label: 'ร่างสคริปต์ / คำกล่าว / วิดีโอ', prompt: 'ช่วยร่างสคริปต์ คำกล่าว หรือชุดทำวิดีโอประชาสัมพันธ์ให้เหมาะกับวัตถุประสงค์ ผู้พูด ผู้ฟัง และช่องทาง หากเป็นวิดีโอ ให้แนะนำความยาวตามงานก่อน แล้วจัด Storyboard บทพากย์ ข้อความขึ้นจอ/ซับ รายการภาพที่ควรใช้ และ Prompt พร้อมคัดลอกไปใช้กับ AI Video ภายนอก โดยยึดข้อเท็จจริงจากข้อมูลต้นฉบับ ห้ามแต่งข้อมูลบุคคล ตำแหน่ง วันที่ ตัวเลข หรือเหตุการณ์ และเตือนเมื่อพบข้อมูลขัดแย้งก่อนเผยแพร่' })
+        Object.freeze({
+          label: 'ร่างสคริปต์ / คำกล่าว / วิดีโอ',
+          prompt: 'ร่างสคริปต์ / คำกล่าว / วิดีโอ',
+          choices: Object.freeze([
+            Object.freeze({ label: '🎤 คำกล่าว', prompt: 'ร่างคำกล่าว' }),
+            Object.freeze({ label: '📝 สคริปต์', prompt: 'ร่างสคริปต์' }),
+            Object.freeze({ label: '🎬 วิดีโอ', prompt: 'ทำวิดีโอประชาสัมพันธ์' })
+          ])
+        })
       ])
     }),
     Object.freeze({
@@ -210,6 +218,9 @@
         button.type = 'button';
         button.className = 'work-catalog-task';
         button.dataset.prompt = task.prompt;
+        if (Array.isArray(task.choices) && task.choices.length) {
+          button.dataset.taskChoices = JSON.stringify(task.choices);
+        }
         button.dataset.search = normalize(`${category.title} ${category.keywords} ${task.label} ${task.prompt}`);
         button.textContent = task.label;
         tasks.append(button);
@@ -247,6 +258,29 @@
     queueMicrotask(() => search.focus());
   }
 
+  function openTaskChoices(button) {
+    if (!dialog || !dialogTitle || !dialogEyebrow || !dialogContent) return false;
+    let choices = [];
+    try { choices = JSON.parse(button.dataset.taskChoices || '[]'); } catch { choices = []; }
+    if (!Array.isArray(choices) || !choices.length) return false;
+
+    const root = document.createElement('div');
+    root.className = 'work-catalog-tasks';
+    choices.forEach(choice => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'work-catalog-task';
+      item.dataset.prompt = String(choice.prompt || '').trim();
+      item.textContent = String(choice.label || choice.prompt || 'เลือก');
+      root.append(item);
+    });
+    dialogTitle.textContent = 'ต้องการให้ช่วยแบบไหน?';
+    dialogEyebrow.textContent = 'เลือกอย่างเดียว แล้วบอกเรื่องหรือแนบข้อมูลได้เลย';
+    dialogContent.replaceChildren(root);
+    if (!dialog.open) dialog.showModal();
+    return true;
+  }
+
   document.addEventListener('click', event => {
     const catalogTrigger = event.target.closest?.('[data-work-catalog-open]');
     if (catalogTrigger) {
@@ -258,6 +292,14 @@
 
     const button = event.target.closest?.('[data-prompt]');
     if (!button) return;
+
+    if (button.dataset.taskChoices) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openTaskChoices(button);
+      return;
+    }
+
     const prompt = String(button.dataset.prompt || '').trim();
     if (!prompt) return;
 
