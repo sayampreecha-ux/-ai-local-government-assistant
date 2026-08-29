@@ -34,5 +34,5 @@ test('existing mic asset loads the fresh accordion only on the home quick-action
   const mic = await readFile('assets/js/mic.js', 'utf8');
   assert.match(mic, /document\.querySelector\('\.quick-actions'\)/);
   assert.match(mic, /assistantCatalogAccordionScript/);
-  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.7/);
+  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.8/);
 });
