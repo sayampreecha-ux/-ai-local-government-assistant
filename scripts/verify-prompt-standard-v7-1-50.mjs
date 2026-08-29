@@ -78,8 +78,14 @@ for (const [question, riskLevel, decisionRequired, multiConditionRequired] of CA
   assert.equal(result.taskPlan.riskLevel, riskLevel, question);
   assert.equal(result.qualityGates.decisionRequired, decisionRequired, `${question} decision`);
   assert.equal(result.qualityGates.multiConditionRequired, multiConditionRequired, `${question} multi`);
-  assert.equal(result.prompt.includes('GovPrompt Prompt Standard v7.1'), true, question);
-  assert.equal(result.prompt.includes('Quality Gates — ต้องผ่านก่อนฟันธง'), true, question);
+  if (result.prMode) {
+    assert.equal(result.prompt.includes('คุณเป็นผู้ช่วยงานประชาสัมพันธ์ของหน่วยงานราชการไทย'), true, question);
+    assert.equal(result.prompt.includes('Quality Gates — ต้องผ่านก่อนฟันธง'), false, question);
+    assert.equal(result.prompt.includes('TOR พัสดุ การเงิน บุคคล หรือกฎหมายมาปน'), true, question);
+  } else {
+    assert.equal(result.prompt.includes('GovPrompt Prompt Standard v7.1'), true, question);
+    assert.equal(result.prompt.includes('Quality Gates — ต้องผ่านก่อนฟันธง'), true, question);
+  }
 
   if (riskLevel === 'HIGH') {
     assert.equal(result.qualityGates.evidenceRequired, true, `${question} evidence`);
