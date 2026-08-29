@@ -105,5 +105,5 @@ test('feature keeps latest-rule checks, privacy and official sources visible', a
   assert.match(page, /id="maintenanceFundApp"/);
   assert.match(catalog, /แผนเงินบำรุง รพ\.สต\.\/สอน\./);
   assert.match(catalog, /maintenance-fund-plan\.html/);
-  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.5/);
+  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.7/);
 });
