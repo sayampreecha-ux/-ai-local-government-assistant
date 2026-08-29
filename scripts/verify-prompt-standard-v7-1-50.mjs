@@ -120,4 +120,21 @@ assert.equal(bonus.prompt.includes('ระบุเงื่อนไขที�
 assert.equal(bonus.prompt.includes('ต้องจับคู่ “วันที่ของข้อเท็จจริง” กับ “กฎที่มีผลในวันนั้น”'), true);
 assert.equal(bonus.prompt.includes('ห้ามใช้คำว่า “ได้แน่นอน/ไม่มีสิทธิแน่นอน”'), true);
 
+
+{
+  const question = 'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนะนำอบจ\nความยาว: ให้ GP แนะนำ';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+  const route = core.routeTransaction(context);
+  const result = core.createGovernmentPrompt({ question, route, context });
+  assert.equal(result.prMode, true, 'Thai PR video request must use compact PR mode');
+  assert.equal(result.prompt.includes('โหมดงาน: PR Media / Video Creation'), true);
+  assert.equal(result.prompt.includes('Storyboard'), true);
+  assert.equal(result.prompt.includes('บทพากย์'), true);
+  assert.equal(result.prompt.includes('Prompt พร้อมคัดลอกไปใช้กับ AI Video ภายนอก'), true);
+  assert.equal(result.prompt.includes('แนวทางเลือกเครื่องมือ'), false);
+  assert.equal(result.prompt.includes('web-search'), false);
+  assert.equal(result.prompt.includes('แหล่งราชการที่ GovPrompt ค้นให้'), false);
+  assert.equal(result.prompt.includes('GovPrompt Prompt Standard v7.1'), false);
+}
+
 console.log('GovPrompt Prompt Standard v7.1 Golden 50 passed.');
