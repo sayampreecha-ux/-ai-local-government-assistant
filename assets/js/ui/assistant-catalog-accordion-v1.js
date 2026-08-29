@@ -63,8 +63,20 @@
     existing.forEach(button => {
       const label = String(button.textContent || '').trim();
       const matched = keepPatterns.findIndex(pattern => pattern.test(label));
-      if (matched < 0 || kept.has(matched)) button.remove();
-      else kept.add(matched);
+      if (matched < 0 || kept.has(matched)) {
+        button.remove();
+        return;
+      }
+      kept.add(matched);
+      if (matched === 2) {
+        button.textContent = '🏥 งาน รพ.สต. / สุขภาพชุมชน';
+        button.dataset.healthGateway = 'true';
+        button.addEventListener('click', event => {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          window.location.href = 'gp008.html';
+        }, true);
+      }
     });
 
     const shortcuts = [
