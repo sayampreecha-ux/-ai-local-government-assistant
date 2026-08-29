@@ -22,8 +22,8 @@ const healthGroup = page.locator('.work-catalog-group').filter({ hasText: /ส�
 await healthGroup.waitFor({ state: 'visible', timeout: 10_000 });
 const healthToggle = healthGroup.locator('.assistant-catalog-toggle');
 await healthToggle.waitFor({ state: 'visible', timeout: 10_000 });
-assert.match(await healthToggle.locator('.assistant-task-count').innerText(), /8\s*เมนูเด่น/);
-assert.doesNotMatch(await healthToggle.locator('.assistant-task-count').innerText(), /8\s*งาน/);
+assert.match(await healthToggle.locator('.assistant-task-count').innerText(), /5\s*เมนูเด่น/);
+assert.doesNotMatch(await healthToggle.locator('.assistant-task-count').innerText(), /5\s*งาน/);
 await healthToggle.click();
 
 const shortcut = healthGroup.locator('[data-health-shortcut="true"]').filter({ hasText: 'แผนลูกจ้างเงินบำรุง' }).first();
@@ -31,17 +31,15 @@ await shortcut.waitFor({ state: 'visible', timeout: 10_000 });
 assert.match(await shortcut.innerText(), /👥\s*แผนลูกจ้างเงินบำรุง/);
 
 const shortcutLabels = await healthGroup.locator('[data-health-shortcut="true"]').allInnerTexts();
-assert.ok(shortcutLabels.some(label => /ดูงานสาธารณสุขทั้งหมด\s*17\s*งาน/.test(label)));
 assert.ok(shortcutLabels.some(label => /แผนลูกจ้างเงินบำรุง/.test(label)));
 const featuredLabels = await healthGroup.locator('.work-catalog-task').allInnerTexts();
-assert.equal(featuredLabels.length, 6, 'public-health Home must expose exactly 6 featured menus');
+assert.equal(featuredLabels.length, 5, 'public-health Home must expose exactly 5 primary menus');
 assert.ok(featuredLabels.some(label => /ทำโครงการสุขภาพ\s*\/\s*NCD/.test(label)));
 assert.ok(featuredLabels.some(label => /โครงการกองทุน\s*สปสช\./.test(label)));
 assert.ok(featuredLabels.some(label => /งาน\s*รพ\.สต\.\s*\/\s*แผนสุขภาพ/.test(label)));
 assert.ok(featuredLabels.some(label => /แผนเงินบำรุง\s*รพ\.สต\.\/สอน\./.test(label)));
 assert.ok(featuredLabels.some(label => /แผนลูกจ้างเงินบำรุง/.test(label)));
-assert.ok(featuredLabels.some(label => /ดูงานสาธารณสุขทั้งหมด\s*17\s*งาน/.test(label)));
-assert.ok(!featuredLabels.some(label => /PDPA|วันเพจลูกน้ำยุงลาย/.test(label)), 'specialized tools must stay in the 17-job page, not the featured Home menu');
+assert.ok(!featuredLabels.some(label => /PDPA|วันเพจลูกน้ำยุงลาย|งานสาธารณสุขอื่น/.test(label)), 'specialized tools must not clutter the five-entry Home menu');
 
 await shortcut.click();
 await page.waitForURL(/temp-staff-wizard\.html$/, { timeout: 15_000 });
@@ -86,8 +84,7 @@ console.log(JSON.stringify({
   checks: {
     homeCatalogOpenerVisible: 'PASS',
     publicHealthGroupVisible: 'PASS',
-    featuredMenuCountClear: '6 เมนูเด่น PASS',
-    allPublicHealthJobsLabelClear: '17 งานทั้งหมด PASS',
+    featuredMenuCountClear: '5 เมนูเด่น PASS',
     tempStaffShortcutVisible: 'PASS',
     shortcutNavigatesToGuidedWizard: 'PASS',
     guidedWizardVisible: '5 steps PASS',
