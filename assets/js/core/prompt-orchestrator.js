@@ -173,10 +173,16 @@
       ? window.GovPromptCore.evaluateAgentGovernance(userQuestion)
       : Object.freeze({ requestedLevel: 'L3', effectiveLevel: 'L3', allowed: true, requiresHumanApproval: false, blockers: Object.freeze([]) });
 
-    const isPrIntent = /(?:ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์(?:โซเชียล)?|อินโฟกราฟิก|สคริปต์|คำกล่าว|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|แนะนำองค์กร|แนะนำหน่วยงาน)/i.test(String(userQuestion || ''));
+    const isPrMediaText = /(?:ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์(?:โซเชียล)?|อินโฟกราฟิก|โปสเตอร์|สคริปต์|คำกล่าว|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|แนะนำองค์กร|แนะนำหน่วยงาน)/i.test(String(userQuestion || ''));
+    const isVideoCreation = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
+      && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|แนะนำองค์กร|แนะนำหน่วยงาน|ประชาสัมพันธ์)/i.test(String(userQuestion || ''));
+    const isPrCreation = isVideoCreation
+      || taskPlan.deliverable === 'public-content'
+      || taskPlan.deliverable === 'speech'
+      || (isPrMediaText && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|วางข้อความ|ทำโพสต์)/i.test(String(userQuestion || '')));
     const isPrRoute = activeRoute?.moduleId === 'GP012'
       || /ประชาสัมพันธ์/.test(String(activeRoute?.label || activeRoute?.title || activeRoute?.assistant?.title || ''))
-      || isPrIntent;
+      || isPrMediaText;
     const domainSpecificPrinciples = isPrRoute
       ? [
           '1. อ่านข้อเท็จจริงและเอกสารแนบทั้งหมดก่อนจัดทำสื่อ และห้ามถามซ้ำในสิ่งที่มีอยู่แล้ว',
@@ -208,7 +214,7 @@
           '15. เมื่อมีหลายทางเลือก ให้สรุปทางเลือกที่เหมาะที่สุดพร้อมเงื่อนไขและความเสี่ยง ไม่โยนภาระให้ผู้ใช้ตัดสินจากข้อมูลดิบเอง'
         ];
 
-    if (isPrRoute) {
+    if (isPrCreation) {
       const isVideo = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(userQuestion);
       const prPrompt = [
         'บทบาท',
@@ -365,6 +371,6 @@
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.1';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.2';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();
