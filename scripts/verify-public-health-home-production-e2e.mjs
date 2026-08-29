@@ -22,6 +22,8 @@ const healthGroup = page.locator('.work-catalog-group').filter({ hasText: /ส�
 await healthGroup.waitFor({ state: 'visible', timeout: 10_000 });
 const healthToggle = healthGroup.locator('.assistant-catalog-toggle');
 await healthToggle.waitFor({ state: 'visible', timeout: 10_000 });
+assert.match(await healthToggle.locator('.assistant-task-count').innerText(), /8\s*เมนูเด่น/);
+assert.doesNotMatch(await healthToggle.locator('.assistant-task-count').innerText(), /8\s*งาน/);
 await healthToggle.click();
 
 const shortcut = healthGroup.locator('[data-health-shortcut="true"]').filter({ hasText: 'แผนลูกจ้างเงินบำรุง' }).first();
@@ -29,7 +31,7 @@ await shortcut.waitFor({ state: 'visible', timeout: 10_000 });
 assert.match(await shortcut.innerText(), /👥\s*แผนลูกจ้างเงินบำรุง/);
 
 const shortcutLabels = await healthGroup.locator('[data-health-shortcut="true"]').allInnerTexts();
-assert.ok(shortcutLabels.some(label => /เครื่องมือหมออนามัย/.test(label)));
+assert.ok(shortcutLabels.some(label => /ดูงานสาธารณสุขทั้งหมด\s*17\s*งาน/.test(label)));
 assert.ok(shortcutLabels.some(label => /แผนลูกจ้างเงินบำรุง/.test(label)));
 assert.ok(shortcutLabels.some(label => /วันเพจลูกน้ำยุงลาย/.test(label)));
 
@@ -76,6 +78,8 @@ console.log(JSON.stringify({
   checks: {
     homeCatalogOpenerVisible: 'PASS',
     publicHealthGroupVisible: 'PASS',
+    featuredMenuCountClear: '8 เมนูเด่น PASS',
+    allPublicHealthJobsLabelClear: '17 งานทั้งหมด PASS',
     tempStaffShortcutVisible: 'PASS',
     shortcutNavigatesToGuidedWizard: 'PASS',
     guidedWizardVisible: '5 steps PASS',

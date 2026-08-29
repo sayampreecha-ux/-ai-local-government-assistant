@@ -56,7 +56,9 @@ assert.match(gp008, /👥 แผนลูกจ้างเงินบำรุ
 assert.match(gp008, /temp-staff-guided-workflow-v2\.js\?v=2\.0\.0/);
 assert.match(wizardPage, /👥 แผนลูกจ้างชั่วคราวเงินบำรุง/);
 assert.match(wizardPage, /temp-staff-guided-wizard-v1\.js\?v=1\.0\.0/);
-assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.3/);
+assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.4/);
+assert.match(catalog, /ดูงานสาธารณสุขทั้งหมด 17 งาน/);
+assert.match(catalog, /เมนูเด่น/);
 assert.match(catalog, /👥 แผนลูกจ้างเงินบำรุง/);
 assert.match(catalog, /temp-staff-wizard\.html/);
 assert.match(context, /public-health-worker-toolkit-v1\.js\?v=1\.0\.1/);
@@ -83,4 +85,4 @@ assert.match(guidedWorkflow, /ร่างบันทึกเสนอ/);
 assert.match(guidedWorkflow, /ดาวน์โหลดชุด Word/);
 assert.match(guidedWorkflow, /Workload CSV/);
 
-console.log('GP008 production proof passed: live public-health page, Home shortcut, standalone guided wizard, temp-staff planner and guided workflow match main exactly.');
+console.log('GP008 production proof passed: live public-health page, clear Home shortcut labeling, standalone guided wizard, temp-staff planner and guided workflow match main exactly.');
