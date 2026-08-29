@@ -82,6 +82,11 @@ await second.locator('[data-expense-check="linkedTempStaff"]').check();
 await page.locator('#mfpSave').click();
 assert.match(await page.locator('#mfpView').innerText(), /คาดการณ์ปลายปี/);
 assert.match(await page.locator('#mfpView').innerText(), /210,000|210000/);
+await page.waitForFunction(() => {
+  const current = localStorage.getItem('govprompt.maintenanceFundPlan.current.v1');
+  const map = JSON.parse(localStorage.getItem('govprompt.maintenanceFundFacilityMeta.v1') || '{}');
+  return Boolean(current && map[current]?.population === 5500 && map[current]?.size === 'M');
+}, undefined, { timeout: 5_000 });
 const savedMeta = await page.evaluate(() => {
   const current = localStorage.getItem('govprompt.maintenanceFundPlan.current.v1');
   const map = JSON.parse(localStorage.getItem('govprompt.maintenanceFundFacilityMeta.v1') || '{}');
