@@ -292,6 +292,13 @@
     document.querySelector('.bottom-nav [data-panel="tools"]')?.remove();
   }
 
+  window.GovPromptStatusCopy = Object.freeze({
+    isPrCreationQuestion,
+    buildPrCreationHandoffPrompt
+  });
+
+  if (typeof document === 'undefined') return;
+
   document.addEventListener('click', event => {
     const control = event.target.closest?.('.answer-actions button'); if (!control) return;
     const card = control.closest('.answer-card'); if (!card) return;
@@ -300,13 +307,6 @@
     event.preventDefault(); event.stopImmediatePropagation();
     if (/ChatGPT/i.test(label)) void handoffTo(card, 'chatgpt'); else if (/Gemini/i.test(label)) void handoffTo(card, 'gemini'); else void handoffTo(card, 'copy');
   }, true);
-
-  window.GovPromptStatusCopy = Object.freeze({
-    isPrCreationQuestion,
-    buildPrCreationHandoffPrompt
-  });
-
-  if (typeof document === 'undefined') return;
 
   softenFreshnessCopy(); enforceLeanMode();
   const observer = new MutationObserver(mutations => mutations.forEach(mutation => mutation.addedNodes.forEach(node => {
