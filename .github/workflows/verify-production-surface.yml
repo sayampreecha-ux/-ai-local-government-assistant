@@ -53,6 +53,7 @@ on:
       - 'scripts/verify-issue73-production-e2e.mjs'
       - 'scripts/verify-budget-production-e2e.mjs'
       - 'scripts/verify-three-workflows-production-e2e.mjs'
+      - 'scripts/verify-pr-video-production-e2e.mjs'
       - '.github/workflows/deploy-github-pages.yml'
       - '.github/workflows/verify-production-surface.yml'
   workflow_dispatch:
@@ -103,6 +104,8 @@ jobs:
         run: node scripts/verify-budget-production-e2e.mjs
       - name: Verify three priority government workflows in real browser
         run: node scripts/verify-three-workflows-production-e2e.mjs
+      - name: Verify PR video prompt in real browser
+        run: node scripts/verify-pr-video-production-e2e.mjs
       - name: Publish Production PASS proof
         uses: actions/github-script@v7
         with:
@@ -131,6 +134,7 @@ jobs:
               '- ขออนุญาตก่อสร้างบ้าน / Citizen Service: PASS',
               '- Case Memory resume / งานค้าง: PASS',
               '- Privacy-minimized Case Memory: PASS',
+              '- PR Video prompt real-browser E2E: PASS',
               '',
               '> This issue is written only after every production verification step above succeeds.'
             ].join('\n');
