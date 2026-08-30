@@ -182,4 +182,24 @@ assert.equal(bonus.prompt.includes('ห้ามใช้คำว่า “ไ�
   }
 }
 
+{
+  const variants = [
+    'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนะนำองค์กร\nความยาว: 5–7 นาที',
+    'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนะนำองกอน\nความยาว: ให้ GP แนะนำ',
+    'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนำนำองหอน\nความยาว: 5–7 นาที',
+    'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนะนำองกรอปท\nความยาว: ให้ GP แนะนำ',
+    'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: หัวข้อพิมพ์ผิดอะไรก็ได้\nความยาว: ให้ GP แนะนำ',
+    'สร้างคลิปประชาสัมพันธ์ เรื่อง ผลงานประจำปี',
+    'จัดทำวีดีโอแนะนำหน่วยงาน 5 นาที'
+  ];
+  for (const question of variants) {
+    const context = core.createSharedContext({ facts: question, desiredOutput: question });
+    const result = core.createGovernmentPrompt({ question, route: core.routeTransaction(context), context });
+    assert.equal(result.prMode, true, question);
+    for (const forbidden of ['แนวทางเลือกเครื่องมือ', 'web-when-needed', 'web-search', 'แนวทางตอบ', 'แหล่งราชการที่ GovPrompt ค้นให้', 'Prompt นี้เป็นผลลัพธ์สำหรับนำไปวิเคราะห์ต่อ']) {
+      assert.equal(result.prompt.includes(forbidden), false, question + ' => ' + forbidden);
+    }
+  }
+}
+
 console.log('GovPrompt Prompt Standard v7.1 Golden 50 passed.');
