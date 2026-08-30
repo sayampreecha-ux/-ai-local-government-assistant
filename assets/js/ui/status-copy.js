@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  if (window.__GOVPROMPT_STATUS_COPY_V14__) return;
-  window.__GOVPROMPT_STATUS_COPY_V14__ = true;
+  if (window.__GOVPROMPT_STATUS_COPY_V15__) return;
+  window.__GOVPROMPT_STATUS_COPY_V15__ = true;
 
   const CURRENT_TEXT = '✅ ค้นสดและยืนยันหลักฐานปัจจุบันได้ตาม metadata ที่มี';
   const SAFER_TEXT = '✅ พบแหล่งราชการที่มีข้อมูลวันที่/การปรับปรุงล่าสุด — โปรดตรวจสอบสถานะการใช้บังคับของเอกสารก่อนนำไปอ้างอิง';
@@ -120,9 +120,67 @@
     ].join('\n');
   }
 
+  function isPrCreationQuestion(question, domain = '') {
+    const text = String(question || '').normalize('NFC');
+    const domainText = String(domain || '');
+    const prDomain = /ประชาสัมพันธ์|public-relations/i.test(domainText);
+    const mediaObject = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|โพสต์|ข่าวประชาสัมพันธ์|อินโฟกราฟิก|โปสเตอร์|แคปชัน|สคริปต์|คำกล่าว)/i.test(text);
+    const creationVerb = /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|วางข้อความ|สรุป|เรียบเรียง)/i.test(text);
+    return (prDomain && mediaObject && creationVerb)
+      || /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ).{0,30}(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|โพสต์|ข่าวประชาสัมพันธ์|อินโฟกราฟิก|โปสเตอร์|แคปชัน|สคริปต์)/i.test(text)
+      || /(?:วิดีโอ|วีดีโอ|คลิป|video).{0,30}(?:ประชาสัมพันธ์|แนะนำ(?:องค์กร|หน่วยงาน|อบจ\.?|อบต\.?|เทศบาล|อปท\.?)?)/i.test(text);
+  }
+
+  function buildPrCreationHandoffPrompt(question) {
+    const text = String(question || '').trim() || '[งานประชาสัมพันธ์ที่ผู้ใช้ต้องการ]';
+    const isVideo = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(text);
+    const lines = [
+      'บทบาท',
+      'คุณเป็นผู้ช่วยงานประชาสัมพันธ์ของหน่วยงานราชการไทย',
+      '',
+      'งานที่ผู้ใช้ต้องการ',
+      text,
+      '',
+      'หลักการทำงาน',
+      '- ใช้ข้อเท็จจริงและข้อมูลที่ผู้ใช้ให้เป็นหลัก ไม่ค้นเว็บโดยอัตโนมัติ เว้นแต่ผู้ใช้ขอให้ตรวจข้อมูลปัจจุบันหรือค้นแหล่งอ้างอิงเพิ่ม',
+      '- ห้ามแต่งชื่อบุคคล ตำแหน่ง วันที่ ตัวเลข สถานที่ ผลงาน เหตุการณ์ หรือผลการดำเนินงานที่ผู้ใช้ไม่ได้ให้',
+      '- หากข้อมูลสำคัญขัดแย้ง ให้ชี้จุดขัดแย้งก่อน และใช้เฉพาะข้อมูลที่ยืนยันได้',
+      '- ตรวจ PDPA ข้อมูลส่วนบุคคล สิทธิการใช้ภาพ/สื่อ ลิขสิทธิ์ และความเหมาะสมก่อนเผยแพร่',
+      '- ใช้ภาษาไทยอ่านง่าย กระชับ น่าเชื่อถือ และเหมาะกับการสื่อสารของหน่วยงานราชการ',
+      '- ถ้าข้อมูลเพียงพอ ให้จัดทำชิ้นงานทันที ไม่ถามซ้ำหรือถามเพิ่มโดยไม่จำเป็น'
+    ];
+
+    if (isVideo) {
+      lines.push(
+        '',
+        'ผลลัพธ์ที่ต้องส่งมอบ',
+        '1. ลำดับฉาก / Storyboard พร้อมช่วงเวลาโดยประมาณ',
+        '2. บทพากย์ภาษาไทย',
+        '3. ข้อความขึ้นจอและซับไตเติล',
+        '4. รายการภาพหรือคลิปที่ควรใช้ในแต่ละช่วง',
+        '5. Prompt พร้อมคัดลอกไปใช้กับ AI Video ภายนอก',
+        '',
+        'ข้อกำหนดสำหรับวิดีโอ',
+        '- ถ้าผู้ใช้ระบุความยาวแล้ว ให้จัดจำนวนฉากและจังหวะเนื้อหาให้พอดีกับเวลานั้น',
+        '- ถ้าผู้ใช้ให้ GP แนะนำความยาว ให้เสนอความยาวที่เหมาะสมก่อน แล้วจัด Storyboard ตามความยาวที่เสนอ',
+        '- ระบุว่าภาพหรือคลิปใดควรใช้ช่วงใด โดยไม่อ้างว่ามีไฟล์หรือภาพที่ผู้ใช้ยังไม่ได้ให้',
+        '- ปิดท้ายด้วย Call to Action เฉพาะเมื่อเหมาะกับวัตถุประสงค์ของงาน'
+      );
+    } else {
+      lines.push(
+        '',
+        'ผลลัพธ์ที่ต้องส่งมอบ',
+        '- จัดชิ้นงานประชาสัมพันธ์พร้อมคัดลอกไปใช้ตามรูปแบบที่ผู้ใช้ขอ'
+      );
+    }
+
+    return lines.join('\n');
+  }
+
   function buildHandoffPrompt(card) {
     const question = findQuestion(card) || '[คำถามของผู้ใช้]';
     const domain = findDomain(card);
+    if (isPrCreationQuestion(question, domain)) return buildPrCreationHandoffPrompt(question);
     const sources = collectOfficialSources(card);
     const sourceBlock = sources.length ? sources.map((source, index) => `${index + 1}. ${source.title || 'แหล่งราชการ'}\n${source.url}`).join('\n\n') : 'ยังไม่มีแหล่งราชการที่ยืนยันได้จาก GovPrompt';
     const formattingBlock = buildDocumentFormattingBlock(question);
@@ -242,6 +300,13 @@
     event.preventDefault(); event.stopImmediatePropagation();
     if (/ChatGPT/i.test(label)) void handoffTo(card, 'chatgpt'); else if (/Gemini/i.test(label)) void handoffTo(card, 'gemini'); else void handoffTo(card, 'copy');
   }, true);
+
+  window.GovPromptStatusCopy = Object.freeze({
+    isPrCreationQuestion,
+    buildPrCreationHandoffPrompt
+  });
+
+  if (typeof document === 'undefined') return;
 
   softenFreshnessCopy(); enforceLeanMode();
   const observer = new MutationObserver(mutations => mutations.forEach(mutation => mutation.addedNodes.forEach(node => {
