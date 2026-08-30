@@ -377,6 +377,6 @@
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.6';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.7';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();
