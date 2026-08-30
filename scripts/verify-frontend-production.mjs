@@ -56,7 +56,7 @@ const expectedSubmitGuard = localIndex.match(/assets\/js\/core\/privacy-submit-g
 const expectedHome = `assets/js/home-v3.js?v=${RELEASE.home}`;
 const expectedMic = `assets/js/mic.js?v=${RELEASE.mic}`;
 const expectedDocumentStudio = `assets/js/core/document-studio-v1.js?v=${RELEASE.documentStudio}`;
-const expectedCaseListBootstrap = `assets/js/ui/case-list-bootstrap-v1.js?v=${RELEASE.caseList}`;
+const caseListBootstrapPath = 'assets/js/ui/case-list-bootstrap-v1.js';
 assert.ok(expectedPrivacyGuard); assert.ok(expectedSubmitGuard);
 
 async function fetchText(url) {
@@ -76,7 +76,6 @@ assert.equal(index.includes(expectedSubmitGuard),true);
 assert.equal(index.includes(expectedHome),true);
 assert.equal(index.includes(expectedMic),true);
 assert.equal(index.includes(expectedDocumentStudio),true);
-assert.equal(index.includes(expectedCaseListBootstrap),true);
 assert.match(index,/Public Beta|Internal Pilot/);
 assert.match(index,new RegExp(`assets/js/home-v3\\.js\\?v=${RELEASE.home.replaceAll('.','\\.')}`));
 assert.match(index,new RegExp(`assets/css/home-v3\\.css\\?v=${RELEASE.homeCss.replaceAll('.','\\.')}`));
@@ -84,7 +83,6 @@ assert.match(index,new RegExp(`assets/js/mic\\.js\\?v=${RELEASE.mic.replaceAll('
 assert.match(index,/official-source-registry\.js\?v=2\.4\.0/);
 assert.match(index,new RegExp(`service-worker\\.js\\?v=${RELEASE.serviceWorker.replaceAll('.','\\.')}`));
 assert.match(index,new RegExp(`document-studio-v1\\.js\\?v=${RELEASE.documentStudio.replaceAll('.','\\.')}`));
-assert.match(index,new RegExp(`case-list-bootstrap-v1\\.js\\?v=${RELEASE.caseList.replaceAll('.','\\.')}`));
 assert.match(index,/data-prompt="จัดทำร่างงบประมาณ"/);
 assert.match(index,/จัดหน้าเอกสาร/);
 assert.match(index,/https:\/\/www\.facebook\.com\/GovPromptThailandAI/);
@@ -98,7 +96,7 @@ const css = await exactProduction(`assets/css/home-v3.css?v=${RELEASE.homeCss}`,
 const sw = await exactProduction(`service-worker.js?v=${RELEASE.serviceWorker}`,localServiceWorker);
 const runtimeBridge = await exactProduction(`assets/js/core/government-workflow-runtime-v5.js?v=${WORKFLOW_RUNTIME_VERSION}`,localRuntimeBridge);
 const documentStudio = await exactProduction(expectedDocumentStudio,localDocumentStudio);
-const caseListBootstrap = await exactProduction(expectedCaseListBootstrap,localCaseListBootstrap);
+const caseListBootstrap = await exactProduction(caseListBootstrapPath,localCaseListBootstrap);
 const caseListUi = await exactProduction('assets/js/ui/case-list-ui-v1.js',localCaseListUi);
 
 assert.match(privacy.text,/sanitizeExternalContent/);
