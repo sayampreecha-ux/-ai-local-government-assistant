@@ -175,8 +175,11 @@
 
     // PR creation must be detected from the user's literal intent before any generic routing.
     // This deliberately catches common Thai typos such as "องกอน" and avoids leaking generic web/legal boilerplate.
+    // Structural PR-video detection: do not depend on the spelling of the topic/title.
+    // If the user asks for a video/clip AND PR/creation intent exists anywhere in the request,
+    // always enter compact PR mode. The topic can be arbitrary or misspelled.
     const isPrVideoIntent = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
-      && /(?:ประชาสัมพันธ์|แนะนำ|แนำนำ|องค์กร|องกอน|องกร|องหอน|อปท\.?|หน่วยงาน|อบจ\.?|อบต\.?|เทศบาล)/i.test(String(userQuestion || ''));
+      && /(?:ประชาสัมพันธ์|ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|แนะนำ)/i.test(String(userQuestion || ''));
     const isPrMediaText = isPrVideoIntent || /(?:ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์(?:โซเชียล)?|อินโฟกราฟิก|โปสเตอร์|สคริปต์|คำกล่าว|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|แนะนำองค์กร|แนะนำหน่วยงาน)/i.test(String(userQuestion || ''));
     const isVideoCreation = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
       && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|ประชาสัมพันธ์|แนะนำ)/i.test(String(userQuestion || ''));
@@ -382,6 +385,6 @@
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.9';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.5.0';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();
