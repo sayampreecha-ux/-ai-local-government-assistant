@@ -17,6 +17,8 @@ on:
       - 'assets/js/home-v3.js'
       - 'assets/js/mic.js'
       - 'assets/js/ui/assistant-catalog-accordion-v1.js'
+      - 'assets/js/ui/status-copy.js'
+      - 'test/status-copy-pr-handoff.test.mjs'
       - 'assets/js/core/context-integration.js'
       - 'assets/js/core/privacy-guard.js'
       - 'assets/js/core/privacy-submit-guard.js'
