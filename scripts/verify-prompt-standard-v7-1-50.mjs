@@ -148,4 +148,18 @@ assert.equal(bonus.prompt.includes('ห้ามใช้คำว่า “ไ�
   }
 }
 
+
+{
+  const question = 'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนะนำองกอน\nความยาว: 5–7 นาที';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+  const result = core.createGovernmentPrompt({ question, route: core.routeTransaction(context), context });
+  assert.equal(result.prMode, true, 'PR video typo regression: องกอน must stay in PR mode');
+  for (const forbidden of ['แนวทางเลือกเครื่องมือ', 'web-when-needed', 'web-search', 'แหล่งราชการที่ GovPrompt ค้นให้', 'แนวทางตอบ', 'Prompt นี้เป็นผลลัพธ์สำหรับนำไปวิเคราะห์ต่อ']) {
+    assert.equal(result.prompt.includes(forbidden), false, 'PR prompt leaked generic boilerplate: ' + forbidden);
+  }
+  for (const required of ['Storyboard', 'บทพากย์', 'ข้อความขึ้นจอ/ซับ', 'รายการภาพหรือคลิปที่ควรใช้', 'Prompt พร้อมคัดลอกไปใช้กับ AI Video ภายนอก']) {
+    assert.equal(result.prompt.includes(required), true, 'PR prompt missing: ' + required);
+  }
+}
+
 console.log('GovPrompt Prompt Standard v7.1 Golden 50 passed.');
