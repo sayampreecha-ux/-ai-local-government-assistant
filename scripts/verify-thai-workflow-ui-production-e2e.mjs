@@ -55,7 +55,7 @@ try {
     };
   }, { frontend, nonce });
 
-  assert.equal(result.uiVersion, '1.2', 'production workflow progress UI is stale');
+  assert.equal(result.uiVersion, '1.3', 'production workflow progress UI is stale');
   assert.equal(result.workflowId, 'gov.hr', 'HR workforce request did not route to HR workflow');
   assert.match(result.text, /ข้อมูล\/หลักฐานที่ต้องเพิ่มเติม/, 'Thai missing-information heading is absent');
   assert.match(result.text, /วัตถุประสงค์และประเภทงานบุคคลที่ต้องการ/, 'hrIntent is not translated for users');
