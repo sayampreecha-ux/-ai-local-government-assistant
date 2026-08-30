@@ -67,7 +67,7 @@ try {
     };
   }, { runtimeUrl });
 
-  assert.equal(result.bridgeVersion, '5.3');
+  assert.equal(result.bridgeVersion, '5.6.2');
 
   assert.equal(result.machine.primary, 'gov.procurement');
   assert.ok(result.machine.ids.includes('gov.project'));
