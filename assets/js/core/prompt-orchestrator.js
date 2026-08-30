@@ -173,11 +173,16 @@
       ? window.GovPromptCore.evaluateAgentGovernance(userQuestion)
       : Object.freeze({ requestedLevel: 'L3', effectiveLevel: 'L3', allowed: true, requiresHumanApproval: false, blockers: Object.freeze([]) });
 
-    const isPrMediaText = /(?:ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์(?:โซเชียล)?|อินโฟกราฟิก|โปสเตอร์|สคริปต์|คำกล่าว|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|แนะนำองค์กร|แนะนำหน่วยงาน)/i.test(String(userQuestion || ''));
+    // PR creation must be detected from the user's literal intent before any generic routing.
+    // This deliberately catches common Thai typos such as "องกอน" and avoids leaking generic web/legal boilerplate.
+    const isPrVideoIntent = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
+      && /(?:ประชาสัมพันธ์|แนะนำ|องค์กร|องกอน|หน่วยงาน|อบจ\.?|อบต\.?|เทศบาล)/i.test(String(userQuestion || ''));
+    const isPrMediaText = isPrVideoIntent || /(?:ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์(?:โซเชียล)?|อินโฟกราฟิก|โปสเตอร์|สคริปต์|คำกล่าว|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|แนะนำองค์กร|แนะนำหน่วยงาน)/i.test(String(userQuestion || ''));
     const isVideoCreation = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
       && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|ประชาสัมพันธ์|แนะนำ)/i.test(String(userQuestion || ''));
     const isCreationAction = /^(?:create|draft|plan|summarize)$/.test(String(taskPlan.action || ''));
-    const isPrCreation = isVideoCreation
+    const isPrCreation = isPrVideoIntent
+      || isVideoCreation
       || (isCreationAction && (taskPlan.deliverable === 'public-content' || taskPlan.deliverable === 'speech'))
       || (isPrMediaText && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|วางข้อความ|ทำโพสต์)/i.test(String(userQuestion || '')));
     const isPrRoute = activeRoute?.moduleId === 'GP012'
@@ -377,6 +382,6 @@
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.7';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.4.8';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();
