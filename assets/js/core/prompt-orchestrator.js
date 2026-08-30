@@ -174,8 +174,8 @@
       : Object.freeze({ requestedLevel: 'L3', effectiveLevel: 'L3', allowed: true, requiresHumanApproval: false, blockers: Object.freeze([]) });
 
     const isPrMediaText = /(?:ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์(?:โซเชียล)?|อินโฟกราฟิก|โปสเตอร์|สคริปต์|คำกล่าว|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|แนะนำองค์กร|แนะนำหน่วยงาน)/i.test(String(userQuestion || ''));
-    const isVideoCreation = /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ)?\s*(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
-      && /(?:ประชาสัมพันธ์|แนะนำ\s*(?:อบจ\.?|อบต\.?|เทศบาล|องค์กร|หน่วยงาน)|เรื่อง\s*:\s*แนะนำ)/i.test(String(userQuestion || ''));
+    const isVideoCreation = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
+      && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|ประชาสัมพันธ์|แนะนำ)/i.test(String(userQuestion || ''));
     const isCreationAction = /^(?:create|draft|plan|summarize)$/.test(String(taskPlan.action || ''));
     const isPrCreation = isVideoCreation
       || (isCreationAction && (taskPlan.deliverable === 'public-content' || taskPlan.deliverable === 'speech'))
