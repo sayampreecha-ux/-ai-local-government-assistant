@@ -12,6 +12,8 @@ const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
 const RELEASE = Object.freeze({ home:'6.3.8', homeCss:'2.5.1', serviceWorker:'6.3.8', mic:'2.3.9', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
+const WORKFLOW_RUNTIME_VERSION = '5.6.2';
+const WORKFLOW_UI_VERSION = '1.3';
 
 const runtimeSourceFiles = Object.freeze([
   'budget-balance-validator.js','budget-official-evidence-adapter.js','budget-official-document-parser.js','budget-document-content-ingestion.js',
@@ -94,7 +96,7 @@ const submit = await exactProduction(expectedSubmitGuard,localSubmitGuard);
 const home = await exactProduction(expectedHome,localHome);
 const css = await exactProduction(`assets/css/home-v3.css?v=${RELEASE.homeCss}`,localHomeCss);
 const sw = await exactProduction(`service-worker.js?v=${RELEASE.serviceWorker}`,localServiceWorker);
-const runtimeBridge = await exactProduction('assets/js/core/government-workflow-runtime-v5.js?v=5.1.0',localRuntimeBridge);
+const runtimeBridge = await exactProduction(`assets/js/core/government-workflow-runtime-v5.js?v=${WORKFLOW_RUNTIME_VERSION}`,localRuntimeBridge);
 const documentStudio = await exactProduction(expectedDocumentStudio,localDocumentStudio);
 const caseListBootstrap = await exactProduction(expectedCaseListBootstrap,localCaseListBootstrap);
 const caseListUi = await exactProduction('assets/js/ui/case-list-ui-v1.js',localCaseListUi);
@@ -108,7 +110,7 @@ assert.match(submit.text,/EVERY detected PII\/sensitive signal fails closed in c
 assert.match(submit.text,/Home\/UI\/history\/router\/search\/Worker\/API/);
 assert.doesNotMatch(submit.text,/requestSubmit\s*\(/);
 assert.match(home.text,/prepareExternalPrompt\(text\)/);
-assert.match(home.text,/government-workflow-runtime-v5\.js\?v=5\.1\.0/);
+assert.match(home.text,new RegExp(`government-workflow-runtime-v5\\.js\\?v=${WORKFLOW_RUNTIME_VERSION.replaceAll('.','\\.')}`));
 assert.match(home.text,new RegExp(`budget-official-source-runtime-v1\\.js\\?v=${RELEASE.budgetOfficialSourceRuntime.replaceAll('.','\\.')}`));
 assert.match(home.text,/budget-official-document-connector-v1\.js\?v=1\.0\.0/);
 assert.match(home.text,new RegExp(`budget-browser-input-runtime-v1\\.js\\?v=${RELEASE.budgetInputRuntime.replaceAll('.','\\.')}`));
@@ -119,7 +121,7 @@ assert.match(css.text,/budget-review-table/);
 assert.match(css.text,/budget-purpose-picker/);
 assert.match(css.text,/budget-review-overlay/);
 assert.match(css.text,/budget-review-dialog/);
-assert.match(runtimeBridge.text,/WORKFLOW_RUNTIME_BRIDGE_VERSION = '5\.3'/);
+assert.match(runtimeBridge.text,new RegExp(`WORKFLOW_RUNTIME_BRIDGE_VERSION = '${WORKFLOW_RUNTIME_VERSION.replaceAll('.','\\.')}'`));
 assert.match(runtimeBridge.text,/rawEvidenceValuesReturned: false/);
 assert.match(runtimeBridge.text,/autoApprovalAllowed: false/);
 assert.match(runtimeBridge.text,/gov\.citizen-service/);
