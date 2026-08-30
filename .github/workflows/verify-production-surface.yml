@@ -40,6 +40,7 @@ on:
       - 'src/budget-*.js'
       - 'scripts/build-static.mjs'
       - 'scripts/verify-frontend-production.mjs'
+      - 'scripts/verify-thai-workflow-ui-production-e2e.mjs'
       - 'scripts/verify-gp008-production.mjs'
       - 'scripts/verify-public-health-home-production-e2e.mjs'
       - 'scripts/verify-maintenance-fund-production-e2e.mjs'
