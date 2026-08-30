@@ -162,4 +162,14 @@ assert.equal(bonus.prompt.includes('ห้ามใช้คำว่า “ไ�
   }
 }
 
+{
+  const question = 'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนำนำองหอน\nความยาว: 5–7 นาที';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+  const result = core.createGovernmentPrompt({ question, route: core.routeTransaction(context), context });
+  assert.equal(result.prMode, true, 'noisy Thai title must stay in PR video mode');
+  for (const forbidden of ['แนวทางเลือกเครื่องมือ', 'web-when-needed', 'web-search', 'แนวทางตอบ', 'แหล่งราชการที่ GovPrompt ค้นให้', 'Prompt นี้เป็นผลลัพธ์สำหรับนำไปวิเคราะห์ต่อ']) {
+    assert.equal(result.prompt.includes(forbidden), false, forbidden);
+  }
+}
+
 console.log('GovPrompt Prompt Standard v7.1 Golden 50 passed.');
