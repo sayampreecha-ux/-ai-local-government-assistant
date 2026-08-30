@@ -19,9 +19,9 @@ await page.locator('.work-catalog-open').click();
 const healthGroup = page.locator('.work-catalog-group').filter({ hasText: /สาธารณสุข|รพ\.สต/i }).first();
 await healthGroup.waitFor({ state: 'visible', timeout: 15_000 });
 await healthGroup.locator('.assistant-catalog-toggle').click();
-const shortcut = healthGroup.locator('[data-health-shortcut="true"]').filter({ hasText: 'แผนและติดตามเงินบำรุง' }).first();
+const shortcut = healthGroup.locator('[data-health-shortcut="true"]').filter({ hasText: 'แผนเงินบำรุง รพ.สต./สอน.' }).first();
 await shortcut.waitFor({ state: 'visible', timeout: 15_000 });
-assert.match(await shortcut.innerText(), /แผนและติดตามเงินบำรุง/);
+assert.match(await shortcut.innerText(), /แผนเงินบำรุง รพ\.สต\.\/สอน\./);
 await shortcut.click();
 await page.waitForURL(/maintenance-fund-plan\.html$/, { timeout: 15_000 });
 
