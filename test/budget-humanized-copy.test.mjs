@@ -30,7 +30,7 @@ test('workflow and agent technical names are humanized', () => {
 });
 
 test('status-copy is idempotent and deduplicates repeated fallback evidence copy', () => {
-  assert.match(statusCopy, /__GOVPROMPT_STATUS_COPY_V14__/);
+  assert.match(statusCopy, /__GOVPROMPT_STATUS_COPY_V15__/);
   assert.match(statusCopy, /ข้อมูล\/หลักฐานเพิ่มเติมที่ต้องใช้ในขั้นตอนนี้/);
   assert.match(statusCopy, /new Set\(parts\)/);
 });
