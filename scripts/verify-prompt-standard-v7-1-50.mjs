@@ -137,4 +137,15 @@ assert.equal(bonus.prompt.includes('ห้ามใช้คำว่า “ไ�
   assert.equal(result.prompt.includes('GovPrompt Prompt Standard v7.1'), false);
 }
 
+
+{
+  const question = 'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนะนำองกอน\nความยาว: 5–7 นาที';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+  const result = core.createGovernmentPrompt({ question, route: core.routeTransaction(context), context });
+  assert.equal(result.prMode, true, 'typo in organization name must not break PR video routing');
+  for (const forbidden of ['แนวทางเลือกเครื่องมือ', 'web-when-needed', 'web-search', 'แหล่งราชการที่ GovPrompt ค้นให้', 'Prompt นี้เป็นผลลัพธ์สำหรับนำไปวิเคราะห์ต่อ']) {
+    assert.equal(result.prompt.includes(forbidden), false, forbidden);
+  }
+}
+
 console.log('GovPrompt Prompt Standard v7.1 Golden 50 passed.');
