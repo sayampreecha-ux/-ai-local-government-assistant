@@ -176,7 +176,7 @@
     // PR creation must be detected from the user's literal intent before any generic routing.
     // This deliberately catches common Thai typos such as "องกอน" and avoids leaking generic web/legal boilerplate.
     const isPrVideoIntent = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
-      && /(?:ประชาสัมพันธ์|แนะนำ|องค์กร|องกอน|หน่วยงาน|อบจ\.?|อบต\.?|เทศบาล)/i.test(String(userQuestion || ''));
+      && /(?:ประชาสัมพันธ์|แนะนำ|แนำนำ|องค์กร|องกอน|องหอน|หน่วยงาน|อบจ\.?|อบต\.?|เทศบาล)/i.test(String(userQuestion || ''));
     const isPrMediaText = isPrVideoIntent || /(?:ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์(?:โซเชียล)?|อินโฟกราฟิก|โปสเตอร์|สคริปต์|คำกล่าว|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์|แนะนำองค์กร|แนะนำหน่วยงาน)/i.test(String(userQuestion || ''));
     const isVideoCreation = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
       && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|ประชาสัมพันธ์|แนะนำ)/i.test(String(userQuestion || ''));
