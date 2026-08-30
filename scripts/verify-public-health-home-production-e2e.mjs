@@ -36,7 +36,7 @@ const featuredLabels = await healthGroup.locator('.work-catalog-task').allInnerT
 assert.equal(featuredLabels.length, 5, 'public-health Home must expose exactly 5 primary menus');
 assert.ok(featuredLabels.some(label => /ทำโครงการสุขภาพ\s*\/\s*NCD/.test(label)));
 assert.ok(featuredLabels.some(label => /โครงการกองทุน\s*สปสช\./.test(label)));
-assert.ok(featuredLabels.some(label => /งาน\s*รพ\.สต\.\s*\/\s*แผนสุขภาพ/.test(label)));
+assert.ok(featuredLabels.some(label => /งาน\s*รพ\.สต\.\s*\/\s*งานสุขภาพทั้งหมด/.test(label)));
 assert.ok(featuredLabels.some(label => /แผนเงินบำรุง\s*รพ\.สต\.\/สอน\./.test(label)));
 assert.ok(featuredLabels.some(label => /แผนลูกจ้างเงินบำรุง/.test(label)));
 assert.ok(!featuredLabels.some(label => /PDPA|วันเพจลูกน้ำยุงลาย|งานสาธารณสุขอื่น/.test(label)), 'specialized tools must not clutter the five-entry Home menu');
