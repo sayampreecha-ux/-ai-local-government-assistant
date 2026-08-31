@@ -1,4 +1,4 @@
-const APP_VERSION = '2.2';
+const APP_VERSION = '2.3';
 const CACHE = `lg-assistant-ready-v${APP_VERSION.replace('.', '-')}`;
 const ASSETS = [
   './',
@@ -45,7 +45,7 @@ self.addEventListener('fetch', event => {
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      fetch(request, { cache: 'no-store' })
         .then(response => {
           if (response.ok) {
             const copy = response.clone();
