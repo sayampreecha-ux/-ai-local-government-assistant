@@ -114,3 +114,18 @@
   .composer textarea{min-height:40px}
   .privacy-note{font-size:8px}
 }
+
+.output-format-mobile-button{display:none;min-width:0;flex:1;height:34px;padding:4px 28px 4px 10px;border:1px solid var(--gdl-line);border-radius:10px;background:#f7faf8;color:var(--gdl-ink);font-size:12px;font-weight:700;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.output-format-picker-dialog{width:min(520px,calc(100% - 28px));max-height:min(70dvh,620px);padding:0;border:1px solid var(--gdl-line);border-radius:20px;background:#fff;color:var(--gdl-ink);box-shadow:0 28px 80px rgba(0,0,0,.24)}
+.output-format-picker-dialog::backdrop{background:rgba(11,27,21,.42);backdrop-filter:blur(3px)}
+.output-format-picker-head{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;background:#fff;border-bottom:1px solid var(--gdl-line)}
+.output-format-picker-head strong{font-size:16px}.output-format-picker-head button{width:36px;height:36px;border:1px solid var(--gdl-line);border-radius:10px;background:#fff;color:var(--gdl-primary);font-size:22px;cursor:pointer}
+.output-format-picker-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px;overflow:auto}
+.output-format-picker-grid button{min-height:46px;padding:10px 11px;border:1px solid var(--gdl-line);border-radius:12px;background:#fff;color:var(--gdl-ink);font:inherit;font-size:13px;font-weight:700;text-align:left;cursor:pointer}
+.output-format-picker-grid button[aria-pressed="true"]{border-color:var(--gdl-primary);background:var(--gdl-soft);color:var(--gdl-primary)}
+
+@media(max-width:620px){
+  .output-format-control select{display:none}
+  .output-format-mobile-button{display:block;font-size:11px}
+  .output-format-picker-grid{grid-template-columns:1fr}
+}
