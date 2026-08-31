@@ -160,6 +160,8 @@
     const relatedModules = Array.isArray(activeRoute.modules) && activeRoute.modules.length ? activeRoute.modules.join(', ') : activeRoute.moduleId;
     const taskPlan = planUniversalTask(userQuestion, normalizedContext);
     const gates = taskPlan.qualityGates;
+    const operationalSummary = taskPlan.action === 'summarize'
+      || /(?:สรุป|ย่อ|executive summary|สรุปหนังสือ|สรุปเอกสาร)/i.test(userQuestion);
     const outputPlan = typeof window.GovPromptCore.routeOutput === 'function'
       ? window.GovPromptCore.routeOutput(userQuestion, activeRoute, normalizedContext)
       : Object.freeze({ id: 'default', label: 'คำตอบพร้อมใช้', format: 'answer-first', instructions: Object.freeze([]), confidence: 0.5, reason: 'fallback' });
@@ -351,6 +353,19 @@
       ...(governancePlan.blockers || []).map(item => `- Governance blocker: ${item}`),
       '', 'หลักการวิเคราะห์ที่ต้องปฏิบัติ',
       ...domainSpecificPrinciples,
+      ...(operationalSummary ? [
+        '',
+        'โหมดสรุปเพื่อการปฏิบัติจริง',
+        '- เริ่มด้วยคำตอบสั้น 2–4 บรรทัดว่าเอกสารนี้หมายความว่าอะไรและมีผลต่อการทำงานอย่างไร',
+        '- ระบุเฉพาะเมื่อมีข้อมูลจริง: ใช้กับใคร/กรณีใด วันมีผล วงเงิน ระยะเวลา เงื่อนไข ข้อยกเว้น และบทเฉพาะกาล',
+        '- แปลงข้อกำหนดเป็น “ต้องทำอะไร” ตามลำดับที่เจ้าหน้าที่ทำตามได้จริง',
+        '- ชี้จุดเสี่ยงหรือความเข้าใจผิดเฉพาะที่มีฐานจากต้นฉบับหรือแหล่งราชการที่ยืนยันได้',
+        '- แยก “สิ่งที่ต้นฉบับกำหนด” ออกจาก “ข้อวิเคราะห์/คำแนะนำของ AI” ให้ชัด',
+        '- ตรวจว่ามีการแก้ไข ยกเลิก แทนที่ หรืออ้างเอกสารเดิมหรือไม่ ก่อนสรุปว่าหลักใดยังใช้',
+        '- หากหลักฐานไม่พอ ห้ามเดาเลขหนังสือ วันที่ วงเงิน เส้นตาย ข้อกฎหมาย หรือผลทางกฎหมาย ให้ระบุสิ่งที่ต้องตรวจเพิ่ม',
+        '- ปิดท้ายด้วย Checklist สั้น ๆ หรือขั้นตอนต่อไปเฉพาะเมื่อช่วยให้ผู้ใช้ทำงานต่อได้จริง',
+        '- ไม่ต้องฝืนสร้างทุกหัวข้อ ถ้าเรื่องง่ายให้ตอบสั้น ถ้าเรื่องซับซ้อนค่อยขยาย'
+      ] : []),
       '', 'Self-check ก่อนตอบ',
       ...taskPlan.selfCheck.map((item, index) => `${index + 1}. ${item}`),
       '', 'สถานะความเสี่ยงเบื้องต้นจาก GovPrompt',
