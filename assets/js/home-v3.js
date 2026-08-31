@@ -450,7 +450,7 @@
   function collectFiles(fileList) {
     const incoming = Array.from(fileList || []);
     attachments = [...attachments, ...incoming].slice(0, 5);
-    attachmentStatus.textContent = attachments.length ? `แนบแล้ว ${attachments.length} ไฟล์ · งานงบประมาณจะอ่านไฟล์ที่รองรับภายในเบราว์เซอร์โดยไม่ส่งไฟล์ดิบออก` : '';
+    attachmentStatus.textContent = attachments.length ? `แนบแล้ว ${attachments.length} ไฟล์ · พิมพ์ “สรุป” เพื่อสรุปใช้ปฏิบัติงาน` : '';
     if (incoming.length) window.GovPrompt?.toast('🔐 ไฟล์ยังอยู่ในเบราว์เซอร์ ระบบคำนวณ hash และอ่านเฉพาะข้อมูลโครงสร้างที่จำเป็น');
   }
   attachmentInput.addEventListener('change', () => collectFiles(attachmentInput.files));
