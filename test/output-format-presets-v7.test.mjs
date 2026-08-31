@@ -57,7 +57,9 @@ test('presentation blocks fail safely and retain government-work safeguards', ()
   assert.match(block, /กฎหมาย การเงิน และพัสดุ/);
   assert.match(block, /ข้อมูลส่วนบุคคล/);
   assert.match(block, /Human Approval|อนุมัติ/);
-  assert.match(block, /ไม่สร้างตราสัญลักษณ์หรือคำรับรอง/);
+  assert.match(block, /ห้ามตัดข้อกำหนดหรือสาระบังคับ/);
+  assert.match(block, /ไม่ได้ขอสื่อภาพ\/อินโฟกราฟิก/);
+  assert.doesNotMatch(block, /ส่งมอบทั้งข้อความพร้อมจัดวางและคำแนะนำโครงสร้างภาพ/);
 });
 
 test('selected presentation augments rather than replaces the routed deliverable', () => {
@@ -192,4 +194,16 @@ test('mobile picker uses the same select as the source of truth and dispatches c
   assert.match(home, /outputFormatSelect.value = option.value/);
   assert.ok(home.includes("outputFormatSelect.dispatchEvent(new Event('change', { bubbles: true }))"));
   assert.ok(home.includes("outputFormatId: outputFormatSelect?.value || 'auto'"));
+});
+
+
+test('non-visual menu choices do not force infographic output or weaken the primary deliverable', () => {
+  const core = loadCore();
+  for (const preset of core.OUTPUT_FORMAT_PRESETS) {
+    const block = core.buildOutputFormatPresetBlock(preset.id);
+    assert.match(block, /ข้อกำกับการนำเสนอสำหรับงานราชการ/, preset.id);
+    assert.match(block, /ห้ามตัดข้อกำหนดหรือสาระบังคับของชิ้นงานหลัก/, preset.id);
+    assert.match(block, /ถ้าผู้ใช้ไม่ได้ขอสื่อภาพ\/อินโฟกราฟิก ไม่ต้องเสนอการจัดวางภาพ/, preset.id);
+    assert.doesNotMatch(block, /ส่งมอบทั้งข้อความพร้อมจัดวางและคำแนะนำโครงสร้างภาพ/, preset.id);
+  }
 });
