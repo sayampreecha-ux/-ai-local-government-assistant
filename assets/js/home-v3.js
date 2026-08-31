@@ -8,6 +8,70 @@
   const cameraInput = document.getElementById('cameraInput');
   const attachmentStatus = document.getElementById('attachmentStatus');
   const outputFormatSelect = document.getElementById('outputFormatSelect');
+  const outputFormatButton = document.getElementById('outputFormatButton');
+
+  function ensureOutputFormatDialog() {
+    let dialog = document.getElementById('outputFormatDialog');
+    if (dialog || !outputFormatSelect) return dialog;
+    dialog = document.createElement('dialog');
+    dialog.id = 'outputFormatDialog';
+    dialog.className = 'output-format-picker-dialog';
+    dialog.setAttribute('aria-labelledby', 'outputFormatDialogTitle');
+
+    const head = document.createElement('div');
+    head.className = 'output-format-picker-head';
+    const title = document.createElement('strong');
+    title.id = 'outputFormatDialogTitle';
+    title.textContent = 'รูปแบบผลลัพธ์';
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.setAttribute('aria-label', 'ปิด');
+    close.textContent = '×';
+    close.addEventListener('click', () => dialog.close());
+    head.append(title, close);
+
+    const grid = document.createElement('div');
+    grid.className = 'output-format-picker-grid';
+    [...outputFormatSelect.options].forEach(option => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.value = option.value;
+      button.textContent = option.textContent;
+      button.setAttribute('aria-pressed', option.value === outputFormatSelect.value ? 'true' : 'false');
+      button.addEventListener('click', () => {
+        outputFormatSelect.value = option.value;
+        outputFormatSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        dialog.close();
+      });
+      grid.append(button);
+    });
+
+    dialog.append(head, grid);
+    document.body.append(dialog);
+    dialog.addEventListener('close', () => outputFormatButton?.focus());
+    return dialog;
+  }
+
+  function syncOutputFormatButton() {
+    if (!outputFormatSelect || !outputFormatButton) return;
+    const option = outputFormatSelect.options[outputFormatSelect.selectedIndex];
+    outputFormatButton.textContent = option?.textContent || 'ให้ระบบเลือกอัตโนมัติ';
+    const dialog = document.getElementById('outputFormatDialog');
+    if (dialog) {
+      dialog.querySelectorAll('[data-value]').forEach(button => {
+        button.setAttribute('aria-pressed', button.dataset.value === outputFormatSelect.value ? 'true' : 'false');
+      });
+    }
+  }
+
+  outputFormatButton?.addEventListener('click', () => {
+    const dialog = ensureOutputFormatDialog();
+    syncOutputFormatButton();
+    if (dialog?.showModal) dialog.showModal();
+  });
+  outputFormatSelect?.addEventListener('change', syncOutputFormatButton);
+  syncOutputFormatButton();
+
   const dialog = document.getElementById('appDialog');
   const legacyHistoryKey = 'govprompt-v3-history';
   const history = [];
