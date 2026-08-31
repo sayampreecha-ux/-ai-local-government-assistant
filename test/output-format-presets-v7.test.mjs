@@ -188,8 +188,8 @@ test('auto and unknown menu values fail safely without pretending a format was s
 
 test('mobile picker uses the same select as the source of truth and dispatches change', () => {
   assert.match(index, /id="outputFormatButton"/);
-  assert.match(home, /[...outputFormatSelect.options]/);
+  assert.ok(home.includes('[...outputFormatSelect.options]'));
   assert.match(home, /outputFormatSelect.value = option.value/);
-  assert.match(home, /dispatchEvent(new Event('change', { bubbles: true }))/);
-  assert.match(home, /outputFormatId: outputFormatSelect?.value || 'auto'/);
+  assert.ok(home.includes("outputFormatSelect.dispatchEvent(new Event('change', { bubbles: true }))"));
+  assert.ok(home.includes("outputFormatId: outputFormatSelect?.value || 'auto'"));
 });
