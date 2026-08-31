@@ -353,14 +353,14 @@
       ? 'GovPrompt ดำเนินงานร่างงบประมาณให้แล้ว'
       : isPrResult
         ? 'คำสั่งประชาสัมพันธ์พร้อมแล้ว — ทำต่อใน AI ได้ทันที'
-        : 'GovPrompt เตรียมคำสั่งงานและแหล่งค้นให้แล้ว';
+        : 'GovPrompt เตรียมคำสั่งพร้อมใช้แล้ว';
     const workflowSummary = workflowRuntime?.primary?.currentStage?.title ? ` · Workflow: ${workflowRuntime.primary.currentStage.title} → ${workflowRuntime.primary.actionLabel}` : '';
     const presentationSummary = promptBundle.presentationPreset ? ` · การนำเสนอ: ${promptBundle.presentationPreset.label}` : '';
     description.textContent = budgetSourceRuntime
       ? `ระบบค้นและอ่านต้นฉบับราชการ ตรวจข้อมูล คำนวณ และเตรียม Working Draft พร้อมหลักฐาน${workflowSummary}${presentationSummary}`
       : isPrResult
         ? `GP จัดคำสั่งเฉพาะงานประชาสัมพันธ์ให้แล้ว พร้อมตรวจข้อเท็จจริง PDPA และรูปแบบสื่อ${workflowSummary}${presentationSummary}`
-        : `ระบบจัดคำถามไปที่ ${route.assistant.title} พร้อมค้น Primary Source ตรวจความใหม่ และส่งแหล่งอ้างอิงเข้า Prompt สำหรับวิเคราะห์ต่อ${workflowSummary}${presentationSummary}`;
+        : `ระบบจัดคำถาม ตรวจความเสี่ยง และเตรียม Prompt พร้อมแหล่งอ้างอิงให้แล้ว — กดคัดลอกไปวางใน ChatGPT หรือ AI ที่คุณใช้${workflowSummary}${presentationSummary}`;
 
     if (isPrResult) status.textContent = '✅ พร้อมทำสื่อประชาสัมพันธ์ — ไม่ดึงกฎงานอื่นมาปน';
     else if (budgetSourceRuntime && structuredBudgetArtifact(budgetSourceRuntime)) status.textContent = '✅ ร่างงบประมาณผ่านการตรวจสมดุลและพร้อมส่งออกเป็น Working Draft';
@@ -378,7 +378,7 @@
       window.GovPrompt?.toast(external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว และคัดลอก Prompt สำหรับ ChatGPT แล้ว' : 'คัดลอก Prompt พร้อมแหล่งค้นแล้ว — วางใน ChatGPT ได้เลย');
     });
 
-    copyButton.type = 'button'; copyButton.textContent = 'คัดลอก Prompt';
+    copyButton.type = 'button'; copyButton.textContent = 'คัดลอกไปใช้กับ AI';
     copyButton.addEventListener('click', async () => {
       const external = prepareExternalPrompt(promptBundle.prompt);
       if (external.blocked) { window.GovPrompt?.toast('🔒 หยุดคัดลอก: Prompt ยังมีข้อมูลเสี่ยง กรุณาปกปิดข้อมูลก่อน'); return; }
@@ -390,7 +390,7 @@
     actions.append(openChatGPT, copyButton, specialistLink);
     appendBudgetResult(section, actions, budgetSourceRuntime);
     appendSearchDetails(section, searchResult);
-    summary.textContent = 'ดู Prompt ที่ GovPrompt จัดให้'; preview.textContent = promptBundle.prompt; preview.style.whiteSpace = 'pre-wrap'; preview.style.overflowWrap = 'anywhere'; details.append(summary, preview);
+    summary.textContent = 'ดู Prompt ที่ GovPrompt เตรียมไว้'; preview.textContent = promptBundle.prompt; preview.style.whiteSpace = 'pre-wrap'; preview.style.overflowWrap = 'anywhere'; details.append(summary, preview);
     section.prepend(heading, description, status, actions); section.append(details);
     card.append(section); content.append(label, card); article.append(mark, content); conversation.appendChild(article);
   }
