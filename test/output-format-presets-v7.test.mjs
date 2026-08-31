@@ -94,3 +94,29 @@ test('home exposes the presets as a composer choice without adding a homepage ca
   assert.doesNotMatch(bottomNav, /automation-pilot|งานอัตโนมัติ/);
   assert.match(registry, /\['GP012',\s*'ผู้ช่วยประชาสัมพันธ์'/);
 });
+
+
+test('operational summary requests are wired into the actual Home prompt', () => {
+  const core = loadCore();
+  const question = 'สรุปหนังสือเวียนนี้ให้ใช้ปฏิบัติงานได้จริง';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+  const bundle = core.createGovernmentPrompt({ question, context, outputFormatId: 'auto' });
+  assert.equal(bundle.taskPlan.action, 'summarize');
+  assert.match(bundle.prompt, /โหมดสรุปเพื่อการปฏิบัติจริง/);
+  assert.match(bundle.prompt, /ต้องทำอะไร/);
+  assert.match(bundle.prompt, /สิ่งที่ต้นฉบับกำหนด/);
+  assert.match(bundle.prompt, /ห้ามเดาเลขหนังสือ วันที่ วงเงิน เส้นตาย/);
+});
+
+test('all ten presentation choices are injected into the prompt, not only shown in the UI', () => {
+  const core = loadCore();
+  const question = 'สรุปหนังสือเวียนนี้';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+  for (const id of expectedIds) {
+    const bundle = core.createGovernmentPrompt({ question, context, outputFormatId: id });
+    assert.equal(bundle.outputFormatId, id);
+    assert.equal(bundle.presentationPreset.id, id);
+    assert.match(bundle.prompt, /รูปแบบการนำเสนอที่ผู้ใช้เลือก/);
+    assert.ok(bundle.prompt.includes(bundle.presentationPreset.label));
+  }
+});
