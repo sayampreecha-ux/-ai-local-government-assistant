@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 
 const frontend = process.env.GOVPROMPT_FRONTEND_URL || 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/index.html';
-const RELEASE_HOME_VERSION = '6.3.9';
+const RELEASE_HOME_VERSION = '6.4.0';
 const browser = await chromium.launch({ headless:true });
 const context = await browser.newContext({ serviceWorkers:'allow', viewport:{width:390,height:844}, isMobile:true, hasTouch:true });
 const page = await context.newPage();
