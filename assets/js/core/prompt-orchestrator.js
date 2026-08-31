@@ -236,6 +236,7 @@
         'โหมดงาน: PR Media / Video Creation',
         '',
         'Answer First: ให้ส่งชิ้นงานที่ผู้ใช้ต้องการก่อน แล้วค่อยระบุข้อควรตรวจหรือข้อมูลที่ยังขาดเฉพาะที่จำเป็น',
+        ...(presentationBlock ? ['', 'รูปแบบการนำเสนอที่ผู้ใช้เลือก', ...presentationBlock.split('\n')] : []),
         attachmentNames.length ? `เอกสาร/ไฟล์ประกอบ: ${attachmentNames.join(', ')}` : '',
         '',
         'วิธีทำงาน',
