@@ -1,4 +1,4 @@
-const APP_VERSION = '2.1';
+const APP_VERSION = '2.2';
 const CACHE = `lg-assistant-ready-v${APP_VERSION.replace('.', '-')}`;
 const ASSETS = [
   './',
