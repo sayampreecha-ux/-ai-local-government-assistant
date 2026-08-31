@@ -120,3 +120,76 @@ test('all ten presentation choices are injected into the prompt, not only shown 
     assert.ok(bundle.prompt.includes(bundle.presentationPreset.label));
   }
 });
+
+
+test('every menu option enforces its own structure in generated prompts', () => {
+  const core = loadCore();
+  const question = 'สรุปหนังสือเวียนนี้ให้ใช้ปฏิบัติงานได้จริง';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+
+  for (const preset of core.OUTPUT_FORMAT_PRESETS) {
+    const bundle = core.createGovernmentPrompt({ question, context, outputFormatId: preset.id });
+    assert.equal(bundle.outputFormatId, preset.id, preset.id);
+    assert.equal(bundle.presentationPreset.id, preset.id, preset.id);
+    assert.ok(bundle.prompt.includes(`รูปแบบการนำเสนอ: ${preset.label}`), preset.id);
+    assert.ok(bundle.prompt.includes(`เป้าหมาย: ${preset.description}`), preset.id);
+    for (const item of preset.structure) {
+      assert.ok(bundle.prompt.includes(item), `${preset.id} missing structure: ${item}`);
+    }
+  }
+});
+
+test('all menu options preserve the primary TOR deliverable instead of replacing it', () => {
+  const core = loadCore();
+  const question = 'ช่วยร่าง TOR จัดซื้อครุภัณฑ์สำนักงาน พร้อมตรวจความเสี่ยง';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+
+  for (const preset of core.OUTPUT_FORMAT_PRESETS) {
+    const bundle = core.createGovernmentPrompt({ question, context, outputFormatId: preset.id });
+    assert.equal(bundle.outputPlan.id, 'tor', preset.id);
+    assert.ok(bundle.prompt.includes('ชิ้นงานหลักที่ Output Router เลือก'), preset.id);
+    assert.ok(bundle.prompt.includes(preset.label), preset.id);
+    assert.match(bundle.prompt, /โดยไม่ลดทอนโครงสร้างบังคับของชิ้นงานหลัก/);
+  }
+});
+
+test('all menu options also affect PR/media prompts when explicitly selected', () => {
+  const core = loadCore();
+  const question = 'ทำโพสต์ประชาสัมพันธ์โครงการนี้';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+
+  for (const preset of core.OUTPUT_FORMAT_PRESETS) {
+    const bundle = core.createGovernmentPrompt({ question, context, outputFormatId: preset.id });
+    assert.equal(bundle.prMode, true, preset.id);
+    assert.equal(bundle.outputFormatId, preset.id, preset.id);
+    assert.ok(bundle.prompt.includes('รูปแบบการนำเสนอที่ผู้ใช้เลือก'), preset.id);
+    assert.ok(bundle.prompt.includes(`รูปแบบการนำเสนอ: ${preset.label}`), preset.id);
+    for (const item of preset.structure) {
+      assert.ok(bundle.prompt.includes(item), `${preset.id} PR missing structure: ${item}`);
+    }
+  }
+});
+
+test('auto and unknown menu values fail safely without pretending a format was selected', () => {
+  const core = loadCore();
+  const question = 'สรุปเอกสารนี้';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+
+  const automatic = core.createGovernmentPrompt({ question, context, outputFormatId: 'auto' });
+  assert.equal(automatic.outputFormatId, 'auto');
+  assert.equal(automatic.presentationPreset, null);
+  assert.doesNotMatch(automatic.prompt, /รูปแบบการนำเสนอที่ผู้ใช้เลือก/);
+
+  const unknown = core.createGovernmentPrompt({ question, context, outputFormatId: 'not-a-real-format' });
+  assert.equal(unknown.outputFormatId, 'auto');
+  assert.equal(unknown.presentationPreset, null);
+  assert.doesNotMatch(unknown.prompt, /รูปแบบการนำเสนอที่ผู้ใช้เลือก/);
+});
+
+test('mobile picker uses the same select as the source of truth and dispatches change', () => {
+  assert.match(index, /id="outputFormatButton"/);
+  assert.ok(home.includes('[...outputFormatSelect.options]'));
+  assert.match(home, /outputFormatSelect.value = option.value/);
+  assert.ok(home.includes("outputFormatSelect.dispatchEvent(new Event('change', { bubbles: true }))"));
+  assert.ok(home.includes("outputFormatId: outputFormatSelect?.value || 'auto'"));
+});
