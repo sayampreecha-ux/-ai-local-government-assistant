@@ -58,8 +58,9 @@ assert.doesNotMatch(state.budgetText,/currentBudgetRule|baselineBudgetSource|lat
 assert.match(state.assistantText,/Workflow:\s*บริบทและกรอบการจัดทำงบประมาณ|ผู้ช่วยจัดทำร่างงบประมาณ/,'governed budget workflow markers missing');
 assert.match(state.homeScript,new RegExp(`home-v3\\.js\\?v=${RELEASE_HOME_VERSION.replaceAll('.','\\.')}`),'production home asset is stale');
 assert.equal(pageErrors.length,0,`page errors: ${JSON.stringify(pageErrors)}`);
-assert.ok(requests.some(item=>/\/api\/official-search/.test(item.url)),'budget workflow did not call official search Worker');
-assert.ok(responses.some(item=>/\/api\/official-search/.test(item.url)),'official search Worker returned no response');
+assert.equal(requests.some(item=>/\/api\/official-search/.test(item.url)),false,'budget workflow must not call GovPrompt official search automatically');
+assert.equal(responses.some(item=>/\/api\/official-search/.test(item.url)),false,'budget workflow unexpectedly received GovPrompt official-search response');
+assert.match(state.assistantText,/ให้ AI ของผู้ใช้ค้นเว็บสด|พร้อมส่งต่อ/,'budget workflow missing delegated user-AI live-search handoff');
 
 for (const item of requests.filter(item=>/\/api\/official-document/.test(item.url))) {
   assert.match(item.url,/ai-local-government-assistant\.sayampreecha\.workers\.dev\/api\/official-document/,'document read used a non-production endpoint');
@@ -73,5 +74,5 @@ if (/ร่างทำงาน พร้อมส่งออก/.test(state.b
   assert.doesNotMatch(state.budgetText,/ร่างทำงาน พร้อมส่งออก/,'blocked budget state must not claim export readiness');
 }
 
-console.log(JSON.stringify({frontend,releaseHomeVersion:RELEASE_HOME_VERSION,checks:{genericBudgetGuidedIntake:'PASS',guidedIntakeUnknownContinue:'PASS',budgetDomainRouting:'PASS',privacyGuard:'PASS',budgetSurface:'PASS',humanizedBudgetCopy:'PASS',governedWorkflowMarkers:'PASS',releaseCacheBust:'PASS',officialSearchWorker:'PASS',documentWorkerRouting:'PASS',officeExportOrFailClosed:'PASS'},requests,responses,pageErrors},null,2));
+console.log(JSON.stringify({frontend,releaseHomeVersion:RELEASE_HOME_VERSION,checks:{genericBudgetGuidedIntake:'PASS',guidedIntakeUnknownContinue:'PASS',budgetDomainRouting:'PASS',privacyGuard:'PASS',budgetSurface:'PASS',humanizedBudgetCopy:'PASS',governedWorkflowMarkers:'PASS',releaseCacheBust:'PASS',userAiSearchDelegation:'PASS',documentWorkerRouting:'PASS',officeExportOrFailClosed:'PASS'},requests,responses,pageErrors},null,2));
 await browser.close();
