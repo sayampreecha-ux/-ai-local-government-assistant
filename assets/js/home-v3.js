@@ -267,13 +267,26 @@
     const workflowRuntimePromise = prepareWorkflowRuntime(text);
     const context = core.createSharedContext({ facts: text, desiredOutput: text, documents: safeAttachments.map(file => file.name).join(', ') });
     const route = core.routeTransaction(context);
-    const promptBundle = core.createGovernmentPrompt({
+    const promptBundleBase = core.createGovernmentPrompt({
       question: text,
       route,
       context,
       attachments: safeAttachments,
       outputFormatId: outputFormatSelect?.value || 'auto'
     });
+    const toolPlan = typeof core.createToolRoutingPlan === 'function'
+      ? core.createToolRoutingPlan({ question: text, attachments: safeAttachments })
+      : null;
+    const toolRoutingBlock = toolPlan && typeof core.formatToolRoutingInstructions === 'function'
+      ? core.formatToolRoutingInstructions(toolPlan)
+      : '';
+    const promptBundle = toolRoutingBlock
+      ? Object.freeze({
+          ...promptBundleBase,
+          prompt: `${promptBundleBase.prompt}\n\nแนวทางเลือกเครื่องมือ\n${toolRoutingBlock}`,
+          toolRoutingPlan: toolPlan
+        })
+      : promptBundleBase;
 
     const isPr = Boolean(promptBundle?.prMode);
 
