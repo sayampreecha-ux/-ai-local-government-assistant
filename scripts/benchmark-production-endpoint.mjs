@@ -4,10 +4,10 @@ const endpoint = process.env.GOVPROMPT_SEARCH_ENDPOINT || 'https://ai-local-gove
 const origin = process.env.GOVPROMPT_FRONTEND_ORIGIN || 'https://sayampreecha-ux.github.io';
 const securityPolicyVersion = '2026-08-25.document-studio-v1';
 const cases = [
-  { query:'ซื้อคอม', sites:['cgd.go.th','dla.go.th'] },
-  { query:'รถเสียเบิกได้ไหม', sites:['cgd.go.th','dla.go.th','moi.go.th'] },
-  { query:'เงินบำรุงซื้อของได้ไหม', sites:['dla.go.th','moi.go.th'] },
-  { query:'ตรวจ TOR ถนน', sites:['cgd.go.th','dla.go.th'] },
+  { query:'ระเบียบการจัดซื้อจัดจ้างและบริหารพัสดุภาครัฐ', sites:['cgd.go.th','dla.go.th'] },
+  { query:'ระเบียบค่าใช้จ่ายในการเดินทางไปราชการ', sites:['cgd.go.th','dla.go.th','moi.go.th'] },
+  { query:'เงินบำรุง รพ.สต. ระเบียบ', sites:['dla.go.th','moi.go.th'] },
+  { query:'TOR งานก่อสร้างถนน ราคากลาง', sites:['cgd.go.th','dla.go.th'] },
   { query:'การเดินทางไปราชการโดยเครื่องบินโดยสาร', sites:['cgd.go.th','dla.go.th','moi.go.th'] }
 ];
 
