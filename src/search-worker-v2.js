@@ -144,7 +144,7 @@ async function tavilySearchOfficial(env, query, count) {
     response = await fetch('https://api.tavily.com/search', {
       method: 'POST',
       headers: { accept: 'application/json', authorization: `Bearer ${env.TAVILY_API_KEY}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ query, search_depth: 'advanced', max_results: Math.min(20, Math.max(8, count * 2)), include_answer: false, include_raw_content: false })
+      body: JSON.stringify({ query, search_depth: 'basic', max_results: Math.min(10, Math.max(5, count)), include_answer: false, include_raw_content: false })
     });
   } catch { return { ok: false, status: 502, error: 'SEARCH_PROVIDER_NETWORK_ERROR' }; }
   if (!response.ok) return classifyProviderFailure(response, 'search');
