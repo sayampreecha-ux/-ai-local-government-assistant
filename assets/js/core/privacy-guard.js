@@ -110,11 +110,7 @@
     const sensitiveContext = detectSensitiveContext(original);
     const redacted = applyRedactions(original, { preserveWhitespace: true });
     const residualRisks = detectResidualRisk(redacted.safeText);
-    // Sensitive-topic words alone are not a reason to block a prepared prompt.
-    // GovPrompt may legitimately instruct an AI how to handle health, religion, politics, etc.
-    // Block only actual restricted secrets/credentials or residual identifiers that remain
-    // after automatic redaction. Sensitive context is retained as metadata for auditing.
-    const blocked = blockingRisks.length > 0 || residualRisks.length > 0;
+    const blocked = blockingRisks.length > 0 || sensitiveContext.length > 0 || residualRisks.length > 0;
     return Object.freeze({
       original,
       safeText: redacted.safeText,
