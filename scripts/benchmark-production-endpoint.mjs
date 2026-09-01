@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 
 const endpoint = process.env.GOVPROMPT_SEARCH_ENDPOINT || 'https://ai-local-government-assistant.sayampreecha.workers.dev/api/official-search';
 const origin = process.env.GOVPROMPT_FRONTEND_ORIGIN || 'https://sayampreecha-ux.github.io';
-const securityPolicyVersion = '2026-08-09.1';
+const securityPolicyVersion = '2026-08-25.document-studio-v1';
 const cases = [
   { query:'ซื้อคอม', sites:['cgd.go.th','dla.go.th'] },
   { query:'รถเสียเบิกได้ไหม', sites:['cgd.go.th','dla.go.th','moi.go.th'] },
