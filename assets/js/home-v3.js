@@ -172,11 +172,19 @@
       return Object.freeze({ blocked: true, safeText: '', changed: false, reason: 'PRIVACY_GUARD_UNAVAILABLE' });
     }
     const privacy = core.sanitizeExternalContent(prompt);
+    const hardRisks = [
+      ...(privacy.blockingRisks || []),
+      ...(privacy.residualRisks || [])
+    ];
+    // A generated GovPrompt may legitimately mention health/public-health concepts.
+    // Sensitive-context keywords alone must not block copying the generated prompt.
+    // Direct identifiers, secrets and residual PII still fail closed.
+    const blocked = hardRisks.length > 0;
     return Object.freeze({
-      blocked: privacy.blocked,
+      blocked,
       safeText: privacy.safeText,
       changed: privacy.changed,
-      reason: privacy.blocked ? 'SENSITIVE_EXTERNAL_HANDOFF_BLOCKED' : ''
+      reason: blocked ? 'SENSITIVE_EXTERNAL_HANDOFF_BLOCKED' : ''
     });
   }
 
