@@ -10,7 +10,7 @@ const build = await readFile('scripts/build-static.mjs', 'utf8');
 test('official-search timeout guard is syntactically valid and fail-closed', () => {
   const checked = spawnSync(process.execPath, ['--check', guardPath], { encoding: 'utf8' });
   assert.equal(checked.status, 0, checked.stderr || checked.stdout);
-  assert.match(guard, /CLIENT_TIMEOUT_MS = 4_000/);
+  assert.match(guard, /CLIENT_TIMEOUT_MS = 7_000/);
   assert.match(guard, /Promise\.race/);
   assert.match(guard, /SEARCH_CLIENT_TIMEOUT/);
   assert.match(guard, /mode: 'plan-only'/);
