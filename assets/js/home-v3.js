@@ -172,14 +172,14 @@
       return Object.freeze({ blocked: true, safeText: '', changed: false, reason: 'PRIVACY_GUARD_UNAVAILABLE' });
     }
     const privacy = core.sanitizeExternalContent(prompt);
-    const hardRisks = [
-      ...(privacy.blockingRisks || []),
-      ...(privacy.residualRisks || [])
-    ];
-    // A generated GovPrompt may legitimately mention health/public-health concepts.
-    // Sensitive-context keywords alone must not block copying the generated prompt.
-    // Direct identifiers, secrets and residual PII still fail closed.
-    const blocked = hardRisks.length > 0;
+    const source = String(prompt ?? '');
+    const explicitSecretValue = /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|(?:password|passwd|api\s*key|secret|token|bearer|รหัสผ่าน|กุญแจ\s*api)\s*[:=：]\s*[A-Za-z0-9_./+\-=]{8,}/i.test(source);
+    const residualIdentifierRisks = (privacy.residualRisks || []).filter(label => label !== 'ข้อมูลรับรองสิทธิ์/รหัสลับ');
+    // Generated prompts may contain security guidance words such as "API key", "token",
+    // "health data" or "government confidential data". Those labels alone are not secrets.
+    // Block only an actual secret value/private key or residual direct identifiers that
+    // remain after automatic redaction.
+    const blocked = explicitSecretValue || residualIdentifierRisks.length > 0;
     return Object.freeze({
       blocked,
       safeText: privacy.safeText,
