@@ -11,7 +11,7 @@ const sitemapUrl = page('sitemap.xml');
 const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
-const RELEASE = Object.freeze({ home:'6.4.1', homeCss:'2.5.3', serviceWorker:'6.4.2', mic:'2.3.9', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
+const RELEASE = Object.freeze({ home:'6.4.2', homeCss:'2.5.3', serviceWorker:'6.4.3', mic:'2.3.9', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
 const WORKFLOW_RUNTIME_VERSION = '5.6.2';
 const WORKFLOW_UI_VERSION = '1.3';
 
