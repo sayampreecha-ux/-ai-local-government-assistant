@@ -129,3 +129,38 @@
   .output-format-mobile-button{display:block;font-size:11px}
   .output-format-picker-grid{grid-template-columns:1fr}
 }
+
+
+/* v2.5.3 — tablet/iPad composer stays in document flow after results */
+@media(min-width:621px) and (max-width:1199px){
+  .chat-main.has-messages{
+    padding-bottom:32px;
+  }
+  .chat-main.has-messages .composer-region{
+    position:sticky;
+    left:auto;
+    width:100%;
+    transform:none;
+    margin:24px 0 0;
+  }
+  .chat-main.has-messages .composer{
+    padding:8px;
+    border-radius:18px;
+    box-shadow:0 8px 24px rgba(18,55,42,.09);
+  }
+  .chat-main.has-messages .composer textarea{
+    min-height:46px;
+    max-height:120px;
+    padding:10px 11px 4px;
+  }
+}
+@media(min-width:621px) and (max-width:959px){
+  .chat-main.has-messages .composer-region{
+    bottom:calc(76px + env(safe-area-inset-bottom));
+  }
+}
+@media(min-width:960px) and (max-width:1199px){
+  .chat-main.has-messages .composer-region{
+    bottom:20px;
+  }
+}
