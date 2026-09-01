@@ -45,9 +45,11 @@ assert.match(index, /privacy-guard\.js/);
 assert.match(index, /tool-routing-policy\.js/);
 assert.match(index, /status-copy\.js/);
 assert.match(privacyGuard, /sanitizeExternalContent/);
-assert.match(home, /officialSearchConnector\.search/);
+assert.doesNotMatch(home, /officialSearchConnector\.search/);
+assert.match(home, /delegated-user-ai/);
+assert.match(home, /ให้ AI ของผู้ใช้ค้นเว็บสด/);
 assert.match(statusCopy, /เปิดใน ChatGPT/);
 assert.match(statusCopy, /เปิดใน Gemini/);
 assert.match(statusCopy, /hideTechnicalSearchStatus/);
 
-console.log(`GovPrompt V7 real-use baseline verified: ${cases.length}/5 priority workflows, router + tool policy + search + privacy + handoff.`);
+console.log(`GovPrompt V7 real-use baseline verified: ${cases.length}/5 priority workflows, router + user-AI web-search delegation + privacy + handoff.`);
