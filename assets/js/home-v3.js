@@ -319,22 +319,44 @@
     });
   }
 
+  function legacyCopyText(text) {
+    const textarea = document.createElement('textarea');
+    const previousFocus = document.activeElement;
+    textarea.value = String(text || '');
+    textarea.setAttribute('aria-hidden', 'true');
+    textarea.autocomplete = 'off';
+    textarea.spellcheck = false;
+    Object.assign(textarea.style, {
+      position: 'fixed',
+      top: '0',
+      left: '-9999px',
+      width: '1px',
+      height: '1px',
+      padding: '0',
+      border: '0',
+      outline: '0',
+      boxShadow: 'none',
+      background: 'transparent',
+      fontSize: '16px',
+      opacity: '0.01'
+    });
+    document.body.appendChild(textarea);
+    try { textarea.focus({ preventScroll: true }); } catch { textarea.focus(); }
+    textarea.setSelectionRange(0, textarea.value.length);
+    let copied = false;
+    try { copied = document.execCommand('copy'); } catch {}
+    textarea.remove();
+    try { previousFocus?.focus?.({ preventScroll: true }); } catch {}
+    return copied;
+  }
+
   async function copyText(text) {
-    try { await navigator.clipboard.writeText(text); return true; }
-    catch {
-      try {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.setAttribute('readonly', '');
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        const copied = document.execCommand('copy');
-        textarea.remove();
-        return copied;
-      } catch { return false; }
+    const value = String(text || '');
+    if (!value) return false;
+    if (navigator.clipboard?.writeText) {
+      try { await navigator.clipboard.writeText(value); return true; } catch {}
     }
+    return legacyCopyText(value);
   }
 
   function appendSearchDetails(section, searchResult) {
