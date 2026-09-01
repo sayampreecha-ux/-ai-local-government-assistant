@@ -194,18 +194,75 @@
     return { blocked: Boolean(result.blocked), safeText: String(result.safeText || ''), changed: Boolean(result.changed) };
   }
 
+  function legacyCopyText(text) {
+    const textarea = document.createElement('textarea');
+    const previousFocus = document.activeElement;
+    textarea.value = String(text || '');
+    textarea.setAttribute('aria-hidden', 'true');
+    textarea.autocomplete = 'off';
+    textarea.spellcheck = false;
+    Object.assign(textarea.style, {
+      position: 'fixed',
+      top: '0',
+      left: '-9999px',
+      width: '1px',
+      height: '1px',
+      padding: '0',
+      border: '0',
+      outline: '0',
+      boxShadow: 'none',
+      background: 'transparent',
+      fontSize: '16px',
+      opacity: '0.01'
+    });
+    document.body.appendChild(textarea);
+    try { textarea.focus({ preventScroll: true }); } catch { textarea.focus(); }
+    textarea.setSelectionRange(0, textarea.value.length);
+    let copied = false;
+    try { copied = document.execCommand('copy'); } catch {}
+    textarea.remove();
+    try { previousFocus?.focus?.({ preventScroll: true }); } catch {}
+    return copied;
+  }
+
   async function copyText(text) {
-    try { await navigator.clipboard.writeText(text); return true; } catch {
-      const textarea = document.createElement('textarea'); textarea.value = text; textarea.setAttribute('readonly', ''); textarea.style.position = 'fixed'; textarea.style.opacity = '0'; document.body.appendChild(textarea); textarea.select(); const copied = document.execCommand('copy'); textarea.remove(); return copied;
+    const value = String(text || '');
+    if (!value) return false;
+    if (navigator.clipboard?.writeText) {
+      try { await navigator.clipboard.writeText(value); return true; } catch {}
     }
+    return legacyCopyText(value);
   }
 
   async function handoffTo(card, destination) {
     const handoff = safeHandoff(card);
     if (handoff.blocked || !handoff.safeText) { window.GovPrompt?.toast?.('🔒 หยุดส่งต่อ: ยังพบข้อมูลเสี่ยง กรุณาปกปิดข้อมูลก่อน'); return; }
-    if (!await copyText(handoff.safeText)) { window.GovPrompt?.toast?.('ไม่สามารถคัดลอกคำสั่งได้ กรุณาลองใหม่'); return; }
-    if (destination === 'chatgpt') window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
-    if (destination === 'gemini') window.open('https://gemini.google.com/', '_blank', 'noopener,noreferrer');
+    const destinationUrl = destination === 'chatgpt'
+      ? 'https://chatgpt.com/'
+      : destination === 'gemini'
+        ? 'https://gemini.google.com/'
+        : '';
+    let destinationWindow = null;
+    if (destinationUrl) {
+      try {
+        destinationWindow = window.open('about:blank', '_blank');
+        if (destinationWindow) destinationWindow.opener = null;
+      } catch {}
+    }
+    const copied = await copyText(handoff.safeText);
+    if (!copied) {
+      try { destinationWindow?.close?.(); } catch {}
+      window.GovPrompt?.toast?.('ไม่สามารถคัดลอกคำสั่งได้ กรุณาลองใหม่');
+      return;
+    }
+    if (destinationUrl) {
+      if (destinationWindow) {
+        try { destinationWindow.location.replace(destinationUrl); }
+        catch { window.open(destinationUrl, '_blank', 'noopener,noreferrer'); }
+      } else {
+        window.open(destinationUrl, '_blank', 'noopener,noreferrer');
+      }
+    }
     if (destination === 'chatgpt') window.GovPrompt?.toast?.(handoff.changed ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว · คัดลอกแล้ว ✅ เปิด ChatGPT → แตะช่องข้อความ → วาง → กดส่ง' : 'คัดลอกแล้ว ✅ เปิด ChatGPT → แตะช่องข้อความ → วาง → กดส่ง');
     else if (destination === 'gemini') window.GovPrompt?.toast?.(handoff.changed ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว · คัดลอกแล้ว ✅ เปิด Gemini → แตะช่องข้อความ → วาง → กดส่ง' : 'คัดลอกแล้ว ✅ เปิด Gemini → แตะช่องข้อความ → วาง → กดส่ง');
     else window.GovPrompt?.toast?.(handoff.changed ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว · คัดลอกคำสั่งแล้ว ✅ ไปที่ ChatGPT → วาง → กดส่ง' : 'คัดลอกคำสั่งแล้ว ✅ ไปที่ ChatGPT → วาง → กดส่ง');
