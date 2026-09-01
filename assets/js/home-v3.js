@@ -134,7 +134,7 @@
     const article = document.createElement('article');
     article.className = 'message assistant';
     article.id = 'thinkingMessage';
-    article.innerHTML = '<span class="assistant-mark" aria-hidden="true">กพ</span><div class="assistant-content"><div class="thinking"><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>กำลังค้น อ่าน และตรวจหลักฐานราชการ</span></div><div class="analysis-steps">จำแนกงาน · ค้นต้นฉบับ · อ่านเอกสาร · ตรวจความใหม่ · คำนวณ/ตรวจสมดุล · เตรียมผลลัพธ์</div></div>';
+    article.innerHTML = '<span class="assistant-mark" aria-hidden="true">กพ</span><div class="assistant-content"><div class="thinking"><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>กำลังจัดโครงสร้างคำถามและเตรียม Prompt</span></div><div class="analysis-steps">จำแนกงาน · ตรวจความเสี่ยง · กำหนดแหล่งที่ AI ควรค้น · เตรียมผลลัพธ์</div></div>';
     conversation.appendChild(article);
   }
 
@@ -144,8 +144,7 @@
       || typeof core.createSharedContext !== 'function'
       || typeof core.routeTransaction !== 'function'
       || typeof core.createGovernmentPrompt !== 'function'
-      || typeof core.resolveOutputFormatPreset !== 'function'
-      || typeof core.officialSearchConnector?.search !== 'function') {
+      || typeof core.resolveOutputFormatPreset !== 'function') {
       throw new Error('GovPrompt Core is unavailable');
     }
     return core;
@@ -282,20 +281,20 @@
       });
     }
 
-    const [searchResult, initialWorkflowRuntime] = await Promise.all([
-      core.officialSearchConnector.search(text, { limitSources: 6, count: 10 }),
-      workflowRuntimePromise
-    ]);
-    const budgetRuntime = await prepareBudgetOfficialRuntime(text, initialWorkflowRuntime, core);
-    const workflowRuntime = budgetRuntime.workflowRuntime;
-    const withSearch = enrichPromptWithSearch(promptBundle, searchResult);
+    const workflowRuntime = await workflowRuntimePromise;
+    const searchResult = Object.freeze({
+      mode: 'delegated-user-ai',
+      results: [],
+      evidence: { primaryResults: [], conclusionEligible: false },
+      warning: 'GovPrompt ไม่ค้นเว็บสดอัตโนมัติ — ให้ AI ของผู้ใช้ค้นแหล่งราชการ/ต้นฉบับล่าสุดตาม Prompt ที่เตรียมไว้'
+    });
     return Object.freeze({
       route,
-      promptBundle: enrichPromptWithWorkflow(withSearch, workflowRuntime),
+      promptBundle: enrichPromptWithWorkflow(promptBundle, workflowRuntime),
       searchResult,
       workflowRuntime: workflowRuntime.view,
       workflowRuntimeStatus: workflowRuntime.status,
-      budgetSourceRuntime: budgetRuntime.budgetSourceRuntime
+      budgetSourceRuntime: null
     });
   }
 
@@ -318,7 +317,7 @@
   }
 
   function appendSearchDetails(section, searchResult) {
-    if (searchResult?.mode === 'skipped-pr') return;
+    if (searchResult?.mode === 'skipped-pr' || searchResult?.mode === 'delegated-user-ai') return;
     const details = document.createElement('details');
     const summary = document.createElement('summary');
     const results = (searchResult?.results || []).filter(result => result.official);
@@ -424,12 +423,13 @@
       ? `ระบบค้นและอ่านต้นฉบับราชการ ตรวจข้อมูล คำนวณ และเตรียม Working Draft พร้อมหลักฐาน${workflowSummary}${presentationSummary}`
       : isPrResult
         ? `GP จัดคำสั่งเฉพาะงานประชาสัมพันธ์ให้แล้ว พร้อมตรวจข้อเท็จจริง PDPA และรูปแบบสื่อ${workflowSummary}${presentationSummary}`
-        : `ระบบจัดคำถาม ตรวจความเสี่ยง และเตรียม Prompt พร้อมแหล่งอ้างอิงให้แล้ว — กดคัดลอกไปวางใน ChatGPT หรือ AI ที่คุณใช้${workflowSummary}${presentationSummary}`;
+        : `ระบบจัดคำถาม ตรวจความเสี่ยง และเตรียม Prompt กำหนดวิธีค้นแหล่งราชการให้แล้ว — กดคัดลอกไปวางใน ChatGPT หรือ AI ที่คุณใช้${workflowSummary}${presentationSummary}`;
 
     if (isPrResult) status.textContent = '✅ พร้อมทำสื่อประชาสัมพันธ์ — ไม่ดึงกฎงานอื่นมาปน';
     else if (budgetSourceRuntime && structuredBudgetArtifact(budgetSourceRuntime)) status.textContent = '✅ ร่างงบประมาณผ่านการตรวจสมดุลและพร้อมส่งออกเป็น Working Draft';
     else if (searchResult?.mode === 'live' && searchResult?.evidence?.conclusionEligible) status.textContent = '✅ ค้นสดและยืนยันหลักฐานปัจจุบันได้ตาม metadata ที่มี';
     else if (searchResult?.mode === 'live') status.textContent = `⚠️ ค้นสดแล้ว แต่ ${searchResult.warning || 'ยังยืนยันฉบับปัจจุบันล่าสุดไม่ได้'}`;
+    else if (searchResult?.mode === 'delegated-user-ai') status.textContent = '✅ พร้อมส่งต่อ — ให้ AI ของผู้ใช้ค้นเว็บสดและตรวจแหล่งราชการเองตาม Prompt';
     else status.textContent = `ℹ️ ${searchResult?.warning || 'ยังเชื่อมบริการค้นเว็บราชการสดไม่ได้'}`;
 
     openChatGPT.type = 'button'; openChatGPT.textContent = 'เปิดใน ChatGPT';
@@ -439,7 +439,7 @@
       const copied = await copyText(external.safeText);
       if (!copied) { window.GovPrompt?.toast('ไม่สามารถคัดลอกได้ กรุณาลองใหม่'); return; }
       window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
-      window.GovPrompt?.toast(external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว และคัดลอก Prompt สำหรับ ChatGPT แล้ว' : 'คัดลอก Prompt พร้อมแหล่งค้นแล้ว — วางใน ChatGPT ได้เลย');
+      window.GovPrompt?.toast(external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว และคัดลอก Prompt สำหรับ ChatGPT แล้ว' : 'คัดลอก Prompt แล้ว — ให้ ChatGPT ค้นสดตามคำสั่งได้เลย');
     });
 
     copyButton.type = 'button'; copyButton.textContent = 'คัดลอกไปใช้กับ AI';
@@ -447,7 +447,7 @@
       const external = prepareExternalPrompt(promptBundle.prompt);
       if (external.blocked) { window.GovPrompt?.toast('🔒 หยุดคัดลอก: Prompt ยังมีข้อมูลเสี่ยง กรุณาปกปิดข้อมูลก่อน'); return; }
       const copied = await copyText(external.safeText);
-      window.GovPrompt?.toast(copied ? (external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงก่อนคัดลอกแล้ว' : 'คัดลอก Prompt พร้อมแหล่งค้นแล้ว') : 'ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
+      window.GovPrompt?.toast(copied ? (external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงก่อนคัดลอกแล้ว' : 'คัดลอก Prompt พร้อมคำสั่งค้นสดแล้ว') : 'ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
     });
 
     specialistLink.href = route.assistant.path; specialistLink.textContent = `เปิดแบบฟอร์ม ${route.moduleId}`;
