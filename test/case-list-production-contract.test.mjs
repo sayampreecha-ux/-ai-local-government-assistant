@@ -24,5 +24,5 @@ test('Pages build ships every browser dependency required by case memory and cit
 });
 
 test('GP008 production proof follows the released toolkit cache version', () => {
-  assert.equal(gp008Proof.includes('public-health-worker-toolkit-v1\\.js\\?v=1\\.0\\.2'), true);
+  assert.equal(gp008Proof.includes('public-health-worker-toolkit-v1\\.js\\?v=1\\.0\\.3'), true);
 });
