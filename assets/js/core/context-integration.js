@@ -69,9 +69,9 @@
     if (!window.GovPromptMosquitoOnepage) {
       appendScript('mosquitoOnepageFeatureScript', 'assets/js/features/mosquito-survey-onepage-v1.js?v=1.0.1');
     }
-    appendScript('mosquitoPublicHealthPlacementScript', 'assets/js/features/mosquito-public-health-placement-v1.js?v=1.0.1');
+    appendScript('mosquitoPublicHealthPlacementScript', 'assets/js/features/mosquito-public-health-placement-v1.js?v=1.0.2');
     if (!window.GovPromptPublicHealthToolkit) {
-      appendScript('publicHealthWorkerToolkitScript', 'assets/js/features/public-health-worker-toolkit-v1.js?v=1.0.2');
+      appendScript('publicHealthWorkerToolkitScript', 'assets/js/features/public-health-worker-toolkit-v1.js?v=1.0.3');
     }
   }
 
