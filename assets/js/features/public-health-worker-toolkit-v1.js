@@ -89,12 +89,24 @@
     document.head.appendChild(style);
   }
 
-  function copyText(text) {
-    if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(text);
+  async function copyText(text) {
+    const value = String(text || '');
+    if (!value) return false;
+    if (navigator.clipboard?.writeText) {
+      try { await navigator.clipboard.writeText(value); return true; } catch (_) {}
+    }
     const area = document.createElement('textarea');
-    area.value = text; area.style.position = 'fixed'; area.style.opacity = '0';
-    document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove();
-    return Promise.resolve();
+    area.value = value;
+    area.setAttribute('readonly', '');
+    Object.assign(area.style, { position: 'fixed', left: '-9999px', top: '0', opacity: '0.01', fontSize: '16px' });
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    area.setSelectionRange(0, area.value.length);
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (_) {}
+    area.remove();
+    return ok;
   }
 
   function createTaskButton(tasks) {
@@ -186,8 +198,8 @@
       const box = document.getElementById('hwtPromptResult'); box.className = 'hwt-result'; box.textContent = prompt; return prompt;
     };
     document.getElementById('hwtBuild').onclick = build;
-    document.getElementById('hwtCopy').onclick = async () => { await copyText(prompt || build()); };
-    document.getElementById('hwtChat').onclick = async () => { await copyText(prompt || build()); window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer'); };
+    document.getElementById('hwtCopy').onclick = async () => { const ok = await copyText(prompt || build()); alert(ok ? 'คัดลอกแล้ว' : 'คัดลอกอัตโนมัติไม่ได้ กรุณาเลือกข้อความแล้วคัดลอก'); };
+    document.getElementById('hwtChat').onclick = async () => { const ok = await copyText(prompt || build()); if (!ok) return alert('คัดลอกอัตโนมัติไม่ได้ กรุณาเลือกข้อความแล้วคัดลอก'); window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer'); };
   }
 
   function openMosquito(panel, generator) {
