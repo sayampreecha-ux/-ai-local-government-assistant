@@ -45,6 +45,6 @@ test('GP008 loads toolbox and groups specialist tools under Other, not global ho
   assert.match(placement, /อื่นๆ/);
   assert.match(gp008, /data-module-id=["']GP008["']/i);
   assert.match(gp008, /id=["']healthWorkerToolkitTask["']/i);
-  assert.match(gp008, /public-health-worker-toolkit-v1\.js\?v=1\.0\.2/);
+  assert.match(gp008, /public-health-worker-toolkit-v1\.js\?v=1\.0\.3/);
   assert.doesNotMatch(home, /healthWorkerToolkitTask/);
 });
