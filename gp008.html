@@ -94,17 +94,42 @@
     $('output').style.display = 'block';
   });
 
+  function fallbackCopy(text) {
+    const area = document.createElement('textarea');
+    area.value = String(text || '');
+    area.setAttribute('readonly', '');
+    Object.assign(area.style, { position: 'fixed', left: '-9999px', top: '0', opacity: '0.01', fontSize: '16px' });
+    document.body.appendChild(area);
+    area.focus();
+    area.select();
+    area.setSelectionRange(0, area.value.length);
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (_) {}
+    area.remove();
+    return ok;
+  }
+
+  async function copyPromptText(text) {
+    const value = String(text || '');
+    if (!value) return false;
+    if (navigator.clipboard?.writeText) {
+      try { await navigator.clipboard.writeText(value); return true; } catch (_) {}
+    }
+    return fallbackCopy(value);
+  }
+
   $('copy').addEventListener('click', async () => {
-    if (!$('output').textContent) return alert('กรุณาสร้าง Prompt ก่อน');
-    await navigator.clipboard.writeText($('output').textContent);
-    alert('คัดลอกแล้ว');
+    const text = $('output').textContent;
+    if (!text) return alert('กรุณาสร้าง Prompt ก่อน');
+    const ok = await copyPromptText(text);
+    alert(ok ? 'คัดลอกแล้ว' : 'คัดลอกอัตโนมัติไม่ได้ กรุณากดค้างที่ข้อความ Prompt แล้วเลือกคัดลอก');
   });
   $('clear').addEventListener('click', () => location.reload());
 })();
 </script>
 
 <script id="mosquitoOnepageFeatureScript" src="assets/js/features/mosquito-survey-onepage-v1.js?v=1.0.1"></script>
-<script id="publicHealthWorkerToolkitScript" src="assets/js/features/public-health-worker-toolkit-v1.js?v=1.0.2"></script>
+<script id="publicHealthWorkerToolkitScript" src="assets/js/features/public-health-worker-toolkit-v1.js?v=1.0.3"></script>
 <script id="mosquitoPublicHealthPlacementScript" src="assets/js/features/mosquito-public-health-placement-v1.js?v=1.0.2"></script>
 <script src="assets/js/core/shared-context.js"></script>
 <script src="assets/js/core/prompt-registry.js"></script>
