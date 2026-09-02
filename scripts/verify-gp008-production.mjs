@@ -57,7 +57,7 @@ assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.10/);
 assert.match(catalog, /เมนูเด่น/);
 assert.match(catalog, /👥 แผนลูกจ้างเงินบำรุง/);
 assert.match(catalog, /temp-staff-wizard\.html/);
-assert.match(context, /public-health-worker-toolkit-v1\.js\?v=1\.0\.2/);
+assert.match(context, /public-health-worker-toolkit-v1\.js\?v=1\.0\.3/);
 assert.match(toolkit, /เครื่องมือหมออนามัย/);
 assert.match(toolkit, /สรุปคัดกรอง NCD/);
 assert.match(toolkit, /รายงานเยี่ยมบ้าน/);
