@@ -40,7 +40,7 @@ test('GP008 loads toolbox and groups specialist tools under Other, not global ho
 
   assert.match(integration, /function isPublicHealthPage\(moduleId\)/);
   assert.match(integration, /loadModuleFeature\(pageModuleId\)/);
-  assert.match(integration, /public-health-worker-toolkit-v1\.js\?v=1\.0\.2/);
+  assert.match(integration, /public-health-worker-toolkit-v1\.js\?v=1\.0\.3/);
   assert.match(placement, /health-worker-toolkit-task/);
   assert.match(placement, /อื่นๆ/);
   assert.match(gp008, /data-module-id=["']GP008["']/i);
