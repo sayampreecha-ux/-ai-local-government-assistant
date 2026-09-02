@@ -44,7 +44,7 @@ for (let index = 1; index <= 13; index += 1) {
     assert.equal(compactCurrent.includes(integrationScripts), true, `${file}: Shared Context integration missing`);
     assert.match(current, /data-module-id=["']GP008["']/i, `${file}: explicit GP008 module marker missing`);
     assert.match(current, /id=["']healthWorkerToolkitTask["']/i, `${file}: health toolkit entry missing`);
-    assert.match(current, /public-health-worker-toolkit-v1\.js\?v=1\.0\.2/i, `${file}: health toolkit runtime missing`);
+    assert.match(current, /public-health-worker-toolkit-v1\.js\?v=1\.0\.3/i, `${file}: health toolkit runtime missing`);
     continue;
   }
 
