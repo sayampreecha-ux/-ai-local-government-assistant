@@ -16,6 +16,8 @@
   const DECISION_TERMS = /(?:ได้ไหม|ได้หรือไม่|มีสิทธิ|ไม่มีสิทธิ|เบิกได้|เบิกไม่ได้|ทำได้|ทำไม่ได้|มีอำนาจ|อนุมัติได้|จ่ายได้|ชอบด้วย|ถูกกฎหมาย|ผิดกฎหมาย|ควร.{0,40}ไหม|ต้อง.{0,40}ไหม|ต้องทำหรือไม่|(?:ใช้|มีผล|เกี่ยวข้อง).{0,40}(?:ไหม|หรือไม่))/i;
   const MULTI_CONDITION_TERMS = /(?:สิทธิ|คุณสมบัติ|เงื่อนไข|โบนัส|ประโยชน์ตอบแทน|เบิก|พัสดุ|จัดซื้อ|จัดจ้าง|tor|งบประมาณ|เงินบำรุง|เงินสะสม|บรรจุ|แต่งตั้ง|เลื่อนเงินเดือน|เงินเดือน|วินัย|อำนาจ|อนุมัติ|สั่งจ่าย)/i;
   const LEGAL_VERSION_TERMS = /(?:กฎหมาย|ระเบียบ|ประกาศ|หลักเกณฑ์|หนังสือเวียน|หนังสือสั่งการ|ข้อหารือ|ซักซ้อม|คำพิพากษา|มาตรา|ข้อ\s*\d|ฉบับ|พ\.ศ\.|ปัจจุบัน|ล่าสุด|ยังใช้|ยังมีผล)/i;
+  const INTERPRETATION_DECISION_TERMS = /(?:เบิก.{0,80}(?:ได้ไหม|ได้หรือไม่)|มีสิทธิ(?:ไหม|หรือไม่)?|จ่าย.{0,80}(?:ได้ไหม|ได้หรือไม่)|ทำ.{0,80}(?:ได้ไหม|ได้หรือไม่)|ผิดหรือไม่|ใครมีอำนาจ|แต่งตั้ง.{0,40}(?:ได้ไหม|ได้หรือไม่)|ย้าย|โอน|รับโอน|ต้องคืนเงิน(?:ไหม|หรือไม่)|เข้าข่าย|ถือเป็น|วิธีนี้ถูกต้องหรือไม่)/i;
+  const INTERPRETATION_FACTORS = /(?:ถือว่า|เข้าลักษณะ|จำเป็น|เพื่อประโยชน์ราชการ|รับการคัดเลือก|โดยอนุโลม|เหตุจำเป็น|ตามความเหมาะสม|ตีความ|ข้อเท็จจริง|หลายกฎหมาย|หลายขั้นตอน|ความเห็น.{0,30}ขัด|แนวปฏิบัติ.{0,30}ขัด|เสียสิทธิ|ความรับผิด|อำนาจหน้าที่|จ่ายเงิน|เบิก|สิทธิ|แต่งตั้ง|โอน|ย้าย)/i;
 
   const GENERAL_ASSISTANT = Object.freeze({ moduleId: 'GENERAL', title: 'ผู้ช่วยงานราชการไทยแบบครอบคลุม' });
 
@@ -97,6 +99,49 @@
     });
   }
 
+  function extractCaseFingerprint(question, context = {}) {
+    const source = normalizeText(question);
+    const facts = normalizeText(context?.facts || source);
+    const pick = (pattern, fallback = '[ให้ AI สกัดจากข้อเท็จจริง]') => facts.match(pattern)?.[0] || fallback;
+    return Object.freeze({
+      actor: pick(/(?:ข้าราชการ|พนักงานส่วนท้องถิ่น|ลูกจ้าง|ผู้บริหาร|ผู้ผ่านการสรรหา|ผู้สมัคร)[^,.\n]{0,80}/i),
+      organization: pick(/(?:องค์การบริหารส่วนจังหวัด|อบจ\.|องค์การบริหารส่วนตำบล|อบต\.|เทศบาล|อปท\.|หน่วยงาน)[^,.\n]{0,60}/i),
+      status: pick(/(?:ผู้ผ่านการสรรหา|ผู้ผ่านการคัดเลือก|ผู้สมัคร|ผู้มีสิทธิ|ผู้ได้รับแต่งตั้ง)[^,.\n]{0,80}/i),
+      priorEvent: pick(/(?:ผ่านการสรรหา|ผ่านการคัดเลือก|ประกาศผล|ได้รับคำสั่ง|ได้รับแต่งตั้ง)[^,.\n]{0,80}/i),
+      currentStage: normalizeText(context?.currentStage) || pick(/(?:รายงานตัวครั้งแรก|รายงานตัว|เลือก[^,.\n]{0,60}|รับตำแหน่ง|ก่อนสอบ|หลังสอบ)[^,.\n]{0,80}/i),
+      action: pick(/(?:เดินทาง|รายงานตัว|เลือก|เบิก|จ่าย|แต่งตั้ง|ย้าย|โอน|รับโอน)[^,.\n]{0,100}/i),
+      claimOrPower: pick(/(?:ค่าใช้จ่ายในการเดินทาง|ค่าเดินทาง|สิทธิ|ค่าใช้จ่าย|อำนาจ|เบิก|จ่าย)[^,.\n]{0,80}/i),
+      legalIssue: pick(/(?:รับการคัดเลือก|ข้อ\s*\d+(?:\(\d+\))?|ถือเป็น|เข้าข่าย|มีอำนาจ)[^,.\n]{0,100}/i),
+      dateContext: pick(/(?:พ\.ศ\.\s*)?25\d{2}|(?:พ\.ศ\.\s*)?26\d{2}|ปี\s*\d{2,4}|วันที่\s*\d{1,2}[^,.\n]{0,30}/i, '[ต้องระบุวันที่เกิดข้อเท็จจริง]')
+    });
+  }
+
+  function buildCasePrecedentGate(question, context = {}, riskLevel = 'LOW') {
+    const source = normalizeForReasoning([question, context?.facts, context?.currentStage].filter(Boolean).join(' '));
+    const interpretationRisk = INTERPRETATION_DECISION_TERMS.test(source) && INTERPRETATION_FACTORS.test(source);
+    if (!interpretationRisk) return Object.freeze({ required: false, status: 'not-required', reason: 'primary-authority-sufficient-unless-new-ambiguity-appears' });
+
+    const fingerprint = extractCaseFingerprint(question, context);
+    const compactFacts = Object.values(fingerprint).filter(value => !String(value).startsWith('[')).join(' ');
+    const legalPhrase = fingerprint.legalIssue.startsWith('[') ? source : fingerprint.legalIssue;
+    return Object.freeze({
+      required: true,
+      status: 'blocked-pending-case-precedent-search',
+      reason: 'interpretation-risk-detected',
+      riskLevel,
+      fingerprint,
+      searchQueries: Object.freeze([
+        `ประเด็นข้อกฎหมาย ${legalPhrase} หนังสือหารือ แนววินิจฉัย`,
+        `${compactFacts || source} หนังสือหารือ`,
+        `หารือ แนวทางปฏิบัติ ${legalPhrase} site:go.th`
+      ]),
+      requiredPasses: Object.freeze(['primary-authority-current-version', 'case-precedent', 'contrary-and-newer-authority']),
+      matchingDimensions: Object.freeze(['person', 'organization', 'procedure-stage', 'action', 'legal-provision', 'claim']),
+      allowedMatchLevels: Object.freeze(['HIGH', 'MEDIUM', 'LOW']),
+      conclusionStatusUntilPassed: '🔎 หลักฐานยังไม่พอที่จะฟันธง'
+    });
+  }
+
   function planUniversalTask(question, context = {}) {
     const source = normalizeForReasoning([question, context?.facts, context?.desiredOutput].filter(Boolean).join(' '));
     if (!source) throw new TypeError('question must be a non-empty string');
@@ -160,6 +205,7 @@
     const relatedModules = Array.isArray(activeRoute.modules) && activeRoute.modules.length ? activeRoute.modules.join(', ') : activeRoute.moduleId;
     const taskPlan = planUniversalTask(userQuestion, normalizedContext);
     const gates = taskPlan.qualityGates;
+    const casePrecedentGate = buildCasePrecedentGate(userQuestion, normalizedContext, taskPlan.riskLevel);
     const operationalSummary = taskPlan.action === 'summarize'
       || /(?:สรุป|ย่อ|executive summary|สรุปหนังสือ|สรุปเอกสาร)/i.test(userQuestion);
     const outputPlan = typeof window.GovPromptCore.routeOutput === 'function'
@@ -326,6 +372,21 @@
         '- ลำดับน้ำหนักหลักฐาน: กฎหมาย/กฎ/ระเบียบ/ประกาศต้นฉบับ → หน่วยงานเจ้าของเรื่อง/หนังสือสั่งการทางการ → คำวินิจฉัยหรือคำพิพากษาที่เกี่ยวข้อง → เว็บไซต์ราชการอื่น → แหล่งสรุป',
         '- หากแหล่งสรุปขัดกับต้นฉบับ ให้ยึดต้นฉบับ และหากต้นฉบับหลายฉบับขัดกันให้ตรวจลำดับศักดิ์ วันมีผล และฉบับแก้ไข'
       ] : []),
+      ...(casePrecedentGate.required ? [
+        '', 'CASE-PRECEDENT & INTERPRETATION GATE — เปิดอัตโนมัติ',
+        '- พบปัญหาตีความ: ห้ามฟันธงจากตัวบทเพียงอย่างเดียว แม้พบกฎหมายหรือระเบียบที่เกี่ยวข้องแล้ว',
+        '- PASS 1: ค้นกฎหมาย กฎ ระเบียบ ประกาศ หนังสือสั่งการหลัก ฉบับแก้ไข/ยกเลิก และวันมีผล เพื่อยืนยัน Rule ปัจจุบัน',
+        '- PASS 2: ค้นหนังสือตอบข้อหารือ แนววินิจฉัย หนังสือซักซ้อม แนวปฏิบัติ คู่มือ/FAQ หรือคำพิพากษาที่ข้อเท็จจริงตรงหรือใกล้เคียง',
+        `- Case Fingerprint: actor=${casePrecedentGate.fingerprint.actor}; organization=${casePrecedentGate.fingerprint.organization}; status=${casePrecedentGate.fingerprint.status}; prior_event=${casePrecedentGate.fingerprint.priorEvent}; current_stage=${casePrecedentGate.fingerprint.currentStage}; action=${casePrecedentGate.fingerprint.action}; claim_or_power=${casePrecedentGate.fingerprint.claimOrPower}; legal_issue=${casePrecedentGate.fingerprint.legalIssue}; date_context=${casePrecedentGate.fingerprint.dateContext}`,
+        '- ต้องสร้างคำค้นอย่างน้อย 3 แบบ: Legal Issue Query / Fact Pattern Query / Official Language Query และห้ามค้นจากชื่อเรื่องอย่างเดียว',
+        ...casePrecedentGate.searchQueries.map((query, index) => `- คำค้นตั้งต้น ${index + 1}: ${query}`),
+        '- เมื่อพบ precedent ให้เทียบ 6 มิติ: บุคคล ประเภทหน่วยงาน ขั้นตอน การกระทำ บทกฎหมาย และสิทธิ/ค่าใช้จ่าย แล้วจัด HIGH / MEDIUM / LOW MATCH',
+        '- LOW MATCH ใช้ฟันธงไม่ได้; หากไม่มี HIGH MATCH ให้หา MEDIUM MATCH จากราชการอย่างน้อย 2 แหล่ง หรือแนวหน่วยงานเจ้าของเรื่องพร้อมคู่มือ/FAQ รองรับ',
+        '- ตรวจวันที่ precedent กฎหมายที่ใช้ขณะนั้น ฉบับแก้ไข หนังสือใหม่กว่า แนวขัดกัน และกฎใหม่ ตั้งแต่วัน precedent ถึงปัจจุบัน',
+        '- หยุดค้นได้เมื่อพบ Rule ปัจจุบัน + HIGH MATCH official precedent + ไม่พบ authority ใหม่กว่าหรือขัดกันที่น้ำหนักสูงกว่า + อธิบาย Rule → Facts → Interpretation → Result ได้ครบ',
+        '- หากค้นแล้วยังไม่พบ ให้เขียนว่า “ยังไม่พบหนังสือตอบข้อหารือหรือแนววินิจฉัยตรงกรณีจากการค้นครั้งนี้” ห้ามสรุปว่าไม่มีหนังสือหารือ',
+        '- ก่อนผ่าน Gate ให้ใช้สถานะ “🔎 หลักฐานยังไม่พอที่จะฟันธง” และงานกฎหมาย/การเงิน/พัสดุ/บุคคล/งบประมาณ/อำนาจ/สิทธิประโยชน์ต้องคง Human Approval'
+      ] : []),
       '', 'หลักสำคัญเรื่องการจำแนกงาน',
       `- ระบบคาดการณ์หมวดเบื้องต้น: ${activeRoute.moduleId} — ${activeRoute.assistant.title}`,
       '- หมวดดังกล่าวมีไว้ช่วยเลือกบริบท/เครื่องมือเท่านั้น ห้ามลดคุณภาพคำตอบหรือปฏิเสธงานเพียงเพราะ Route ไม่ตรง',
@@ -390,6 +451,7 @@
       presentationPreset,
       governancePlan,
       qualityGates: gates,
+      casePrecedentGate,
       context: normalizedContext,
       attachmentNames: Object.freeze(attachmentNames)
     });
@@ -399,8 +461,9 @@
   window.GovPromptCore.detectPromptRiskFlags = detectRiskFlags;
   window.GovPromptCore.classifyPromptRiskLevel = classifyRiskLevel;
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
+  window.GovPromptCore.buildCasePrecedentGate = buildCasePrecedentGate;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.5.0';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.5.2';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();

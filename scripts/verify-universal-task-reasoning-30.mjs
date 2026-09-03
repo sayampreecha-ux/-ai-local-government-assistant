@@ -11,6 +11,7 @@ for (const file of [
 const core = sandbox.window.GovPromptCore;
 assert.equal(core.UNIVERSAL_TASK_REASONING_VERSION, '7.1');
 assert.equal(typeof core.planUniversalTask, 'function');
+assert.equal(typeof core.buildCasePrecedentGate, 'function');
 
 const cases = [
   ['ร่างหนังสือขอความร่วมมือประชาสัมพันธ์โครงการ', 'draft', 'official-document', 'records'],
@@ -66,5 +67,23 @@ assert.ok(bundle.prompt.includes('Universal Task Reasoning'));
 assert.ok(bundle.prompt.includes('Router เป็นเพียงคำแนะนำ'));
 assert.ok(bundle.prompt.includes('ส่งชิ้นงานหรือข้อสรุปที่ใช้ต่อได้ก่อน'));
 assert.ok(bundle.prompt.includes('ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง'));
+
+const precedentQuestion = 'ข้าราชการ อบจ. ผู้ผ่านการสรรหาสายงานผู้บริหาร เดินทางไปรายงานตัวครั้งแรกเพื่อเลือก อบจ. ที่ประสงค์จะได้รับการแต่งตั้ง เบิกค่าใช้จ่ายในการเดินทางได้หรือไม่ ตามข้อ 14(2) เรื่องรับการคัดเลือก';
+const precedentContext = core.createSharedContext({ organizationType: 'องค์การบริหารส่วนจังหวัด', currentStage: 'รายงานตัวครั้งแรกเพื่อเลือก อบจ.', facts: precedentQuestion, desiredOutput: 'วินิจฉัยสิทธิเบิกค่าเดินทาง' });
+const precedentBundle = core.createGovernmentPrompt({ question: precedentQuestion, route: null, context: precedentContext });
+assert.equal(precedentBundle.casePrecedentGate.required, true);
+assert.equal(precedentBundle.casePrecedentGate.status, 'blocked-pending-case-precedent-search');
+assert.equal(precedentBundle.casePrecedentGate.searchQueries.length, 3);
+assert.deepEqual([...precedentBundle.casePrecedentGate.matchingDimensions], ['person', 'organization', 'procedure-stage', 'action', 'legal-provision', 'claim']);
+assert.match(precedentBundle.prompt, /CASE-PRECEDENT & INTERPRETATION GATE — เปิดอัตโนมัติ/);
+assert.match(precedentBundle.prompt, /PASS 1: ค้นกฎหมาย/);
+assert.match(precedentBundle.prompt, /PASS 2: ค้นหนังสือตอบข้อหารือ/);
+assert.match(precedentBundle.prompt, /ห้ามฟันธงจากตัวบทเพียงอย่างเดียว/);
+assert.match(precedentBundle.prompt, /คำค้นตั้งต้น 3/);
+assert.match(precedentBundle.prompt, /🔎 หลักฐานยังไม่พอที่จะฟันธง/);
+
+const clearRuleBundle = core.createGovernmentPrompt({ question: 'สรุประเบียบค่าเดินทางฉบับนี้เป็นหัวข้อ', route: null, context: core.createSharedContext({ facts: 'สรุปเนื้อหาเอกสารที่แนบ', desiredOutput: 'สรุป' }) });
+assert.equal(clearRuleBundle.casePrecedentGate.required, false);
+assert.doesNotMatch(clearRuleBundle.prompt, /CASE-PRECEDENT & INTERPRETATION GATE — เปิดอัตโนมัติ/);
 
 console.log(`GovPrompt Universal Task Reasoning v7.1 passed: ${cases.length} real-work cases.`);
