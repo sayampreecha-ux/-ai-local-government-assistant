@@ -73,17 +73,35 @@ const precedentContext = core.createSharedContext({ organizationType: 'องค
 const precedentBundle = core.createGovernmentPrompt({ question: precedentQuestion, route: null, context: precedentContext });
 assert.equal(precedentBundle.casePrecedentGate.required, true);
 assert.equal(precedentBundle.casePrecedentGate.status, 'blocked-pending-case-precedent-search');
-assert.equal(precedentBundle.casePrecedentGate.searchQueries.length, 3);
-assert.deepEqual([...precedentBundle.casePrecedentGate.matchingDimensions], ['person', 'organization', 'procedure-stage', 'action', 'legal-provision', 'claim']);
-assert.match(precedentBundle.prompt, /CASE-PRECEDENT & INTERPRETATION GATE — เปิดอัตโนมัติ/);
+assert.equal(precedentBundle.casePrecedentGate.interpretation_issue, true);
+assert.equal(precedentBundle.casePrecedentGate.officialPrecedent, 'NOT_SEARCHED');
+assert.equal(precedentBundle.casePrecedentGate.decisionLock, 'ON');
+assert.equal(precedentBundle.casePrecedentGate.workflowStatus, 'BLOCKED_PRECEDENT_SEARCH');
+assert.equal(precedentBundle.casePrecedentGate.nextAction, 'EXECUTE_OFFICIAL_PRECEDENT_SEARCH');
+assert.deepEqual([...precedentBundle.casePrecedentGate.requiredEvidence], ['currentRule', 'officialPrecedent', 'legalVersion', 'caseMatch', 'conflictingOrNewerAuthority']);
+assert.equal(precedentBundle.casePrecedentGate.searchQueries.length, 4);
+assert.equal(precedentBundle.casePrecedentGate.searchLadder.length, 6);
+assert.deepEqual([...precedentBundle.casePrecedentGate.allowedFinalDecisions], ['⚠️ ได้โดยมีเงื่อนไข', '🔎 หลักฐานยังไม่พอที่จะฟันธง']);
+assert.match(precedentBundle.prompt, /OFFICIAL PRECEDENT EXECUTION GATE/);
 assert.match(precedentBundle.prompt, /PASS 1: ค้นกฎหมาย/);
 assert.match(precedentBundle.prompt, /PASS 2: ค้นหนังสือตอบข้อหารือ/);
 assert.match(precedentBundle.prompt, /ห้ามฟันธงจากตัวบทเพียงอย่างเดียว/);
-assert.match(precedentBundle.prompt, /คำค้นตั้งต้น 3/);
+assert.match(precedentBundle.prompt, /หาก AI มี Web Search ต้องดำเนินการค้นเองทันที/);
+assert.match(precedentBundle.prompt, /คำค้นตั้งต้น 4/);
 assert.match(precedentBundle.prompt, /🔎 หลักฐานยังไม่พอที่จะฟันธง/);
+
+const explicitPrecedent = core.buildCasePrecedentGate('ค้นหนังสือหารือกรณีเทียบเคียงเรื่องนี้', { facts: 'ผู้ใช้ขอแนววินิจฉัยจากหน่วยงานเจ้าของเรื่อง' }, 'HIGH');
+assert.equal(explicitPrecedent.interpretation_issue, true);
+assert.equal(explicitPrecedent.decisionLock, 'ON');
+
+const unlocked = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', { currentRule: true, officialPrecedent: 'VERIFIED', legalVersion: true, caseMatch: 'HIGH MATCH', conflictingOrNewerAuthority: true, officialSourceVerified: true, searchLadderExecuted: true });
+assert.equal(unlocked.decisionLock, 'OFF');
+assert.equal(unlocked.workflowStatus, 'READY_FOR_HUMAN_REVIEW');
+assert.equal(unlocked.nextAction, 'HUMAN_REVIEW');
+assert.equal(unlocked.humanApprovalRequired, true);
 
 const clearRuleBundle = core.createGovernmentPrompt({ question: 'สรุประเบียบค่าเดินทางฉบับนี้เป็นหัวข้อ', route: null, context: core.createSharedContext({ facts: 'สรุปเนื้อหาเอกสารที่แนบ', desiredOutput: 'สรุป' }) });
 assert.equal(clearRuleBundle.casePrecedentGate.required, false);
-assert.doesNotMatch(clearRuleBundle.prompt, /CASE-PRECEDENT & INTERPRETATION GATE — เปิดอัตโนมัติ/);
+assert.doesNotMatch(clearRuleBundle.prompt, /OFFICIAL PRECEDENT EXECUTION GATE/);
 
 console.log(`GovPrompt Universal Task Reasoning v7.1 passed: ${cases.length} real-work cases.`);

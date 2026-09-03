@@ -18,6 +18,11 @@
   const LEGAL_VERSION_TERMS = /(?:กฎหมาย|ระเบียบ|ประกาศ|หลักเกณฑ์|หนังสือเวียน|หนังสือสั่งการ|ข้อหารือ|ซักซ้อม|คำพิพากษา|มาตรา|ข้อ\s*\d|ฉบับ|พ\.ศ\.|ปัจจุบัน|ล่าสุด|ยังใช้|ยังมีผล)/i;
   const INTERPRETATION_DECISION_TERMS = /(?:เบิก.{0,80}(?:ได้ไหม|ได้หรือไม่)|มีสิทธิ(?:ไหม|หรือไม่)?|จ่าย.{0,80}(?:ได้ไหม|ได้หรือไม่)|ทำ.{0,80}(?:ได้ไหม|ได้หรือไม่)|ผิดหรือไม่|ใครมีอำนาจ|แต่งตั้ง.{0,40}(?:ได้ไหม|ได้หรือไม่)|ย้าย|โอน|รับโอน|ต้องคืนเงิน(?:ไหม|หรือไม่)|เข้าข่าย|ถือเป็น|วิธีนี้ถูกต้องหรือไม่)/i;
   const INTERPRETATION_FACTORS = /(?:ถือว่า|เข้าลักษณะ|จำเป็น|เพื่อประโยชน์ราชการ|รับการคัดเลือก|โดยอนุโลม|เหตุจำเป็น|ตามความเหมาะสม|ตีความ|ข้อเท็จจริง|หลายกฎหมาย|หลายขั้นตอน|ความเห็น.{0,30}ขัด|แนวปฏิบัติ.{0,30}ขัด|เสียสิทธิ|ความรับผิด|อำนาจหน้าที่|จ่ายเงิน|เบิก|สิทธิ|แต่งตั้ง|โอน|ย้าย)/i;
+  const EXPLICIT_PRECEDENT_TERMS = /(?:หนังสือหารือ|ตอบข้อหารือ|แนววินิจฉัย|แนวปฏิบัติ|กรณีเทียบเคียง|กรณีหารือ|ซักซ้อมความเข้าใจ)/i;
+  const INTERPRETATION_DISPUTE_TERMS = /(?:ไม่ตรง(?:กับ)?(?:ถ้อยคำ|ระเบียบ|กฎหมาย)|ข้อโต้แย้ง|ทักท้วง|ไม่ให้เบิก|ความเห็น.{0,50}(?:ขัด|ต่าง)|การเงิน|คลัง|พัสดุ|นิติกร|ผู้ตรวจสอบ).{0,80}(?:แย้ง|ทักท้วง|ไม่เห็นด้วย|ไม่ให้|ขัด)/i;
+  const MULTI_AUTHORITY_TERMS = /(?:หลายเงื่อนไข|หลายบท|หลายกฎหมาย|กฎหมาย.{0,40}(?:ร่วมกัน|ประกอบ)|ระเบียบ.{0,40}(?:ร่วมกัน|ประกอบ))/i;
+  const REQUIRED_PRECEDENT_EVIDENCE = Object.freeze(['currentRule', 'officialPrecedent', 'legalVersion', 'caseMatch', 'conflictingOrNewerAuthority']);
+  const PRECEDENT_STATUSES = Object.freeze(['NOT_SEARCHED', 'SEARCHED_NOT_FOUND', 'FOUND', 'VERIFIED']);
 
   const GENERAL_ASSISTANT = Object.freeze({ moduleId: 'GENERAL', title: 'ผู้ช่วยงานราชการไทยแบบครอบคลุม' });
 
@@ -116,29 +121,64 @@
     });
   }
 
-  function buildCasePrecedentGate(question, context = {}, riskLevel = 'LOW') {
+  function detectInterpretationIssue(source) {
+    return EXPLICIT_PRECEDENT_TERMS.test(source)
+      || INTERPRETATION_DISPUTE_TERMS.test(source)
+      || MULTI_AUTHORITY_TERMS.test(source)
+      || (INTERPRETATION_DECISION_TERMS.test(source) && INTERPRETATION_FACTORS.test(source));
+  }
+
+  function normalizePrecedentEvidence(evidence = {}) {
+    const officialPrecedent = PRECEDENT_STATUSES.includes(evidence?.officialPrecedent) ? evidence.officialPrecedent : 'NOT_SEARCHED';
+    return Object.freeze({
+      currentRule: evidence?.currentRule === true,
+      officialPrecedent,
+      legalVersion: evidence?.legalVersion === true,
+      caseMatch: /^(?:HIGH|MEDIUM|LOW) MATCH$/.test(String(evidence?.caseMatch || '')) ? evidence.caseMatch : null,
+      conflictingOrNewerAuthority: evidence?.conflictingOrNewerAuthority === true,
+      officialSourceVerified: evidence?.officialSourceVerified === true,
+      searchLadderExecuted: evidence?.searchLadderExecuted === true
+    });
+  }
+
+  function buildCasePrecedentGate(question, context = {}, riskLevel = 'LOW', evidence = {}) {
     const source = normalizeForReasoning([question, context?.facts, context?.currentStage].filter(Boolean).join(' '));
-    const interpretationRisk = INTERPRETATION_DECISION_TERMS.test(source) && INTERPRETATION_FACTORS.test(source);
-    if (!interpretationRisk) return Object.freeze({ required: false, status: 'not-required', reason: 'primary-authority-sufficient-unless-new-ambiguity-appears' });
+    const interpretationIssue = detectInterpretationIssue(source);
+    if (!interpretationIssue) return Object.freeze({ required: false, interpretation_issue: false, status: 'not-required', reason: 'primary-authority-sufficient-unless-new-ambiguity-appears' });
 
     const fingerprint = extractCaseFingerprint(question, context);
+    const evidenceState = normalizePrecedentEvidence(evidence);
     const compactFacts = Object.values(fingerprint).filter(value => !String(value).startsWith('[')).join(' ');
     const legalPhrase = fingerprint.legalIssue.startsWith('[') ? source : fingerprint.legalIssue;
+    const decisionUnlocked = evidenceState.currentRule && evidenceState.legalVersion && evidenceState.searchLadderExecuted
+      && evidenceState.officialPrecedent === 'VERIFIED' && /^(?:HIGH|MEDIUM) MATCH$/.test(String(evidenceState.caseMatch || ''))
+      && evidenceState.conflictingOrNewerAuthority && evidenceState.officialSourceVerified;
     return Object.freeze({
       required: true,
-      status: 'blocked-pending-case-precedent-search',
+      interpretation_issue: true,
+      officialPrecedent: evidenceState.officialPrecedent,
+      decisionLock: decisionUnlocked ? 'OFF' : 'ON',
+      workflowStatus: decisionUnlocked ? 'READY_FOR_HUMAN_REVIEW' : 'BLOCKED_PRECEDENT_SEARCH',
+      nextAction: decisionUnlocked ? 'HUMAN_REVIEW' : 'EXECUTE_OFFICIAL_PRECEDENT_SEARCH',
+      status: decisionUnlocked ? 'evidence-ready-human-review-required' : 'blocked-pending-case-precedent-search',
       reason: 'interpretation-risk-detected',
       riskLevel,
       fingerprint,
+      requiredEvidence: REQUIRED_PRECEDENT_EVIDENCE,
+      evidenceState,
       searchQueries: Object.freeze([
-        `ประเด็นข้อกฎหมาย ${legalPhrase} หนังสือหารือ แนววินิจฉัย`,
         `${compactFacts || source} หนังสือหารือ`,
-        `หารือ แนวทางปฏิบัติ ${legalPhrase} site:go.th`
+        `ถ้อยคำกฎหมาย ${legalPhrase} ตอบข้อหารือ แนววินิจฉัย`,
+        `หนังสือหารือ ตอบข้อหารือ แนววินิจฉัย ซักซ้อมความเข้าใจ แนวทางปฏิบัติ กรณีหารือ ${legalPhrase}`,
+        `${legalPhrase} site:ratchakitcha.soc.go.th OR site:krisdika.go.th OR site:moi.go.th OR site:dla.go.th OR site:cgd.go.th OR site:bb.go.th OR site:coj.go.th OR site:oag.go.th OR site:nacc.go.th`
       ]),
-      requiredPasses: Object.freeze(['primary-authority-current-version', 'case-precedent', 'contrary-and-newer-authority']),
-      matchingDimensions: Object.freeze(['person', 'organization', 'procedure-stage', 'action', 'legal-provision', 'claim']),
+      searchLadder: Object.freeze(['exact-fact-pattern', 'legal-terminology', 'precedent-document-type', 'official-source-search', 'citation-chaining', 'forward-backward-authority-check']),
+      requiredPasses: Object.freeze(['primary-authority-current-version', 'official-precedent-search-executed', 'case-match-assessed', 'contrary-and-newer-authority']),
+      matchingDimensions: Object.freeze(['person-position', 'organization', 'prior-event-status', 'current-stage-action', 'legal-provision', 'claim-power-legal-effect']),
       allowedMatchLevels: Object.freeze(['HIGH', 'MEDIUM', 'LOW']),
-      conclusionStatusUntilPassed: '🔎 หลักฐานยังไม่พอที่จะฟันธง'
+      allowedFinalDecisions: decisionUnlocked ? Object.freeze(['✅ ได้', '❌ ไม่ได้', '⚠️ ได้โดยมีเงื่อนไข', '🔎 หลักฐานยังไม่พอที่จะฟันธง']) : Object.freeze(['⚠️ ได้โดยมีเงื่อนไข', '🔎 หลักฐานยังไม่พอที่จะฟันธง']),
+      conclusionStatusUntilPassed: '🔎 หลักฐานยังไม่พอที่จะฟันธง',
+      humanApprovalRequired: true
     });
   }
 
@@ -373,17 +413,28 @@
         '- หากแหล่งสรุปขัดกับต้นฉบับ ให้ยึดต้นฉบับ และหากต้นฉบับหลายฉบับขัดกันให้ตรวจลำดับศักดิ์ วันมีผล และฉบับแก้ไข'
       ] : []),
       ...(casePrecedentGate.required ? [
-        '', 'CASE-PRECEDENT & INTERPRETATION GATE — เปิดอัตโนมัติ',
-        '- พบปัญหาตีความ: ห้ามฟันธงจากตัวบทเพียงอย่างเดียว แม้พบกฎหมายหรือระเบียบที่เกี่ยวข้องแล้ว',
+        '', 'GOVPROMPT — OFFICIAL PRECEDENT EXECUTION GATE',
+        '- interpretation_issue = true',
+        `- requiredEvidence = ${casePrecedentGate.requiredEvidence.join(', ')}`,
+        `- officialPrecedent = ${casePrecedentGate.officialPrecedent}`,
+        `- decisionLock = ${casePrecedentGate.decisionLock}`,
+        `- workflowStatus = ${casePrecedentGate.workflowStatus}`,
+        `- nextAction = ${casePrecedentGate.nextAction}`,
+        '- HARD STOP: ขณะที่ officialPrecedent = NOT_SEARCHED ห้ามออก Final Decision เป็น ✅ ได้ หรือ ❌ ไม่ได้',
+        '- พบปัญหาตีความ: ห้ามฟันธงจากตัวบทเพียงอย่างเดียว และ PASS 1 ทดแทน PASS 2 ไม่ได้',
+        '- หาก AI มี Web Search ต้องดำเนินการค้นเองทันที ห้ามเพียงแจ้งว่าควรค้น ห้ามโยนให้ผู้ใช้ค้นเอง',
+        '- เมื่อ workflow ขาดหลักฐานสาธารณะที่ AI ค้นได้ ให้ AI ใช้เครื่องมือรวบรวมก่อนตอบ; ถามผู้ใช้เฉพาะข้อเท็จจริง/เอกสารที่หาเองไม่ได้และเปลี่ยนผลตัดสิน',
         '- PASS 1: ค้นกฎหมาย กฎ ระเบียบ ประกาศ หนังสือสั่งการหลัก ฉบับแก้ไข/ยกเลิก และวันมีผล เพื่อยืนยัน Rule ปัจจุบัน',
         '- PASS 2: ค้นหนังสือตอบข้อหารือ แนววินิจฉัย หนังสือซักซ้อม แนวปฏิบัติ คู่มือ/FAQ หรือคำพิพากษาที่ข้อเท็จจริงตรงหรือใกล้เคียง',
         `- Case Fingerprint: actor=${casePrecedentGate.fingerprint.actor}; organization=${casePrecedentGate.fingerprint.organization}; status=${casePrecedentGate.fingerprint.status}; prior_event=${casePrecedentGate.fingerprint.priorEvent}; current_stage=${casePrecedentGate.fingerprint.currentStage}; action=${casePrecedentGate.fingerprint.action}; claim_or_power=${casePrecedentGate.fingerprint.claimOrPower}; legal_issue=${casePrecedentGate.fingerprint.legalIssue}; date_context=${casePrecedentGate.fingerprint.dateContext}`,
-        '- ต้องสร้างคำค้นอย่างน้อย 3 แบบ: Legal Issue Query / Fact Pattern Query / Official Language Query และห้ามค้นจากชื่อเรื่องอย่างเดียว',
+        '- Search Ladder ต้องเปลี่ยนมิติการค้นอย่างมีสาระตามลำดับ: Exact Fact Pattern → Legal Terminology → Precedent Document Type → Official Source → Citation Chaining → Forward/Backward Authority Check',
         ...casePrecedentGate.searchQueries.map((query, index) => `- คำค้นตั้งต้น ${index + 1}: ${query}`),
-        '- เมื่อพบ precedent ให้เทียบ 6 มิติ: บุคคล ประเภทหน่วยงาน ขั้นตอน การกระทำ บทกฎหมาย และสิทธิ/ค่าใช้จ่าย แล้วจัด HIGH / MEDIUM / LOW MATCH',
-        '- LOW MATCH ใช้ฟันธงไม่ได้; หากไม่มี HIGH MATCH ให้หา MEDIUM MATCH จากราชการอย่างน้อย 2 แหล่ง หรือแนวหน่วยงานเจ้าของเรื่องพร้อมคู่มือ/FAQ รองรับ',
+        '- Citation Chaining: เมื่อพบเลขหนังสือ วันที่ ชื่อเรื่อง หรือเอกสารอ้างต่อ ต้องค้นเอกสารที่ถูกอ้าง หาต้นฉบับ และห้ามหยุดที่เว็บสรุป',
+        '- เมื่อพบ precedent ให้เทียบ 6 มิติ: บุคคล/ตำแหน่ง ประเภทหน่วยงาน เหตุการณ์/สถานะก่อนหน้า ขั้นตอน/การกระทำ บทกฎหมาย และสิทธิ/อำนาจ/ผลทางกฎหมาย แล้วจัด HIGH / MEDIUM / LOW MATCH',
+        '- LOW MATCH ใช้เพียงลำพังเพื่อฟันธงไม่ได้; ไม่บังคับโควตาจำนวนเอกสาร ให้ยึดคุณภาพ ความตรง ลำดับศักดิ์ และความน่าเชื่อถือ',
         '- ตรวจวันที่ precedent กฎหมายที่ใช้ขณะนั้น ฉบับแก้ไข หนังสือใหม่กว่า แนวขัดกัน และกฎใหม่ ตั้งแต่วัน precedent ถึงปัจจุบัน',
-        '- หยุดค้นได้เมื่อพบ Rule ปัจจุบัน + HIGH MATCH official precedent + ไม่พบ authority ใหม่กว่าหรือขัดกันที่น้ำหนักสูงกว่า + อธิบาย Rule → Facts → Interpretation → Result ได้ครบ',
+        '- officialPrecedent เปลี่ยนจาก NOT_SEARCHED เป็น SEARCHED_NOT_FOUND ได้ต่อเมื่อดำเนิน Search Ladder จริงแล้วเท่านั้น; FOUND ยังไม่เท่ากับ VERIFIED',
+        '- ปลด decisionLock ได้เมื่อยืนยัน Current Rule, Legal Version, ทำ Official Precedent Search จริง, ประเมิน Case Match, ตรวจ Newer/Conflicting Authority และยืนยันแหล่งราชการครบ',
         '- หากค้นแล้วยังไม่พบ ให้เขียนว่า “ยังไม่พบหนังสือตอบข้อหารือหรือแนววินิจฉัยตรงกรณีจากการค้นครั้งนี้” ห้ามสรุปว่าไม่มีหนังสือหารือ',
         '- ก่อนผ่าน Gate ให้ใช้สถานะ “🔎 หลักฐานยังไม่พอที่จะฟันธง” และงานกฎหมาย/การเงิน/พัสดุ/บุคคล/งบประมาณ/อำนาจ/สิทธิประโยชน์ต้องคง Human Approval'
       ] : []),
@@ -464,6 +515,6 @@
   window.GovPromptCore.buildCasePrecedentGate = buildCasePrecedentGate;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.5.2';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.6.0';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();
