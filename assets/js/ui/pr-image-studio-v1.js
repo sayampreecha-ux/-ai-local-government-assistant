@@ -184,3 +184,6 @@ export function initializePRImageStudio() {
 }
 
 initializePRImageStudio();
+if (new URLSearchParams(window.location.search).get('mode') === 'image-prompt') {
+  queueMicrotask(() => document.querySelector('[data-gp-pr-image-task="true"]')?.click());
+}
