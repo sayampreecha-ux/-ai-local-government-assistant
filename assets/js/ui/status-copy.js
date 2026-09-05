@@ -315,6 +315,7 @@
 
   function simplifyAnswerCard(card) {
     if (!card) return;
+    if (card.closest('.guided-intake-message')) return;
     const actions = card.querySelector('.answer-actions');
     if (actions) {
       actions.classList.add('handoff-actions');

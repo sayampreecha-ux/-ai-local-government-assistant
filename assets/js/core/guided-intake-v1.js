@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.2.0';
+  const VERSION = '1.2.1';
   const MAX_QUESTIONS = 3;
   const UNKNOWN_PATTERN = /(?:ไม่ทราบ|ยังไม่ทราบ|ยังไม่กำหนด|ยังไม่มีข้อมูล)/i;
   const CREATE_PATTERN = /(?:^|\s)(?:ร่าง|จัดทำ|ทำ|สร้าง|เขียน|เตรียม|ออกแบบ|จัดซื้อ|จัดจ้าง|จัดอบรม)(?:\s|$|[^ก-๙a-z0-9])/i;
@@ -228,7 +228,7 @@
       window.setTimeout(() => { bypass = false; }, 1200);
       input.value = finalText;
       input.dispatchEvent(new Event('input', { bubbles: true }));
-      queueMicrotask(() => form.requestSubmit());
+      window.setTimeout(() => form.requestSubmit(), 0);
     }
 
     form.addEventListener('submit', event => {
