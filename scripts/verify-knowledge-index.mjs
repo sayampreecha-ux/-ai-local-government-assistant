@@ -9,26 +9,10 @@ for (const file of ['citation-engine.js', 'knowledge-index.js']) {
 }
 const core = sandbox.window.GovPromptCore;
 const documents = [
-  {
-    id: 'finance-old', title: 'ระเบียบการเงิน', agency: 'กรมทดสอบ', category: 'finance', documentType: 'regulation',
-    effectiveDate: '2024-01-01', version: '1.0', keywords: ['การเงิน', 'เบิกจ่าย'], summary: 'ฉบับเดิม',
-    reference: 'กค 1/2567', sourceURL: 'https://finance.go.th/old', source: 'https://finance.go.th/old'
-  },
-  {
-    id: 'finance-new', title: 'ระเบียบการเงิน', agency: 'กรมทดสอบ', category: 'finance', documentType: 'regulation',
-    effectiveDate: '2026-01-01', version: '2.0', keywords: ['การเงิน', 'เบิกจ่าย', 'งบประมาณ'], summary: 'ฉบับใหม่',
-    reference: 'กค 2/2569', sourceURL: 'https://finance.go.th/new', source: 'https://finance.go.th/new'
-  },
-  {
-    id: 'health', title: 'แนวทางสุขภาพ', agency: 'กรมสุขภาพ', category: 'public-health', documentType: 'directive',
-    effectiveDate: '2025-06-01', version: '1.0', keywords: ['สุขภาพ', 'ชุมชน'], summary: 'แนวทาง',
-    reference: 'สธ 1/2568', sourceURL: 'https://health.go.th/guide', source: 'https://health.go.th/guide'
-  },
-  {
-    id: 'unofficial', title: 'บทความการเงิน', agency: 'เอกชน', category: 'finance', documentType: 'article',
-    effectiveDate: '2026-07-01', version: '1.0', keywords: ['การเงิน'], summary: 'บทความ',
-    reference: 'บทความ', sourceURL: 'https://example.com/article', source: 'https://example.com/article'
-  }
+  { id: 'finance-old', title: 'ระเบียบการเงิน', agency: 'กรมทดสอบ', category: 'finance', documentType: 'regulation', effectiveDate: '2024-01-01', version: '1.0', keywords: ['การเงิน', 'เบิกจ่าย'], summary: 'ฉบับเดิม', reference: 'กค 1/2567', sourceURL: 'https://finance.go.th/old', source: 'https://finance.go.th/old' },
+  { id: 'finance-new', title: 'ระเบียบการเงิน', agency: 'กรมทดสอบ', category: 'finance', documentType: 'regulation', effectiveDate: '2026-01-01', version: '2.0', keywords: ['การเงิน', 'เบิกจ่าย', 'งบประมาณ'], summary: 'ฉบับใหม่', reference: 'กค 2/2569', sourceURL: 'https://finance.go.th/new', source: 'https://finance.go.th/new' },
+  { id: 'health', title: 'แนวทางสุขภาพ', agency: 'กรมสุขภาพ', category: 'public-health', documentType: 'directive', effectiveDate: '2025-06-01', version: '1.0', keywords: ['สุขภาพ', 'ชุมชน'], summary: 'แนวทาง', reference: 'สธ 1/2568', sourceURL: 'https://health.go.th/guide', source: 'https://health.go.th/guide' },
+  { id: 'unofficial', title: 'บทความการเงิน', agency: 'เอกชน', category: 'finance', documentType: 'article', effectiveDate: '2026-07-01', version: '1.0', keywords: ['การเงิน'], summary: 'บทความ', reference: 'บทความ', sourceURL: 'https://example.com/article', source: 'https://example.com/article' }
 ];
 
 const index = core.createKnowledgeIndex(documents);
@@ -36,7 +20,6 @@ assert.equal(Object.isFrozen(index), true);
 assert.equal(Object.isFrozen(index.records), true);
 assert.equal(index.records.length, 4);
 assert.equal(index.records[0].documentType, 'regulation');
-
 assert.deepEqual(Array.from(index.exactSearch('ระเบียบการเงิน', { asOf: '2026-08-01' }), result => result.citation.citationId), ['finance-new', 'finance-old']);
 assert.equal(index.keywordSearch('สุขภาพ', { asOf: '2026-08-01' })[0].citation.citationId, 'health');
 assert.equal(index.categorySearch('finance', { asOf: '2026-08-01' }).length, 3);
@@ -44,11 +27,8 @@ assert.equal(index.agencySearch('กรมสุขภาพ', { asOf: '2026-08-
 assert.equal(index.keywordSearch(['การเงิน', 'งบประมาณ'], { asOf: '2026-08-01' })[0].citation.citationId, 'finance-new');
 assert.equal(index.search({ documentType: 'directive', asOf: '2026-08-01' }).length, 1);
 assert.equal(index.search({ keywords: ['การเงิน'], asOf: '2026-08-01' })[0].citation.sourceVerified, true);
-
 const result = index.search({ query: 'ระเบียบการเงิน', asOf: '2026-08-01' })[0];
-for (const field of ['title', 'summary', 'citation', 'confidence', 'source', 'effectiveDate']) {
-  assert.equal(field in result, true, `missing result field ${field}`);
-}
+for (const field of ['title', 'summary', 'citation', 'confidence', 'source', 'effectiveDate']) assert.equal(field in result, true, `missing result field ${field}`);
 assert.equal(Object.isFrozen(result), true);
 
 const indexScripts = '<script src="assets/js/core/shared-context.js"></script><script src="assets/js/core/prompt-registry.js"></script><script src="assets/js/core/transaction-router.js"></script><script src="assets/js/core/context-integration.js"></script><script src="assets/js/core/document-loader.js"></script><script src="assets/js/core/citation-engine.js"></script><script src="assets/js/core/knowledge-index.js"></script><script src="assets/js/core/semantic-search.js"></script><script src="assets/js/core/knowledge-engine.js"></script>';
@@ -61,9 +41,15 @@ for (let number = 1; number <= 13; number += 1) {
     assert.match(current, /id=["']healthWorkerToolkitTask["']/i, `${file}: approved health toolkit entry missing`);
     continue;
   }
+  if (file === 'gp012.html') {
+    assert.equal(current.includes(indexScripts), true, `${file}: knowledge index missing`);
+    assert.match(current, /id=["']request["']/i, `${file}: simplified request field missing`);
+    assert.match(current, /ทำอินโฟกราฟิก/, `${file}: infographic task missing`);
+    assert.match(current, /สร้างคำสั่ง/, `${file}: simplified generator missing`);
+    continue;
+  }
   const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
   assert.equal(current.includes(indexScripts), true, `${file}: knowledge index missing`);
   assert.equal(current.replace(indexScripts, ''), baseline, `${file}: Sprint 4.3 output changed`);
 }
-
-console.log('Government Knowledge Index verification passed for GP001-GP013; GP008 validates the approved static health-tool entry.');
+console.log('Government Knowledge Index verification passed for GP001-GP013; GP008 validates static health tools and GP012 validates the simplified single-input PR flow.');
