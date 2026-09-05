@@ -53,7 +53,7 @@ const guidedWorkflow = await readFile(new URL('../assets/js/features/temp-staff-
 assert.match(gp008, /assets\/js\/core\/context-integration\.js/);
 assert.match(wizardPage, /👥 แผนลูกจ้างชั่วคราวเงินบำรุง/);
 assert.match(wizardPage, /temp-staff-guided-wizard-v1\.js\?v=1\.0\.0/);
-assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.0\.10/);
+assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.1\.0/);
 assert.match(catalog, /เมนูเด่น/);
 assert.match(catalog, /👥 แผนลูกจ้างเงินบำรุง/);
 assert.match(catalog, /temp-staff-wizard\.html/);
