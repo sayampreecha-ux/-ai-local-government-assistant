@@ -8,8 +8,18 @@ test('home assistant catalog is collapsed by assistant with frequent-task lists'
   assert.match(source, /aria-expanded/);
   assert.match(source, /work-catalog-tasks/);
   assert.match(source, /ผู้ช่วยงานราชการทั้งหมด/);
-  assert.match(source, /กดเลือกผู้ช่วย แล้วเลือกงานใช้บ่อย/);
+  assert.match(source, /เลือกงานที่ต้องการครั้งเดียว แล้วบอก GP ได้เลย/);
   assert.match(source, /collapseOthers/);
+});
+
+test('public-relations assistant keeps four simple jobs and direct image prompt entry', async () => {
+  const source = await readFile('assets/js/ui/assistant-catalog-accordion-v1.js', 'utf8');
+  assert.match(source, /เขียนข่าวประชาสัมพันธ์/);
+  assert.match(source, /ทำโพสต์โซเชียล/);
+  assert.match(source, /ทำอินโฟกราฟิก/);
+  assert.match(source, /ทำภาพประชาสัมพันธ์/);
+  assert.match(source, /gp012\.html\?mode=image-prompt/);
+  assert.match(source, /prImageShortcut/);
 });
 
 test('public-health assistant keeps a clean five-entry landing menu', async () => {
