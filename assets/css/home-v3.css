@@ -252,7 +252,7 @@
 /* v2.6.1 — dedicated result route; selected work never appends below the catalog */
 html.result-route .welcome,
 html.result-route .quick-actions,
-html.result-route .composer-region{display:none!important}
+html.result-route:not(.result-intake) .composer-region{display:none!important}
 html.result-route .chat-main{display:block;width:min(860px,100%);padding-top:calc(var(--nav-height) + 22px);padding-bottom:calc(92px + env(safe-area-inset-bottom))}
 .result-page-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 18px;padding-bottom:14px;border-bottom:1px solid var(--gdl-line)}
 .result-page-header>div{display:grid;text-align:right}
@@ -262,6 +262,8 @@ html.result-route .chat-main{display:block;width:min(860px,100%);padding-top:cal
 .result-empty{padding:28px;border:1px solid var(--gdl-line);border-radius:20px;background:#fff;text-align:center}
 .result-empty strong{font-size:1.15rem}.result-empty p{color:var(--gdl-muted)}
 html.result-route .message.user{display:none}
+html.result-route.result-intake .composer-region{display:block!important;position:sticky;left:auto;bottom:calc(72px + env(safe-area-inset-bottom));width:100%;transform:none;margin:18px 0 0}
+html.result-route.result-intake .privacy-note{display:none}
 @media(max-width:620px){
   html.result-route .chat-main{padding-top:calc(var(--nav-height) + 12px);padding-left:10px;padding-right:10px}
   .result-page-header{position:sticky;top:var(--nav-height);z-index:12;margin:0 -10px 12px;padding:8px 10px;background:rgba(247,248,245,.96);backdrop-filter:blur(12px)}

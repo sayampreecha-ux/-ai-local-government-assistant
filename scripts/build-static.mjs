@@ -3,7 +3,7 @@ import { extname, join } from "node:path";
 import { build as bundle } from "esbuild";
 
 const output = "dist";
-const RELEASE_VERSIONS = Object.freeze({ home: "6.4.4", homeCss: "2.6.1", serviceWorker: "6.4.5", quickActionBridge: "1.2.0", mic: "2.4.0", outputFormats: "1.0.1", promptOrchestrator: "7.8.0", automationPilot: "1.0.0", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0", documentStudio: "1.0.0", caseList: "1.0.0", searchTimeoutGuard: "1.1.0", budgetUiWatchdog: "1.2.0" });
+const RELEASE_VERSIONS = Object.freeze({ home: "6.4.5", homeCss: "2.6.2", serviceWorker: "6.4.6", quickActionBridge: "1.2.1", guidedIntake: "1.2.0", mic: "2.4.0", outputFormats: "1.0.1", promptOrchestrator: "7.8.0", automationPilot: "1.0.0", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0", documentStudio: "1.0.0", caseList: "1.0.0", searchTimeoutGuard: "1.1.0", budgetUiWatchdog: "1.2.0" });
 const publicExtensions = new Set([
   ".html", ".htlm", ".css", ".js", ".json", ".webmanifest", ".txt", ".xml"
 ]);
@@ -100,6 +100,7 @@ distIndex = distIndex
   .replace(/assets\/js\/core\/prompt-orchestrator\.js\?v=[^"'\s<]+/g, `assets/js/core/prompt-orchestrator.js?v=${RELEASE_VERSIONS.promptOrchestrator}`)
   .replace(/assets\/js\/home-v3\.js\?v=[^"'\s<]+/g, `assets/js/home-v3.js?v=${RELEASE_VERSIONS.home}`)
   .replace(/assets\/js\/ui\/quick-action-guided-bridge-v1\.js\?v=[^"'\s<]+/g, `assets/js/ui/quick-action-guided-bridge-v1.js?v=${RELEASE_VERSIONS.quickActionBridge}`)
+  .replace(/assets\/js\/core\/guided-intake-v1\.js\?v=[^"'\s<]+/g, `assets/js/core/guided-intake-v1.js?v=${RELEASE_VERSIONS.guidedIntake}`)
   .replace(/assets\/js\/mic\.js\?v=[^"'\s<]+/g, `assets/js/mic.js?v=${RELEASE_VERSIONS.mic}`)
   .replace(/service-worker\.js\?v=[^"'\s<)]+/g, `service-worker.js?v=${RELEASE_VERSIONS.serviceWorker}`);
 

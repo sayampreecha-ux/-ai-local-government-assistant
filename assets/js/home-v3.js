@@ -10,6 +10,7 @@
   const outputFormatSelect = document.getElementById('outputFormatSelect');
   const outputFormatButton = document.getElementById('outputFormatButton');
   const resultPromptKey = 'govprompt.resultPrompt.v1';
+  const resultForceIntakeKey = 'govprompt.forceGuidedIntake.v1';
   const resultRoute = new URLSearchParams(window.location.search).get('view') === 'result';
 
   function installResultHeader() {
@@ -542,6 +543,10 @@
     event.preventDefault();
     const text = input.value.trim();
     if (!text) return;
+    if (resultRoute) {
+      document.documentElement.classList.remove('result-intake');
+      conversation.querySelectorAll('.guided-intake-message').forEach(message => message.remove());
+    }
     input.value = ''; resizeInput(); submitPrompt(text);
   });
 
@@ -620,15 +625,26 @@
 
   if (resultRoute) {
     document.documentElement.classList.add('result-route');
+    document.documentElement.classList.add('result-intake');
     document.querySelector('.chat-main').classList.add('has-messages');
     installResultHeader();
     let pendingPrompt = '';
+    let forceGuidedIntake = false;
     try {
       pendingPrompt = sessionStorage.getItem(resultPromptKey) || '';
+      forceGuidedIntake = sessionStorage.getItem(resultForceIntakeKey) === 'true';
       sessionStorage.removeItem(resultPromptKey);
+      sessionStorage.removeItem(resultForceIntakeKey);
     } catch {}
-    if (pendingPrompt) submitPrompt(pendingPrompt);
+    if (pendingPrompt) {
+      if (forceGuidedIntake) form.dataset.forceGuidedIntake = 'true';
+      input.value = pendingPrompt;
+      input.placeholder = 'พิมพ์ข้อมูลเพิ่มเติมที่จำเป็น...';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      form.requestSubmit();
+    }
     else {
+      document.documentElement.classList.remove('result-intake');
       const empty = document.createElement('div');
       empty.className = 'result-empty';
       empty.innerHTML = '<strong>ยังไม่ได้เลือกงาน</strong><p>กลับไปเลือกผู้ช่วยที่ต้องการ แล้วระบบจะเปิดผลลัพธ์ในหน้านี้</p><a href="index.html">กลับหน้าเลือกงาน</a>';

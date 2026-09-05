@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.1.1';
+  const VERSION = '1.2.0';
   const MAX_QUESTIONS = 3;
   const UNKNOWN_PATTERN = /(?:ไม่ทราบ|ยังไม่ทราบ|ยังไม่กำหนด|ยังไม่มีข้อมูล)/i;
   const CREATE_PATTERN = /(?:^|\s)(?:ร่าง|จัดทำ|ทำ|สร้าง|เขียน|เตรียม|ออกแบบ|จัดซื้อ|จัดจ้าง|จัดอบรม)(?:\s|$|[^ก-๙a-z0-9])/i;
@@ -50,7 +50,7 @@
     pr: Object.freeze([
       Object.freeze({ key: 'topic', question: 'จะทำเรื่องอะไร? วางรายละเอียดข่าว/กิจกรรม หรือแนบข้อมูลที่มีได้เลย' }),
       Object.freeze({ key: 'target', question: 'ต้องการสื่อกับใครหรือใช้ช่องทางไหน เช่น ประชาชน Facebook งานประชุม หรือคณะกรรมการ?' }),
-      Object.freeze({ key: 'duration', question: 'ถ้าเป็นวิดีโอ ต้องการประมาณกี่นาที? ถ้าไม่แน่ใจพิมพ์ “ให้ GP แนะนำ” ได้' })
+      Object.freeze({ key: 'duration', question: 'ต้องการรูปแบบ โทน หรือความยาวแบบไหน? ถ้าเป็นวิดีโอและไม่แน่ใจ พิมพ์ “ให้ GP แนะนำ” ได้' })
     ]),
     general: Object.freeze([
       Object.freeze({ key: 'output', question: 'ต้องการให้ GP ช่วยทำอะไรให้เสร็จ เช่น ร่างโครงการ หนังสือ คำกล่าว แผน หรือวิเคราะห์เรื่องใด?' }),
@@ -155,14 +155,14 @@
     return value.length < 70;
   }
 
-  function assessQuery(text, route = null, acknowledgedUnknown = []) {
+  function assessQuery(text, route = null, acknowledgedUnknown = [], options = {}) {
     const value = normalize(text);
     const activeRoute = route || routeFor(value) || {};
     const intent = inferIntent(value, activeRoute);
-    if (!shouldGuide(value)) return Object.freeze({ ready: true, intent, route: activeRoute, missingFields: Object.freeze([]), questions: Object.freeze([]) });
+    if (!options.force && !shouldGuide(value)) return Object.freeze({ ready: true, intent, route: activeRoute, missingFields: Object.freeze([]), questions: Object.freeze([]) });
     const unknown = new Set((acknowledgedUnknown || []).map(String));
     const profile = PROFILES[intent] || PROFILES.general;
-    const missing = profile.filter(item => !unknown.has(item.key) && !fieldSatisfied(item.key, value)).slice(0, MAX_QUESTIONS);
+    const missing = profile.filter(item => !unknown.has(item.key) && (options.force || !fieldSatisfied(item.key, value))).slice(0, MAX_QUESTIONS);
     return Object.freeze({
       ready: missing.length === 0,
       intent,
@@ -248,7 +248,9 @@
         return;
       }
 
-      const assessment = assessQuery(text);
+      const force = form.dataset.forceGuidedIntake === 'true';
+      delete form.dataset.forceGuidedIntake;
+      const assessment = assessQuery(text, null, [], { force });
       if (assessment.ready) return;
       event.preventDefault(); event.stopImmediatePropagation();
       pending = { original: text, answers: [], unknown: new Set(), rounds: 1, lastMissing: assessment.missingFields };

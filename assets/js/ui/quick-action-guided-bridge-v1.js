@@ -176,12 +176,14 @@
   }
 
   const RESULT_PROMPT_KEY = 'govprompt.resultPrompt.v1';
+  const RESULT_FORCE_INTAKE_KEY = 'govprompt.forceGuidedIntake.v1';
 
-  function openResultPage(prompt) {
+  function openResultPage(prompt, options = {}) {
     const value = String(prompt || '').trim();
     if (!value) return;
     try {
       sessionStorage.setItem(RESULT_PROMPT_KEY, value);
+      sessionStorage.setItem(RESULT_FORCE_INTAKE_KEY, options.forceIntake === false ? 'false' : 'true');
       const target = new URL(window.location.href);
       target.searchParams.set('view', 'result');
       target.searchParams.set('run', String(Date.now()));
@@ -306,7 +308,7 @@
         'ยึดเฉพาะข้อเท็จจริงจากข้อมูลที่ให้ หากข้อมูลสำคัญขัดแย้งให้เตือนก่อน และห้ามแต่งข้อมูลบุคคล ตำแหน่ง วันที่ ตัวเลข หรือเหตุการณ์'
       ].join('\n');
       if (dialog?.open) dialog.close();
-      openResultPage(prompt);
+      openResultPage(prompt, { forceIntake: false });
     });
 
     dialogTitle.textContent = '🎬 ทำวิดีโอประชาสัมพันธ์';

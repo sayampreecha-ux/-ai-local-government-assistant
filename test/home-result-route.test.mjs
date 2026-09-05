@@ -11,6 +11,7 @@ const [home, bridge, css, index] = await Promise.all([
 
 test('catalog tasks navigate to a dedicated result route', () => {
   assert.match(bridge, /sessionStorage\.setItem\(RESULT_PROMPT_KEY, value\)/);
+  assert.match(bridge, /sessionStorage\.setItem\(RESULT_FORCE_INTAKE_KEY/);
   assert.match(bridge, /searchParams\.set\('view', 'result'\)/);
   assert.match(bridge, /window\.location\.assign\(target\.toString\(\)\)/);
 });
@@ -20,6 +21,9 @@ test('result route consumes the selected prompt and provides a clear return path
   assert.match(home, /className = 'result-page-header'/);
   assert.match(home, /← เลือกงานอื่น/);
   assert.match(css, /html\.result-route \.quick-actions[^}]*display:none!important/s);
-  assert.match(css, /html\.result-route \.composer-region[^}]*display:none!important/s);
+  assert.match(home, /form\.dataset\.forceGuidedIntake = 'true'/);
+  assert.match(home, /form\.requestSubmit\(\)/);
+  assert.match(css, /html\.result-route:not\(\.result-intake\) \.composer-region[^}]*display:none!important/s);
+  assert.match(css, /html\.result-route\.result-intake \.composer-region[^}]*display:block!important/s);
   assert.match(index, /documentElement\.classList\.add\('result-route'\)/);
 });

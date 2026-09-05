@@ -17,7 +17,7 @@ function api() {
 test('short TOR request is stopped for three critical intake questions', () => {
   const tool = api();
   const result = tool.assessQuery('ร่างtor', { transactionType: 'procurement' });
-  assert.equal(tool.version, '1.1.1');
+  assert.equal(tool.version, '1.2.0');
   assert.equal(result.ready, false);
   assert.equal(result.intent, 'procurement');
   assert.deepEqual([...result.missingFields], ['item', 'purpose', 'budget']);
@@ -61,6 +61,17 @@ test('ordinary factual questions are not forced through guided intake', () => {
   const tool = api();
   assert.equal(tool.shouldGuide('ปลัด อบจ. เบิกค่าที่พักได้กี่บาท'), false);
   assert.equal(tool.assessQuery('ปลัด อบจ. เบิกค่าที่พักได้กี่บาท', { transactionType: 'finance' }).ready, true);
+});
+
+test('a catalog task can force the relevant intake even when its instruction text is detailed', () => {
+  const result = api().assessQuery(
+    'ช่วยจัดทำหรือวิเคราะห์งาน รพ.สต. และแผนสุขภาพจากข้อมูลพื้นที่ที่ให้',
+    { transactionType: 'public-health' },
+    [],
+    { force: true }
+  );
+  assert.equal(result.ready, false);
+  assert.equal(result.questions.length, 3);
 });
 
 test('unknown fields can be explicitly acknowledged without fabrication', () => {
