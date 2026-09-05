@@ -14,8 +14,9 @@ page.on('pageerror', error => errors.push(String(error?.stack || error?.message 
 const home = new URL(root);
 home.searchParams.set('maintenance-fund-proof', `${Date.now()}-${Math.random().toString(16).slice(2)}`);
 await page.goto(home.toString(), { waitUntil: 'domcontentloaded', timeout: 30_000 });
-await page.locator('.work-catalog-open').waitFor({ state: 'visible', timeout: 15_000 });
-await page.locator('.work-catalog-open').click();
+const catalog = page.locator('.work-catalog-groups');
+await catalog.waitFor({ state: 'visible', timeout: 15_000 });
+assert.equal(await catalog.locator('.work-catalog-group').count(), 12, 'Home must expose all 12 assistant categories without an extra opener');
 const healthGroup = page.locator('.work-catalog-group').filter({ hasText: /สาธารณสุข|รพ\.สต/i }).first();
 await healthGroup.waitFor({ state: 'visible', timeout: 15_000 });
 await healthGroup.locator('.assistant-catalog-toggle').click();
