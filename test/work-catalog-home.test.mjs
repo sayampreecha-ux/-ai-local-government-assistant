@@ -27,15 +27,16 @@ test('one-page catalog covers core local-government domains', () => {
   assert.match(source, /section\.dataset\.categoryId = category\.id/);
 });
 
-test('catalog selections reuse the guided-intake submit path instead of bypassing it', () => {
+test('catalog selections open the dedicated result route without bypassing the Home runner', () => {
   assert.match(source, /button\.dataset\.prompt = task\.prompt/);
-  assert.match(source, /input\.value = prompt/);
-  assert.match(source, /form\.requestSubmit\(\)/);
+  assert.match(source, /openResultPage\(prompt\)/);
+  assert.match(source, /sessionStorage\.setItem\(RESULT_PROMPT_KEY, value\)/);
+  assert.match(source, /window\.location\.assign\(target\.toString\(\)\)/);
   assert.doesNotMatch(source, /submitPrompt\s*\(/);
 });
 
-test('work catalog adds no persistence or network channel', () => {
-  assert.doesNotMatch(source, /\b(localStorage|sessionStorage|indexedDB|document\.cookie)\b/);
+test('work catalog adds no durable persistence or network channel', () => {
+  assert.doesNotMatch(source, /\b(localStorage|indexedDB|document\.cookie)\b/);
   assert.doesNotMatch(source, /\b(fetch\s*\(|XMLHttpRequest|WebSocket|sendBeacon)\b/);
 });
 

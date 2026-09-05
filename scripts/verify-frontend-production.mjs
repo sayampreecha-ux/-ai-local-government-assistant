@@ -11,8 +11,8 @@ const sitemapUrl = page('sitemap.xml');
 const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
-const quickActionBridgeUrl = page('assets/js/ui/quick-action-guided-bridge-v1.js?v=1.1.0');
-const RELEASE = Object.freeze({ home:'6.4.3', homeCss:'2.6.0', serviceWorker:'6.4.4', mic:'2.4.0', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
+const quickActionBridgeUrl = page('assets/js/ui/quick-action-guided-bridge-v1.js?v=1.2.0');
+const RELEASE = Object.freeze({ home:'6.4.4', homeCss:'2.6.1', serviceWorker:'6.4.5', mic:'2.4.0', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
 const WORKFLOW_RUNTIME_VERSION = '5.6.2';
 const WORKFLOW_UI_VERSION = '1.3';
 

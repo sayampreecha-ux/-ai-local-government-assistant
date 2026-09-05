@@ -17,6 +17,17 @@ const catalog = page.locator('.work-catalog-groups');
 await catalog.waitFor({ state: 'visible', timeout: 15_000 });
 assert.equal(await catalog.locator('.work-catalog-group').count(), 12, 'Home must expose all 12 assistant categories without an extra opener');
 
+const recordsGroup = page.locator('.work-catalog-group').filter({ hasText: /สารบรรณ|หนังสือราชการ/i }).first();
+await recordsGroup.locator('.assistant-catalog-toggle').click();
+await recordsGroup.locator('.work-catalog-task').first().click();
+await page.waitForURL(/[?&]view=result(?:&|$)/, { timeout: 15_000 });
+await page.locator('.result-page-header').waitFor({ state: 'visible', timeout: 15_000 });
+await page.locator('.answer-card').waitFor({ state: 'visible', timeout: 15_000 });
+assert.equal(await page.locator('.work-catalog-groups').isVisible(), false, 'selected work must open on a dedicated result screen');
+await page.locator('.result-back').click();
+await page.waitForURL(url => !url.searchParams.has('view'), { timeout: 15_000 });
+await page.locator('.work-catalog-groups').waitFor({ state: 'visible', timeout: 15_000 });
+
 const healthGroup = page.locator('.work-catalog-group').filter({ hasText: /สาธารณสุข|รพ\.สต/i }).first();
 await healthGroup.waitFor({ state: 'visible', timeout: 10_000 });
 const healthToggle = healthGroup.locator('.assistant-catalog-toggle');
@@ -82,6 +93,7 @@ console.log(JSON.stringify({
   frontend,
   checks: {
     allHomeCategoriesVisible: '12 categories PASS',
+    selectedTaskUsesDedicatedResultPage: 'PASS',
     publicHealthGroupVisible: 'PASS',
     featuredMenuCountClear: '5 เมนูเด่น PASS',
     tempStaffShortcutVisible: 'PASS',

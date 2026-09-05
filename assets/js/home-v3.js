@@ -9,6 +9,16 @@
   const attachmentStatus = document.getElementById('attachmentStatus');
   const outputFormatSelect = document.getElementById('outputFormatSelect');
   const outputFormatButton = document.getElementById('outputFormatButton');
+  const resultPromptKey = 'govprompt.resultPrompt.v1';
+  const resultRoute = new URLSearchParams(window.location.search).get('view') === 'result';
+
+  function installResultHeader() {
+    if (!resultRoute || document.querySelector('.result-page-header')) return;
+    const header = document.createElement('div');
+    header.className = 'result-page-header';
+    header.innerHTML = '<a href="index.html" class="result-back">← เลือกงานอื่น</a><div><span>GOVPROMPT</span><strong>ผลลัพธ์พร้อมใช้งาน</strong></div>';
+    conversation.before(header);
+  }
 
   function ensureOutputFormatDialog() {
     let dialog = document.getElementById('outputFormatDialog');
@@ -604,6 +614,25 @@
 
   window.GovPrompt.on('shell:panel', openPanel);
   document.getElementById('newChat').addEventListener('click', () => {
+    if (resultRoute) { window.location.assign('index.html'); return; }
     conversation.replaceChildren(); clearAttachments(); document.querySelector('.chat-main').classList.remove('has-messages'); input.focus();
   });
+
+  if (resultRoute) {
+    document.documentElement.classList.add('result-route');
+    document.querySelector('.chat-main').classList.add('has-messages');
+    installResultHeader();
+    let pendingPrompt = '';
+    try {
+      pendingPrompt = sessionStorage.getItem(resultPromptKey) || '';
+      sessionStorage.removeItem(resultPromptKey);
+    } catch {}
+    if (pendingPrompt) submitPrompt(pendingPrompt);
+    else {
+      const empty = document.createElement('div');
+      empty.className = 'result-empty';
+      empty.innerHTML = '<strong>ยังไม่ได้เลือกงาน</strong><p>กลับไปเลือกผู้ช่วยที่ต้องการ แล้วระบบจะเปิดผลลัพธ์ในหน้านี้</p><a href="index.html">กลับหน้าเลือกงาน</a>';
+      conversation.append(empty);
+    }
+  }
 })();

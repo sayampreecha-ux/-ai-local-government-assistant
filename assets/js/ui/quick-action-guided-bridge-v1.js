@@ -175,6 +175,25 @@
     return String(value || '').normalize('NFC').toLocaleLowerCase('th-TH').replace(/\s+/g, ' ').trim();
   }
 
+  const RESULT_PROMPT_KEY = 'govprompt.resultPrompt.v1';
+
+  function openResultPage(prompt) {
+    const value = String(prompt || '').trim();
+    if (!value) return;
+    try {
+      sessionStorage.setItem(RESULT_PROMPT_KEY, value);
+      const target = new URL(window.location.href);
+      target.searchParams.set('view', 'result');
+      target.searchParams.set('run', String(Date.now()));
+      target.hash = '';
+      window.location.assign(target.toString());
+    } catch {
+      input.value = value;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      form.requestSubmit();
+    }
+  }
+
   function buildCatalog() {
     const root = document.createElement('div');
     const heading = document.createElement('div');
@@ -287,9 +306,7 @@
         'ยึดเฉพาะข้อเท็จจริงจากข้อมูลที่ให้ หากข้อมูลสำคัญขัดแย้งให้เตือนก่อน และห้ามแต่งข้อมูลบุคคล ตำแหน่ง วันที่ ตัวเลข หรือเหตุการณ์'
       ].join('\n');
       if (dialog?.open) dialog.close();
-      input.value = prompt;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      form.requestSubmit();
+      openResultPage(prompt);
     });
 
     dialogTitle.textContent = '🎬 ทำวิดีโอประชาสัมพันธ์';
@@ -324,9 +341,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     if (dialog?.open && dialog.contains(button)) dialog.close();
-    input.value = prompt;
-    input.dispatchEvent(new Event('input', { bubbles: true }));
-    form.requestSubmit();
+    openResultPage(prompt);
   }, true);
 
   addCatalogStyles();
