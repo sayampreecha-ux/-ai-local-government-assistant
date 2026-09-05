@@ -13,10 +13,9 @@ url.searchParams.set('public-health-shortcut-proof', `${Date.now()}-${Math.rando
 await page.goto(url.toString(), { waitUntil: 'domcontentloaded', timeout: 30_000 });
 await page.waitForFunction(() => document.readyState === 'complete', undefined, { timeout: 15_000 });
 
-const opener = page.locator('.work-catalog-open');
-await opener.waitFor({ state: 'visible', timeout: 15_000 });
-assert.match(await opener.innerText(), /ผู้ช่วยงานราชการทั้งหมด/);
-await opener.click();
+const catalog = page.locator('.work-catalog-groups');
+await catalog.waitFor({ state: 'visible', timeout: 15_000 });
+assert.equal(await catalog.locator('.work-catalog-group').count(), 12, 'Home must expose all 12 assistant categories without an extra opener');
 
 const healthGroup = page.locator('.work-catalog-group').filter({ hasText: /สาธารณสุข|รพ\.สต/i }).first();
 await healthGroup.waitFor({ state: 'visible', timeout: 10_000 });
@@ -82,7 +81,7 @@ assert.deepEqual(pageErrors, [], `page errors: ${JSON.stringify(pageErrors)}`);
 console.log(JSON.stringify({
   frontend,
   checks: {
-    homeCatalogOpenerVisible: 'PASS',
+    allHomeCategoriesVisible: '12 categories PASS',
     publicHealthGroupVisible: 'PASS',
     featuredMenuCountClear: '5 เมนูเด่น PASS',
     tempStaffShortcutVisible: 'PASS',
