@@ -1,4 +1,4 @@
-import { executeImageWorkflow, buildCreativeImagePrompt } from '../core/pr-image-workflow-v1.js?v=1.0.0';
+import { executeImageWorkflow, buildCreativeImagePrompt } from '../core/pr-image-workflow-v1.js?v=1.1.0';
 
 function showToast(message) {
   if (window.GovPrompt?.toast) return window.GovPrompt.toast(message);
@@ -43,15 +43,13 @@ function installStyles() {
     .gp-pr-image-task small{display:block;margin-top:3px;color:#52647b;font-weight:600}
     .gp-pr-image-studio{margin-top:16px;background:#fff;border:1px solid #dde6f0;border-radius:14px;padding:15px}
     .gp-pr-image-studio[hidden]{display:none!important}.gp-pr-image-intro{margin:3px 0 14px;color:#52647b}.gp-pr-image-flow{display:grid;gap:13px}
-    .gp-pr-image-upload{border:1.5px dashed #b9c9dc;border-radius:14px;padding:14px;background:#f9fbfe}.gp-pr-image-upload input{padding:0;border:0;background:transparent}
-    .gp-pr-image-preview{display:none;margin-top:10px;max-width:100%;max-height:360px;object-fit:contain;border-radius:12px;background:#eef3f8}.gp-pr-image-preview.visible{display:block}
     .gp-pr-image-label{display:block;font-weight:800;margin-bottom:6px}.gp-pr-image-cta{width:100%;min-height:50px;font-size:1.04rem}
     .gp-pr-image-result{display:none;margin-top:14px;border:1px solid #dbe5ef;background:#f8fbff;border-radius:14px;padding:13px}.gp-pr-image-result.visible{display:block}
-    .gp-pr-image-status{font-weight:800;margin:0 0 8px}.gp-pr-image-note{margin:5px 0;color:#52647b}.gp-pr-generated-image{display:none;width:100%;max-height:600px;object-fit:contain;border-radius:12px;margin:10px 0}.gp-pr-generated-image.visible{display:block}
+    .gp-pr-image-status{font-weight:800;margin:0 0 8px}.gp-pr-image-note{margin:5px 0;color:#52647b}
     .gp-pr-thai-text{white-space:pre-wrap;background:#fff;border:1px solid #dbe5ef;border-radius:10px;padding:10px;min-height:46px}.gp-pr-image-quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.gp-pr-image-quick button{min-height:44px}
-    .gp-pr-fallback-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.gp-pr-prompt-details{margin-top:10px}.gp-pr-prompt-details pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto;background:#fff;border-radius:10px;padding:10px;border:1px solid #e1e8f0}
+    .gp-pr-prompt-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.gp-pr-prompt-details{margin-top:10px}.gp-pr-prompt-details pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:320px;overflow:auto;background:#fff;border-radius:10px;padding:10px;border:1px solid #e1e8f0}
     .gp-pr-image-footnote{font-size:12px;color:#65758b;margin-top:10px}
-    @media(max-width:650px){.task.gp-pr-image-task{grid-column:auto}.gp-pr-image-studio{padding:13px}.gp-pr-image-quick{grid-template-columns:1fr}.gp-pr-fallback-actions .btn{flex:1 1 150px}}
+    @media(max-width:650px){.task.gp-pr-image-task{grid-column:auto}.gp-pr-image-studio{padding:13px}.gp-pr-image-quick{grid-template-columns:1fr}.gp-pr-prompt-actions .btn{flex:1 1 150px}}
   `;
   document.head.append(style);
 }
@@ -64,38 +62,32 @@ function createStudio() {
   section.setAttribute('aria-labelledby', 'gpPrImageStudioTitle');
   section.innerHTML = `
     <strong id="gpPrImageStudioTitle">✨ ทำภาพประชาสัมพันธ์</strong>
-    <p class="gp-pr-image-intro">ไม่ต้องเลือก Font สี Layout หรือสัดส่วนภาพ — GP จัดให้ตามงานโดยอัตโนมัติ</p>
+    <p class="gp-pr-image-intro">บอกงานสั้น ๆ แล้ว GP จะทำคำสั่งพร้อมใช้ให้ จากนั้นคัดลอกไปใช้ใน AI ที่สร้างภาพได้</p>
     <div class="gp-pr-image-flow">
-      <div class="gp-pr-image-upload">
-        <label class="gp-pr-image-label" for="gpPrImageInput">1. แนบภาพ</label>
-        <input id="gpPrImageInput" type="file" accept="image/*">
-        <img id="gpPrImagePreview" class="gp-pr-image-preview" alt="ตัวอย่างภาพที่แนบ">
-      </div>
       <div>
-        <label class="gp-pr-image-label" for="gpPrImageRequest">2. อยากให้ทำอะไร?</label>
+        <label class="gp-pr-image-label" for="gpPrImageRequest">อยากให้ทำอะไร?</label>
         <textarea id="gpPrImageRequest" rows="3" maxlength="1000" placeholder="เช่น ทำภาพเกษียณให้สวยที่สุด อบอุ่น ภูมิฐาน"></textarea>
       </div>
-      <button class="btn primary gp-pr-image-cta" id="gpPrMakeImage" type="button">✨ ทำให้เลย</button>
+      <button class="btn primary gp-pr-image-cta" id="gpPrMakeImage" type="button">✨ สร้างคำสั่ง</button>
     </div>
     <div class="gp-pr-image-result" id="gpPrImageResult" aria-live="polite">
-      <p class="gp-pr-image-status" id="gpPrImageResultStatus"></p>
-      <img id="gpPrGeneratedImage" class="gp-pr-generated-image" alt="ภาพประชาสัมพันธ์ที่สร้างแล้ว">
-      <p class="gp-pr-image-note" id="gpPrImageResultNote"></p>
+      <p class="gp-pr-image-status" id="gpPrImageResultStatus">✅ คำสั่งพร้อมใช้</p>
+      <p class="gp-pr-image-note" id="gpPrImageResultNote">คัดลอกไปวางใน ChatGPT / Gemini / AI Image ที่รองรับภาพ แล้วค่อยแนบภาพต้นฉบับใน AI ปลายทางถ้ามี</p>
       <div><strong>ข้อความภาษาไทยสำหรับใช้บนภาพ</strong><div class="gp-pr-thai-text" id="gpPrThaiText"></div></div>
       <p class="gp-pr-image-note" id="gpPrSizeNote"></p>
-      <div class="gp-pr-fallback-actions" id="gpPrFallbackActions">
-        <button class="btn primary" id="gpPrCopyPrompt" type="button">คัดลอก Prompt</button>
+      <div class="gp-pr-prompt-actions">
+        <button class="btn primary" id="gpPrCopyPrompt" type="button">คัดลอกคำสั่ง</button>
         <button class="btn secondary" id="gpPrOpenChatGPT" type="button">เปิด ChatGPT</button>
       </div>
-      <details class="gp-pr-prompt-details" id="gpPrPromptDetails"><summary>ดู Prompt ที่ GP เตรียมไว้</summary><pre id="gpPrImagePrompt"></pre></details>
-      <div class="gp-pr-image-quick" aria-label="ปรับภาพต่อ">
+      <details class="gp-pr-prompt-details" id="gpPrPromptDetails"><summary>ดูคำสั่งที่ GP เตรียมไว้</summary><pre id="gpPrImagePrompt"></pre></details>
+      <div class="gp-pr-image-quick" aria-label="ปรับคำสั่งต่อ">
         <button class="btn secondary" type="button" data-gp-pr-refine="สวยขึ้น">✨ สวยขึ้น</button>
         <button class="btn secondary" type="button" data-gp-pr-action="edit-text">✍️ แก้ข้อความ</button>
         <button class="btn secondary" type="button" data-gp-pr-action="change-style">🖼️ เปลี่ยนรูป/สไตล์</button>
         <button class="btn secondary" type="button" data-gp-pr-action="ready">✅ พร้อมใช้</button>
       </div>
     </div>
-    <div class="gp-pr-image-footnote">ภาพและไฟล์ต้นฉบับอยู่ในเบราว์เซอร์ของคุณใน fallback mode · ก่อนเผยแพร่ให้ตรวจชื่อ ตำแหน่ง หน่วยงาน วันที่ ตัวเลข โลโก้ และข้อความไทยอีกครั้ง</div>`;
+    <div class="gp-pr-image-footnote">GovPrompt ไม่รับหรืออัปโหลดรูปในขั้นตอนนี้ · ถ้ามีภาพต้นฉบับ ให้แนบใน AI ปลายทางโดยตรง</div>`;
   return section;
 }
 
@@ -111,19 +103,15 @@ export function initializePRImageStudio() {
   taskButton.type = 'button';
   taskButton.className = 'task gp-pr-image-task';
   taskButton.dataset.gpPrImageTask = 'true';
-  taskButton.innerHTML = '✨ ทำภาพประชาสัมพันธ์ <small>แนบรูป → บอกงาน → ทำให้เลย</small>';
+  taskButton.innerHTML = '✨ ทำภาพประชาสัมพันธ์ <small>บอกงาน → สร้างคำสั่ง → ไปทำใน AI</small>';
   tasksHost.prepend(taskButton);
 
   const studio = createStudio();
   generator.insertAdjacentElement('beforebegin', studio);
 
-  const input = studio.querySelector('#gpPrImageInput');
-  const preview = studio.querySelector('#gpPrImagePreview');
   const request = studio.querySelector('#gpPrImageRequest');
   const make = studio.querySelector('#gpPrMakeImage');
   const result = studio.querySelector('#gpPrImageResult');
-  let imageFile = null;
-  let previewUrl = '';
   let lastResult = null;
 
   function showLegacy() {
@@ -148,81 +136,50 @@ export function initializePRImageStudio() {
     taskButton.style.display = taskButton.innerText.toLocaleLowerCase('th-TH').includes(query) ? 'block' : 'none';
   });
 
-  input.addEventListener('change', () => {
-    const file = input.files?.[0] || null;
-    if (file && !String(file.type || '').startsWith('image/')) {
-      showToast('กรุณาเลือกไฟล์ภาพ');
-      input.value = '';
-      return;
-    }
-    imageFile = file;
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    previewUrl = file ? URL.createObjectURL(file) : '';
-    preview.src = previewUrl;
-    preview.classList.toggle('visible', Boolean(previewUrl));
-  });
-
-  function renderImageResult(workflowResult) {
+  function renderPrompt(workflowResult) {
     lastResult = workflowResult;
     const bundle = workflowResult.bundle;
     result.classList.add('visible');
     studio.querySelector('#gpPrImagePrompt').textContent = bundle.prompt;
     studio.querySelector('#gpPrThaiText').textContent = bundle.thaiText || 'ยังไม่มีข้อความภาษาไทยที่ยืนยันจากคำสั่งผู้ใช้ — GP จะไม่แต่งชื่อ ตำแหน่ง วันที่ หรือตัวเลขขึ้นเอง';
     studio.querySelector('#gpPrSizeNote').textContent = `ขนาดแนะนำ: ${bundle.size.width}×${bundle.size.height} px (${bundle.size.ratio}) · ${bundle.size.label}`;
-    const direct = workflowResult.mode === 'direct';
-    studio.querySelector('#gpPrImageResultStatus').textContent = direct ? '✅ GP สร้าง/แก้ไขภาพให้แล้ว' : '✅ GP เตรียมงานภาพให้พร้อมส่งต่อแล้ว';
-    studio.querySelector('#gpPrImageResultNote').textContent = direct
-      ? 'ตรวจข้อความไทย ชื่อ ตำแหน่ง วันที่ ตัวเลข และโลโก้ก่อนเผยแพร่'
-      : 'AI ที่หน้าเว็บนี้ยังรับภาพไปแก้ไขโดยตรงไม่ได้ จึงใช้ fallback: คัดลอก Prompt แล้วแนบภาพต้นฉบับใน AI ที่สร้าง/แก้ไขภาพได้';
-    studio.querySelector('#gpPrFallbackActions').style.display = direct ? 'none' : 'flex';
     studio.querySelector('#gpPrPromptDetails').open = false;
-    const directUrl = typeof workflowResult.result === 'string' ? workflowResult.result : (workflowResult.result?.url || workflowResult.result?.imageUrl || '');
-    const generated = studio.querySelector('#gpPrGeneratedImage');
-    generated.src = directUrl;
-    generated.classList.toggle('visible', Boolean(directUrl));
   }
 
-  async function runImageWorkflow(iteration = '') {
+  function runPromptWorkflow(iteration = '') {
     const userRequest = request.value.trim();
-    if (!imageFile) { showToast('แนบภาพก่อนครับ'); input.focus(); return; }
     if (!userRequest) { showToast('บอก GP สั้น ๆ ว่าอยากให้ทำอะไร'); request.focus(); return; }
-    make.disabled = true;
-    make.textContent = 'กำลังจัดภาพ…';
-    try {
-      renderImageResult(await executeImageWorkflow({ file: imageFile, request: userRequest, iteration, scope: window }));
-      result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    } catch {
-      showToast('ยังเตรียมงานภาพไม่ได้ กรุณาลองใหม่');
-    } finally {
-      make.disabled = false;
-      make.textContent = '✨ ทำให้เลย';
-    }
+    renderPrompt(executeImageWorkflow({ request: userRequest, iteration }));
+    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  make.addEventListener('click', () => runImageWorkflow());
+  make.addEventListener('click', () => runPromptWorkflow());
   request.addEventListener('keydown', event => {
-    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); runImageWorkflow(); }
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); runPromptWorkflow(); }
   });
-  studio.querySelector('#gpPrCopyPrompt').addEventListener('click', async () => showToast(await copyText(lastResult?.bundle?.prompt || '') ? 'คัดลอก Prompt แล้ว' : 'คัดลอกไม่สำเร็จ'));
+
+  studio.querySelector('#gpPrCopyPrompt').addEventListener('click', async () => {
+    showToast(await copyText(lastResult?.bundle?.prompt || '') ? 'คัดลอกคำสั่งแล้ว' : 'คัดลอกไม่สำเร็จ');
+  });
+
   studio.querySelector('#gpPrOpenChatGPT').addEventListener('click', async () => {
     if (!lastResult?.bundle?.prompt) return;
     const copied = await copyText(lastResult.bundle.prompt);
-    if (!copied) return showToast('คัดลอกไม่สำเร็จ');
+    if (!copied) return showToast('คัดลอกคำสั่งไม่สำเร็จ');
     window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
-    showToast('คัดลอก Prompt แล้ว — อย่าลืมแนบภาพต้นฉบับใน ChatGPT');
   });
-  studio.querySelector('[data-gp-pr-refine]').addEventListener('click', event => runImageWorkflow(event.currentTarget.dataset.gpPrRefine));
-  studio.querySelector('[data-gp-pr-action="edit-text"]').addEventListener('click', () => { request.focus(); showToast('แก้ข้อความหรือรายละเอียด แล้วกด ทำให้เลย'); });
-  studio.querySelector('[data-gp-pr-action="change-style"]').addEventListener('click', () => { request.focus(); showToast('เปลี่ยนภาพ หรือพิมพ์สไตล์ เช่น “อบอุ่นขึ้น” แล้วกด ทำให้เลย'); });
-  studio.querySelector('[data-gp-pr-action="ready"]').addEventListener('click', async () => {
-    if (!lastResult) return showToast('ทำภาพก่อนครับ');
-    if (lastResult.mode === 'direct') return showToast('พร้อมใช้ — ตรวจข้อมูลสำคัญบนภาพอีกครั้งก่อนเผยแพร่');
-    const copied = await copyText(lastResult.bundle.prompt);
-    showToast(copied ? 'พร้อมส่งต่อ — Prompt ถูกคัดลอกแล้ว แนบภาพต้นฉบับกับ AI ที่สร้างภาพได้' : 'พร้อมส่งต่อ — ใช้ปุ่มคัดลอก Prompt ด้านบน');
-  });
-  window.addEventListener('beforeunload', () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, { once: true });
 
-  window.GovPromptPRImageStudio = Object.freeze({ buildPrompt: buildCreativeImagePrompt, run: runImageWorkflow });
+  studio.querySelector('[data-gp-pr-refine="สวยขึ้น"]').addEventListener('click', () => runPromptWorkflow('สวยขึ้น'));
+  studio.querySelector('[data-gp-pr-action="edit-text"]').addEventListener('click', () => { request.focus(); request.select(); showToast('แก้ข้อความแล้วกด “สร้างคำสั่ง”'); });
+  studio.querySelector('[data-gp-pr-action="change-style"]').addEventListener('click', () => { request.focus(); request.value = `${request.value.trim()} เปลี่ยนรูป/สไตล์`.trim(); showToast('บอกสไตล์ที่ต้องการเพิ่มได้เลย'); });
+  studio.querySelector('[data-gp-pr-action="ready"]').addEventListener('click', async () => {
+    showToast(await copyText(lastResult?.bundle?.prompt || '') ? 'พร้อมใช้ — คัดลอกคำสั่งแล้ว' : 'ยังไม่มีคำสั่งให้คัดลอก');
+  });
+
+  window.GovPromptPRImageStudio = Object.freeze({
+    buildPrompt: (value) => buildCreativeImagePrompt({ request: value }),
+    run: (value, iteration = '') => executeImageWorkflow({ request: value, iteration })
+  });
   return true;
 }
 
