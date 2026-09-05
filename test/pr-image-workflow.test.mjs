@@ -8,11 +8,13 @@ import {
   recommendImageSize
 } from '../assets/js/core/pr-image-workflow-v1.js';
 
-test('builds safe retirement publicity image fallback prompt', () => {
-  const result = buildCreativeImagePrompt({ request: 'ทำภาพเกษียณให้สวยที่สุด อบอุ่น ภูมิฐาน', fileName: 'retire.jpg' });
+test('builds safe retirement publicity image fallback prompt without exposing filename', () => {
+  const result = buildCreativeImagePrompt({ request: 'ทำภาพเกษียณให้สวยที่สุด อบอุ่น ภูมิฐาน', fileName: 'ชื่อบุคคล-ข้อมูลส่วนตัว.jpg' });
   assert.match(result.prompt, /รักษาใบหน้า/);
   assert.match(result.prompt, /ห้ามแต่งชื่อ ตำแหน่ง หน่วยงาน วันที่ ตัวเลข/);
   assert.match(result.prompt, /ข้อความภาษาไทยจริง/);
+  assert.match(result.prompt, /ภาพต้นฉบับที่ผู้ใช้แนบ/);
+  assert.equal(result.prompt.includes('ชื่อบุคคล-ข้อมูลส่วนตัว.jpg'), false);
   assert.equal(result.size.width, 1080);
   assert.equal(result.size.height, 1350);
   assert.equal(result.thaiText, '');
@@ -20,7 +22,7 @@ test('builds safe retirement publicity image fallback prompt', () => {
 
 test('keeps explicit Thai copy separate from visual prompt', () => {
   const request = 'ทำภาพแสดงความยินดี ข้อความ “ขอแสดงความยินดี”';
-  const result = buildCreativeImagePrompt({ request, fileName: 'person.png' });
+  const result = buildCreativeImagePrompt({ request });
   assert.equal(extractExplicitThaiText(request), 'ขอแสดงความยินดี');
   assert.equal(result.thaiText, 'ขอแสดงความยินดี');
 });
