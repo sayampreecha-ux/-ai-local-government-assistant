@@ -50,11 +50,6 @@ async function verifyPRImageStudio(targetPage, expectedViewport, label) {
   targetPage.on('pageerror', (error) => errors.push(String(error?.stack || error?.message || error)));
   await targetPage.goto(`${origin}/gp012.html`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
   await targetPage.locator('[data-gp-pr-image-task="true"]').click();
-  await targetPage.locator('#gpPrImageInput').setInputFiles({
-    name: 'ชื่อบุคคล-ข้อมูลส่วนตัว.png',
-    mimeType: 'image/png',
-    buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
-  });
   await targetPage.locator('#gpPrImageRequest').fill('ทำภาพเกษียณให้สวยที่สุด อบอุ่น ภูมิฐาน');
   await targetPage.locator('#gpPrMakeImage').click();
   await targetPage.locator('#gpPrImageResult.visible').waitFor({ state: 'visible', timeout: 10_000 });
@@ -69,22 +64,26 @@ async function verifyPRImageStudio(targetPage, expectedViewport, label) {
     size: document.getElementById('gpPrSizeNote')?.textContent || '',
     quickActions: document.querySelectorAll('.gp-pr-image-quick button').length,
     hasTechnicalSettings: Boolean(document.querySelector('[name="font"],[name="color"],[name="layout"],[name="aspectRatio"],[name="promptStyle"]')),
-    imageVisible: document.getElementById('gpPrImagePreview')?.classList.contains('visible') || false,
-    legacyTaskCount: document.querySelectorAll('#tasks .task:not([data-gp-pr-image-task])').length
+    hasImageUpload: Boolean(document.getElementById('gpPrImageInput') || document.querySelector('#gpPrImageStudio input[type="file"]')),
+    legacyTaskCount: document.querySelectorAll('#tasks .task:not([data-gp-pr-image-task])').length,
+    taskCopy: document.querySelector('[data-gp-pr-image-task="true"]')?.textContent || '',
+    ctaCopy: document.getElementById('gpPrMakeImage')?.textContent || ''
   }));
 
   assert.ok(Math.abs(state.viewportWidth - expectedViewport) <= 2, `${label} viewport mismatch: ${state.viewportWidth}`);
   assert.ok(state.scrollWidth <= state.viewportWidth, `${label} has horizontal overflow: ${JSON.stringify(state)}`);
-  assert.match(state.status, /เตรียมงานภาพให้พร้อมส่งต่อ/, `${label} must use fallback without an image provider`);
-  assert.match(state.note, /fallback/, `${label} must explain image fallback briefly`);
-  assert.match(state.prompt, /รักษาใบหน้า/, `${label} prompt must preserve important source-image facts`);
+  assert.match(state.status, /คำสั่งพร้อมใช้/, `${label} must produce a ready-to-copy prompt`);
+  assert.match(state.note, /AI ปลายทาง/, `${label} must explain that image attachment happens in the destination AI`);
+  assert.match(state.prompt, /ผู้ใช้จะแนบภาพใน AI ปลายทางโดยตรง/, `${label} prompt must keep image attachment out of GovPrompt`);
+  assert.match(state.prompt, /รักษาใบหน้า/, `${label} prompt must preserve important source-image facts when a destination image is attached`);
   assert.match(state.prompt, /ห้ามแต่งชื่อ ตำแหน่ง หน่วยงาน วันที่ ตัวเลข/, `${label} prompt must prohibit invented official facts`);
-  assert.equal(state.prompt.includes('ชื่อบุคคล-ข้อมูลส่วนตัว.png'), false, `${label} must not expose local filename in the handoff prompt`);
   assert.match(state.thaiText, /ยังไม่มีข้อความภาษาไทยที่ยืนยัน/, `${label} must keep unverified Thai text separate`);
   assert.match(state.size, /1080×1350/, `${label} must recommend a practical Facebook-first default size`);
   assert.equal(state.quickActions, 4, `${label} must keep only the required quick actions`);
   assert.equal(state.hasTechnicalSettings, false, `${label} must not require technical design settings`);
-  assert.equal(state.imageVisible, true, `${label} must preview the attached source image`);
+  assert.equal(state.hasImageUpload, false, `${label} must not ask users to upload an image in GovPrompt`);
+  assert.match(state.taskCopy, /บอกงาน.*สร้างคำสั่ง.*ไปทำใน AI/s, `${label} task copy must reflect prompt-only flow`);
+  assert.match(state.ctaCopy, /สร้างคำสั่ง/, `${label} CTA must generate a prompt, not an image`);
   assert.equal(state.legacyTaskCount, 10, `${label} must preserve all existing PR tasks`);
   assert.deepEqual(errors, [], `${label} page errors: ${JSON.stringify(errors)}`);
   return state;
@@ -177,7 +176,7 @@ try {
   }
 
   assert.deepEqual(pageErrors, [], `browser console errors: ${JSON.stringify(pageErrors)}`);
-  console.log(JSON.stringify({ frontend, checks: { mobile390: 'PASS', desktop1280: 'PASS', noHorizontalOverflow: 'PASS', privacyGuard: 'PASS', prImageUpload: 'PASS', prImageFallback: 'PASS', prImageThaiTextSeparation: 'PASS', prLegacyTasksPreserved: 'PASS', allWorkflowRuntimeRoutes: `${workflowState.length} PASS`, console: 'PASS' } }, null, 2));
+  console.log(JSON.stringify({ frontend, checks: { mobile390: 'PASS', desktop1280: 'PASS', noHorizontalOverflow: 'PASS', privacyGuard: 'PASS', prImagePromptOnly: 'PASS', prImageNoUpload: 'PASS', prImageThaiTextSeparation: 'PASS', prLegacyTasksPreserved: 'PASS', allWorkflowRuntimeRoutes: `${workflowState.length} PASS`, console: 'PASS' } }, null, 2));
 } finally {
   await context.close();
   await browser.close();
