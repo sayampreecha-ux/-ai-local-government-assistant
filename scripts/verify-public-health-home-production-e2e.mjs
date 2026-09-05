@@ -25,7 +25,7 @@ await page.locator('.result-page-header').waitFor({ state: 'visible', timeout: 1
 await page.locator('.guided-intake-message').waitFor({ state: 'visible', timeout: 15_000 });
 assert.equal(await page.locator('.composer-region').isVisible(), true, 'intake input must remain visible while facts are missing');
 assert.equal(await page.locator('.work-catalog-groups').isVisible(), false, 'selected work must open on a dedicated result screen');
-await page.locator('#promptInput').fill('หนังสือเกี่ยวกับการขอความร่วมมือจัดกิจกรรม จะเรียนถึงนายกองค์การบริหารส่วนจังหวัด และมีวัตถุประสงค์เพื่อขอความร่วมมือสนับสนุนสถานที่จัดงาน');
+await page.locator('#promptInput').fill('เรื่องการขอความร่วมมือจัดกิจกรรม ผู้รับคือหน่วยงานภายนอก และมีวัตถุประสงค์เพื่อขอความร่วมมือสนับสนุนสถานที่จัดงาน');
 await page.locator('.send-button').click();
 await page.waitForFunction(() => {
   const count = document.querySelectorAll('.guided-intake-message').length;
