@@ -21,8 +21,26 @@
   const EXPLICIT_PRECEDENT_TERMS = /(?:หนังสือหารือ|ตอบข้อหารือ|แนววินิจฉัย|แนวปฏิบัติ|กรณีเทียบเคียง|กรณีหารือ|ซักซ้อมความเข้าใจ)/i;
   const INTERPRETATION_DISPUTE_TERMS = /(?:ไม่ตรง(?:กับ)?(?:ถ้อยคำ|ระเบียบ|กฎหมาย)|ข้อโต้แย้ง|ทักท้วง|ไม่ให้เบิก|ความเห็น.{0,50}(?:ขัด|ต่าง)|การเงิน|คลัง|พัสดุ|นิติกร|ผู้ตรวจสอบ).{0,80}(?:แย้ง|ทักท้วง|ไม่เห็นด้วย|ไม่ให้|ขัด)/i;
   const MULTI_AUTHORITY_TERMS = /(?:หลายเงื่อนไข|หลายบท|หลายกฎหมาย|กฎหมาย.{0,40}(?:ร่วมกัน|ประกอบ)|ระเบียบ.{0,40}(?:ร่วมกัน|ประกอบ))/i;
-  const REQUIRED_PRECEDENT_EVIDENCE = Object.freeze(['currentRule', 'officialPrecedent', 'legalVersion', 'caseMatch', 'conflictingOrNewerAuthority']);
-  const PRECEDENT_STATUSES = Object.freeze(['NOT_SEARCHED', 'SEARCHED_NOT_FOUND', 'FOUND', 'VERIFIED']);
+  const OFFICIAL_PRECEDENT_GATE_VERSION = '3.1';
+  const REQUIRED_PRECEDENT_EVIDENCE = Object.freeze(['currentRule', 'officialPrecedent', 'caseMatch', 'legalVersion', 'newerOrConflictingAuthority']);
+  const REQUIRED_CURRENT_RULE_CHECKS = Object.freeze([
+    'law', 'rule', 'regulation', 'announcement', 'primaryDirective', 'amendments',
+    'repealOrReplacement', 'transitionalProvisions', 'effectiveDate', 'dateContextMatched'
+  ]);
+  const REQUIRED_PRECEDENT_VERIFICATION = Object.freeze([
+    'issuingAuthority', 'documentNumber', 'documentDate', 'title', 'consultedFacts',
+    'citedRules', 'reasoning', 'conclusion', 'officialSource'
+  ]);
+  const ADAPTIVE_SEARCH_LEVELS = Object.freeze([
+    'LEVEL_1_DIRECT_FACT_SEARCH',
+    'LEVEL_2_LEGAL_OFFICIAL_LANGUAGE_SEARCH',
+    'LEVEL_3_PRECEDENT_INDEX_RECOVERY',
+    'LEVEL_4_IDENTIFIER_CITATION_CHAINING'
+  ]);
+  const PRECEDENT_STATUSES = Object.freeze(['NOT_SEARCHED', 'SEARCH_INCOMPLETE', 'FOUND_UNVERIFIED', 'VERIFIED', 'SEARCHED_NOT_FOUND']);
+  const CASE_MATCH_LEVELS = Object.freeze(['HIGH MATCH', 'MEDIUM MATCH', 'LOW MATCH']);
+  const AUTHORITY_STATUSES = Object.freeze(['NOT_CHECKED', 'NOT_FULLY_CHECKED', 'CHECKED_NONE_FOUND', 'FOUND']);
+  const RULE_CONFIDENCE_STATUSES = Object.freeze(['NOT_ASSESSED', 'SUFFICIENT', 'INSUFFICIENT']);
 
   const GENERAL_ASSISTANT = Object.freeze({ moduleId: 'GENERAL', title: 'ผู้ช่วยงานราชการไทยแบบครอบคลุม' });
 
@@ -108,16 +126,18 @@
     const source = normalizeText(question);
     const facts = normalizeText(context?.facts || source);
     const pick = (pattern, fallback = '[ให้ AI สกัดจากข้อเท็จจริง]') => facts.match(pattern)?.[0] || fallback;
+    const status = pick(/(?:ผู้ผ่านการสรรหา|ผู้ผ่านการคัดเลือก|ผู้สมัคร|ผู้มีสิทธิ|ผู้ได้รับแต่งตั้ง)[^,.\n]{0,80}/i);
+    const priorEvent = pick(/(?:ผ่านการสรรหา|ผ่านการคัดเลือก|ประกาศผล|ได้รับคำสั่ง|ได้รับแต่งตั้ง)[^,.\n]{0,80}/i);
     return Object.freeze({
       actor: pick(/(?:ข้าราชการ|พนักงานส่วนท้องถิ่น|ลูกจ้าง|ผู้บริหาร|ผู้ผ่านการสรรหา|ผู้สมัคร)[^,.\n]{0,80}/i),
       organization: pick(/(?:องค์การบริหารส่วนจังหวัด|อบจ\.|องค์การบริหารส่วนตำบล|อบต\.|เทศบาล|อปท\.|หน่วยงาน)[^,.\n]{0,60}/i),
-      status: pick(/(?:ผู้ผ่านการสรรหา|ผู้ผ่านการคัดเลือก|ผู้สมัคร|ผู้มีสิทธิ|ผู้ได้รับแต่งตั้ง)[^,.\n]{0,80}/i),
-      priorEvent: pick(/(?:ผ่านการสรรหา|ผ่านการคัดเลือก|ประกาศผล|ได้รับคำสั่ง|ได้รับแต่งตั้ง)[^,.\n]{0,80}/i),
-      currentStage: normalizeText(context?.currentStage) || pick(/(?:รายงานตัวครั้งแรก|รายงานตัว|เลือก[^,.\n]{0,60}|รับตำแหน่ง|ก่อนสอบ|หลังสอบ)[^,.\n]{0,80}/i),
-      action: pick(/(?:เดินทาง|รายงานตัว|เลือก|เบิก|จ่าย|แต่งตั้ง|ย้าย|โอน|รับโอน)[^,.\n]{0,100}/i),
-      claimOrPower: pick(/(?:ค่าใช้จ่ายในการเดินทาง|ค่าเดินทาง|สิทธิ|ค่าใช้จ่าย|อำนาจ|เบิก|จ่าย)[^,.\n]{0,80}/i),
-      legalIssue: pick(/(?:รับการคัดเลือก|ข้อ\s*\d+(?:\(\d+\))?|ถือเป็น|เข้าข่าย|มีอำนาจ)[^,.\n]{0,100}/i),
-      dateContext: pick(/(?:พ\.ศ\.\s*)?25\d{2}|(?:พ\.ศ\.\s*)?26\d{2}|ปี\s*\d{2,4}|วันที่\s*\d{1,2}[^,.\n]{0,30}/i, '[ต้องระบุวันที่เกิดข้อเท็จจริง]')
+      status_or_prior_event: [status, priorEvent].filter(value => !value.startsWith('[')).join(' / ') || '[ให้ AI สกัดสถานะหรือเหตุการณ์ก่อนหน้า]',
+      current_stage: normalizeText(context?.currentStage) || pick(/(?:รายงานตัวครั้งแรก|รายงานตัว|เลือก[^,.\n]{0,60}|รับตำแหน่ง|ก่อนสอบ|หลังสอบ)[^,.\n]{0,80}/i),
+      disputed_action: pick(/(?:เดินทาง|รายงานตัว|เลือก|เบิก|จ่าย|แต่งตั้ง|ย้าย|โอน|รับโอน)[^,.\n]{0,100}/i),
+      claim_or_power: pick(/(?:ค่าใช้จ่ายในการเดินทาง|ค่าเดินทาง|สิทธิ|ค่าใช้จ่าย|อำนาจ|เบิก|จ่าย)[^,.\n]{0,80}/i),
+      legal_issue: pick(/(?:รับการคัดเลือก|ข้อ\s*\d+(?:\(\d+\))?|ถือเป็น|เข้าข่าย|มีอำนาจ)[^,.\n]{0,100}/i),
+      applicable_rule: pick(/(?:พระราชบัญญัติ|กฎกระทรวง|ระเบียบ|ประกาศ|หนังสือ(?:สั่งการ|เวียน)?|มาตรา\s*\d+|ข้อ\s*\d+(?:\(\d+\))?)[^,.\n]{0,120}/i),
+      date_context: pick(/(?:พ\.ศ\.\s*)?25\d{2}|(?:พ\.ศ\.\s*)?26\d{2}|ปี\s*\d{2,4}|วันที่\s*\d{1,2}[^,.\n]{0,30}/i, '[ต้องระบุวันที่เกิดข้อเท็จจริง]')
     });
   }
 
@@ -128,16 +148,83 @@
       || (INTERPRETATION_DECISION_TERMS.test(source) && INTERPRETATION_FACTORS.test(source));
   }
 
+  function normalizeCompletedChecks(value, allowed) {
+    const supplied = Array.isArray(value)
+      ? value
+      : Object.entries(value && typeof value === 'object' ? value : {}).filter(([, done]) => done === true).map(([key]) => key);
+    return Object.freeze([...new Set(supplied.filter(item => allowed.includes(item)))]);
+  }
+
+  function allChecksCompleted(completed, required) {
+    return required.every(item => completed.includes(item));
+  }
+
   function normalizePrecedentEvidence(evidence = {}) {
-    const officialPrecedent = PRECEDENT_STATUSES.includes(evidence?.officialPrecedent) ? evidence.officialPrecedent : 'NOT_SEARCHED';
+    const validationIssues = [];
+    const currentRuleChecks = normalizeCompletedChecks(evidence?.currentRuleChecks, REQUIRED_CURRENT_RULE_CHECKS);
+    const requestedCurrentRule = evidence?.currentRule === 'VERIFIED' || evidence?.currentRule === true;
+    const currentRule = requestedCurrentRule && allChecksCompleted(currentRuleChecks, REQUIRED_CURRENT_RULE_CHECKS) ? 'VERIFIED' : 'NOT_VERIFIED';
+    if (requestedCurrentRule && currentRule !== 'VERIFIED') validationIssues.push('CURRENT_RULE_CHECKLIST_INCOMPLETE');
+
+    const searchLevelsCompleted = normalizeCompletedChecks(evidence?.searchLevelsCompleted, ADAPTIVE_SEARCH_LEVELS);
+    if (currentRule !== 'VERIFIED' && searchLevelsCompleted.length > 0) validationIssues.push('PRECEDENT_SEARCH_BEFORE_CURRENT_RULE_VERIFIED');
+    const identifierLeadDetected = evidence?.identifierLeadDetected === true || (Array.isArray(evidence?.citationIdentifiers) && evidence.citationIdentifiers.length > 0);
+    const unresolvedLeads = evidence?.unresolvedLeads === true || (Array.isArray(evidence?.unresolvedLeads) && evidence.unresolvedLeads.length > 0);
+    const precedentVerification = normalizeCompletedChecks(evidence?.precedentVerification, REQUIRED_PRECEDENT_VERIFICATION);
+    const precedentVerificationComplete = allChecksCompleted(precedentVerification, REQUIRED_PRECEDENT_VERIFICATION);
+    const rawPrecedent = evidence?.officialPrecedent === 'FOUND' ? 'FOUND_UNVERIFIED' : evidence?.officialPrecedent;
+    let officialPrecedent = PRECEDENT_STATUSES.includes(rawPrecedent) ? rawPrecedent : 'NOT_SEARCHED';
+    if (officialPrecedent === 'VERIFIED' && (!precedentVerificationComplete || searchLevelsCompleted.length === 0)) {
+      officialPrecedent = 'FOUND_UNVERIFIED';
+      validationIssues.push('PRECEDENT_VERIFICATION_INCOMPLETE');
+    }
+    if (officialPrecedent === 'SEARCHED_NOT_FOUND') {
+      const baseLevelsComplete = ADAPTIVE_SEARCH_LEVELS.slice(0, 3).every(level => searchLevelsCompleted.includes(level));
+      const citationLevelComplete = !identifierLeadDetected || searchLevelsCompleted.includes('LEVEL_4_IDENTIFIER_CITATION_CHAINING');
+      if (!baseLevelsComplete || !citationLevelComplete || unresolvedLeads) {
+        officialPrecedent = 'SEARCH_INCOMPLETE';
+        validationIssues.push('PRECEDENT_SEARCH_COVERAGE_INCOMPLETE');
+      }
+    }
+
+    const explicitNotAssessed = evidence?.caseMatch === 'NOT_ASSESSED';
+    const requestedMatchLevel = explicitNotAssessed
+      ? 'NOT_ASSESSED'
+      : (CASE_MATCH_LEVELS.includes(evidence?.caseMatchLevel)
+        ? evidence.caseMatchLevel
+        : (CASE_MATCH_LEVELS.includes(evidence?.caseMatch) ? evidence.caseMatch : 'NOT_ASSESSED'));
+    const caseMatch = !explicitNotAssessed && (evidence?.caseMatch === 'ASSESSED' || requestedMatchLevel !== 'NOT_ASSESSED') ? 'ASSESSED' : 'NOT_ASSESSED';
+    const caseMatchLevel = caseMatch === 'ASSESSED' ? requestedMatchLevel : 'NOT_ASSESSED';
+    if (caseMatch === 'ASSESSED' && caseMatchLevel === 'NOT_ASSESSED') validationIssues.push('CASE_MATCH_LEVEL_MISSING');
+
+    const legalVersion = evidence?.legalVersion === 'VERIFIED' || evidence?.legalVersion === true ? 'VERIFIED' : 'NOT_VERIFIED';
+    const rawAuthority = evidence?.newerOrConflictingAuthority
+      || (evidence?.conflictingOrNewerAuthority === true ? 'CHECKED_NONE_FOUND' : 'NOT_CHECKED');
+    const newerOrConflictingAuthority = AUTHORITY_STATUSES.includes(rawAuthority) ? rawAuthority : 'NOT_CHECKED';
+    const authorityAnalysisComplete = newerOrConflictingAuthority !== 'FOUND' || evidence?.authorityAnalysisComplete === true;
+    if (newerOrConflictingAuthority === 'FOUND' && !authorityAnalysisComplete) validationIssues.push('CONFLICTING_AUTHORITY_ANALYSIS_INCOMPLETE');
+    const ruleInterpretationConfidence = RULE_CONFIDENCE_STATUSES.includes(evidence?.ruleInterpretationConfidence)
+      ? evidence.ruleInterpretationConfidence
+      : 'NOT_ASSESSED';
+    const precedentContradictsPriorAnalysis = evidence?.precedentContradictsPriorAnalysis === true;
+
     return Object.freeze({
-      currentRule: evidence?.currentRule === true,
+      currentRule,
+      currentRuleChecks,
       officialPrecedent,
-      legalVersion: evidence?.legalVersion === true,
-      caseMatch: /^(?:HIGH|MEDIUM|LOW) MATCH$/.test(String(evidence?.caseMatch || '')) ? evidence.caseMatch : null,
-      conflictingOrNewerAuthority: evidence?.conflictingOrNewerAuthority === true,
-      officialSourceVerified: evidence?.officialSourceVerified === true,
-      searchLadderExecuted: evidence?.searchLadderExecuted === true
+      searchLevelsCompleted,
+      identifierLeadDetected,
+      unresolvedLeads,
+      precedentVerification,
+      precedentVerificationComplete,
+      caseMatch,
+      caseMatchLevel,
+      legalVersion,
+      newerOrConflictingAuthority,
+      authorityAnalysisComplete,
+      ruleInterpretationConfidence,
+      precedentContradictsPriorAnalysis,
+      validationIssues: Object.freeze(validationIssues)
     });
   }
 
@@ -149,33 +236,98 @@
     const fingerprint = extractCaseFingerprint(question, context);
     const evidenceState = normalizePrecedentEvidence(evidence);
     const compactFacts = Object.values(fingerprint).filter(value => !String(value).startsWith('[')).join(' ');
-    const legalPhrase = fingerprint.legalIssue.startsWith('[') ? source : fingerprint.legalIssue;
-    const decisionUnlocked = evidenceState.currentRule && evidenceState.legalVersion && evidenceState.searchLadderExecuted
-      && evidenceState.officialPrecedent === 'VERIFIED' && /^(?:HIGH|MEDIUM) MATCH$/.test(String(evidenceState.caseMatch || ''))
-      && evidenceState.conflictingOrNewerAuthority && evidenceState.officialSourceVerified;
+    const legalPhrase = fingerprint.legal_issue.startsWith('[') ? source : fingerprint.legal_issue;
+    const precedentGatePassed = evidenceState.officialPrecedent === 'SEARCHED_NOT_FOUND'
+      || (evidenceState.officialPrecedent === 'VERIFIED'
+        && evidenceState.caseMatch === 'ASSESSED'
+        && /^(?:HIGH|MEDIUM) MATCH$/.test(evidenceState.caseMatchLevel));
+    const authorityGatePassed = evidenceState.newerOrConflictingAuthority === 'CHECKED_NONE_FOUND'
+      || (evidenceState.newerOrConflictingAuthority === 'FOUND' && evidenceState.authorityAnalysisComplete);
+    const decisionUnlocked = evidenceState.currentRule === 'VERIFIED'
+      && precedentGatePassed
+      && evidenceState.legalVersion === 'VERIFIED'
+      && authorityGatePassed
+      && evidenceState.ruleInterpretationConfidence === 'SUFFICIENT';
+    const correctionRequired = evidenceState.precedentContradictsPriorAnalysis
+      && evidenceState.officialPrecedent === 'VERIFIED'
+      && evidenceState.caseMatchLevel === 'HIGH MATCH';
+    let workflowStatus = 'READY_FOR_HUMAN_REVIEW';
+    let nextAction = 'HUMAN_REVIEW';
+    if (decisionUnlocked && correctionRequired) {
+      workflowStatus = 'READY_FOR_CORRECTION_AND_HUMAN_REVIEW';
+      nextAction = 'CORRECT_PRIOR_ANALYSIS_THEN_HUMAN_REVIEW';
+    }
+    if (!decisionUnlocked) {
+      if (evidenceState.currentRule !== 'VERIFIED') {
+        workflowStatus = 'BLOCKED_CURRENT_RULE_CHECK';
+        nextAction = 'EXECUTE_CURRENT_RULE_CHECK';
+      } else if (evidenceState.officialPrecedent === 'NOT_SEARCHED') {
+        workflowStatus = 'BLOCKED_PRECEDENT_SEARCH';
+        nextAction = 'EXECUTE_OFFICIAL_PRECEDENT_SEARCH';
+      } else if (evidenceState.officialPrecedent === 'SEARCH_INCOMPLETE') {
+        workflowStatus = 'BLOCKED_PRECEDENT_SEARCH';
+        nextAction = 'CONTINUE_ADAPTIVE_PRECEDENT_SEARCH';
+      } else if (evidenceState.officialPrecedent === 'FOUND_UNVERIFIED') {
+        workflowStatus = 'BLOCKED_PRECEDENT_VERIFICATION';
+        nextAction = 'VERIFY_PRECEDENT_CANDIDATE';
+      } else if (evidenceState.officialPrecedent === 'VERIFIED' && (evidenceState.caseMatch !== 'ASSESSED' || evidenceState.caseMatchLevel === 'LOW MATCH')) {
+        workflowStatus = 'BLOCKED_CASE_MATCH_ASSESSMENT';
+        nextAction = evidenceState.caseMatchLevel === 'LOW MATCH' ? 'SEARCH_STRONGER_PRECEDENT_OR_LIMIT_CONCLUSION' : 'ASSESS_CASE_MATCH';
+      } else if (evidenceState.legalVersion !== 'VERIFIED') {
+        workflowStatus = 'BLOCKED_LEGAL_VERSION_CHECK';
+        nextAction = 'VERIFY_LEGAL_VERSION';
+      } else if (!authorityGatePassed) {
+        workflowStatus = 'BLOCKED_AUTHORITY_CHECK';
+        nextAction = 'CHECK_NEWER_OR_CONFLICTING_AUTHORITY';
+      } else {
+        workflowStatus = 'BLOCKED_RULE_INTERPRETATION';
+        nextAction = 'ASSESS_RULE_INTERPRETATION_CONFIDENCE';
+      }
+    }
+    const officialDocumentLanguage = Object.freeze([
+      'หารือการพิจารณา', 'หารือแนวทางการปฏิบัติ', 'หลักเกณฑ์และแนวทาง',
+      'ซักซ้อมความเข้าใจ', 'การเบิกค่าใช้จ่าย', 'การเดินทางไปราชการ',
+      'การแต่งตั้ง', 'การรับการคัดเลือก'
+    ]);
     return Object.freeze({
       required: true,
       interpretation_issue: true,
+      gateVersion: OFFICIAL_PRECEDENT_GATE_VERSION,
+      currentRule: evidenceState.currentRule,
       officialPrecedent: evidenceState.officialPrecedent,
+      caseMatch: evidenceState.caseMatch,
+      caseMatchLevel: evidenceState.caseMatchLevel,
+      legalVersion: evidenceState.legalVersion,
+      newerOrConflictingAuthority: evidenceState.newerOrConflictingAuthority,
+      ruleInterpretationConfidence: evidenceState.ruleInterpretationConfidence,
+      correctionRequired,
       decisionLock: decisionUnlocked ? 'OFF' : 'ON',
-      workflowStatus: decisionUnlocked ? 'READY_FOR_HUMAN_REVIEW' : 'BLOCKED_PRECEDENT_SEARCH',
-      nextAction: decisionUnlocked ? 'HUMAN_REVIEW' : 'EXECUTE_OFFICIAL_PRECEDENT_SEARCH',
+      workflowStatus,
+      nextAction,
       status: decisionUnlocked ? 'evidence-ready-human-review-required' : 'blocked-pending-case-precedent-search',
       reason: 'interpretation-risk-detected',
       riskLevel,
       fingerprint,
       requiredEvidence: REQUIRED_PRECEDENT_EVIDENCE,
+      requiredDecisionChecks: Object.freeze([...REQUIRED_PRECEDENT_EVIDENCE, 'ruleInterpretationConfidence']),
+      requiredCurrentRuleChecks: REQUIRED_CURRENT_RULE_CHECKS,
+      requiredPrecedentVerification: REQUIRED_PRECEDENT_VERIFICATION,
       evidenceState,
+      searchConcepts: Object.freeze({
+        factLanguage: compactFacts || source,
+        legalLanguage: legalPhrase,
+        officialDocumentLanguage
+      }),
       searchQueries: Object.freeze([
-        `${compactFacts || source} หนังสือหารือ`,
-        `ถ้อยคำกฎหมาย ${legalPhrase} ตอบข้อหารือ แนววินิจฉัย`,
-        `หนังสือหารือ ตอบข้อหารือ แนววินิจฉัย ซักซ้อมความเข้าใจ แนวทางปฏิบัติ กรณีหารือ ${legalPhrase}`,
-        `${legalPhrase} site:ratchakitcha.soc.go.th OR site:krisdika.go.th OR site:moi.go.th OR site:dla.go.th OR site:cgd.go.th OR site:bb.go.th OR site:coj.go.th OR site:oag.go.th OR site:nacc.go.th`
+        `${compactFacts || source} หนังสือหารือ ตอบข้อหารือ แนววินิจฉัย ซักซ้อม`,
+        `${legalPhrase} ผ่านการสรรหา รับการคัดเลือก รายงานตัวเพื่อแต่งตั้ง เลือกตำแหน่ง การเดินทางไปราชการชั่วคราว ค่าใช้จ่ายในการเดินทางไปราชการ`,
+        `รวมหนังสือหารือ รวมข้อหารือ ประมวลข้อหารือ สารบัญหนังสือหารือ คู่มือแนววินิจฉัย FAQ แนวปฏิบัติ ${legalPhrase} site:go.th`,
+        `เลขหนังสือ รหัสกอง วันที่ ชื่อเรื่อง หนังสือที่อ้างถึง หน่วยงานผู้ตอบ ${legalPhrase} site:go.th`
       ]),
-      searchLadder: Object.freeze(['exact-fact-pattern', 'legal-terminology', 'precedent-document-type', 'official-source-search', 'citation-chaining', 'forward-backward-authority-check']),
-      requiredPasses: Object.freeze(['primary-authority-current-version', 'official-precedent-search-executed', 'case-match-assessed', 'contrary-and-newer-authority']),
+      searchLadder: ADAPTIVE_SEARCH_LEVELS,
+      requiredPasses: Object.freeze(['current-rule-date-context', 'adaptive-precedent-retrieval', 'precedent-verification', 'case-match', 'temporal-authority', 'rule-interpretation-confidence']),
       matchingDimensions: Object.freeze(['person-position', 'organization', 'prior-event-status', 'current-stage-action', 'legal-provision', 'claim-power-legal-effect']),
-      allowedMatchLevels: Object.freeze(['HIGH', 'MEDIUM', 'LOW']),
+      allowedMatchLevels: CASE_MATCH_LEVELS,
       allowedFinalDecisions: decisionUnlocked ? Object.freeze(['✅ ได้', '❌ ไม่ได้', '⚠️ ได้โดยมีเงื่อนไข', '🔎 หลักฐานยังไม่พอที่จะฟันธง']) : Object.freeze(['⚠️ ได้โดยมีเงื่อนไข', '🔎 หลักฐานยังไม่พอที่จะฟันธง']),
       conclusionStatusUntilPassed: '🔎 หลักฐานยังไม่พอที่จะฟันธง',
       humanApprovalRequired: true
@@ -413,30 +565,77 @@
         '- หากแหล่งสรุปขัดกับต้นฉบับ ให้ยึดต้นฉบับ และหากต้นฉบับหลายฉบับขัดกันให้ตรวจลำดับศักดิ์ วันมีผล และฉบับแก้ไข'
       ] : []),
       ...(casePrecedentGate.required ? [
-        '', 'GOVPROMPT — OFFICIAL PRECEDENT EXECUTION GATE',
+        '', `GOVPROMPT — OFFICIAL PRECEDENT EXECUTION GATE v${casePrecedentGate.gateVersion}`,
         '- interpretation_issue = true',
-        `- requiredEvidence = ${casePrecedentGate.requiredEvidence.join(', ')}`,
+        `- currentRule = ${casePrecedentGate.currentRule}`,
         `- officialPrecedent = ${casePrecedentGate.officialPrecedent}`,
+        `- caseMatch = ${casePrecedentGate.caseMatch}`,
+        `- legalVersion = ${casePrecedentGate.legalVersion}`,
+        `- newerOrConflictingAuthority = ${casePrecedentGate.newerOrConflictingAuthority}`,
+        `- ruleInterpretationConfidence = ${casePrecedentGate.ruleInterpretationConfidence}`,
         `- decisionLock = ${casePrecedentGate.decisionLock}`,
         `- workflowStatus = ${casePrecedentGate.workflowStatus}`,
         `- nextAction = ${casePrecedentGate.nextAction}`,
-        '- HARD STOP: ขณะที่ officialPrecedent = NOT_SEARCHED ห้ามออก Final Decision เป็น ✅ ได้ หรือ ❌ ไม่ได้',
-        '- พบปัญหาตีความ: ห้ามฟันธงจากตัวบทเพียงอย่างเดียว และ PASS 1 ทดแทน PASS 2 ไม่ได้',
-        '- หาก AI มี Web Search ต้องดำเนินการค้นเองทันที ห้ามเพียงแจ้งว่าควรค้น ห้ามโยนให้ผู้ใช้ค้นเอง',
-        '- เมื่อ workflow ขาดหลักฐานสาธารณะที่ AI ค้นได้ ให้ AI ใช้เครื่องมือรวบรวมก่อนตอบ; ถามผู้ใช้เฉพาะข้อเท็จจริง/เอกสารที่หาเองไม่ได้และเปลี่ยนผลตัดสิน',
-        '- PASS 1: ค้นกฎหมาย กฎ ระเบียบ ประกาศ หนังสือสั่งการหลัก ฉบับแก้ไข/ยกเลิก และวันมีผล เพื่อยืนยัน Rule ปัจจุบัน',
-        '- PASS 2: ค้นหนังสือตอบข้อหารือ แนววินิจฉัย หนังสือซักซ้อม แนวปฏิบัติ คู่มือ/FAQ หรือคำพิพากษาที่ข้อเท็จจริงตรงหรือใกล้เคียง',
-        `- Case Fingerprint: actor=${casePrecedentGate.fingerprint.actor}; organization=${casePrecedentGate.fingerprint.organization}; status=${casePrecedentGate.fingerprint.status}; prior_event=${casePrecedentGate.fingerprint.priorEvent}; current_stage=${casePrecedentGate.fingerprint.currentStage}; action=${casePrecedentGate.fingerprint.action}; claim_or_power=${casePrecedentGate.fingerprint.claimOrPower}; legal_issue=${casePrecedentGate.fingerprint.legalIssue}; date_context=${casePrecedentGate.fingerprint.dateContext}`,
-        '- Search Ladder ต้องเปลี่ยนมิติการค้นอย่างมีสาระตามลำดับ: Exact Fact Pattern → Legal Terminology → Precedent Document Type → Official Source → Citation Chaining → Forward/Backward Authority Check',
-        ...casePrecedentGate.searchQueries.map((query, index) => `- คำค้นตั้งต้น ${index + 1}: ${query}`),
-        '- Citation Chaining: เมื่อพบเลขหนังสือ วันที่ ชื่อเรื่อง หรือเอกสารอ้างต่อ ต้องค้นเอกสารที่ถูกอ้าง หาต้นฉบับ และห้ามหยุดที่เว็บสรุป',
-        '- เมื่อพบ precedent ให้เทียบ 6 มิติ: บุคคล/ตำแหน่ง ประเภทหน่วยงาน เหตุการณ์/สถานะก่อนหน้า ขั้นตอน/การกระทำ บทกฎหมาย และสิทธิ/อำนาจ/ผลทางกฎหมาย แล้วจัด HIGH / MEDIUM / LOW MATCH',
-        '- LOW MATCH ใช้เพียงลำพังเพื่อฟันธงไม่ได้; ไม่บังคับโควตาจำนวนเอกสาร ให้ยึดคุณภาพ ความตรง ลำดับศักดิ์ และความน่าเชื่อถือ',
-        '- ตรวจวันที่ precedent กฎหมายที่ใช้ขณะนั้น ฉบับแก้ไข หนังสือใหม่กว่า แนวขัดกัน และกฎใหม่ ตั้งแต่วัน precedent ถึงปัจจุบัน',
-        '- officialPrecedent เปลี่ยนจาก NOT_SEARCHED เป็น SEARCHED_NOT_FOUND ได้ต่อเมื่อดำเนิน Search Ladder จริงแล้วเท่านั้น; FOUND ยังไม่เท่ากับ VERIFIED',
-        '- ปลด decisionLock ได้เมื่อยืนยัน Current Rule, Legal Version, ทำ Official Precedent Search จริง, ประเมิน Case Match, ตรวจ Newer/Conflicting Authority และยืนยันแหล่งราชการครบ',
-        '- หากค้นแล้วยังไม่พบ ให้เขียนว่า “ยังไม่พบหนังสือตอบข้อหารือหรือแนววินิจฉัยตรงกรณีจากการค้นครั้งนี้” ห้ามสรุปว่าไม่มีหนังสือหารือ',
-        '- ก่อนผ่าน Gate ให้ใช้สถานะ “🔎 หลักฐานยังไม่พอที่จะฟันธง” และงานกฎหมาย/การเงิน/พัสดุ/บุคคล/งบประมาณ/อำนาจ/สิทธิประโยชน์ต้องคง Human Approval'
+        '- FINAL DECISION LOCK: ห้ามออก Final Decision เป็น ✅ ได้ หรือ ❌ ไม่ได้ จนกว่าจะผ่าน FINAL DECISION GATE ครบทุกเงื่อนไข',
+        '- หาก AI มี Web Search ต้องดำเนินการค้นและเปิดหลักฐานเองทันที ห้ามเพียงแนะนำให้ค้นหรือโยนให้ผู้ใช้ไปค้น',
+        '- ถ้าหลักฐานที่ขาดเป็นข้อมูลสาธารณะ ให้ AI พยายามรวบรวมก่อนตอบ; ถามผู้ใช้เฉพาะข้อเท็จจริงหรือเอกสารที่หาเองไม่ได้และเปลี่ยนผลจริง',
+        '', 'B. CURRENT RULE CHECK — ต้องทำก่อนค้น precedent',
+        '- ตรวจ: กฎหมาย กฎ ระเบียบ ประกาศ หนังสือสั่งการหลัก ฉบับแก้ไข การยกเลิก/แทนที่ บทเฉพาะกาล และวันมีผลใช้บังคับ',
+        '- จับคู่กฎกับ date_context ของข้อเท็จจริง; รายการที่ไม่ใช้ต้องระบุว่าไม่เกี่ยวข้องพร้อมเหตุผล ห้ามข้ามเงียบ ๆ',
+        '- เปลี่ยน currentRule เป็น VERIFIED ได้เมื่อรายการตรวจครบและยืนยันจากต้นฉบับราชการแล้วเท่านั้น',
+        '', 'C. CASE FINGERPRINT — ห้ามค้นจากประโยคผู้ใช้เพียงอย่างเดียว',
+        `- actor=${casePrecedentGate.fingerprint.actor}`,
+        `- organization=${casePrecedentGate.fingerprint.organization}`,
+        `- status_or_prior_event=${casePrecedentGate.fingerprint.status_or_prior_event}`,
+        `- current_stage=${casePrecedentGate.fingerprint.current_stage}`,
+        `- disputed_action=${casePrecedentGate.fingerprint.disputed_action}`,
+        `- claim_or_power=${casePrecedentGate.fingerprint.claim_or_power}`,
+        `- legal_issue=${casePrecedentGate.fingerprint.legal_issue}`,
+        `- applicable_rule=${casePrecedentGate.fingerprint.applicable_rule}`,
+        `- date_context=${casePrecedentGate.fingerprint.date_context}`,
+        '', 'D. SEARCH CONCEPT GENERATION — สร้างอย่างน้อย 3 มิติ',
+        `- FACT LANGUAGE: ${casePrecedentGate.searchConcepts.factLanguage}`,
+        `- LEGAL LANGUAGE: ${casePrecedentGate.searchConcepts.legalLanguage}`,
+        `- OFFICIAL DOCUMENT LANGUAGE: ${casePrecedentGate.searchConcepts.officialDocumentLanguage.join(' / ')}`,
+        '- ห้ามสมมติว่าชื่อหนังสือหารือใช้คำเดียวกับคำถามของผู้ใช้',
+        '', 'E. ADAPTIVE PRECEDENT RETRIEVAL',
+        '- LEVEL 1 — DIRECT FACT SEARCH: ค้น Fact Language + เหตุการณ์ + หนังสือหารือ/ตอบข้อหารือ/แนววินิจฉัย/ซักซ้อม; พบ candidate ให้ไป VERIFY',
+        '- LEVEL 2 — LEGAL & OFFICIAL LANGUAGE SEARCH: แปลงข้อเท็จจริงเป็นศัพท์กฎหมายและภาษาชื่อเรื่องราชการแล้วค้นใหม่',
+        '- LEVEL 3 — PRECEDENT INDEX RECOVERY: ค้นรวม/ประมวล/สารบัญข้อหารือ คู่มือ FAQ และแนวปฏิบัติจากหน่วยงานเจ้าของเรื่องก่อน; ต้องเปิดตรวจรายการภายในเอกสารรวม ห้ามดูเพียงชื่อไฟล์หรือ snippet',
+        '- LEVEL 4 — IDENTIFIER & CITATION CHAINING: เมื่อมีเลขหนังสือ รหัสกอง วันที่ ชื่อเรื่อง ข้อกฎหมาย หน่วยงานผู้ตอบ หรือเอกสารอ้างต่อ ต้องตาม identifier ถึงต้นฉบับ',
+        '- เอกสารจำนวนหนึ่งเป็น PDF scan และอาจไม่ถูกทำ full-text index; ค้นข้อความไม่เจอไม่เท่ากับไม่มีหนังสือ',
+        ...casePrecedentGate.searchQueries.map((query, index) => `- คำค้น LEVEL ${index + 1}: ${query}`),
+        '', 'F. SEARCH STATUS',
+        '- NOT_SEARCHED = ยังไม่ได้ค้น precedent',
+        '- SEARCH_INCOMPLETE = เริ่มค้นแล้ว แต่ยังมี Search Level หรือ unresolved lead สำคัญ',
+        '- FOUND_UNVERIFIED = พบ candidate/เลขหนังสือ แต่ยังไม่ได้ตรวจเนื้อหาจริง',
+        '- VERIFIED = ยืนยันตัวเอกสาร แหล่งที่มา และเนื้อหาสำคัญแล้ว',
+        '- SEARCHED_NOT_FOUND = ทำ LEVEL 1–3 ตามสมควร และ LEVEL 4 เมื่อมี lead แล้ว แต่ยังไม่พบจากการค้นครั้งนี้; ห้ามตั้งสถานะนี้จาก Direct Keyword Search อย่างเดียว',
+        '', 'G. PRECEDENT VERIFICATION',
+        '- ก่อน VERIFIED ต้องตรวจ: หน่วยงานผู้ออก เลขหนังสือ วันที่ ชื่อเรื่อง ข้อเท็จจริงที่หารือ กฎที่อ้าง เหตุผลวินิจฉัย ผลวินิจฉัย และต้นฉบับราชการ',
+        '- Search snippet ชื่อไฟล์ เลขหนังสือ เว็บสรุป หรือข้อความอ้างต่อ เป็นเพียง Discovery Source ไม่ใช่ VERIFIED',
+        '', 'H. CASE MATCH',
+        '- เทียบ 6 มิติ: บุคคล/ตำแหน่ง ประเภทหน่วยงาน สถานะ/เหตุการณ์ก่อนหน้า ขั้นตอน/การกระทำ กฎที่ใช้ และสิทธิ/อำนาจ/ผลทางกฎหมาย',
+        '- จัด HIGH MATCH / MEDIUM MATCH / LOW MATCH; LOW MATCH เพียงลำพังห้ามใช้ฟันธง',
+        '- VERIFIED + HIGH MATCH มีน้ำหนักเหนือการตีความตัวบททั่วไป เว้นแต่มี authority สูงกว่า ใหม่กว่า หรือกฎหมายเปลี่ยนแล้ว',
+        '', 'I–J. TEMPORAL / AUTHORITY / CONFIDENCE CHECK',
+        '- ตรวจว่ากฎที่ precedent ใช้ยังมีผลหรือไม่ มีฉบับแก้ไข ยกเลิก แทนที่ precedent ใหม่กว่า แนวที่ขัดกัน หรือกฎหมายใหม่ที่เปลี่ยนผลหรือไม่',
+        '- newerOrConflictingAuthority ใช้ CHECKED_NONE_FOUND หรือ FOUND หลังวิเคราะห์ลำดับศักดิ์/ความใหม่ครบ; ถ้ายังไม่ครบใช้ NOT_FULLY_CHECKED',
+        '- ruleInterpretationConfidence ใช้ SUFFICIENT เฉพาะเมื่อหลักฐานรองรับการตีความพอ; แม้ SEARCHED_NOT_FOUND แต่ตัวบทกำกวมหรือยังตีความได้หลายทาง ให้ใช้ INSUFFICIENT และห้ามฟันธง',
+        '', 'K. FINAL DECISION GATE',
+        '- ปลด decisionLock ได้เมื่อ currentRule=VERIFIED และ officialPrecedent=VERIFIED หรือ SEARCHED_NOT_FOUND และ legalVersion=VERIFIED และตรวจ newer/conflicting authority ครบ และ ruleInterpretationConfidence=SUFFICIENT',
+        '- หากพบ precedent ต้อง caseMatch=ASSESSED และห้ามใช้ LOW MATCH เพียงลำพัง; หากพบ authority ขัดกันต้องวิเคราะห์ลำดับศักดิ์/ความใหม่แล้ว',
+        '- ถ้ายังไม่ครบ ใช้ ⚠️ ได้โดยมีเงื่อนไข หรือ 🔎 หลักฐานยังไม่พอที่จะฟันธง ตามน้ำหนักหลักฐาน',
+        '', 'L. ANTI-FALSE-NEGATIVE RULE',
+        '- ห้ามกล่าวว่า “ไม่มีหนังสือหารือ/ไม่มีแนววินิจฉัย/ไม่มีหนังสือตอบข้อหารือ” เพียงเพราะ Search Engine ไม่พบ',
+        '- ให้ใช้ว่า “ยังไม่พบหนังสือตอบข้อหารือหรือแนววินิจฉัยตรงกรณีจากการค้นครั้งนี้” เว้นแต่ฐานข้อมูลทางการยืนยันความครบถ้วนจริง',
+        '', 'M. PRECEDENT OVERRIDE / CORRECTION RULE',
+        '- หากภายหลังพบ officialPrecedent=VERIFIED + HIGH MATCH ที่ให้ผลต่างจากการตีความเดิม ต้องแก้ผลทันที ยึด authority ที่หนักกว่า และแจ้งสั้น ๆ ว่าเหตุใดผลจึงเปลี่ยน ห้ามปกป้องคำตอบเดิม',
+        '', 'N. SEARCH EFFICIENCY RULE',
+        '- ไม่กำหนดจำนวนครั้งขั้นต่ำ; ค้นให้ครบมิติ ไม่ค้นซ้ำโดยไม่เพิ่มหลักฐาน หากพบ VERIFIED + HIGH MATCH ตั้งแต่ต้น ให้ข้ามระดับที่ไม่จำเป็นแล้วทำ Temporal / Authority Check ทันที',
+        '', 'O. HUMAN APPROVAL',
+        '- AI ทำได้เฉพาะ Search / Analyze / Compare / Draft / Recommend ไม่มีอำนาจอนุมัติ ลงนาม สั่งจ่าย ลงมติ หรือใช้อำนาจแทนผู้มีอำนาจตามกฎหมาย',
+        '- ผล Final ทุกกรณีต้องผ่าน Human Approval ก่อนนำไปใช้จริง'
       ] : []),
       '', 'หลักสำคัญเรื่องการจำแนกงาน',
       `- ระบบคาดการณ์หมวดเบื้องต้น: ${activeRoute.moduleId} — ${activeRoute.assistant.title}`,
@@ -515,6 +714,7 @@
   window.GovPromptCore.buildCasePrecedentGate = buildCasePrecedentGate;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.6.0';
+  window.GovPromptCore.OFFICIAL_PRECEDENT_GATE_VERSION = OFFICIAL_PRECEDENT_GATE_VERSION;
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.7.0';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();
