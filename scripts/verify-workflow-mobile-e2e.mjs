@@ -37,12 +37,58 @@ const server = createServer(async (request, response) => {
 
 await new Promise((resolveServer) => server.listen(0, '127.0.0.1', resolveServer));
 const address = server.address();
-const frontend = `http://127.0.0.1:${address.port}/index.html`;
+const origin = `http://127.0.0.1:${address.port}`;
+const frontend = `${origin}/index.html`;
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, serviceWorkers: 'allow' });
 const page = await context.newPage();
 const pageErrors = [];
 page.on('pageerror', (error) => pageErrors.push(String(error?.stack || error?.message || error)));
+
+async function verifyPRImageStudio(targetPage, expectedViewport, label) {
+  const errors = [];
+  targetPage.on('pageerror', (error) => errors.push(String(error?.stack || error?.message || error)));
+  await targetPage.goto(`${origin}/gp012.html`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  await targetPage.locator('[data-gp-pr-image-task="true"]').click();
+  await targetPage.locator('#gpPrImageInput').setInputFiles({
+    name: 'ชื่อบุคคล-ข้อมูลส่วนตัว.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
+  });
+  await targetPage.locator('#gpPrImageRequest').fill('ทำภาพเกษียณให้สวยที่สุด อบอุ่น ภูมิฐาน');
+  await targetPage.locator('#gpPrMakeImage').click();
+  await targetPage.locator('#gpPrImageResult.visible').waitFor({ state: 'visible', timeout: 10_000 });
+
+  const state = await targetPage.evaluate(() => ({
+    viewportWidth: window.innerWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    status: document.getElementById('gpPrImageResultStatus')?.textContent || '',
+    note: document.getElementById('gpPrImageResultNote')?.textContent || '',
+    prompt: document.getElementById('gpPrImagePrompt')?.textContent || '',
+    thaiText: document.getElementById('gpPrThaiText')?.textContent || '',
+    size: document.getElementById('gpPrSizeNote')?.textContent || '',
+    quickActions: document.querySelectorAll('.gp-pr-image-quick button').length,
+    hasTechnicalSettings: Boolean(document.querySelector('[name="font"],[name="color"],[name="layout"],[name="aspectRatio"],[name="promptStyle"]')),
+    imageVisible: document.getElementById('gpPrImagePreview')?.classList.contains('visible') || false,
+    legacyTaskCount: document.querySelectorAll('#tasks .task:not([data-gp-pr-image-task])').length
+  }));
+
+  assert.ok(Math.abs(state.viewportWidth - expectedViewport) <= 2, `${label} viewport mismatch: ${state.viewportWidth}`);
+  assert.ok(state.scrollWidth <= state.viewportWidth, `${label} has horizontal overflow: ${JSON.stringify(state)}`);
+  assert.match(state.status, /เตรียมงานภาพให้พร้อมส่งต่อ/, `${label} must use fallback without an image provider`);
+  assert.match(state.note, /fallback/, `${label} must explain image fallback briefly`);
+  assert.match(state.prompt, /รักษาใบหน้า/, `${label} prompt must preserve important source-image facts`);
+  assert.match(state.prompt, /ห้ามแต่งชื่อ ตำแหน่ง หน่วยงาน วันที่ ตัวเลข/, `${label} prompt must prohibit invented official facts`);
+  assert.equal(state.prompt.includes('ชื่อบุคคล-ข้อมูลส่วนตัว.png'), false, `${label} must not expose local filename in the handoff prompt`);
+  assert.match(state.thaiText, /ยังไม่มีข้อความภาษาไทยที่ยืนยัน/, `${label} must keep unverified Thai text separate`);
+  assert.match(state.size, /1080×1350/, `${label} must recommend a practical Facebook-first default size`);
+  assert.equal(state.quickActions, 4, `${label} must keep only the required quick actions`);
+  assert.equal(state.hasTechnicalSettings, false, `${label} must not require technical design settings`);
+  assert.equal(state.imageVisible, true, `${label} must preview the attached source image`);
+  assert.equal(state.legacyTaskCount, 10, `${label} must preserve all existing PR tasks`);
+  assert.deepEqual(errors, [], `${label} page errors: ${JSON.stringify(errors)}`);
+  return state;
+}
 
 try {
   await page.goto(frontend, { waitUntil: 'domcontentloaded', timeout: 30_000 });
@@ -120,8 +166,18 @@ try {
     assert.equal(state.rawEvidenceValuesReturned, false, `${state.workflowId} must not expose raw evidence`);
   }
 
+  await verifyPRImageStudio(page, 390, 'mobile GP012');
+
+  const desktopContext = await browser.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: 'block' });
+  const desktopPage = await desktopContext.newPage();
+  try {
+    await verifyPRImageStudio(desktopPage, 1280, 'desktop GP012');
+  } finally {
+    await desktopContext.close();
+  }
+
   assert.deepEqual(pageErrors, [], `browser console errors: ${JSON.stringify(pageErrors)}`);
-  console.log(JSON.stringify({ frontend, checks: { mobile390: 'PASS', noHorizontalOverflow: 'PASS', privacyGuard: 'PASS', allWorkflowRuntimeRoutes: `${workflowState.length} PASS`, console: 'PASS' } }, null, 2));
+  console.log(JSON.stringify({ frontend, checks: { mobile390: 'PASS', desktop1280: 'PASS', noHorizontalOverflow: 'PASS', privacyGuard: 'PASS', prImageUpload: 'PASS', prImageFallback: 'PASS', prImageThaiTextSeparation: 'PASS', prLegacyTasksPreserved: 'PASS', allWorkflowRuntimeRoutes: `${workflowState.length} PASS`, console: 'PASS' } }, null, 2));
 } finally {
   await context.close();
   await browser.close();
