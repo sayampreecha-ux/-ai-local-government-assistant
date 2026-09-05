@@ -21,9 +21,10 @@ test('GP008 fallback bootstrap uses the same current assets as the static produc
   assert.match(gp008, /public-health-worker-toolkit-v1\.js\?v=1\.0\.3/);
 });
 
-test('mobile home keeps quick actions scrollable and composer out of the fixed-button collision zone', () => {
+test('mobile home keeps all categories in two columns and composer out of the fixed-button collision zone', () => {
   assert.match(homeCss, /@media\(max-width:620px\)/);
-  assert.match(homeCss, /\.quick-actions\{[^}]*flex-wrap:nowrap[^}]*overflow-x:auto/s);
+  assert.match(homeCss, /\.chat-main:not\(\.has-messages\)>\.quick-actions\{[^}]*overflow:visible/s);
+  assert.match(homeCss, /\.chat-main:not\(\.has-messages\) \.composer-region\{[^}]*position:static/s);
   assert.match(homeCss, /\.chat-main\.has-messages \.composer-region\{[^}]*position:sticky/s);
   assert.match(homeCss, /\.answer-actions\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/s);
 });

@@ -10,13 +10,9 @@
   const dialogContent = document.getElementById('dialogContent');
   if (!form || !input || !quickActions) return;
 
-  const PRIMARY_ACTIONS = Object.freeze([
-    Object.freeze({ label: 'ร่างหนังสือ / บันทึก', prompt: 'ร่างหนังสือราชการ' }),
-    Object.freeze({ label: 'ทำโครงการ', prompt: 'ทำโครงการ' }),
-    Object.freeze({ label: 'พัสดุ / TOR', prompt: 'ร่าง TOR' }),
-    Object.freeze({ label: 'เบิกจ่าย / ค่าใช้จ่าย', prompt: 'เบิกจ่าย' }),
-    Object.freeze({ label: 'กฎหมาย / ระเบียบ', prompt: 'วิเคราะห์กฎหมาย' }),
-    Object.freeze({ label: 'งานบุคคล', prompt: 'ทำงานบุคคล' })
+  const CATALOG_ORDER = Object.freeze([
+    'pr', 'records', 'audit', 'finance', 'planning', 'procurement',
+    'hr', 'executive', 'engineering', 'health', 'education', 'council'
   ]);
 
   const WORK_CATALOG = Object.freeze([
@@ -36,7 +32,8 @@
         Object.freeze({ label: 'ร่างบันทึกข้อความ', prompt: 'ร่างบันทึกข้อความ' }),
         Object.freeze({ label: 'ร่างหนังสือหารือ', prompt: 'ร่างหนังสือหารือ' }),
         Object.freeze({ label: 'ร่างคำสั่ง', prompt: 'ช่วยร่างคำสั่งราชการ โดยถามข้อมูลสำคัญที่ยังขาดก่อน' }),
-        Object.freeze({ label: 'สรุป / ร่างรายงานการประชุม', prompt: 'ช่วยสรุปและจัดทำรายงานการประชุมจากข้อมูลที่ให้' })
+        Object.freeze({ label: 'สรุป / ร่างรายงานการประชุม', prompt: 'ช่วยสรุปและจัดทำรายงานการประชุมจากข้อมูลที่ให้' }),
+        Object.freeze({ label: 'จัดหน้าเอกสาร', prompt: 'ช่วยจัดหน้าเอกสารที่แนบให้อ่านง่ายและเป็นทางการ โดยรักษาข้อเท็จจริง ชื่อ ตัวเลข วันที่ และสาระเดิมไว้' })
       ])
     }),
     Object.freeze({
@@ -134,8 +131,9 @@
       ])
     }),
     Object.freeze({
-      id: 'audit', title: 'ตรวจสอบ ความเสี่ยง และธรรมาภิบาล', keywords: 'ตรวจสอบภายใน ความเสี่ยง ทุจริต ธรรมาภิบาล PDPA ตรวจเอกสาร ควบคุมภายใน',
+      id: 'audit', title: 'กฎหมาย ระเบียบ และตรวจสอบ', keywords: 'กฎหมาย ระเบียบ หนังสือสั่งการ หารือ ตรวจสอบภายใน ความเสี่ยง ทุจริต ธรรมาภิบาล PDPA ตรวจเอกสาร ควบคุมภายใน',
       tasks: Object.freeze([
+        Object.freeze({ label: 'ค้นและวิเคราะห์กฎหมาย / ระเบียบ', prompt: 'ช่วยค้นและวิเคราะห์กฎหมาย ระเบียบ หรือหนังสือสั่งการที่เกี่ยวข้อง พร้อมฐานอำนาจ เงื่อนไข ความเสี่ยง และข้อเสนอแนะ โดยใช้แหล่งทางการที่เป็นปัจจุบัน' }),
         Object.freeze({ label: 'ตรวจความเสี่ยงทุจริต', prompt: 'ช่วยวิเคราะห์ความเสี่ยงทุจริต จุดควบคุม หลักฐาน และแนวทางป้องกันสำหรับงานนี้' }),
         Object.freeze({ label: 'ตรวจความครบถ้วนเอกสาร', prompt: 'ช่วยทำ checklist ตรวจความครบถ้วนของเอกสารและหลักฐานก่อนเสนอหรืออนุมัติ' }),
         Object.freeze({ label: 'ประเมินความเสี่ยง / ควบคุมภายใน', prompt: 'ช่วยประเมินความเสี่ยงและออกแบบมาตรการควบคุมภายในสำหรับกระบวนงานนี้' }),
@@ -149,18 +147,17 @@
     const style = document.createElement('style');
     style.id = 'gp-work-catalog-style';
     style.textContent = `
-      .quick-actions .work-catalog-open{border-style:dashed;background:#f7fbf9;color:#12372a}
-      .work-catalog-intro{margin:0 0 12px;color:#44534d}
-      .work-catalog-search{width:100%;min-height:44px;border:1px solid #b9c9c1;border-radius:12px;padding:10px 12px;font:inherit;background:#fff;color:#17201c;box-sizing:border-box;margin:0 0 14px}
-      .work-catalog-search:focus{outline:2px solid #12372a;outline-offset:1px}
+      .work-catalog-home{width:100%}
+      .work-catalog-heading{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:0 0 12px;text-align:left}
+      .work-catalog-heading h2{margin:0;color:#12372a;font-size:1.18rem}
+      .work-catalog-intro{margin:0;color:#52645b;font-size:.9rem}
       .work-catalog-groups{display:grid;gap:12px}
       .work-catalog-group{border:1px solid #d7e1dc;border-radius:14px;padding:12px;background:#fbfdfc}
       .work-catalog-group h3{margin:0 0 8px;color:#12372a;font-size:1rem}
       .work-catalog-tasks{display:flex;flex-wrap:wrap;gap:7px}
       .work-catalog-task{border:1px solid #c8d7d0;background:#fff;color:#12372a;border-radius:999px;padding:8px 11px;font:inherit;font-weight:700;cursor:pointer;text-align:left}
       .work-catalog-task:hover,.work-catalog-task:focus-visible{background:#edf6f1;outline:2px solid #12372a;outline-offset:1px}
-      .work-catalog-empty{padding:18px;text-align:center;border:1px dashed #cbd7d1;border-radius:14px;color:#59665f}
-      @media(max-width:620px){.work-catalog-group{padding:10px}.work-catalog-task{width:100%;border-radius:12px;padding:10px 11px}.work-catalog-search{font-size:16px}}
+      @media(max-width:620px){.work-catalog-heading{display:block;margin-bottom:10px}.work-catalog-heading h2{font-size:1rem}.work-catalog-intro{margin-top:2px;font-size:.78rem}.work-catalog-group{padding:10px}.work-catalog-task{width:100%;border-radius:12px;padding:10px 11px}}
     
       .pr-video-intake{display:grid;gap:12px}
       .pr-video-label{font-weight:800;color:#12372a}
@@ -174,54 +171,34 @@
     document.head.append(style);
   }
 
-  function installPrimaryActions() {
-    const fragment = document.createDocumentFragment();
-    PRIMARY_ACTIONS.forEach(action => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.dataset.prompt = action.prompt;
-      button.textContent = action.label;
-      fragment.append(button);
-    });
-    const more = document.createElement('button');
-    more.type = 'button';
-    more.className = 'work-catalog-open';
-    more.dataset.workCatalogOpen = 'true';
-    more.textContent = 'งานอื่น ๆ';
-    more.setAttribute('aria-label', 'เปิดรายการงานอื่น ๆ ทั้งหมด');
-    fragment.append(more);
-    quickActions.replaceChildren(fragment);
-  }
-
   function normalize(value) {
     return String(value || '').normalize('NFC').toLocaleLowerCase('th-TH').replace(/\s+/g, ' ').trim();
   }
 
   function buildCatalog() {
     const root = document.createElement('div');
+    const heading = document.createElement('div');
+    const title = document.createElement('h2');
     const intro = document.createElement('p');
-    const search = document.createElement('input');
     const groups = document.createElement('div');
-    const empty = document.createElement('div');
+    root.className = 'work-catalog-home';
+    heading.className = 'work-catalog-heading';
+    title.textContent = 'เลือกผู้ช่วยตามงาน';
     intro.className = 'work-catalog-intro';
-    intro.textContent = 'เลือกจากหมวด หรือพิมพ์คำที่นึกออก เช่น BOQ, โบนัส, NCD, งบประมาณ, ข่าว — ไม่ต้องรู้ชื่อเมนู';
-    search.className = 'work-catalog-search';
-    search.type = 'search';
-    search.placeholder = 'ค้นหางานที่ต้องการ...';
-    search.setAttribute('aria-label', 'ค้นหางานที่ต้องการ');
+    intro.textContent = '12 หมวดงาน เรียงจากงานที่ใช้บ่อย';
     groups.className = 'work-catalog-groups';
-    empty.className = 'work-catalog-empty';
-    empty.textContent = 'ยังไม่พบงานที่ตรงคำค้น — ลองพิมพ์คำสั้นลง หรือถามในช่องหลักได้เลย';
-    empty.hidden = true;
 
-    WORK_CATALOG.forEach(category => {
+    const categories = new Map(WORK_CATALOG.map(category => [category.id, category]));
+    CATALOG_ORDER.map(id => categories.get(id)).filter(Boolean).forEach((category, index) => {
       const section = document.createElement('section');
       const heading = document.createElement('h3');
       const tasks = document.createElement('div');
-      section.className = 'work-catalog-group';
+      section.className = `work-catalog-group work-catalog-tone-${(index % 6) + 1}`;
+      section.dataset.categoryId = category.id;
       section.dataset.search = normalize(`${category.title} ${category.keywords} ${category.tasks.map(task => `${task.label} ${task.prompt}`).join(' ')}`);
       heading.textContent = category.title;
       tasks.className = 'work-catalog-tasks';
+      tasks.hidden = true;
       category.tasks.forEach(task => {
         const button = document.createElement('button');
         button.type = 'button';
@@ -238,33 +215,9 @@
       groups.append(section);
     });
 
-    search.addEventListener('input', () => {
-      const query = normalize(search.value);
-      let visibleCount = 0;
-      groups.querySelectorAll('.work-catalog-group').forEach(section => {
-        let sectionVisible = false;
-        section.querySelectorAll('.work-catalog-task').forEach(button => {
-          const visible = !query || button.dataset.search.includes(query);
-          button.hidden = !visible;
-          if (visible) { sectionVisible = true; visibleCount += 1; }
-        });
-        section.hidden = !sectionVisible;
-      });
-      empty.hidden = visibleCount !== 0;
-    });
-
-    root.append(intro, search, groups, empty);
-    return { root, search };
-  }
-
-  function openCatalog() {
-    if (!dialog || !dialogTitle || !dialogEyebrow || !dialogContent) return;
-    const { root, search } = buildCatalog();
-    dialogTitle.textContent = 'งานอื่น ๆ ที่ GP ช่วยได้';
-    dialogEyebrow.textContent = 'เลือกงานให้ตรงเรื่อง หรือค้นหาด้วยคำที่นึกออก';
-    dialogContent.replaceChildren(root);
-    if (!dialog.open) dialog.showModal();
-    queueMicrotask(() => search.focus());
+    heading.append(title, intro);
+    root.append(heading, groups);
+    return root;
   }
 
   function openTaskChoices(button) {
@@ -348,14 +301,6 @@
   }
 
   document.addEventListener('click', event => {
-    const catalogTrigger = event.target.closest?.('[data-work-catalog-open]');
-    if (catalogTrigger) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      openCatalog();
-      return;
-    }
-
     const button = event.target.closest?.('[data-prompt]');
     if (!button) return;
 
@@ -385,5 +330,5 @@
   }, true);
 
   addCatalogStyles();
-  installPrimaryActions();
+  quickActions.replaceChildren(buildCatalog());
 })();

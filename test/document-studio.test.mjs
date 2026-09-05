@@ -50,12 +50,13 @@ test('wrangler binds Workers AI and both Pages paths ship the browser module', a
   const wrangler = await text('wrangler.jsonc');
   const build = await text('scripts/build-static.mjs');
   const index = await text('index.html');
+  const catalog = await text('assets/js/ui/quick-action-guided-bridge-v1.js');
   assert.match(wrangler, /"ai"\s*:\s*\{[\s\S]*"binding"\s*:\s*"AI"/);
   assert.match(build, /document-studio-v1\.js/);
   assert.match(build, /Document Studio release script missing/);
   assert.match(build, /serviceWorker: "\d+\.\d+\.\d+"/);
   assert.match(index, /document-studio-v1\.js\?v=1\.0\.0/);
-  assert.match(index, />จัดหน้าเอกสาร<\/button>/);
+  assert.match(catalog, /label: 'จัดหน้าเอกสาร'/);
   assert.match(index, /service-worker\.js\?v=\d+\.\d+\.\d+/);
 });
 

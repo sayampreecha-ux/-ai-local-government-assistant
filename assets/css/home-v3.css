@@ -164,3 +164,87 @@
     bottom:20px;
   }
 }
+
+/* v2.6.0 — one-page assistant catalog */
+.new-chat-button{
+  width:auto;
+  padding:0 12px;
+  grid-template-columns:auto auto;
+  gap:6px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.new-chat-button span{font-size:.82rem}
+
+.chat-main:not(.has-messages){
+  width:min(1120px,100%);
+  padding-top:calc(var(--nav-height) + 24px);
+  padding-bottom:110px;
+  display:grid;
+}
+.chat-main:not(.has-messages) .welcome{order:1;padding-top:0}
+.chat-main:not(.has-messages) .welcome-mark{
+  width:54px;
+  height:54px;
+  border-radius:17px;
+  box-shadow:0 10px 28px rgba(18,55,42,.16);
+}
+.chat-main:not(.has-messages) .welcome .eyebrow{margin-top:10px}
+.chat-main:not(.has-messages) .welcome h1{font-size:clamp(28px,4vw,40px)}
+.chat-main:not(.has-messages) .composer-region{
+  position:static;
+  order:2;
+  left:auto;
+  bottom:auto;
+  width:min(820px,100%);
+  transform:none;
+  margin:18px auto 0;
+}
+.chat-main:not(.has-messages) .composer{box-shadow:0 12px 34px rgba(18,55,42,.1)}
+.chat-main:not(.has-messages)>.quick-actions{
+  order:3;
+  display:block;
+  width:100%;
+  margin-top:24px;
+}
+.chat-main:not(.has-messages)>.conversation{order:4}
+.chat-main.has-messages>.quick-actions{display:none}
+
+@media(max-width:959px){
+  .chat-main:not(.has-messages){padding-bottom:calc(92px + env(safe-area-inset-bottom))}
+}
+
+@media(max-width:620px){
+  .app-header{gap:8px}
+  .header-actions{gap:7px}
+  .app-header .facebook-link{min-height:48px;padding:7px 9px;font-size:.76rem}
+  .new-chat-button{min-height:48px;padding:0 9px}
+  .new-chat-button span{font-size:.76rem}
+  .chat-main:not(.has-messages){
+    padding-top:calc(var(--nav-height) + 12px);
+    padding-left:10px;
+    padding-right:10px;
+  }
+  .chat-main:not(.has-messages) .welcome-mark{width:44px;height:44px;border-radius:14px}
+  .chat-main:not(.has-messages) .welcome .eyebrow{margin:7px 0 2px;font-size:.64rem}
+  .chat-main:not(.has-messages) .welcome h1{font-size:clamp(24px,7.4vw,31px)}
+  .chat-main:not(.has-messages) .welcome>p:not(.eyebrow){font-size:.84rem;line-height:1.4}
+  .chat-main:not(.has-messages) .composer-region{width:100%;margin-top:12px}
+  .chat-main:not(.has-messages) .composer{padding:8px;border-radius:18px}
+  .chat-main:not(.has-messages) .tool-button,
+  .chat-main:not(.has-messages) .send-button{width:48px;height:48px;min-width:48px;min-height:48px}
+  .chat-main:not(.has-messages)>.quick-actions{
+    margin:16px 0 0;
+    padding:0;
+    overflow:visible;
+  }
+}
+
+@media(max-width:390px){
+  .app-brand small{display:none}
+  .app-brand{gap:7px}
+  .app-brand strong{font-size:.82rem}
+  .facebook-link{padding-inline:7px}
+  .new-chat-button span{display:none}
+  .new-chat-button{width:48px;padding:0}
+}

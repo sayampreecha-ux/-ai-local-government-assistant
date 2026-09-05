@@ -304,7 +304,7 @@
     const welcome = document.getElementById('welcome');
     if (!welcome) return;
     const intro = [...welcome.children].find(element => element.tagName === 'P' && !element.classList.contains('eyebrow'));
-    if (intro) intro.textContent = 'อ่าน · สรุป · จัดหน้า · ตรวจ · เปรียบเทียบเอกสารราชการ พร้อมสร้าง Prompt ใช้ต่อได้';
+    if (intro) intro.textContent = 'พิมพ์สิ่งที่ต้องการ หรือเลือกผู้ช่วยตามหมวดงานด้านล่าง';
     const documentAction = [...welcome.querySelectorAll('.quick-actions button')]
       .find(button => /^(?:จัดซื้อจัดจ้าง|สรุปเอกสาร|จัดหน้าเอกสาร)$/.test(String(button.textContent || '').trim()));
     if (documentAction) {
