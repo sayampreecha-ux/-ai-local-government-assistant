@@ -146,4 +146,11 @@
     if (event.key === 'Escape' && document.querySelector('.workspace:not(.hidden)')) document.querySelector('.close-button')?.click();
   });
   window.addEventListener('unhandledrejection', () => app.toast('เกิดข้อขัดข้อง กรุณาลองใหม่อีกครั้ง'));
+
+  const path = String(window.location?.pathname || '');
+  if (/(?:^|\/)gp012\.html$/i.test(path)) {
+    import('./ui/pr-image-studio-v1.js?v=1.0.0').catch(() => {
+      // Progressive enhancement: legacy GP012 remains fully usable.
+    });
+  }
 })();
