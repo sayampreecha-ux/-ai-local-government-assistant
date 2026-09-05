@@ -54,9 +54,16 @@ for (let index = 1; index <= 13; index += 1) {
     assert.match(current, /id=["']healthWorkerToolkitTask["']/i, `${file}: approved health toolkit entry missing`);
     continue;
   }
+  if (file === 'gp012.html') {
+    assert.equal(current.includes(citationScripts), true, `${file}: citation engine missing`);
+    assert.match(current, /id=["']request["']/i, `${file}: simplified request field missing`);
+    assert.match(current, /เลือกสิ่งที่อยากทำ แล้วบอก GP สั้น ๆ ครั้งเดียว/, `${file}: simplified PR intro missing`);
+    assert.match(current, /สร้างคำสั่ง/, `${file}: simplified generator missing`);
+    continue;
+  }
   const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
   assert.equal(current.includes(citationScripts), true, `${file}: citation engine missing`);
   assert.equal(current.replace(citationScripts, ''), baseline, `${file}: Sprint 4.2 output changed`);
 }
 
-console.log('Citation & Source Engine verification passed for GP001-GP013; GP008 validates the approved static health-tool entry.');
+console.log('Citation & Source Engine verification passed for GP001-GP013; GP008 validates static health tools and GP012 validates the simplified single-input PR flow.');
