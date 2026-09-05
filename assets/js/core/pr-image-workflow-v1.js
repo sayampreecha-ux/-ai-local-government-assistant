@@ -42,12 +42,12 @@ export function resolveQuickAction(request = '') {
   return key ? QUICK_ACTIONS[key] : '';
 }
 
-export function buildCreativeImagePrompt({ request = '', fileName = '', iteration = '' } = {}) {
+export function buildCreativeImagePrompt({ request = '', iteration = '' } = {}) {
   const userRequest = normalize(request);
   const refinement = normalize(iteration) || resolveQuickAction(userRequest);
   const size = recommendImageSize(`${userRequest} ${refinement}`);
   const explicitText = extractExplicitThaiText(userRequest);
-  const sourceName = normalize(fileName) || 'ภาพต้นฉบับที่ผู้ใช้แนบ';
+  const sourceName = 'ภาพต้นฉบับที่ผู้ใช้แนบ';
 
   const prompt = [
     'บทบาท',
@@ -57,7 +57,7 @@ export function buildCreativeImagePrompt({ request = '', fileName = '', iteratio
     'แก้ไข/ออกแบบภาพจากภาพต้นฉบับให้พร้อมใช้งานจริง โดยให้ผู้ใช้ตัดสินใจรายละเอียดทางเทคนิคให้น้อยที่สุด',
     '',
     'ภาพต้นฉบับ',
-    `- ใช้ไฟล์: ${sourceName}`,
+    `- ใช้: ${sourceName}`,
     '- วิเคราะห์ภาพจริงก่อนออกแบบ และถือภาพต้นฉบับเป็นหลักฐานของบุคคล เครื่องแบบ โลโก้ และองค์ประกอบสำคัญ',
     '',
     'ความต้องการของผู้ใช้',
@@ -100,7 +100,7 @@ export function detectImageCapability(scope = globalThis) {
 
 export async function executeImageWorkflow({ file, request, iteration = '', scope = globalThis } = {}) {
   if (!file) throw new Error('IMAGE_REQUIRED');
-  const bundle = buildCreativeImagePrompt({ request, fileName: file.name, iteration });
+  const bundle = buildCreativeImagePrompt({ request, iteration });
   const capability = detectImageCapability(scope);
 
   if (capability.canEdit) {
