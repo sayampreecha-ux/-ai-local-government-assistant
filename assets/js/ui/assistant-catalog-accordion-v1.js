@@ -100,6 +100,23 @@
     tasks.dataset.healthFeaturedCurated = 'true';
   }
 
+  function appendPrImageShortcut(group, tasks) {
+    const title = String(group.querySelector('h3')?.textContent || group.textContent || '');
+    if (!/ประชาสัมพันธ์|สื่อสาร/i.test(title) || tasks.dataset.prImageShortcut === 'true') return;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'work-catalog-task assistant-direct-tool';
+    button.dataset.prImageShortcut = 'true';
+    button.textContent = '✨ ทำภาพประชาสัมพันธ์';
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      window.location.assign('gp012.html?mode=image-prompt');
+    });
+    tasks.appendChild(button);
+    tasks.dataset.prImageShortcut = 'true';
+  }
+
   function enhanceGroup(group, index) {
     if (group.dataset.assistantAccordion === 'true') return;
     const heading = group.querySelector('h3');
@@ -111,6 +128,7 @@
     const controlsId = `assistantCatalogTasks${index}`;
     tasks.id = tasks.id || controlsId;
     appendHealthShortcuts(group, tasks);
+    appendPrImageShortcut(group, tasks);
     const visibleCount = tasks.querySelectorAll('.work-catalog-task').length;
     const countLabel = isHealthGroup ? `${visibleCount} เมนูเด่น` : `${visibleCount} งาน`;
 

@@ -1,4 +1,4 @@
-const APP_VERSION = '2.7';
+const APP_VERSION = '2.8';
 const CACHE = `lg-assistant-ready-v${APP_VERSION.replace('.', '-')}`;
 const ASSETS = [
   './',
@@ -18,6 +18,8 @@ const NETWORK_FRESH_MODULES = Object.freeze([
   '/assets/js/ui/workflow-progress-ui-v1.js',
   '/assets/js/ui/status-copy.js',
   '/assets/js/govprompt.js',
+  '/assets/js/mic.js',
+  '/assets/js/ui/assistant-catalog-accordion-v1.js',
   '/assets/js/ui/pr-image-studio-v1.js',
   '/assets/js/core/pr-image-workflow-v1.js'
 ]);
