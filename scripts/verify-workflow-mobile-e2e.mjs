@@ -49,27 +49,28 @@ async function verifyPRImageStudio(targetPage, expectedViewport, label) {
   const errors = [];
   targetPage.on('pageerror', (error) => errors.push(String(error?.stack || error?.message || error)));
   await targetPage.goto(`${origin}/gp012.html`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-  await targetPage.locator('[data-image-task="true"]').click();
-  await targetPage.locator('#imageInput').setInputFiles({
+  await targetPage.locator('[data-gp-pr-image-task="true"]').click();
+  await targetPage.locator('#gpPrImageInput').setInputFiles({
     name: 'ชื่อบุคคล-ข้อมูลส่วนตัว.png',
     mimeType: 'image/png',
     buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64')
   });
-  await targetPage.locator('#imageRequest').fill('ทำภาพเกษียณให้สวยที่สุด อบอุ่น ภูมิฐาน');
-  await targetPage.locator('#makeImage').click();
-  await targetPage.locator('#imageResult.visible').waitFor({ state: 'visible', timeout: 10_000 });
+  await targetPage.locator('#gpPrImageRequest').fill('ทำภาพเกษียณให้สวยที่สุด อบอุ่น ภูมิฐาน');
+  await targetPage.locator('#gpPrMakeImage').click();
+  await targetPage.locator('#gpPrImageResult.visible').waitFor({ state: 'visible', timeout: 10_000 });
 
   const state = await targetPage.evaluate(() => ({
     viewportWidth: window.innerWidth,
     scrollWidth: document.documentElement.scrollWidth,
-    status: document.getElementById('imageResultStatus')?.textContent || '',
-    note: document.getElementById('imageResultNote')?.textContent || '',
-    prompt: document.getElementById('imagePrompt')?.textContent || '',
-    thaiText: document.getElementById('thaiText')?.textContent || '',
-    size: document.getElementById('sizeNote')?.textContent || '',
-    quickActions: document.querySelectorAll('.quick-image-actions button').length,
+    status: document.getElementById('gpPrImageResultStatus')?.textContent || '',
+    note: document.getElementById('gpPrImageResultNote')?.textContent || '',
+    prompt: document.getElementById('gpPrImagePrompt')?.textContent || '',
+    thaiText: document.getElementById('gpPrThaiText')?.textContent || '',
+    size: document.getElementById('gpPrSizeNote')?.textContent || '',
+    quickActions: document.querySelectorAll('.gp-pr-image-quick button').length,
     hasTechnicalSettings: Boolean(document.querySelector('[name="font"],[name="color"],[name="layout"],[name="aspectRatio"],[name="promptStyle"]')),
-    imageVisible: document.getElementById('imagePreview')?.classList.contains('visible') || false
+    imageVisible: document.getElementById('gpPrImagePreview')?.classList.contains('visible') || false,
+    legacyTaskCount: document.querySelectorAll('#tasks .task:not([data-gp-pr-image-task])').length
   }));
 
   assert.ok(Math.abs(state.viewportWidth - expectedViewport) <= 2, `${label} viewport mismatch: ${state.viewportWidth}`);
@@ -84,6 +85,7 @@ async function verifyPRImageStudio(targetPage, expectedViewport, label) {
   assert.equal(state.quickActions, 4, `${label} must keep only the required quick actions`);
   assert.equal(state.hasTechnicalSettings, false, `${label} must not require technical design settings`);
   assert.equal(state.imageVisible, true, `${label} must preview the attached source image`);
+  assert.equal(state.legacyTaskCount, 10, `${label} must preserve all existing PR tasks`);
   assert.deepEqual(errors, [], `${label} page errors: ${JSON.stringify(errors)}`);
   return state;
 }
@@ -175,7 +177,7 @@ try {
   }
 
   assert.deepEqual(pageErrors, [], `browser console errors: ${JSON.stringify(pageErrors)}`);
-  console.log(JSON.stringify({ frontend, checks: { mobile390: 'PASS', desktop1280: 'PASS', noHorizontalOverflow: 'PASS', privacyGuard: 'PASS', prImageUpload: 'PASS', prImageFallback: 'PASS', prImageThaiTextSeparation: 'PASS', allWorkflowRuntimeRoutes: `${workflowState.length} PASS`, console: 'PASS' } }, null, 2));
+  console.log(JSON.stringify({ frontend, checks: { mobile390: 'PASS', desktop1280: 'PASS', noHorizontalOverflow: 'PASS', privacyGuard: 'PASS', prImageUpload: 'PASS', prImageFallback: 'PASS', prImageThaiTextSeparation: 'PASS', prLegacyTasksPreserved: 'PASS', allWorkflowRuntimeRoutes: `${workflowState.length} PASS`, console: 'PASS' } }, null, 2));
 } finally {
   await context.close();
   await browser.close();
