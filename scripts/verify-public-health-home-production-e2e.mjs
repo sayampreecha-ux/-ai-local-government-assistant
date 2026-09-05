@@ -27,6 +27,10 @@ assert.equal(await page.locator('.composer-region').isVisible(), true, 'intake i
 assert.equal(await page.locator('.work-catalog-groups').isVisible(), false, 'selected work must open on a dedicated result screen');
 await page.locator('#promptInput').fill('หนังสือเกี่ยวกับการขอความร่วมมือจัดกิจกรรม จะเรียนถึงนายกองค์การบริหารส่วนจังหวัด และมีวัตถุประสงค์เพื่อขอความร่วมมือสนับสนุนสถานที่จัดงาน');
 await page.locator('.send-button').click();
+await page.locator('.guided-intake-message').nth(1).waitFor({ state: 'visible', timeout: 15_000 });
+assert.equal(await page.locator('.composer-region').isVisible(), true, 'intake input must remain visible for a second missing-fact round');
+await page.locator('#promptInput').fill('ยังไม่ทราบข้อมูลส่วนที่เหลือ');
+await page.locator('.send-button').click();
 await page.locator('.guided-intake-message').waitFor({ state: 'detached', timeout: 15_000 });
 await page.locator('.answer-card').waitFor({ state: 'visible', timeout: 15_000 });
 assert.equal(await page.locator('.composer-region').isVisible(), false, 'intake input must close after the result is ready');
