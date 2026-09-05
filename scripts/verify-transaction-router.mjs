@@ -133,9 +133,22 @@ for (let index = 1; index <= 13; index += 1) {
     continue;
   }
 
+  if (file === 'gp012.html') {
+    assert.equal(current.includes(insertedScripts), true, `${file}: router scripts not integrated`);
+    assert.match(current, /เลือกสิ่งที่อยากทำ แล้วบอก GP สั้น ๆ ครั้งเดียว/, `${file}: simple intro missing`);
+    assert.match(current, /เขียนข่าวประชาสัมพันธ์/, `${file}: news task missing`);
+    assert.match(current, /ทำโพสต์โซเชียล/, `${file}: social task missing`);
+    assert.match(current, /ทำอินโฟกราฟิก/, `${file}: infographic task missing`);
+    assert.match(current, /ร่างสคริปต์ \/ คำกล่าว \/ วิดีโอ/, `${file}: script speech video task missing`);
+    assert.match(current, /id=["']request["']/i, `${file}: single request field missing`);
+    assert.match(current, /สร้างคำสั่ง/, `${file}: simplified generator action missing`);
+    assert.match(current, /PDPA/, `${file}: PDPA review note missing`);
+    continue;
+  }
+
   const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' });
   assert.equal(current.includes(insertedScripts), true, `${file}: router scripts not integrated`);
   assert.equal(normalizeEol(current.replace(insertedScripts, '')), normalizeEol(baseline), `${file}: existing UI or prompt behavior changed`);
 }
 
-console.log('GovPrompt hybrid intent router verification passed for GP001-GP013, cross-domain adversarial cases, GP008 static health tools, and 36 real-language production queries.');
+console.log('GovPrompt hybrid intent router verification passed for GP001-GP013, cross-domain adversarial cases, GP008 static health tools, simplified GP012 UX, and 36 real-language production queries.');
