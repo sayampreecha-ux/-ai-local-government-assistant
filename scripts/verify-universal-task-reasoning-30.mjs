@@ -75,41 +75,52 @@ assert.equal(precedentBundle.casePrecedentGate.required, true);
 assert.equal(precedentBundle.casePrecedentGate.status, 'blocked-pending-case-precedent-search');
 assert.equal(precedentBundle.casePrecedentGate.interpretation_issue, true);
 assert.equal(precedentBundle.casePrecedentGate.gateVersion, '3.1');
+assert.equal(precedentBundle.casePrecedentGate.retrievalGateVersion, '1.0');
 assert.equal(core.OFFICIAL_PRECEDENT_GATE_VERSION, '3.1');
-assert.equal(core.PROMPT_STANDARD_VERSION, '7.7.0');
+assert.equal(core.OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION, '1.0');
+assert.equal(core.PROMPT_STANDARD_VERSION, '7.8.0');
 assert.equal(precedentBundle.casePrecedentGate.currentRule, 'NOT_VERIFIED');
 assert.equal(precedentBundle.casePrecedentGate.officialPrecedent, 'NOT_SEARCHED');
 assert.equal(precedentBundle.casePrecedentGate.caseMatch, 'NOT_ASSESSED');
 assert.equal(precedentBundle.casePrecedentGate.legalVersion, 'NOT_VERIFIED');
 assert.equal(precedentBundle.casePrecedentGate.newerOrConflictingAuthority, 'NOT_CHECKED');
+assert.equal(precedentBundle.casePrecedentGate.contraryEvidenceCheck, 'NOT_CHECKED');
+assert.equal(precedentBundle.casePrecedentGate.searchStatus, 'NOT_SEARCHED');
 assert.equal(precedentBundle.casePrecedentGate.ruleInterpretationConfidence, 'NOT_ASSESSED');
 assert.equal(precedentBundle.casePrecedentGate.decisionLock, 'ON');
 assert.equal(precedentBundle.casePrecedentGate.workflowStatus, 'BLOCKED_CURRENT_RULE_CHECK');
 assert.equal(precedentBundle.casePrecedentGate.nextAction, 'EXECUTE_CURRENT_RULE_CHECK');
-assert.deepEqual([...precedentBundle.casePrecedentGate.requiredEvidence], ['currentRule', 'officialPrecedent', 'caseMatch', 'legalVersion', 'newerOrConflictingAuthority']);
+assert.deepEqual([...precedentBundle.casePrecedentGate.requiredEvidence], ['currentRule', 'officialPrecedent', 'caseMatch', 'legalVersion', 'newerOrConflictingAuthority', 'contraryEvidenceCheck']);
 assert.equal(precedentBundle.casePrecedentGate.searchQueries.length, 4);
 assert.equal(precedentBundle.casePrecedentGate.searchLadder.length, 4);
 assert.deepEqual(Object.keys(precedentBundle.casePrecedentGate.fingerprint), ['actor', 'organization', 'status_or_prior_event', 'current_stage', 'disputed_action', 'claim_or_power', 'legal_issue', 'applicable_rule', 'date_context']);
 assert.ok(precedentBundle.casePrecedentGate.searchConcepts.factLanguage);
 assert.ok(precedentBundle.casePrecedentGate.searchConcepts.legalLanguage);
 assert.ok(precedentBundle.casePrecedentGate.searchConcepts.officialDocumentLanguage.length >= 3);
+assert.deepEqual(Object.keys(precedentBundle.casePrecedentGate.ruleCaseMap.entries), ['WHO', 'ORG', 'BEFORE', 'STAGE', 'ACTION', 'RIGHT', 'RULE', 'TIME']);
+assert.deepEqual([...precedentBundle.casePrecedentGate.retrievalLoop], ['SEARCH', 'EXTRACT_LEADS', 'FOLLOW_BEST_LEAD', 'UPDATE_SEARCH', 'VERIFY']);
+assert.equal(precedentBundle.casePrecedentGate.leadTypes.length, 9);
+assert.equal(precedentBundle.casePrecedentGate.hiddenDocumentRecovery.length, 5);
 assert.deepEqual([...precedentBundle.casePrecedentGate.allowedFinalDecisions], ['⚠️ ได้โดยมีเงื่อนไข', '🔎 หลักฐานยังไม่พอที่จะฟันธง']);
-assert.match(precedentBundle.prompt, /OFFICIAL PRECEDENT EXECUTION GATE v3\.1/);
-assert.match(precedentBundle.prompt, /CURRENT RULE CHECK — ต้องทำก่อนค้น precedent/);
-assert.match(precedentBundle.prompt, /ADAPTIVE PRECEDENT RETRIEVAL/);
-assert.match(precedentBundle.prompt, /PRECEDENT INDEX RECOVERY/);
-assert.match(precedentBundle.prompt, /FOUND_UNVERIFIED/);
-assert.match(precedentBundle.prompt, /PRECEDENT OVERRIDE \/ CORRECTION RULE/);
-assert.match(precedentBundle.prompt, /หาก AI มี Web Search ต้องดำเนินการค้นและเปิดหลักฐานเองทันที/);
-assert.match(precedentBundle.prompt, /คำค้น LEVEL 4/);
+assert.match(precedentBundle.prompt, /OFFICIAL AUTHORITY RETRIEVAL GATE/);
+assert.match(precedentBundle.prompt, /SEARCH FOR THE CASE, NOT JUST THE WORDS/);
+assert.match(precedentBundle.prompt, /CURRENT RULE FIRST/);
+assert.match(precedentBundle.prompt, /MULTI-ANGLE \+ ADAPTIVE RETRIEVAL LOOP/);
+assert.match(precedentBundle.prompt, /HIDDEN-DOCUMENT/);
+assert.match(precedentBundle.prompt, /CONTRARY EVIDENCE/);
+assert.match(precedentBundle.prompt, /หากมี Web Search ให้ค้นและเปิดหลักฐานเองทันที/);
+assert.match(precedentBundle.prompt, /Query 4/);
 assert.match(precedentBundle.prompt, /🔎 หลักฐานยังไม่พอที่จะฟันธง/);
+assert.ok(precedentBundle.prompt.length < 16_500, `authority prompt is too long: ${precedentBundle.prompt.length}`);
 
 const explicitPrecedent = core.buildCasePrecedentGate('ค้นหนังสือหารือกรณีเทียบเคียงเรื่องนี้', { facts: 'ผู้ใช้ขอแนววินิจฉัยจากหน่วยงานเจ้าของเรื่อง' }, 'HIGH');
 assert.equal(explicitPrecedent.interpretation_issue, true);
 assert.equal(explicitPrecedent.decisionLock, 'ON');
+const interpretationAnalysis = core.buildCasePrecedentGate('วิเคราะห์กฎหมายเกี่ยวกับสิทธิเบิกค่าเดินทาง', {}, 'HIGH');
+assert.equal(interpretationAnalysis.interpretation_issue, true);
 
 const currentRuleChecks = ['law', 'rule', 'regulation', 'announcement', 'primaryDirective', 'amendments', 'repealOrReplacement', 'transitionalProvisions', 'effectiveDate', 'dateContextMatched'];
-const precedentVerification = ['issuingAuthority', 'documentNumber', 'documentDate', 'title', 'consultedFacts', 'citedRules', 'reasoning', 'conclusion', 'officialSource'];
+const precedentVerification = ['issuingAuthority', 'documentNumber', 'documentDate', 'title', 'consultedFacts', 'adjudicatedIssue', 'citedRules', 'reasoning', 'conclusion', 'officialSource'];
 const levelOne = ['LEVEL_1_DIRECT_FACT_SEARCH'];
 const levelOneToThree = ['LEVEL_1_DIRECT_FACT_SEARCH', 'LEVEL_2_LEGAL_OFFICIAL_LANGUAGE_SEARCH', 'LEVEL_3_PRECEDENT_INDEX_RECOVERY'];
 const verifiedEvidence = {
@@ -122,6 +133,7 @@ const verifiedEvidence = {
   caseMatchLevel: 'HIGH MATCH',
   legalVersion: 'VERIFIED',
   newerOrConflictingAuthority: 'CHECKED_NONE_FOUND',
+  contraryEvidenceCheck: 'CHECKED_NONE_FOUND',
   ruleInterpretationConfidence: 'SUFFICIENT'
 };
 const incompleteCurrentRule = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', { currentRule: 'VERIFIED' });
@@ -184,6 +196,15 @@ const identifierLeadCompleted = core.buildCasePrecedentGate(precedentQuestion, p
 assert.equal(identifierLeadCompleted.officialPrecedent, 'SEARCHED_NOT_FOUND');
 assert.equal(identifierLeadCompleted.decisionLock, 'OFF');
 
+const hiddenDocumentIncomplete = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', {
+  ...verifiedEvidence,
+  hiddenDocumentRiskDetected: true,
+  hiddenDocumentRecoveryCompleted: false
+});
+assert.equal(hiddenDocumentIncomplete.searchStatus, 'SEARCH_INCOMPLETE');
+assert.equal(hiddenDocumentIncomplete.decisionLock, 'ON');
+assert.equal(hiddenDocumentIncomplete.nextAction, 'EXECUTE_HIDDEN_DOCUMENT_RECOVERY');
+
 const lowMatchLocked = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', { ...verifiedEvidence, caseMatchLevel: 'LOW MATCH' });
 assert.equal(lowMatchLocked.decisionLock, 'ON');
 assert.equal(lowMatchLocked.nextAction, 'SEARCH_STRONGER_PRECEDENT_OR_LIMIT_CONCLUSION');
@@ -198,6 +219,15 @@ assert.equal(unresolvedConflict.workflowStatus, 'BLOCKED_AUTHORITY_CHECK');
 const resolvedConflict = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', { ...verifiedEvidence, newerOrConflictingAuthority: 'FOUND', authorityAnalysisComplete: true });
 assert.equal(resolvedConflict.decisionLock, 'OFF');
 
+const contraryNotChecked = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', { ...verifiedEvidence, contraryEvidenceCheck: 'NOT_CHECKED' });
+assert.equal(contraryNotChecked.decisionLock, 'ON');
+assert.equal(contraryNotChecked.nextAction, 'EXECUTE_CONTRARY_EVIDENCE_CHECK');
+const contraryUnresolved = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', { ...verifiedEvidence, contraryEvidenceCheck: 'FOUND_UNRESOLVED' });
+assert.equal(contraryUnresolved.decisionLock, 'ON');
+assert.equal(contraryUnresolved.nextAction, 'RESOLVE_CONTRARY_EVIDENCE');
+const contraryResolved = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', { ...verifiedEvidence, contraryEvidenceCheck: 'FOUND_RESOLVED' });
+assert.equal(contraryResolved.decisionLock, 'OFF');
+
 const correctionRequired = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', { ...verifiedEvidence, precedentContradictsPriorAnalysis: true });
 assert.equal(correctionRequired.correctionRequired, true);
 assert.equal(correctionRequired.workflowStatus, 'READY_FOR_CORRECTION_AND_HUMAN_REVIEW');
@@ -205,6 +235,6 @@ assert.equal(correctionRequired.nextAction, 'CORRECT_PRIOR_ANALYSIS_THEN_HUMAN_R
 
 const clearRuleBundle = core.createGovernmentPrompt({ question: 'สรุประเบียบค่าเดินทางฉบับนี้เป็นหัวข้อ', route: null, context: core.createSharedContext({ facts: 'สรุปเนื้อหาเอกสารที่แนบ', desiredOutput: 'สรุป' }) });
 assert.equal(clearRuleBundle.casePrecedentGate.required, false);
-assert.doesNotMatch(clearRuleBundle.prompt, /OFFICIAL PRECEDENT EXECUTION GATE/);
+assert.doesNotMatch(clearRuleBundle.prompt, /OFFICIAL AUTHORITY RETRIEVAL GATE/);
 
 console.log(`GovPrompt Universal Task Reasoning v7.1 passed: ${cases.length} real-work cases.`);
