@@ -62,7 +62,12 @@
   function curatePublicRelations(group, tasks) {
     const title = String(group.querySelector('h3')?.textContent || group.textContent || '');
     if (!/ประชาสัมพันธ์|สื่อสาร/i.test(title) || tasks.dataset.prSimple === 'true') return;
-    const patterns = [/เขียนข่าวประชาสัมพันธ์|ข่าวประชาสัมพันธ์/i, /ทำโพสต์.*โซเชียล|โพสต์.*Facebook/i, /อินโฟกราฟิก/i];
+    const patterns = [
+      /เขียนข่าวประชาสัมพันธ์|ข่าวประชาสัมพันธ์/i,
+      /ทำโพสต์.*โซเชียล|โพสต์.*Facebook/i,
+      /อินโฟกราฟิก/i,
+      /ร่างสคริปต์|สคริปต์.*วิดีโอ|คำกล่าว|วิดีโอ/i
+    ];
     const kept = new Set();
     [...tasks.querySelectorAll('.work-catalog-task')].forEach(button => {
       const label = String(button.textContent || '').trim();
@@ -72,6 +77,7 @@
       if (match === 0) button.textContent = 'เขียนข่าวประชาสัมพันธ์';
       if (match === 1) button.textContent = 'ทำโพสต์โซเชียล';
       if (match === 2) button.textContent = 'ทำอินโฟกราฟิก';
+      if (match === 3) button.textContent = 'ร่างสคริปต์ / คำกล่าว / วิดีโอ';
     });
     const image = document.createElement('button');
     image.type = 'button'; image.className = 'work-catalog-task assistant-direct-tool'; image.dataset.prImageShortcut = 'true'; image.textContent = '✨ ทำภาพประชาสัมพันธ์';
