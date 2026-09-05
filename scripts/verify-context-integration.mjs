@@ -48,9 +48,18 @@ for (let index = 1; index <= 13; index += 1) {
     continue;
   }
 
+  if (file === 'gp012.html') {
+    assert.equal(current.includes(integrationScripts), true, `${file}: Shared Context integration missing`);
+    assert.match(current, /id=["']request["']/i, `${file}: simplified request field missing`);
+    assert.match(current, /เขียนข่าวประชาสัมพันธ์/, `${file}: public-relations tasks missing`);
+    assert.match(current, /ร่างสคริปต์ \/ คำกล่าว \/ วิดีโอ/, `${file}: script speech video task missing`);
+    assert.match(current, /สร้างคำสั่ง/, `${file}: simplified generator missing`);
+    continue;
+  }
+
   const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
   assert.equal(current.includes(integrationScripts), true, `${file}: Shared Context integration missing`);
   assert.equal(current.replace(integrationScripts, ''), baseline, `${file}: Sprint 3.3 output behavior changed`);
 }
 
-console.log('Shared Context integration verification passed for GP001-GP013; GP008 explicitly validates the approved static health-tool entry while other assistants remain baseline-locked.');
+console.log('Shared Context integration verification passed for GP001-GP013; GP008 validates approved static health tools and GP012 validates the simplified single-input PR flow.');
