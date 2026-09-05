@@ -1,1 +1,0 @@
-Temporary implementation marker for PR image prompt-only refactor. This file will be removed before merge.
