@@ -10,20 +10,9 @@ vm.runInNewContext(await readFile('assets/js/core/semantic-search.js', 'utf8'), 
 vm.runInNewContext(await readFile('assets/js/core/knowledge-engine.js', 'utf8'), sandbox);
 const core = sandbox.window.GovPromptCore;
 
-assert.deepEqual(Array.from(core.DOCUMENT_FIELDS), [
-  'title', 'source', 'issuingAgency', 'effectiveDate', 'version', 'category'
-]);
+assert.deepEqual(Array.from(core.DOCUMENT_FIELDS), ['title', 'source', 'issuingAgency', 'effectiveDate', 'version', 'category']);
 assert.equal(Object.isFrozen(core.DOCUMENT_FIELDS), true);
-
-const input = {
-  id: 'test-document',
-  title: ' ระเบียบทดสอบ ',
-  source: ' https://example.go.th/document ',
-  issuingAgency: ' หน่วยงานทดสอบ ',
-  effectiveDate: '2026-01-15',
-  version: '2.1',
-  category: 'ระเบียบ'
-};
+const input = { id: 'test-document', title: ' ระเบียบทดสอบ ', source: ' https://example.go.th/document ', issuingAgency: ' หน่วยงานทดสอบ ', effectiveDate: '2026-01-15', version: '2.1', category: 'ระเบียบ' };
 const snapshot = structuredClone(input);
 const document = core.createKnowledgeDocument(input);
 assert.deepEqual(input, snapshot);
@@ -35,7 +24,6 @@ assert.equal(Object.isFrozen(document), true);
 assert.equal(Object.isFrozen(document.citation), true);
 assert.throws(() => core.createKnowledgeDocument({}), /Missing document metadata/);
 assert.throws(() => core.createKnowledgeDocument({ ...input, effectiveDate: '2026-02-30' }), /valid YYYY-MM-DD/);
-
 assert.equal(core.compareVersions('2.9', '2.10') < 0, true);
 assert.equal(core.checkDocumentVersion(document, '2.1').status, 'current');
 assert.equal(core.checkDocumentVersion(document, '3.0').status, 'outdated');
@@ -44,7 +32,6 @@ assert.equal(core.checkDocumentVersion(document, '').status, 'unknown');
 assert.equal(core.validateEffectiveDate(document, '2026-01-14').status, 'not-yet-effective');
 assert.equal(core.validateEffectiveDate(document, '2026-01-15').status, 'effective');
 assert.equal(core.validateEffectiveDate(document, 'invalid').status, 'invalid-reference-date');
-
 const second = { ...input, id: 'second', title: 'ประกาศทดสอบ', category: 'ประกาศ', version: '1.0' };
 const engine = core.createKnowledgeEngine([input, second]);
 assert.equal(Object.isFrozen(engine), true);
@@ -62,10 +49,7 @@ const answer = engine.createAnswer('คำตอบ', ['test-document', 'second'
 assert.equal(answer.citations.length, 2);
 assert.equal(answer.citations.every(citation => citation.citationId && citation.officialReference && citation.effectiveDate && citation.confidenceLevel), true);
 assert.equal(Object.isFrozen(answer), true);
-const versionedEngine = core.createKnowledgeEngine([
-  { ...input, id: 'old', reference: 'ref-1', version: '1.0' },
-  { ...input, id: 'new', reference: 'ref-1', version: '2.0' }
-]);
+const versionedEngine = core.createKnowledgeEngine([{ ...input, id: 'old', reference: 'ref-1', version: '1.0' }, { ...input, id: 'new', reference: 'ref-1', version: '2.0' }]);
 assert.throws(() => versionedEngine.getCitations(['old'], { asOf: '2026-02-01' }), /Obsolete/);
 assert.equal(versionedEngine.getCitations(['new'], { asOf: '2026-02-01' })[0].citationId, 'new');
 assert.equal(core.knowledgeEngine.documents.length, 0);
@@ -85,9 +69,15 @@ for (let index = 1; index <= 13; index += 1) {
     assert.match(current, /id=["']healthWorkerToolkitTask["']/i, `${file}: approved health toolkit entry missing`);
     continue;
   }
+  if (file === 'gp012.html') {
+    assert.equal(current.includes(engineScripts), true, `${file}: Knowledge Engine missing`);
+    assert.match(current, /id=["']request["']/i, `${file}: simplified request field missing`);
+    assert.match(current, /เขียนข่าวประชาสัมพันธ์/, `${file}: public-relations task missing`);
+    assert.match(current, /สร้างคำสั่ง/, `${file}: simplified generator missing`);
+    continue;
+  }
   const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
   assert.equal(current.includes(engineScripts), true, `${file}: Knowledge Engine missing`);
   assert.equal(current.replace(engineScripts, ''), baseline, `${file}: Sprint 3.4 output behavior changed`);
 }
-
-console.log('Knowledge Engine verification passed for GP001-GP013; GP008 validates the approved static health-tool entry.');
+console.log('Knowledge Engine verification passed for GP001-GP013; GP008 validates static health tools and GP012 validates the simplified single-input PR flow.');
