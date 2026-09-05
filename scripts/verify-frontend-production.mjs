@@ -11,6 +11,7 @@ const sitemapUrl = page('sitemap.xml');
 const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
+const quickActionBridgeUrl = page('assets/js/ui/quick-action-guided-bridge-v1.js?v=1.1.0');
 const RELEASE = Object.freeze({ home:'6.4.3', homeCss:'2.6.0', serviceWorker:'6.4.4', mic:'2.4.0', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
 const WORKFLOW_RUNTIME_VERSION = '5.6.2';
 const WORKFLOW_UI_VERSION = '1.3';
@@ -71,6 +72,7 @@ async function exactProduction(path, localContent) {
 }
 
 const { response:indexResponse, text:index } = await fetchText(frontend);
+const quickActionBridge = await fetchText(quickActionBridgeUrl);
 assert.equal(index.includes(expectedPrivacyGuard),true);
 assert.equal(index.includes(expectedSubmitGuard),true);
 assert.equal(index.includes(expectedHome),true);
@@ -83,8 +85,10 @@ assert.match(index,new RegExp(`assets/js/mic\\.js\\?v=${RELEASE.mic.replaceAll('
 assert.match(index,/official-source-registry\.js\?v=2\.4\.0/);
 assert.match(index,new RegExp(`service-worker\\.js\\?v=${RELEASE.serviceWorker.replaceAll('.','\\.')}`));
 assert.match(index,new RegExp(`document-studio-v1\\.js\\?v=${RELEASE.documentStudio.replaceAll('.','\\.')}`));
-assert.match(index,/data-prompt="จัดทำร่างงบประมาณ"/);
-assert.match(index,/จัดหน้าเอกสาร/);
+assert.match(index,/aria-label="ผู้ช่วยงานราชการ 12 หมวด"/);
+assert.match(quickActionBridge.text,/12 หมวดงาน เรียงจากงานที่ใช้บ่อย/);
+assert.match(quickActionBridge.text,/label: 'ร่างงบประมาณ'/);
+assert.match(quickActionBridge.text,/label: 'จัดหน้าเอกสาร'/);
 assert.match(index,/https:\/\/www\.facebook\.com\/GovPromptThailandAI/);
 assert.match(index,/privacy-notice\.html/);
 assert.equal(indexResponse.url.startsWith('https://'),true);
