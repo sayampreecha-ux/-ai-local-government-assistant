@@ -90,7 +90,7 @@ for (const [question, riskLevel, decisionRequired, multiConditionRequired] of CA
   if (riskLevel === 'HIGH') {
     assert.equal(result.qualityGates.evidenceRequired, true, `${question} evidence`);
     assert.equal(result.qualityGates.legalVersionRequired, true, `${question} version`);
-    assert.equal(result.taskPlan.evidenceMode, 'verify-current-primary-source', `${question} evidenceMode`);
+    assert.equal(result.taskPlan.evidenceMode, 'verify-applicable-primary-source', `${question} evidenceMode`);
     assert.equal(result.prompt.includes('Evidence Gate: ก่อนฟันธงต้องยืนยันแหล่งปฐมภูมิ/ราชการ'), true, question);
     assert.equal(result.prompt.includes('Legal Version Gate: ตรวจวันมีผลใช้บังคับ'), true, question);
   }

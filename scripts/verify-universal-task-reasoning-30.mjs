@@ -1,3 +1,4 @@
+import { applicableEvidence } from './fixtures/applicable-authority.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
@@ -55,7 +56,7 @@ for (const [question, action, deliverable, discipline] of cases) {
 }
 
 for (const question of ['ระเบียบนี้ยังใช้ได้หรือไม่', 'วิเคราะห์ระเบียบเบิกค่าเดินทางล่าสุด', 'ร่าง TOR ซื้อรถส่วนกลาง']) {
-  assert.equal(core.planUniversalTask(question).evidenceMode, 'verify-current-primary-source', `${question}: evidence freshness`);
+  assert.equal(core.planUniversalTask(question).evidenceMode, 'verify-applicable-primary-source', `${question}: evidence freshness`);
 }
 
 const context = core.createSharedContext({ facts: 'ทำโครงการบวชสามเณร', desiredOutput: 'ร่างโครงการพร้อมใช้' });
@@ -78,7 +79,7 @@ assert.equal(precedentBundle.casePrecedentGate.gateVersion, '3.1');
 assert.equal(precedentBundle.casePrecedentGate.retrievalGateVersion, '1.0');
 assert.equal(core.OFFICIAL_PRECEDENT_GATE_VERSION, '3.1');
 assert.equal(core.OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION, '1.0');
-assert.equal(core.PROMPT_STANDARD_VERSION, '7.8.0');
+assert.equal(core.PROMPT_STANDARD_VERSION, '7.9.0');
 assert.equal(precedentBundle.casePrecedentGate.currentRule, 'NOT_VERIFIED');
 assert.equal(precedentBundle.casePrecedentGate.officialPrecedent, 'NOT_SEARCHED');
 assert.equal(precedentBundle.casePrecedentGate.caseMatch, 'NOT_ASSESSED');
@@ -104,7 +105,7 @@ assert.equal(precedentBundle.casePrecedentGate.hiddenDocumentRecovery.length, 5)
 assert.deepEqual([...precedentBundle.casePrecedentGate.allowedFinalDecisions], ['⚠️ ได้โดยมีเงื่อนไข', '🔎 หลักฐานยังไม่พอที่จะฟันธง']);
 assert.match(precedentBundle.prompt, /OFFICIAL AUTHORITY RETRIEVAL GATE/);
 assert.match(precedentBundle.prompt, /SEARCH FOR THE CASE, NOT JUST THE WORDS/);
-assert.match(precedentBundle.prompt, /CURRENT RULE FIRST/);
+assert.match(precedentBundle.prompt, /APPLICABLE RULE FIRST/);
 assert.match(precedentBundle.prompt, /MULTI-ANGLE \+ ADAPTIVE RETRIEVAL LOOP/);
 assert.match(precedentBundle.prompt, /HIDDEN-DOCUMENT/);
 assert.match(precedentBundle.prompt, /CONTRARY EVIDENCE/);
@@ -124,6 +125,7 @@ const precedentVerification = ['issuingAuthority', 'documentNumber', 'documentDa
 const levelOne = ['LEVEL_1_DIRECT_FACT_SEARCH'];
 const levelOneToThree = ['LEVEL_1_DIRECT_FACT_SEARCH', 'LEVEL_2_LEGAL_OFFICIAL_LANGUAGE_SEARCH', 'LEVEL_3_PRECEDENT_INDEX_RECOVERY'];
 const verifiedEvidence = {
+  applicableAuthority: applicableEvidence(),
   currentRule: 'VERIFIED',
   currentRuleChecks,
   officialPrecedent: 'VERIFIED',
