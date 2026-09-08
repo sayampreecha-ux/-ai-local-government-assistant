@@ -3,7 +3,7 @@ import {
   runGovernmentCaseByDetectedWorkflowsV4,
   runGovernmentWorkflowByIdV4,
   DEEP_WORKFLOWS
-} from '../../../src/government-workflow-suite.js?v=5.5.0';
+} from '../../../src/government-workflow-suite.js?v=5.5.1';
 import {
   detectCitizenServiceIntent,
   runCitizenServiceWorkflow,

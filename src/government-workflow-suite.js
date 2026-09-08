@@ -6,7 +6,7 @@ import { buildGovernmentWorkOrderV4, advanceGovernmentWorkflowV4, driveGovernmen
 const WORKFLOWS = Object.freeze({
   budgetDraft: { id: "gov.budget-draft", keywords: ["ทำร่างงบ", "ร่างงบประมาณ", "ร่างงบ", "ข้อบัญญัติงบประมาณ", "ทำกรอบงบ", "กรอบงบ", "จัดร่างงบ", "สรุปคำของบ"] },
   procurement: { id: "gov.procurement", keywords: ["จัดซื้อ", "จัดจ้าง", "ซื้อ", "เครื่องจักร", "รถขุด", "รถบรรทุก", "tor", "ราคากลาง", "e-bidding", "เฉพาะเจาะจง"] },
-  finance: { id: "gov.finance", keywords: ["เบิก", "เบิกจ่าย", "งบประมาณ", "เงินกู้", "กู้เงิน", "เงินสะสม", "ค่าใช้จ่าย", "การเงิน"] },
+  finance: { id: "gov.finance", keywords: ["เบิก", "เบิกจ่าย", "งบประมาณ", "เงินกู้", "กู้เงิน", "เงินสะสม", "ค่าใช้จ่าย", "การเงิน", "ค่าเช่าซื้อบ้าน", "ค่าซื้อบ้าน", "ผ่อนบ้าน", "ผ่อนชำระบ้าน"] },
   correspondence: { id: "gov.correspondence", keywords: ["หนังสือราชการ", "ร่างหนังสือ", "บันทึกข้อความ", "หนังสือภายนอก", "หนังสือภายใน"] },
   legal: { id: "gov.legal", keywords: ["กฎหมาย", "ระเบียบ", "ข้อกฎหมาย", "อำนาจ", "หารือ", "คำพิพากษา", "วินัย"] },
   project: { id: "gov.project", keywords: ["ทำโครงการ", "โครงการ", "จัดอบรม", "กิจกรรม", "ดำเนินโครงการ"] },
@@ -50,6 +50,8 @@ const PRIMARY_DOMAIN_RULES = Object.freeze([
   ['gov.finance', /(?:เงินสะสม|ค่าใช้จ่าย|การเงิน)/i]
 ]);
 
+const procurementText = text => text.replace(/(?:ค่า(?:เช่าซื้อ|ซื้อ|เช่า)บ้าน(?!พัก)|(?:ผ่อนชำระ|ผ่อน)(?:เงินกู้(?:เพื่อ)?)?(?:ซื้อ)?บ้าน(?!พัก))/g, 'สิทธิที่อยู่อาศัย');
+
 const textOf = (input = {}) => String(input.query || input.question || input.text || input.intent || "").toLowerCase();
 
 function resolvePrimaryWorkflowId(text, directIds, matched) {
@@ -65,7 +67,7 @@ function resolvePrimaryWorkflowId(text, directIds, matched) {
 export function detectGovernmentWorkflows(input = {}) {
   const text = textOf(input);
   const all = Object.values(WORKFLOWS);
-  const matched = all.filter((wf) => wf.keywords.some((k) => text.includes(k.toLowerCase())));
+  const matched = all.filter((wf) => wf.keywords.some((k) => (wf.id === "gov.procurement" ? procurementText(text) : text).includes(k.toLowerCase())));
   const directIds = new Set(matched.map((x) => x.id));
   const ids = new Set(directIds);
   if (ids.has("gov.budget-draft")) ids.add("gov.finance");
