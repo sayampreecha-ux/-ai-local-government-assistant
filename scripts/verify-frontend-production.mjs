@@ -1,3 +1,4 @@
+import { RELEASE_VERSIONS } from './release-versions.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
@@ -12,7 +13,7 @@ const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
 const quickActionBridgeUrl = page('assets/js/ui/quick-action-guided-bridge-v1.js?v=1.2.1');
-const RELEASE = Object.freeze({ home:'6.4.5', homeCss:'2.6.2', serviceWorker:'6.4.6', mic:'2.4.0', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
+const RELEASE = RELEASE_VERSIONS;
 const WORKFLOW_RUNTIME_VERSION = '5.6.2';
 const WORKFLOW_UI_VERSION = '1.3';
 
@@ -54,6 +55,8 @@ const localHome = localHomeSource
 
 const expectedPrivacyGuard = localIndex.match(/assets\/js\/core\/privacy-guard\.js\?v=[^"'\s<]+/)?.[0];
 const expectedSubmitGuard = localIndex.match(/assets\/js\/core\/privacy-submit-guard\.js\?v=[^"'\s<]+/)?.[0];
+const workflowAssetVersion = localHomeSource.match(/government-workflow-runtime-v5\.js\?v=([^'"\s)]+)/)?.[1];
+assert.ok(workflowAssetVersion, 'workflow runtime asset version missing');
 const expectedHome = `assets/js/home-v3.js?v=${RELEASE.home}`;
 const expectedMic = `assets/js/mic.js?v=${RELEASE.mic}`;
 const expectedDocumentStudio = `assets/js/core/document-studio-v1.js?v=${RELEASE.documentStudio}`;
@@ -98,7 +101,7 @@ const submit = await exactProduction(expectedSubmitGuard,localSubmitGuard);
 const home = await exactProduction(expectedHome,localHome);
 const css = await exactProduction(`assets/css/home-v3.css?v=${RELEASE.homeCss}`,localHomeCss);
 const sw = await exactProduction(`service-worker.js?v=${RELEASE.serviceWorker}`,localServiceWorker);
-const runtimeBridge = await exactProduction(`assets/js/core/government-workflow-runtime-v5.js?v=${WORKFLOW_RUNTIME_VERSION}`,localRuntimeBridge);
+const runtimeBridge = await exactProduction(`assets/js/core/government-workflow-runtime-v5.js?v=${workflowAssetVersion}`,localRuntimeBridge);
 const documentStudio = await exactProduction(expectedDocumentStudio,localDocumentStudio);
 const caseListBootstrap = await exactProduction(caseListBootstrapPath,localCaseListBootstrap);
 const caseListUi = await exactProduction('assets/js/ui/case-list-ui-v1.js',localCaseListUi);
@@ -112,7 +115,7 @@ assert.match(submit.text,/EVERY detected PII\/sensitive signal fails closed in c
 assert.match(submit.text,/Home\/UI\/history\/router\/search\/Worker\/API/);
 assert.doesNotMatch(submit.text,/requestSubmit\s*\(/);
 assert.match(home.text,/prepareExternalPrompt\(text\)/);
-assert.match(home.text,new RegExp(`government-workflow-runtime-v5\\.js\\?v=${WORKFLOW_RUNTIME_VERSION.replaceAll('.','\\.')}`));
+assert.match(home.text,new RegExp(`government-workflow-runtime-v5\\.js\\?v=${workflowAssetVersion.replaceAll('.','\\.')}`));
 assert.match(home.text,new RegExp(`budget-official-source-runtime-v1\\.js\\?v=${RELEASE.budgetOfficialSourceRuntime.replaceAll('.','\\.')}`));
 assert.match(home.text,/budget-official-document-connector-v1\.js\?v=1\.0\.0/);
 assert.match(home.text,new RegExp(`budget-browser-input-runtime-v1\\.js\\?v=${RELEASE.budgetInputRuntime.replaceAll('.','\\.')}`));
