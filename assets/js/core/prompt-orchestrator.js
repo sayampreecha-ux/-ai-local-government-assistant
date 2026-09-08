@@ -262,9 +262,61 @@
     });
   }
 
+  // Internal evidence assessment contract, not an automated legal determination.
+  const APPLICABLE_DIMENSIONS = Object.freeze(['AUTHORITY', 'TIME', 'VERSION', 'FACT_MATCH', 'LATER_CHANGE', 'CONFLICT_TRANSITION']);
+  function buildApplicableAuthorityCheck(question, context = {}, evidence = {}) {
+    const source = normalizeForReasoning([question, context.facts, context.currentStage].filter(Boolean).join(' '));
+    const precedentUsed = EXPLICIT_PRECEDENT_TERMS.test(source) || evidence.officialPrecedent === 'VERIFIED' || evidence.reliesOnPrecedent === true;
+    const full = precedentUsed || detectInterpretationIssue(source) || MULTI_CONDITION_TERMS.test(source)
+      || /(?:การเงิน|การคลัง|สวัสดิการ|สิทธิประโยชน์|บุคคล|บุคลากร|ข้าราชการ|งบประมาณ)/i.test(source);
+    const mode = full ? 'FULL' : LEGAL_VERSION_TERMS.test(source) ? 'RULE_VERSION' : 'NONE';
+    const requiredChecks = mode === 'FULL' ? APPLICABLE_DIMENSIONS : mode === 'RULE_VERSION' ? ['AUTHORITY', 'VERSION'] : [];
+    if (mode === 'NONE') return Object.freeze({ mode, required: false, qualityStatus: null, decisionLock: 'OFF', requiredChecks: Object.freeze([]) });
+    const assessment = evidence.applicableAuthority || {};
+    const sources = Array.isArray(assessment.sources) ? assessment.sources : [];
+    const reviews = assessment.reviews || {};
+    // VERIFIED is accepted only with source-linked review records, never a bare status flag.
+    const complete = key => {
+      const review = reviews[key];
+      return review?.status === 'VERIFIED' && Boolean(normalizeText(review.reason))
+        && Array.isArray(review.sourceIds) && review.sourceIds.length > 0
+        && review.sourceIds.every(id => sources.some(item => item.id === id && item.primary === true
+          && item.opened === true && Boolean(normalizeText(item.locator))));
+    };
+    const missingChecks = requiredChecks.filter(key => !complete(key));
+    const conflict = assessment.unresolvedConflict === true || evidence.contraryEvidenceCheck === 'FOUND_UNRESOLVED';
+    const conditions = Array.isArray(assessment.conditions) ? assessment.conditions.filter(item => normalizeText(item)) : [];
+    const qualityStatus = conflict ? 'CONFLICT' : missingChecks.length ? 'UNVERIFIED' : conditions.length ? 'CONDITIONAL' : 'VERIFIED';
+    return Object.freeze({ mode, required: true, qualityStatus, decisionLock: qualityStatus === 'VERIFIED' ? 'OFF' : 'ON',
+      requiredChecks: Object.freeze([...requiredChecks]), missingChecks: Object.freeze(missingChecks),
+      conditions: Object.freeze([...conditions]),
+      searchFlow: Object.freeze(mode === 'FULL' ? ['Rule', 'Case', 'Later Rule', 'Conflict Check', 'Applicable Rule', 'Answer'] : ['Rule', 'Version', 'Answer']) });
+  }
+
+  function applicableAuthorityInstructions(check) {
+    if (!check.required) return [];
+    return [
+      '', 'Applicable Authority Check — ใช้ร่วมกับ Official Authority Retrieval Gate เดิม ไม่ค้นซ้ำ',
+      `- mode=${check.mode}; qualityStatus=${check.qualityStatus}; decisionLock=${check.decisionLock}; Search Flow: ${check.searchFlow.join(' → ')}`,
+      '- AUTHORITY: จำแนก พ.ร.บ. / พ.ร.ฎ. / กฎกระทรวง / ระเบียบ / ประกาศ / หนังสือสั่งการ / หนังสือซักซ้อม / หนังสือหารือ-ตอบข้อหารือ / คำพิพากษา-แนววินิจฉัย / FAQ-คู่มือ-บทความ; เทียบฐานอำนาจและขอบเขต ห้ามใช้หลักฐานต่ำกว่าหักฐานอำนาจสูงกว่าโดยไม่มีเหตุผล และไม่จัดคำพิพากษาเป็นลำดับศักดิ์กฎหมายแบบตายตัว',
+      '- VERSION: ตรวจฉบับที่มีผลใช้บังคับกับบุคคล เหตุการณ์ และช่วงเวลาที่ต้องวินิจฉัย และตรวจฉบับปัจจุบันประกอบ; ตรวจแก้ไข ยกเลิก แทนที่ วันมีผล บทเฉพาะกาล และสิทธิเดิม (grandfathering); ห้ามใช้กฎใหม่ตัดสิทธิเดิมอัตโนมัติ',
+      ...(check.mode === 'FULL' ? [
+        '- TIME: สกัดจากคำถาม/เอกสาร แยกวันเกิดเหตุ วันเกิดสิทธิหรือหน้าที่ วันอนุมัติ วันคำสั่ง วันมีผลกฎ และวันออกคำพิพากษา/หนังสือ; ห้ามถือปีคำพิพากษาเป็นปีข้อเท็จจริงในคดี; ไม่บังคับผู้ใช้กรอก Timeline ถ้าสกัดได้ ถ้าขาดให้ถามเฉพาะวันที่เปลี่ยนผลหรือแยกเงื่อนไข',
+        '- FACT_MATCH: ก่อนอาศัยคดี/หารือ เทียบบุคคล หน่วยงาน ลำดับก่อน-หลัง เงื่อนไขสิทธิ วันอนุมัติเทียบเหตุสำคัญ และกฎหมายชุดเดียวกัน; เรื่องคล้ายกันไม่เท่ากับผลเหมือนกัน ต่างหน่วยงาน/ฐานกฎหมายต้องอธิบายก่อนใช้',
+        '- LATER_CHANGE: หลังพบคดี/หารือ ต้องค้นกฎหมาย ระเบียบ หนังสือสั่งการ หลักเกณฑ์ ข้อยกเว้น การแก้ไข/ยกเลิกภายหลังต่อ ห้ามหยุดที่เอกสารฉบับแรก; บันทึกขอบเขตและผลการค้น รวมฉบับปัจจุบันประกอบ',
+        '- CONFLICT_TRANSITION: เทียบฐานอำนาจ วันมีผล บทเฉพาะกาล บุคคลและเหตุการณ์; ต้องตรวจว่ากฎหรือหลักเกณฑ์ที่ออกภายหลังทำให้ข้อเท็จจริงหรือกฎหมายที่ใช้กับกรณีปัจจุบันแตกต่างจากคดีเดิมหรือไม่ ห้ามกล่าวอัตโนมัติว่า “กฎใหม่ลบคำพิพากษา”'
+      ] : []),
+      '- ประเมินสถานะใหม่หลังค้น: VERIFIED=ปฐมภูมิครบ ตรงข้อเท็จจริง ยืนยันช่วงเวลาบังคับใช้; CONDITIONAL=ขึ้นกับเงื่อนไขสำคัญ; CONFLICT=ความขัดแย้งยังต้องวิเคราะห์; UNVERIFIED=ยังยืนยันต้นฉบับ/ฉบับที่ใช้/สถานะล่าสุดไม่ได้',
+      '- พบเพียง FAQ/คู่มือ/บทความ ให้ UNVERIFIED และตามหาต้นฉบับต่อ; CONFLICT/UNVERIFIED ห้ามฟันธง ได้/ไม่ได้ โดยไม่มีคำเตือน; CONDITIONAL ต้องระบุเงื่อนไข; สถานะเริ่มต้นไม่ใช่ผลการตรวจจริง ห้ามอ้างว่าค้นแล้วหากยังไม่ค้น',
+      '- หากภายหลังใช้คำพิพากษา หนังสือหารือ หรือแนววินิจฉัยเป็นเหตุหลัก ให้ยกระดับ FULL และตรวจทั้ง 6 ด้านก่อนตอบทุกครั้ง',
+      '- เก็บผลตรวจภายในแต่ละด้านพร้อมเหตุผลและแหล่งปฐมภูมิที่เปิดตรวจ (sourceIds/locator); คง Answer First แสดงเฉพาะข้อสรุป เหตุผล ฐานอำนาจ ความเสี่ยง และสิ่งที่ยังต้องตรวจ ไม่แสดง checklist ทั้งหมด'
+    ];
+  }
+
   function buildCasePrecedentGate(question, context = {}, riskLevel = 'LOW', evidence = {}) {
     const source = normalizeForReasoning([question, context?.facts, context?.currentStage].filter(Boolean).join(' '));
-    const interpretationIssue = detectInterpretationIssue(source);
+    const applicableAuthorityCheck = buildApplicableAuthorityCheck(question, context, evidence);
+    const interpretationIssue = applicableAuthorityCheck.mode === 'FULL';
     if (!interpretationIssue) return Object.freeze({ required: false, interpretation_issue: false, status: 'not-required', reason: 'primary-authority-sufficient-unless-new-ambiguity-appears' });
 
     const fingerprint = extractCaseFingerprint(question, context);
@@ -282,7 +334,8 @@
       || evidenceState.contraryEvidenceCheck === 'FOUND_RESOLVED';
     const searchCompletionPassed = evidenceState.searchStatus === 'VERIFIED'
       || evidenceState.searchStatus === 'SEARCHED_NOT_FOUND';
-    const decisionUnlocked = evidenceState.currentRule === 'VERIFIED'
+    const decisionUnlocked = applicableAuthorityCheck.decisionLock === 'OFF'
+      && evidenceState.currentRule === 'VERIFIED'
       && precedentGatePassed
       && searchCompletionPassed
       && evidenceState.legalVersion === 'VERIFIED'
@@ -330,6 +383,9 @@
         nextAction = evidenceState.contraryEvidenceCheck === 'FOUND_UNRESOLVED'
           ? 'RESOLVE_CONTRARY_EVIDENCE'
           : 'EXECUTE_CONTRARY_EVIDENCE_CHECK';
+      } else if (applicableAuthorityCheck.decisionLock === 'ON') {
+        workflowStatus = 'BLOCKED_APPLICABLE_AUTHORITY_CHECK';
+        nextAction = 'COMPLETE_APPLICABLE_AUTHORITY_CHECK';
       } else {
         workflowStatus = 'BLOCKED_RULE_INTERPRETATION';
         nextAction = 'ASSESS_RULE_INTERPRETATION_CONFIDENCE';
@@ -341,6 +397,8 @@
       'การแต่งตั้ง', 'การรับการคัดเลือก'
     ]);
     return Object.freeze({
+      applicableAuthorityCheck,
+      qualityStatus: applicableAuthorityCheck.qualityStatus,
       required: true,
       interpretation_issue: true,
       gateVersion: OFFICIAL_PRECEDENT_GATE_VERSION,
@@ -398,6 +456,7 @@
     if (!source) throw new TypeError('question must be a non-empty string');
     const riskLevel = classifyRiskLevel(source);
     const qualityGates = buildQualityGates(source, riskLevel);
+    const applicableAuthorityCheck = buildApplicableAuthorityCheck(question, context);
     return Object.freeze({
       version: '7.1',
       standard: 'GovPrompt Prompt Standard v7.1',
@@ -406,7 +465,8 @@
       disciplines: allMatches(source, DISCIPLINES),
       riskLevel,
       qualityGates,
-      evidenceMode: qualityGates.evidenceRequired || FRESHNESS.test(source) ? 'verify-current-primary-source' : 'reason-from-provided-context-first',
+      applicableAuthorityCheck,
+      evidenceMode: applicableAuthorityCheck.required || qualityGates.evidenceRequired || FRESHNESS.test(source) ? 'verify-applicable-primary-source' : 'reason-from-provided-context-first',
       shouldProduceNow: EXPLICIT_GENERATION.test(source),
       routeIsAdvisory: true,
       missingInfoPolicy: 'produce-usable-draft-first-then-ask-only-decisive-gaps',
@@ -416,6 +476,7 @@
         'งานที่ขึ้นกับกฎ/อัตรา/สถานะปัจจุบันต้องยืนยันแหล่งปฐมภูมิและความใหม่',
         'ถ้าสิทธิหรือผลลัพธ์มีหลายเงื่อนไข ต้องตรวจครบทุกเงื่อนไขที่มีสาระสำคัญก่อนสรุป',
         'ตรวจวันมีผลใช้บังคับ ฉบับแก้ไข การยกเลิก และบทเฉพาะกาลให้ตรงกับวันที่ของข้อเท็จจริง',
+        'หากระหว่างทำงานใช้คำพิพากษา/หนังสือหารือ/แนววินิจฉัยเป็นเหตุหลัก ต้องตรวจฐานอำนาจ เวลา ฉบับที่ใช้ ข้อเท็จจริง กฎภายหลัง และความขัดแย้ง/บทเฉพาะกาลครบก่อนฟันธง',
         'ตรวจ PDPA ข้อมูลอ่อนไหว และข้อมูลลับ',
         'งานสั่งการ/อนุมัติ/ลงนาม/จ่ายเงินจริงต้องคง Human Approval',
         'ส่งมอบชิ้นงานพร้อมใช้ก่อนคำอธิบาย เมื่อผู้ใช้ขอให้ทำหรือร่าง'
@@ -623,6 +684,7 @@
         '- ลำดับน้ำหนักหลักฐาน: กฎหมาย/กฎ/ระเบียบ/ประกาศต้นฉบับ → หน่วยงานเจ้าของเรื่อง/หนังสือสั่งการทางการ → คำวินิจฉัยหรือคำพิพากษาที่เกี่ยวข้อง → เว็บไซต์ราชการอื่น → แหล่งสรุป',
         '- หากแหล่งสรุปขัดกับต้นฉบับ ให้ยึดต้นฉบับ และหากต้นฉบับหลายฉบับขัดกันให้ตรวจลำดับศักดิ์ วันมีผล และฉบับแก้ไข'
       ] : []),
+      ...applicableAuthorityInstructions(taskPlan.applicableAuthorityCheck),
       ...(casePrecedentGate.required ? [
         '', 'GOVPROMPT — OFFICIAL AUTHORITY RETRIEVAL GATE',
         `- retrievalGateVersion=${casePrecedentGate.retrievalGateVersion}; stateModel=Official Precedent Gate v${casePrecedentGate.gateVersion}; interpretation_issue=true`,
@@ -634,7 +696,7 @@
         '', '1) RULE + CASE MAP — แยกสิ่งที่ทราบ/ไม่ทราบ ห้ามสมมติข้อเท็จจริง',
         ...Object.entries(casePrecedentGate.ruleCaseMap.entries).map(([key, value]) => `- ${key}=${value}`),
         `- KNOWN=${casePrecedentGate.ruleCaseMap.known.join(', ') || 'NONE'}; UNKNOWN=${casePrecedentGate.ruleCaseMap.unknown.join(', ') || 'NONE'}`,
-        '', '2) CURRENT RULE FIRST',
+        '', '2) APPLICABLE RULE FIRST (currentRule = compatibility field)',
         '- เปิดแหล่งปฐมภูมิ ตรวจตัวบท/ข้อ/มาตรา วันมีผล ฉบับแก้ไข การยกเลิก/แทนที่ บทเฉพาะกาล และหน่วยงานเจ้าของเรื่อง แล้วจับคู่กับ TIME',
         '- สกัดถ้อยคำกฎหมายและ legal concepts จากตัวบทจริงไปค้น authority; ห้ามใช้คำถามผู้ใช้เป็น Search Vocabulary เพียงอย่างเดียว',
         '', '3–4) MULTI-ANGLE + ADAPTIVE RETRIEVAL LOOP',
@@ -659,7 +721,7 @@
         '- หยุดเมื่อ (A) VERIFIED + Case Match เพียงพอ + Rule/Version/Authority ครบและไม่มี unresolved lead สำคัญ หรือ (B) ทำ Direct/Multi-Angle + Deep/Index + Identifier/Citation เมื่อมี lead ตามสมควรแล้วแต่ยังไม่พบ',
         '- SEARCH_INCOMPLETE=ยังมี lead/PDF/ฐานข้อมูลสำคัญ; SEARCHED_NOT_FOUND=ใช้ retrieval strategy ที่สมควรครบแล้วแต่ยังไม่พบจากการค้นครั้งนี้; ห้ามกล่าวว่าไม่มีเอกสารเพียงเพราะ Search Engine ไม่พบ',
         '', '12) FINAL DECISION GATE',
-        '- ต้องผ่าน Current Rule + Legal Version + Official Authority Search + Case Match เมื่อพบ authority + Newer/Conflicting Check + Contrary-Evidence Check + ruleInterpretationConfidence=SUFFICIENT',
+        '- ต้องผ่าน Applicable Authority Check + Current Rule (ฉบับที่ใช้กับเหตุ) + Legal Version + Official Authority Search + Case Match เมื่อพบ authority + Newer/Conflicting Check + Contrary-Evidence Check + ruleInterpretationConfidence=SUFFICIENT',
         '- ผลใช้เพียง ✅ ได้ / ❌ ไม่ได้ / ⚠️ ได้โดยมีเงื่อนไข / 🔎 หลักฐานยังไม่พอที่จะฟันธง; VERIFIED + HIGH MATCH มีน้ำหนักสำคัญ เว้นแต่ authority สูงกว่า/ใหม่กว่าหรือกฎหมายเปลี่ยนผล',
         '- หากภายหลังพบหลักฐานราชการน้ำหนักสูงกว่าที่เปลี่ยนคำตอบ ต้องแก้ผลทันทีและแจ้งเหตุผลสั้น ๆ',
         '- AI ทำได้เฉพาะ Search / Verify / Compare / Analyze / Draft / Recommend; การอนุมัติ ลงนาม สั่งจ่าย ลงมติ หรือใช้อำนาจจริงต้องผ่าน Human Approval'
@@ -738,11 +800,12 @@
   window.GovPromptCore.detectPromptRiskFlags = detectRiskFlags;
   window.GovPromptCore.classifyPromptRiskLevel = classifyRiskLevel;
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
+  window.GovPromptCore.buildApplicableAuthorityCheck = buildApplicableAuthorityCheck;
   window.GovPromptCore.buildCasePrecedentGate = buildCasePrecedentGate;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
   window.GovPromptCore.OFFICIAL_PRECEDENT_GATE_VERSION = OFFICIAL_PRECEDENT_GATE_VERSION;
   window.GovPromptCore.OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION = OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION;
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.8.0';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.9.0';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();

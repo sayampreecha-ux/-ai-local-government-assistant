@@ -39,7 +39,7 @@ assert.equal(result.outputPlan.id, 'tor');
 assert.equal(result.prompt.includes('เกณฑ์ตรวจรับวัดได้จริง'), true);
 assert.equal(result.prompt.includes('จำกัดการแข่งขัน'), true);
 assert.equal(result.taskPlan.routeIsAdvisory, true);
-assert.equal(result.taskPlan.evidenceMode, 'verify-current-primary-source');
+assert.equal(result.taskPlan.evidenceMode, 'verify-applicable-primary-source');
 assert.equal(result.taskPlan.riskLevel, 'HIGH');
 assert.equal(result.qualityGates.evidenceRequired, true);
 assert.equal(result.qualityGates.legalVersionRequired, true);
