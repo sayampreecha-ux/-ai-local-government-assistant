@@ -98,7 +98,7 @@
       [5.0, /รถเสีย.{0,18}(?:ไปราชการ|ราชการ)|(?:ไปราชการ|ราชการ).{0,18}รถเสีย/],
       [4.8, /เดินทางไปราชการ|ค่าเดินทาง|ค่าใช้จ่ายเดินทาง/],
       [4.5, /เบิกได้ไหม|เบิกได้หรือไม่|จ่ายได้ไหม|จ่ายได้หรือไม่|เบิกจ่าย|ฎีกา/],
-      [4.2, /ค่าเช่าบ้าน|ค่าที่พัก|ค่าอาหาร|ค่าพาหนะ|เงินยืม/], [3.0, /การเงิน|การคลัง|เบิก|จ่ายเงิน/]
+      [4.2, /ค่าเช่าบ้าน|ค่าเช่าซื้อบ้าน|ค่าซื้อบ้าน|ผ่อนชำระบ้าน|ผ่อนบ้าน|ค่าที่พัก|ค่าอาหาร|ค่าพาหนะ|เงินยืม/], [3.0, /การเงิน|การคลัง|เบิก|จ่ายเงิน/]
     ]],
     ['GP006', [
       [5.4, /ขาดราชการ|ขาดงาน|ไม่มาปฏิบัติราชการ|ไม่มาทำงาน|ละทิ้งหน้าที่ราชการ|ละทิ้งหน้าที่|ทอดทิ้งหน้าที่/],
@@ -161,16 +161,20 @@
   function detectDomainOverride(request) {
     const source = normalize(request);
     for (const rule of DOMAIN_OVERRIDE_RULES) {
-      const matched = rule.patterns.filter(pattern => pattern.test(source));
+      const matched = rule.patterns.filter(pattern => pattern.test(rule.moduleId === 'GP003' ? procurementText(source) : source));
       if (matched.length) return Object.freeze({ moduleId: rule.moduleId, weight: rule.weight, matched: Object.freeze(matched.map(pattern => pattern.source)) });
     }
     return null;
   }
 
+  function procurementText(text) {
+    return text.replace(/(?:ค่า(?:เช่าซื้อ|ซื้อ|เช่า)บ้าน(?!พัก)|(?:ผ่อนชำระ|ผ่อน)(?:เงินกู้(?:เพื่อ)?)?(?:ซื้อ)?บ้าน(?!พัก))/g, 'สิทธิที่อยู่อาศัย');
+  }
+
   function detectActionIntent(request) {
     const source = normalize(request);
     for (const rule of ACTION_INTENT_RULES) {
-      const matched = rule.patterns.filter(pattern => pattern.test(source));
+      const matched = rule.patterns.filter(pattern => pattern.test(rule.moduleId === 'GP003' ? procurementText(source) : source));
       if (matched.length) return Object.freeze({ moduleId: rule.moduleId, weight: rule.weight, matched: Object.freeze(matched.map(pattern => pattern.source)) });
     }
     return null;
@@ -182,13 +186,13 @@
       const matches = [];
       let rawScore = 0;
       group.rules.forEach(rule => {
-        if (rule.pattern.test(source)) {
+        if (rule.pattern.test(group.moduleId === 'GP003' ? procurementText(source) : source)) {
           rawScore += rule.weight;
           matches.push(rule.pattern.source);
         }
       });
       CROSS_INTENT_BONUSES.filter(item => item.moduleId === group.moduleId).forEach(item => {
-        if (item.all.every(pattern => pattern.test(source))) {
+        if (item.all.every(pattern => pattern.test(group.moduleId === 'GP003' ? procurementText(source) : source))) {
           rawScore += item.weight;
           matches.push('context-bonus');
         }
