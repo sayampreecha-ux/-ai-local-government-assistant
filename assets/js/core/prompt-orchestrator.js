@@ -321,9 +321,12 @@
 
     const fingerprint = extractCaseFingerprint(question, context);
     const ruleCaseMap = buildRuleCaseMap(fingerprint);
+    const needsScopeClarification = normalizeText(question).length < 18
+      && (!normalizeText(context.facts) || normalizeText(context.facts) === normalizeText(question))
+      && !normalizeText(context.documents) && !normalizeText(context.organizationType) && !context.hasAttachments;
     const evidenceState = normalizePrecedentEvidence(evidence);
-    const compactFacts = Object.values(fingerprint).filter(value => !String(value).startsWith('[')).join(' ');
-    const legalPhrase = fingerprint.legal_issue.startsWith('[') ? source : fingerprint.legal_issue;
+    const compactFacts = [...new Set(Object.values(fingerprint).filter(value => !String(value).startsWith('[')).map(normalizeText))].join(' ');
+    const legalPhrase = fingerprint.legal_issue.startsWith('[') ? (compactFacts || normalizeText(question)) : fingerprint.legal_issue;
     const precedentGatePassed = evidenceState.officialPrecedent === 'SEARCHED_NOT_FOUND'
       || (evidenceState.officialPrecedent === 'VERIFIED'
         && evidenceState.caseMatch === 'ASSESSED'
@@ -391,6 +394,10 @@
         nextAction = 'ASSESS_RULE_INTERPRETATION_CONFIDENCE';
       }
     }
+    if (needsScopeClarification) {
+      workflowStatus = 'BLOCKED_MISSING_SCOPE';
+      nextAction = 'CLARIFY_DECISIVE_SCOPE';
+    }
     const officialDocumentLanguage = Object.freeze([
       'หารือการพิจารณา', 'หารือแนวทางการปฏิบัติ', 'หลักเกณฑ์และแนวทาง',
       'ซักซ้อมความเข้าใจ', 'การเบิกค่าใช้จ่าย', 'การเดินทางไปราชการ',
@@ -421,6 +428,7 @@
       riskLevel,
       fingerprint,
       ruleCaseMap,
+      needsScopeClarification,
       requiredEvidence: REQUIRED_PRECEDENT_EVIDENCE,
       requiredDecisionChecks: Object.freeze([...REQUIRED_PRECEDENT_EVIDENCE, 'ruleInterpretationConfidence']),
       requiredCurrentRuleChecks: REQUIRED_CURRENT_RULE_CHECKS,
@@ -435,9 +443,9 @@
       retrievalLoop: Object.freeze(['SEARCH', 'EXTRACT_LEADS', 'FOLLOW_BEST_LEAD', 'UPDATE_SEARCH', 'VERIFY']),
       leadTypes: Object.freeze(['documentNumber', 'date', 'title', 'issuingAuthority', 'legalProvision', 'officialTerminology', 'citedDocument', 'indexOrCompilation', 'pageNumber']),
       hiddenDocumentRecovery: Object.freeze(['open-pdf-or-compilation', 'inspect-index-and-table-of-contents', 'navigate-relevant-pages', 'inspect-page-images', 'ocr-only-when-needed-and-supported']),
-      searchQueries: Object.freeze([
+      searchQueries: Object.freeze(needsScopeClarification ? [] : [
         `${compactFacts || source} หนังสือหารือ ตอบข้อหารือ แนววินิจฉัย ซักซ้อม`,
-        `"${legalPhrase}" ข้อ มาตรา หลักเกณฑ์ การพิจารณา แนวทางปฏิบัติ site:go.th`,
+        `${legalPhrase} ข้อ มาตรา หลักเกณฑ์ การพิจารณา แนวทางปฏิบัติ site:go.th`,
         `รวมหนังสือหารือ ประมวลข้อหารือ สารบัญ ดัชนี คู่มือ FAQ แนววินิจฉัย ${legalPhrase} ${normalizeText(context?.owningUnit || '')} site:go.th`,
         `เลขหนังสือ รหัสกอง วันที่ ชื่อเรื่อง หนังสือที่อ้างถึง หน่วยงานผู้ตอบ ${legalPhrase} site:go.th`
       ]),
@@ -491,7 +499,7 @@
     if (/(?:\+66|0)\d{8,9}\b/.test(source)) flags.push('พบหมายเลขโทรศัพท์ — ตรวจและปกปิดหากไม่จำเป็น');
     if (/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/.test(source)) flags.push('พบอีเมล — ตรวจและปกปิดหากไม่จำเป็น');
     if (/(?:เลขบัญชี|พร้อมเพย์|ข้อมูลสุขภาพ|ผลตรวจ|โรค|ข้อมูลลับ)/i.test(source)) flags.push('อาจมีข้อมูลอ่อนไหว/ข้อมูลลับ');
-    if (HIGH_RISK_TERMS.some(term => source.includes(term))) flags.push('งานความเสี่ยงสูง — ต้องตรวจแหล่งข้อมูลปฐมภูมิและสถานะฉบับล่าสุดก่อนฟันธง');
+    if (HIGH_RISK_TERMS.some(term => source.includes(term))) flags.push('งานความเสี่ยงสูง — ต้องตรวจแหล่งปฐมภูมิ ฉบับที่ใช้กับเหตุ และการเปลี่ยนแปลงภายหลังก่อนฟันธง');
     if (DECISION_TERMS.test(source) && MULTI_CONDITION_TERMS.test(source)) flags.push('Decision Gate — ห้ามสรุปจากเงื่อนไขเพียงข้อเดียว');
     return Object.freeze([...new Set(flags)]);
   }
@@ -517,7 +525,7 @@
     const relatedModules = Array.isArray(activeRoute.modules) && activeRoute.modules.length ? activeRoute.modules.join(', ') : activeRoute.moduleId;
     const taskPlan = planUniversalTask(userQuestion, normalizedContext);
     const gates = taskPlan.qualityGates;
-    const casePrecedentGate = buildCasePrecedentGate(userQuestion, normalizedContext, taskPlan.riskLevel);
+    const casePrecedentGate = buildCasePrecedentGate(userQuestion, { ...normalizedContext, hasAttachments: attachments.length > 0 }, taskPlan.riskLevel);
     const operationalSummary = taskPlan.action === 'summarize'
       || /(?:สรุป|ย่อ|executive summary|สรุปหนังสือ|สรุปเอกสาร)/i.test(userQuestion);
     const outputPlan = typeof window.GovPromptCore.routeOutput === 'function'
@@ -571,11 +579,11 @@
           '4. หากข้อมูลสำคัญไม่ครบ ให้ใช้ [ระบุ...] เฉพาะช่องที่จำเป็นในงานร่าง และถามเพิ่มเฉพาะข้อมูลที่เปลี่ยนผลลัพธ์จริง',
           '5. แยกข้อเท็จจริง สิ่งที่ยืนยันแล้ว ข้อวิเคราะห์ ความเสี่ยง และสิ่งที่ยังต้องตรวจให้ชัดเมื่อมีผลต่อการตัดสินใจ',
           '6. ห้ามสมมติเลขมาตรา เลขหนังสือ วันที่ คำพิพากษา ชื่อบุคคล URL อัตราเงิน หรือสถานะกฎหมาย',
-          '7. สำหรับกฎ ระเบียบ หนังสือสั่งการ หนังสือหารือ หนังสือซักซ้อม แนววินิจฉัย อัตรา สิทธิ และคำพิพากษา ให้ตรวจฉบับปัจจุบันล่าสุดก่อนฟันธง',
-          '8. ค้นเอกสารที่เกี่ยวข้อง เรียงตามวันที่ ตรวจฉบับแก้ไข/ยกเลิก/ฉบับใหม่กว่า แล้วเลือกต้นฉบับที่ยังมีผลและใหม่ที่สุด',
+          '7. สำหรับกฎ ระเบียบ หนังสือสั่งการ หนังสือหารือ หนังสือซักซ้อม แนววินิจฉัย อัตรา สิทธิ และคำพิพากษา ให้ตรวจฉบับที่มีผลกับบุคคล เหตุการณ์ และช่วงเวลาที่ต้องวินิจฉัย พร้อมตรวจฉบับปัจจุบันประกอบก่อนฟันธง',
+          '8. ค้นเอกสารที่เกี่ยวข้อง เรียงตามวันที่ ตรวจฉบับแก้ไข/ยกเลิก/ฉบับใหม่กว่า แล้วเลือกต้นฉบับที่มีผลกับกรณีตามวันเกิดเหตุ/เกิดสิทธิและบทเฉพาะกาล ไม่เลือกจากความใหม่เพียงอย่างเดียว',
           '9. ยึดแหล่งปฐมภูมิทางราชการก่อน เช่น ราชกิจจานุเบกษา กฤษฎีกา กรมบัญชีกลาง กระทรวงมหาดไทย สถ. สำนักงบประมาณ ศาล ป.ป.ช. ป.ป.ท. และ สตง.',
           '10. บทความ อินโฟกราฟิก Facebook หรือเว็บไซต์สรุป ใช้เป็นเบาะแสในการค้นเท่านั้น ห้ามใช้ฟันธงโดยไม่มีต้นฉบับรองรับ',
-          '11. ถ้ายังยืนยันความเป็นฉบับล่าสุดไม่ได้ ให้ระบุชัดว่า “ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง”',
+          '11. ถ้ายังยืนยันฉบับที่ใช้กับกรณีหรือการเปลี่ยนแปลงภายหลังไม่ได้ ให้ระบุว่า “ยังยืนยันหลักฐานที่ใช้บังคับกับกรณีไม่ได้ — ยังไม่ควรฟันธง”',
           '12. ตรวจ PDPA ข้อมูลอ่อนไหว และข้อมูลลับก่อนแสดงหรือใช้ข้อมูลที่ไม่จำเป็น',
           '13. ให้คำตอบแบบ Answer First แล้วตามด้วยเหตุผล ฐานอำนาจ ความเสี่ยง และขั้นตอนเท่าที่จำเป็น',
           '14. งานที่เป็นเอกสาร/โครงการ/TOR/ตาราง/สื่อ/คำกล่าว ให้จัดโครงสร้างตามมาตรฐานของชิ้นงานนั้น ไม่ใช้รูปแบบคำตอบทั่วไปแทน',
@@ -662,15 +670,15 @@
       '8. ก่อนส่งคำตอบ ให้ตรวจความถูกต้อง ความใหม่ของหลักฐาน PDPA อำนาจตามกฎหมาย และความพร้อมใช้ของชิ้นงาน',
       '',
       'Quality Gates — ต้องผ่านก่อนฟันธง',
-      `- Decision Gate: ${gates.decisionRequired ? 'ON' : 'OFF'}`,
-      `- Multi-condition Gate: ${gates.multiConditionRequired ? 'ON' : 'OFF'}`,
+      `- Decision Gate: ${gates.decisionRequired || taskPlan.applicableAuthorityCheck.required ? 'ON' : 'OFF'} (การควบคุมข้อสรุปตามหลักฐาน; เจตนาขอคำตัดสิน=${gates.decisionRequired ? 'พบ' : 'ยังไม่ชัด'})`,
+      `- Multi-condition Gate: ${gates.multiConditionRequired || taskPlan.applicableAuthorityCheck.mode === 'FULL' ? 'ON' : 'OFF'}`,
       `- Legal Version Gate: ${gates.legalVersionRequired ? 'ON' : 'OFF'}`,
       `- Evidence Gate: ${gates.evidenceRequired ? 'ON' : 'OFF'}`,
       ...(gates.decisionRequired ? [
         '- เมื่อคำถามต้องการคำตัดสิน ให้เลือกสถานะตามหลักฐานจาก 4 สถานะเท่านั้น: ✅ ได้ / ❌ ไม่ได้ / ⚠️ ได้โดยมีเงื่อนไข / 🔎 หลักฐานยังไม่พอที่จะฟันธง',
         '- ห้ามใช้คำว่า “ได้แน่นอน/ไม่มีสิทธิแน่นอน” หากยังมีเงื่อนไขสำคัญที่ไม่ได้ตรวจ'
       ] : []),
-      ...(gates.multiConditionRequired ? [
+      ...(gates.multiConditionRequired || taskPlan.applicableAuthorityCheck.mode === 'FULL' ? [
         '- Multi-condition Gate: ห้ามสรุปสิทธิ อำนาจ การเบิกจ่าย การจัดซื้อจัดจ้าง หรือผลทางบุคคลจากเงื่อนไขเพียงข้อเดียว',
         '- ระบุเงื่อนไขที่มีสาระสำคัญทั้งหมดที่ค้นพบ → เทียบกับข้อเท็จจริงทีละข้อ → ระบุ ผ่าน/ไม่ผ่าน/ยังไม่ทราบ → จึงสรุปผลรวม',
         '- ถ้าข้อมูลขาดในเงื่อนไขที่สามารถเปลี่ยนคำตอบ ให้ใช้สถานะ “🔎 หลักฐานยังไม่พอที่จะฟันธง” หรือ “⚠️ ได้โดยมีเงื่อนไข” ตามความเหมาะสม'
@@ -692,7 +700,8 @@
         `- newerOrConflictingAuthority=${casePrecedentGate.newerOrConflictingAuthority}; contraryEvidenceCheck=${casePrecedentGate.contraryEvidenceCheck}; ruleInterpretationConfidence=${casePrecedentGate.ruleInterpretationConfidence}`,
         `- decisionLock=${casePrecedentGate.decisionLock}; workflowStatus=${casePrecedentGate.workflowStatus}; nextAction=${casePrecedentGate.nextAction}`,
         '- MISSION: ค้นหลักฐานราชการที่มีน้ำหนักสูง ตรงข้อเท็จจริง และใช้ได้ในวันที่เกิดกรณีก่อนฟันธง — SEARCH FOR THE CASE, NOT JUST THE WORDS.',
-        '- HARD STOP: ขณะ decisionLock=ON ห้ามสรุป ✅ ได้ หรือ ❌ ไม่ได้; หากมี Web Search ให้ค้นและเปิดหลักฐานเองทันที ห้ามโยนให้ผู้ใช้ค้น',
+        ...(casePrecedentGate.needsScopeClarification ? ['- ก่อนค้นเชิงลึก: คำถามยังสั้นและขาดบริบท ให้ถามเฉพาะประเภทเรื่อง/รายการหรือบุคคลที่เปลี่ยนฐานกฎหมายก่อน ห้ามเดาประเภทจากหมวดหรือคำกว้าง เมื่อได้ขอบเขตแล้วจึงสร้างคำค้นและเดิน Rule → Case → Later Rule → Conflict Check → Applicable Rule → Answer'] : []),
+        '- HARD STOP: ขณะ decisionLock=ON ห้ามสรุป ✅ ได้ หรือ ❌ ไม่ได้; เมื่อขอบเขตเรื่องชัด หากมี Web Search ให้ค้นและเปิดหลักฐานเองทันที ห้ามโยนให้ผู้ใช้ค้น',
         '', '1) RULE + CASE MAP — แยกสิ่งที่ทราบ/ไม่ทราบ ห้ามสมมติข้อเท็จจริง',
         ...Object.entries(casePrecedentGate.ruleCaseMap.entries).map(([key, value]) => `- ${key}=${value}`),
         `- KNOWN=${casePrecedentGate.ruleCaseMap.known.join(', ') || 'NONE'}; UNKNOWN=${casePrecedentGate.ruleCaseMap.unknown.join(', ') || 'NONE'}`,
@@ -806,6 +815,6 @@
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
   window.GovPromptCore.OFFICIAL_PRECEDENT_GATE_VERSION = OFFICIAL_PRECEDENT_GATE_VERSION;
   window.GovPromptCore.OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION = OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION;
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.9.0';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.9.1';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();

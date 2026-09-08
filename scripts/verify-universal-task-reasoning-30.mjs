@@ -67,7 +67,7 @@ assert.ok(bundle.prompt.includes('GovPrompt Prompt Standard v7.1'));
 assert.ok(bundle.prompt.includes('Universal Task Reasoning'));
 assert.ok(bundle.prompt.includes('Router เป็นเพียงคำแนะนำ'));
 assert.ok(bundle.prompt.includes('ส่งชิ้นงานหรือข้อสรุปที่ใช้ต่อได้ก่อน'));
-assert.ok(bundle.prompt.includes('ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง'));
+assert.ok(bundle.prompt.includes('ยังยืนยันหลักฐานที่ใช้บังคับกับกรณีไม่ได้ — ยังไม่ควรฟันธง'));
 
 const precedentQuestion = 'ข้าราชการ อบจ. ผู้ผ่านการสรรหาสายงานผู้บริหาร เดินทางไปรายงานตัวครั้งแรกเพื่อเลือก อบจ. ที่ประสงค์จะได้รับการแต่งตั้ง เบิกค่าใช้จ่ายในการเดินทางได้หรือไม่ ตามข้อ 14(2) เรื่องรับการคัดเลือก';
 const precedentContext = core.createSharedContext({ organizationType: 'องค์การบริหารส่วนจังหวัด', currentStage: 'รายงานตัวครั้งแรกเพื่อเลือก อบจ.', facts: precedentQuestion, desiredOutput: 'วินิจฉัยสิทธิเบิกค่าเดินทาง' });
@@ -79,7 +79,7 @@ assert.equal(precedentBundle.casePrecedentGate.gateVersion, '3.1');
 assert.equal(precedentBundle.casePrecedentGate.retrievalGateVersion, '1.0');
 assert.equal(core.OFFICIAL_PRECEDENT_GATE_VERSION, '3.1');
 assert.equal(core.OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION, '1.0');
-assert.equal(core.PROMPT_STANDARD_VERSION, '7.9.0');
+assert.equal(core.PROMPT_STANDARD_VERSION, '7.9.1');
 assert.equal(precedentBundle.casePrecedentGate.currentRule, 'NOT_VERIFIED');
 assert.equal(precedentBundle.casePrecedentGate.officialPrecedent, 'NOT_SEARCHED');
 assert.equal(precedentBundle.casePrecedentGate.caseMatch, 'NOT_ASSESSED');
