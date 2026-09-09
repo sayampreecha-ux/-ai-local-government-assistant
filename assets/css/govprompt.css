@@ -22,3 +22,20 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .gp-attachment-help{width:min(440px,calc(100vw - 40px));margin-top:7px;padding:10px 12px;border:1px solid #cfe0f3;border-radius:10px;background:#f5faff;font-size:.82rem;line-height:1.55;box-shadow:0 6px 16px rgba(11,59,117,.08)}
 .gp-attachment-help small{display:block;margin-top:4px;color:#65758b}
 @media(max-width:650px){.gp-attachment-notice summary{min-height:40px;padding:8px 12px;font-size:.85rem}.gp-attachment-help{width:min(360px,calc(100vw - 32px))}}
+
+/* iPad/tablet landscape: use the full workspace beside the desktop rail. */
+@media (min-width:960px) and (max-width:1366px){
+  body.app-shell .chat-main{
+    width:auto!important;
+    max-width:none!important;
+    margin-left:112px!important;
+    margin-right:24px!important;
+  }
+  body.app-shell .composer-region{
+    left:112px!important;
+    right:24px!important;
+    width:auto!important;
+    max-width:none!important;
+    transform:none!important;
+  }
+}
