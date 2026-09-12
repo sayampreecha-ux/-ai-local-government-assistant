@@ -23,12 +23,31 @@ try {
     const citizen = runtime.buildWorkflowRuntimeView({ query: 'ขออนุญาตก่อสร้างบ้านต้องทำอย่างไร' });
     const citizenResume = runtime.buildWorkflowRuntimeView({ query: 'ทำต่อ ขออนุญาต บริการประชาชน' });
 
+    const core = window.GovPromptCore;
+    const housingQuery = 'เบิกค่าเช่าซื้อบ้าน';
+    const housing = runtime.buildWorkflowRuntimeView({ query: housingQuery });
+    const housingContext = core.createSharedContext({ facts: housingQuery, desiredOutput: housingQuery });
+    const housingRoute = core.routeTransaction(housingContext);
+    const housingBundle = core.createGovernmentPrompt({ question: housingQuery, context: housingContext, route: housingRoute });
+    const housingPrompt = core.sanitizeExternalContent(housingBundle.prompt + '\n' +
+      core.formatToolRoutingInstructions(core.createToolRoutingPlan({ question: housingQuery })) + '\n' +
+      runtime.buildWorkflowPromptBlock(housing)).safeText;
+    const benefitProof = {
+      ids: housing.workflowIds, orchestration: housing.orchestration, route: housingRoute.moduleId,
+      unwantedWorkflow: /gov.procurement|gov.project/.test(runtime.buildWorkflowPromptBlock(housing)),
+      timelinePreserved: housingPrompt.includes('วันเกิดเหตุ วันเกิดสิทธิหรือหน้าที่ วันอนุมัติ'),
+      uncertainAnswerAllowed: housingPrompt.includes('เบิกได้ / เบิกไม่ได้ / มีเงื่อนไข / ยังยืนยันไม่ได้'),
+      staleRuleInstruction: /ให้ตรวจฉบับปัจจุบันล่าสุดก่อนฟันธง|เลือกต้นฉบับที่ยังมีผลและใหม่ที่สุด/.test(housingPrompt),
+      birthdayMasked: !core.sanitizeExternalContent('วันเกิด 1 มกราคม 2530').safeText.includes('1 มกราคม 2530')
+    };
+
     await new Promise((resolve) => setTimeout(resolve, 50));
     const caseButton = document.querySelector('.gp-case-button');
     const count = Number(caseButton?.querySelector('.gp-case-count')?.textContent || 0);
     const memory = localStorage.getItem('govprompt-v7-case-memory') || '';
 
     return {
+      benefitProof,
       bridgeVersion: runtime.WORKFLOW_RUNTIME_BRIDGE_VERSION,
       machine: {
         primary: machine.primary?.workflowId,
@@ -67,6 +86,10 @@ try {
     };
   }, { runtimeUrl });
 
+  assert.deepEqual(result.benefitProof, {
+    ids: ['gov.finance'], orchestration: 'single-workflow', route: 'GP005', unwantedWorkflow: false,
+    timelinePreserved: true, uncertainAnswerAllowed: true, staleRuleInstruction: false, birthdayMasked: true
+  }, 'production housing-benefit final prompt failed');
   assert.equal(result.bridgeVersion, '5.6.2');
 
   assert.equal(result.machine.primary, 'gov.procurement');
@@ -106,6 +129,9 @@ try {
   console.log(JSON.stringify({
     frontend,
     checks: {
+      housingBenefitFinalPrompt: 'PASS',
+      applicableAuthorityTimeline: 'PASS',
+      housingBenefitNoProcurementFanout: 'PASS',
       machineryProcurement: 'PASS',
       workforcePlan: 'PASS',
       buildingPermitCitizenService: 'PASS',

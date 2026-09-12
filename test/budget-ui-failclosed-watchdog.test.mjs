@@ -1,3 +1,4 @@
+import { RELEASE_VERSIONS } from '../scripts/release-versions.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -28,7 +29,7 @@ test('budget UI watchdog is syntactically valid and explicitly fail-closed', () 
 });
 
 test('production build injects watchdog after Home and cache-busts it', () => {
-  assert.match(build, /budgetUiWatchdog: "1\.2\.0"/);
+  assert.equal(RELEASE_VERSIONS.budgetUiWatchdog, '1.2.0');
   assert.match(build, /budget-ui-failclosed-watchdog-v1\.js/);
   assert.match(build, /normalizedHomeScript[\s\S]*budgetWatchdogScript/);
   assert.match(build, /Budget UI fail-closed watchdog missing/);

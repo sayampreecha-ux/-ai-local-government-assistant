@@ -1,3 +1,4 @@
+import { RELEASE_VERSIONS } from '../scripts/release-versions.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -54,7 +55,7 @@ test('wrangler binds Workers AI and both Pages paths ship the browser module', a
   assert.match(wrangler, /"ai"\s*:\s*\{[\s\S]*"binding"\s*:\s*"AI"/);
   assert.match(build, /document-studio-v1\.js/);
   assert.match(build, /Document Studio release script missing/);
-  assert.match(build, /serviceWorker: "\d+\.\d+\.\d+"/);
+  assert.match(RELEASE_VERSIONS.serviceWorker, /^\d+\.\d+\.\d+$/);
   assert.match(index, /document-studio-v1\.js\?v=1\.0\.0/);
   assert.match(catalog, /label: 'จัดหน้าเอกสาร'/);
   assert.match(index, /service-worker\.js\?v=\d+\.\d+\.\d+/);
