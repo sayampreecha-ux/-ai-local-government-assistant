@@ -1,5 +1,12 @@
 :root{--gdl-primary:#12372a;--gdl-primary-2:#174333;--gdl-accent:#8a6418;--gdl-canvas:#f7f8f5;--gdl-surface:#fff;--gdl-soft:#e8f0eb;--gdl-ink:#17231e;--gdl-muted:#4f5e56;--gdl-line:#d2dcd5;--gdl-danger:#8f2923;--gdl-focus:#005fcc;--gdl-r-sm:10px;--gdl-r-md:16px;--gdl-r-lg:24px;--gdl-shadow:0 18px 48px rgba(18,55,42,.11);--nav-height:72px}
 /* Keep the homepage composer in the document flow above all catalog categories. */
+html.result-route:not(.result-intake) .composer-region{display:none!important}
+html.result-route.result-intake .composer-region{display:block!important;position:relative!important;inset:auto!important;width:100%!important;transform:none!important;margin:16px 0 0!important}
+html.result-route.result-intake .composer textarea{min-height:72px;font-size:16px}
+html.result-route .guided-intake-message .answer-section{display:block}
+html.result-route .guided-intake-message .answer-section>p{display:block!important}
+html.result-route.result-intake .answer-card[data-awaiting-input="true"] .answer-actions{display:none!important}
+html.result-route.result-intake .answer-card[data-awaiting-input="true"] .answer-section>details{display:none!important}
 html:not(.result-route) body.app-shell .composer-region{position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important;transform:none!important;margin:14px 0 0!important}
 @media(min-width:621px){html:not(.result-route) body.app-shell .chat-main{padding-bottom:32px!important}}
 *{box-sizing:border-box}html{background:var(--gdl-canvas)}body.app-shell{margin:0;min-height:100dvh;background:var(--gdl-canvas);color:var(--gdl-ink);font-family:"Noto Sans Thai","Leelawadee UI",Tahoma,system-ui,sans-serif}.app-shell button,.app-shell textarea,.app-shell input,.app-shell select{font:inherit}.app-shell svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.app-shell :focus-visible{outline:3px solid var(--gdl-focus);outline-offset:3px}
