@@ -11,50 +11,7 @@
   const outputFormatButton = document.getElementById('outputFormatButton');
   const resultPromptKey = 'govprompt.resultPrompt.v1';
   const resultForceIntakeKey = 'govprompt.forceGuidedIntake.v1';
-  let resultRoute = new URLSearchParams(window.location.search).get('view') === 'result';
-  let currentRequestText = '';
-
-  function workflowResultState(view) {
-    const primary = view?.primary;
-    const needsInput = Boolean(primary?.missingEvidence?.length || primary?.missingOfficialEvidence?.length
-      || /^(blocked-missing-evidence|blocked-official-source)$/.test(primary?.workflowStatus || ''));
-    const label = needsInput ? 'รอข้อมูลเพิ่มเติม' : primary?.approvalRequired ? 'รอผู้มีอำนาจตรวจและอนุมัติ'
-      : primary?.riskReviewRequired ? 'รอตรวจความเสี่ยง' : '';
-    return { needsInput, label };
-  }
-
-  function setResultState(needsInput, label = needsInput ? 'รอข้อมูลเพิ่มเติม' : 'คำสั่งพร้อมใช้งาน') {
-    if (!resultRoute) return;
-    document.documentElement.classList.toggle('result-intake', needsInput);
-    const title = document.querySelector('.result-page-header strong');
-    if (title) title.textContent = label;
-    input.placeholder = needsInput ? 'พิมพ์ข้อมูลเพิ่มเติมที่จำเป็น...' : 'พิมพ์สิ่งที่ต้องการ...';
-  }
-
-  function enterResultPage() {
-    if (!resultRoute) {
-      const target = new URL(window.location.href);
-      target.searchParams.set('view', 'result');
-      target.hash = '';
-      // A same-document route retains the selected File objects and output format.
-      window.history.pushState({ govpromptResult: true }, '', target.toString());
-      resultRoute = true;
-    }
-    document.documentElement.classList.add('result-route');
-    document.querySelector('.chat-main').classList.add('has-messages');
-    conversation.after(document.querySelector('.composer-region'));
-    installResultHeader();
-    setResultState(true);
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }
-
-  // This changes only the view; the existing privacy and intake gates still handle submission.
-  document.addEventListener('submit', event => {
-    if (event.target === form && !resultRoute && input.value.trim()) enterResultPage();
-  }, true);
-  window.addEventListener('popstate', () => {
-    if ((new URLSearchParams(window.location.search).get('view') === 'result') !== resultRoute) window.location.reload();
-  });
+  const resultRoute = new URLSearchParams(window.location.search).get('view') === 'result';
 
   function installResultHeader() {
     if (!resultRoute || document.querySelector('.result-page-header')) return;
@@ -507,9 +464,6 @@
     const mark = document.createElement('span');
 
     article.className = 'message assistant'; content.className = 'assistant-content'; label.className = 'route-label'; card.className = 'answer-card'; section.className = 'answer-section'; actions.className = 'answer-actions'; mark.className = 'assistant-mark'; mark.setAttribute('aria-hidden', 'true'); mark.textContent = 'กพ';
-    const { needsInput, label: blockedLabel } = workflowResultState(workflowRuntime);
-    card.dataset.awaitingInput = String(needsInput);
-    card.dataset.resultStatusLabel = blockedLabel;
     label.textContent = `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
     const isPrResult = Boolean(promptBundle?.prMode);
     heading.textContent = budgetSourceRuntime
@@ -556,9 +510,7 @@
     appendSearchDetails(section, searchResult);
     summary.textContent = 'ดู Prompt ที่ GovPrompt เตรียมไว้'; preview.textContent = promptBundle.prompt; preview.style.whiteSpace = 'pre-wrap'; preview.style.overflowWrap = 'anywhere'; details.append(summary, preview);
     section.prepend(heading, description, status, actions); section.append(details);
-    if (blockedLabel) heading.textContent = blockedLabel;
     card.append(section); content.append(label, card); article.append(mark, content); conversation.appendChild(article);
-    setResultState(needsInput, blockedLabel || 'คำสั่งพร้อมใช้งาน');
   }
 
   function saveHistory(text, route) {
@@ -571,9 +523,6 @@
   }
 
   async function submitPrompt(text) {
-    currentRequestText = text;
-    if (resultRoute) conversation.replaceChildren();
-    setResultState(false, 'กำลังเตรียมงาน');
     document.querySelector('.chat-main').classList.add('has-messages');
     addUserMessage(text); addThinking();
     conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -582,24 +531,19 @@
     catch {
       document.getElementById('thinkingMessage')?.remove();
       window.GovPrompt?.toast('ระบบวิเคราะห์หรือค้นข้อมูลยังไม่พร้อม กรุณาลองใหม่อีกครั้ง');
-      setResultState(true, 'กรุณาลองส่งอีกครั้ง');
       input.value = text; resizeInput(); input.focus(); return;
     }
     await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 250));
     document.getElementById('thinkingMessage')?.remove();
-    addRouteResult(prepared); saveHistory(text, prepared.route);
-    if (!document.documentElement.classList.contains('result-intake')) clearAttachments();
-    conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: resultRoute ? 'start' : 'end' });
+    addRouteResult(prepared); saveHistory(text, prepared.route); clearAttachments();
+    conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }
 
   form.addEventListener('submit', event => {
     event.preventDefault();
-    let text = input.value.trim();
+    const text = input.value.trim();
     if (!text) return;
     if (resultRoute) {
-      if (currentRequestText && document.documentElement.classList.contains('result-intake') && text !== currentRequestText) {
-        text = `${currentRequestText}\n\nข้อมูลเพิ่มเติมจากผู้ใช้:\n${text}`;
-      }
       document.documentElement.classList.remove('result-intake');
       conversation.querySelectorAll('.guided-intake-message').forEach(message => message.remove());
     }
@@ -680,7 +624,10 @@
   });
 
   if (resultRoute) {
-    enterResultPage();
+    document.documentElement.classList.add('result-route');
+    document.documentElement.classList.add('result-intake');
+    document.querySelector('.chat-main').classList.add('has-messages');
+    installResultHeader();
     let pendingPrompt = '';
     let forceGuidedIntake = false;
     try {
