@@ -11,21 +11,6 @@
     /^เว็บไซด์อินเตอร์เน็ต/, /^ค้นหา(?:\s|$)/, /^หน้าหลัก(?:\s|$)/, /^ข่าว(?:จัดซื้อจัดจ้าง|ประกวดราคา)?(?:\s*-|$)/,
     /^ประกาศร่าง\s*tor(?:\s*-|$)/i, /^ระเบียบ ข้อบังคับหลักเกณฑ์และขั้นตอนการปฏิบัติงาน$/
   ]);
-  const DOMAIN_HINTS = Object.freeze({
-    GP001: 'งานสารบรรณ หนังสือราชการ ระเบียบสำนักนายกรัฐมนตรี งานสารบรรณ',
-    GP002: 'กฎหมาย ระเบียบ หนังสือสั่งการ ฐานอำนาจ องค์กรปกครองส่วนท้องถิ่น',
-    GP003: 'จัดซื้อจัดจ้าง พัสดุภาครัฐ TOR ราคากลาง วิธีจัดซื้อจัดจ้าง กรมบัญชีกลาง',
-    GP004: 'แผนพัฒนาท้องถิ่น โครงการ งบประมาณ ข้อบัญญัติงบประมาณ กระทรวงมหาดไทย',
-    GP005: 'การเงิน การคลัง การเบิกจ่าย ค่าใช้จ่าย ระเบียบ หลักเกณฑ์ องค์กรปกครองส่วนท้องถิ่น',
-    GP006: 'บริหารงานบุคคลท้องถิ่น เลื่อนเงินเดือน แต่งตั้ง โอนย้าย วินัย สอบแข่งขัน',
-    GP007: 'งานช่าง วิศวกรรม ก่อสร้าง ถนน มาตรฐานงานทาง ท้องถิ่น',
-    GP008: 'สาธารณสุข รพ.สต. เงินบำรุง บริการสุขภาพ องค์กรปกครองส่วนท้องถิ่น',
-    GP009: 'การศึกษาท้องถิ่น โรงเรียน ศูนย์พัฒนาเด็กเล็ก ครู นักเรียน',
-    GP010: 'ตรวจสอบภายใน ควบคุมภายใน บริหารความเสี่ยง หน่วยงานรัฐ',
-    GP011: 'การบริหารท้องถิ่น ผู้บริหาร นโยบาย ข้อสั่งการ',
-    GP012: 'ประชาสัมพันธ์ภาครัฐ การสื่อสารราชการ ข่าวประชาสัมพันธ์',
-    GP013: 'สภาท้องถิ่น ญัตติ มติสภา สมัยประชุม ข้อบัญญัติ'
-  });
   const INTENT_PROFILES = Object.freeze([
     Object.freeze({
       id: 'vehicle-maintenance',
@@ -113,9 +98,16 @@
     const moduleIds = route?.modules?.length ? route.modules.slice(0, 2) : [route?.primaryModule].filter(Boolean);
     const intentProfile = detectSearchIntent(original);
     const subjectProfile = detectSearchSubject(original, intentProfile);
+    const caseTerms = [
+      [/(?:ซื้อ|จัดหา)/i, 'พัสดุ'],
+      [/(?:เบิก|จ่าย)/i, 'การเงิน'],
+      [/(?:ตรวจ|audit)/i, 'ตรวจสอบ'],
+      [/ค่า\s*k\b/i, 'เงินชดเชยค่างานก่อสร้าง สัญญาแบบปรับราคาได้']
+    ].filter(([pattern]) => pattern.test(original)).map(([, term]) => term);
     const hints = subjectProfile
       ? [subjectProfile.expansion, 'TOR ขอบเขตงาน ราคากลาง จัดซื้อจัดจ้าง พัสดุภาครัฐ ระเบียบ']
-      : (intentProfile ? [intentProfile.expansion] : moduleIds.map(id => DOMAIN_HINTS[id]).filter(Boolean));
+      : (intentProfile ? [intentProfile.expansion] : ['ระเบียบ หลักเกณฑ์', ...caseTerms]);
+    // Routing may rank sources, but cannot inject another workflow's search terms.
     const rewritten = [original, ...hints].filter(Boolean).join(' ');
     return Object.freeze({ original, rewritten, moduleIds: Object.freeze(moduleIds), route, terms: queryTerms(original), intentProfile, subjectProfile });
   }

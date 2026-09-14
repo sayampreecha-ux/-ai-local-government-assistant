@@ -23,11 +23,18 @@
   const MULTI_AUTHORITY_TERMS = /(?:หลายเงื่อนไข|หลายบท|หลายกฎหมาย|กฎหมาย.{0,40}(?:ร่วมกัน|ประกอบ)|ระเบียบ.{0,40}(?:ร่วมกัน|ประกอบ))/i;
   const INTERPRETATION_ANALYSIS_TERMS = /(?:วิเคราะห์|วินิจฉัย|ตีความ|พิจารณา|ตรวจสอบ).{0,80}(?:กฎหมาย|กฎ|ระเบียบ|สิทธิ|อำนาจ|เบิก|จ่าย|พัสดุ|บุคคล|งบประมาณ)/i;
   const OFFICIAL_PRECEDENT_GATE_VERSION = '3.1';
-  const OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION = '1.0';
+  const OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION = '1.1';
+  const AUTHORITY_RETRIEVAL_FLOW = Object.freeze([
+    'Current Rule', 'Later Rule/Amendment', 'Temporary Measure/Exception', 'Expiry/Transition',
+    'Official Guidance/Precedent when relevant', 'Conflict Check', 'Contrary Evidence Check',
+    'Applicable Rule', 'Decision Facts', 'Final Decision'
+  ]);
   const REQUIRED_PRECEDENT_EVIDENCE = Object.freeze(['currentRule', 'officialPrecedent', 'caseMatch', 'legalVersion', 'newerOrConflictingAuthority', 'contraryEvidenceCheck']);
   const REQUIRED_CURRENT_RULE_CHECKS = Object.freeze([
     'law', 'rule', 'regulation', 'announcement', 'primaryDirective', 'amendments',
-    'repealOrReplacement', 'transitionalProvisions', 'effectiveDate', 'dateContextMatched'
+    'repealOrReplacement', 'transitionalProvisions', 'effectiveDate', 'dateContextMatched',
+    'laterRuleSearch', 'temporaryMeasuresAndExceptions', 'expiryAndExtensions',
+    'scopeOfApplication', 'priorEventsEffect'
   ]);
   const REQUIRED_PRECEDENT_VERIFICATION = Object.freeze([
     'issuingAuthority', 'documentNumber', 'documentDate', 'title', 'consultedFacts',
@@ -168,6 +175,109 @@
     return Object.freeze({ entries, known, unknown });
   }
 
+  // Search scope is about the subject, never the number of known decision facts.
+  // Only current-case text is used; route, domain and template fields are not vocabulary.
+  function extractAuthoritySearchScope(question, context = {}) {
+    const questionText = normalizeText(question);
+    const meaningful = text => normalizeText(text)
+      .replace(/(?:ข้าราชการ(?:ส่วนท้องถิ่น)?|พนักงานส่วนท้องถิ่น|องค์การบริหารส่วนจังหวัด|องค์การบริหารส่วนตำบล|อบจ\.|อบต\.|อปท\.|เทศบาล|หน่วยงาน|ช่วย|กรุณา|สอบถาม|พิจารณา|ตรวจสอบ|หน่อย|ครับ|ค่ะ|คะ|ขอ|การ|จะ|ยัง|สามารถ|ได้หรือไม่|ได้ไหม|หรือไม่|ไหม|ไม่ได้|ได้|เบิกจ่าย|เบิก|จ่าย|ทำ|ดำเนินการ|แบบนี้|เช่นนี้|อันนี้|เรื่องนี้|รายการนี้|กรณีนี้|ดังกล่าว|ค่าใช้จ่าย|ค่าเช่า|ค่า|เงิน|สิทธิ|ว่า|ใน|นี้)/g, '')
+      .replace(/[\s\p{P}\p{N}]/gu, '');
+    const questionIdentifiable = Boolean(meaningful(questionText));
+    const facts = normalizeText(context.facts);
+    const documentText = normalizeText(context.documents);
+    const documentReferenceOnly = /^(?:https?:\/\/\S+|[^\n]+\.(?:pdf|docx?|xlsx?|png|jpe?g))$/i.test(documentText);
+    const documents = documentReferenceOnly ? '' : documentText;
+    const segmenter = typeof Intl.Segmenter === 'function' ? new Intl.Segmenter('th', { granularity: 'word' }) : null;
+    const anchors = segmenter ? [...segmenter.segment(questionText)].filter(part => part.isWordLike)
+      .map(part => meaningful(part.segment)).filter(term => term.length > 2) : [meaningful(questionText)].filter(Boolean);
+    const sameSubject = text => /ค่า\s*k\b/i.test(questionText)
+      ? /(?:ค่า\s*k\b|ก่อสร้าง|สัญญาแบบปรับราคาได้)/i.test(text)
+      : anchors.some(term => normalizeForReasoning(text).includes(normalizeForReasoning(term)));
+    const supportingText = [facts !== questionText ? facts : '', documents].filter(text => text && sameSubject(text));
+    // A named new subject starts with a fresh vocabulary. Extra case text may resolve
+    // an elliptical question; unrelated workflow defaults cannot resolve it.
+    const caseText = questionIdentifiable ? [...new Set([questionText, ...supportingText])].join(' ')
+      : [questionText, facts !== questionText ? facts : '', documents].filter(Boolean).join(' ');
+    const identifiable = Boolean(meaningful(caseText));
+    const pendingDocumentRead = !identifiable && (context.hasAttachments === true || documentReferenceOnly);
+    return Object.freeze({
+      subjectMatter: identifiable ? (questionIdentifiable ? questionText : normalizeText(meaningful(facts) ? facts : documents)) : '',
+      caseText,
+      caseKey: normalizeForReasoning(caseText),
+      subjectStatus: identifiable ? 'SUBJECT_IDENTIFIABLE' : pendingDocumentRead ? 'DOCUMENT_SCOPE_PENDING' : 'SUBJECT_AMBIGUOUS',
+      searchable: identifiable,
+      pendingDocumentRead
+    });
+  }
+
+  function buildAuthoritySearchVocabulary(scope, evidence = {}) {
+    const aliases = /ค่า\s*k\b/i.test(scope.caseText)
+      ? ['เงินชดเชยค่างานก่อสร้าง', 'สัญญาแบบปรับราคาได้'] : [];
+    const sources = Array.isArray(evidence.applicableAuthority?.sources) ? evidence.applicableAuthority.sources : [];
+    // Follow leads only from an opened source in this retrieval, bound to this case.
+    const leads = evidence.retrievalCaseKey === scope.caseKey && Array.isArray(evidence.retrievalLeads)
+      ? evidence.retrievalLeads.filter(lead => normalizeText(lead.value)
+        && sources.some(source => source.id === lead.sourceId && source.primary === true
+          && source.opened === true && normalizeText(source.locator))) : [];
+    const legalLanguage = [...new Set([scope.subjectMatter, ...aliases,
+      ...leads.filter(lead => /^(?:legalProvision|officialTerminology|title)$/.test(lead.type)).map(lead => normalizeText(lead.value))])].filter(Boolean).join(' ');
+    const identifiers = leads.filter(lead => /^(?:documentNumber|date|citedDocument|resolution)$/.test(lead.type));
+    const identifierQueries = [...new Set(identifiers.map(lead => `${normalizeText(lead.value)} ${scope.subjectMatter} site:go.th`))];
+    return Object.freeze({
+      factLanguage: scope.caseText,
+      legalLanguage,
+      officialDocumentLanguage: Object.freeze(['หลักเกณฑ์และแนวทาง', 'หนังสือสั่งการ', 'ซักซ้อมความเข้าใจ', 'ตอบข้อหารือ']),
+      sourceLanguage: [...new Set(leads.filter(lead => lead.type === 'issuingAuthority').map(lead => normalizeText(lead.value)))].join(' '),
+      identifierQueries: Object.freeze(identifierQueries),
+      searchQueries: Object.freeze(!scope.searchable ? [] : [
+        `${legalLanguage} กฎหมาย ระเบียบ หลักเกณฑ์ site:go.th`,
+        `${legalLanguage} แก้ไขเพิ่มเติม ยกเลิก มาตรการชั่วคราว ข้อยกเว้น สิ้นสุด ขยายเวลา บทเฉพาะกาล site:go.th`,
+        `${legalLanguage} หนังสือหารือ แนววินิจฉัย รวมหนังสือ สารบัญ ดัชนี site:go.th`,
+        identifierQueries[0] || `${legalLanguage} หนังสือที่อ้างถึง หน่วยงานเจ้าของเรื่อง site:go.th`
+      ])
+    });
+  }
+
+  function authorityReviewComplete(assessment, key) {
+    const review = assessment?.reviews?.[key];
+    const sources = Array.isArray(assessment?.sources) ? assessment.sources : [];
+    return review?.status === 'VERIFIED' && Boolean(normalizeText(review.reason))
+      && Array.isArray(review.sourceIds) && review.sourceIds.length > 0
+      && review.sourceIds.every(id => sources.some(item => item.id === id && item.primary === true
+        && item.opened === true && Boolean(normalizeText(item.locator))));
+  }
+
+  // Sufficiency assessments live inside the existing retrieval gate. They do not
+  // authorize a decision or replace any existing legal/evidence/approval check.
+  function assessDecisionSufficiency(evidence, evidenceState) {
+    const assessment = evidence.applicableAuthority || {};
+    const authoritySufficient = ['AUTHORITY', 'VERSION', 'LATER_CHANGE', 'CONFLICT_TRANSITION']
+      .every(key => authorityReviewComplete(assessment, key))
+      && REQUIRED_CURRENT_RULE_CHECKS.filter(key => key !== 'dateContextMatched')
+        .every(key => evidenceState.currentRuleChecks.includes(key))
+      && evidenceState.legalVersion === 'VERIFIED'
+      && evidenceState.authorityAnalysisComplete
+      && ['CHECKED_NONE_FOUND', 'FOUND'].includes(evidenceState.newerOrConflictingAuthority)
+      && ['CHECKED_NONE_FOUND', 'FOUND_RESOLVED'].includes(evidenceState.contraryEvidenceCheck)
+      && !evidenceState.unresolvedLeads && evidenceState.hiddenDocumentRecoveryCompleted
+      && assessment.unresolvedConflict !== true;
+    const decisiveFacts = Array.isArray(evidence.decisiveFacts) ? evidence.decisiveFacts : [];
+    const missingDecisiveFacts = decisiveFacts.filter(fact => fact?.changesOutcome === true
+      && (fact.status !== 'KNOWN' || !normalizeText(fact.value)));
+    const conditions = Array.isArray(assessment.conditions) ? assessment.conditions : [];
+    const factsSufficient = ['TIME', 'FACT_MATCH'].every(key => authorityReviewComplete(assessment, key))
+      && !conditions.some(item => normalizeText(item))
+      && missingDecisiveFacts.length === 0;
+    return Object.freeze({
+      authorityStatus: authoritySufficient ? 'AUTHORITY_SUFFICIENT' : 'AUTHORITY_INSUFFICIENT',
+      factsStatus: factsSufficient ? 'FACTS_SUFFICIENT' : 'FACTS_INSUFFICIENT',
+      authoritySufficient, factsSufficient,
+      missingDecisiveFacts: Object.freeze(missingDecisiveFacts.map(fact => Object.freeze({
+        key: normalizeText(fact.key), question: normalizeText(fact.question), changesOutcome: true
+      })))
+    });
+  }
+
   function normalizeCompletedChecks(value, allowed) {
     const supplied = Array.isArray(value)
       ? value
@@ -187,7 +297,8 @@
     if (requestedCurrentRule && currentRule !== 'VERIFIED') validationIssues.push('CURRENT_RULE_CHECKLIST_INCOMPLETE');
 
     const searchLevelsCompleted = normalizeCompletedChecks(evidence?.searchLevelsCompleted, ADAPTIVE_SEARCH_LEVELS);
-    if (currentRule !== 'VERIFIED' && searchLevelsCompleted.length > 0) validationIssues.push('PRECEDENT_SEARCH_BEFORE_CURRENT_RULE_VERIFIED');
+    const generalRuleChecked = allChecksCompleted(currentRuleChecks, REQUIRED_CURRENT_RULE_CHECKS.filter(key => key !== 'dateContextMatched'));
+    if (!generalRuleChecked && searchLevelsCompleted.length > 0) validationIssues.push('PRECEDENT_SEARCH_BEFORE_CURRENT_RULE_VERIFIED');
     const identifierLeadDetected = evidence?.identifierLeadDetected === true || (Array.isArray(evidence?.citationIdentifiers) && evidence.citationIdentifiers.length > 0);
     const unresolvedLeads = evidence?.unresolvedLeads === true || (Array.isArray(evidence?.unresolvedLeads) && evidence.unresolvedLeads.length > 0);
     const hiddenDocumentRiskDetected = evidence?.hiddenDocumentRiskDetected === true;
@@ -268,22 +379,13 @@
     const source = normalizeForReasoning([question, context.facts, context.currentStage].filter(Boolean).join(' '));
     const precedentUsed = EXPLICIT_PRECEDENT_TERMS.test(source) || evidence.officialPrecedent === 'VERIFIED' || evidence.reliesOnPrecedent === true;
     const full = precedentUsed || detectInterpretationIssue(source) || MULTI_CONDITION_TERMS.test(source)
-      || /(?:การเงิน|การคลัง|สวัสดิการ|สิทธิประโยชน์|บุคคล|บุคลากร|ข้าราชการ|งบประมาณ)/i.test(source);
+      || /(?:การเงิน|การคลัง|สวัสดิการ|สิทธิประโยชน์|บุคคล|บุคลากร|ข้าราชการ|งบประมาณ|ค่า\s*k\b|ค่าเช่า|ค่าใช้จ่าย|เดินทางไปราชการ|แปรญัตติ)/i.test(source);
     const mode = full ? 'FULL' : LEGAL_VERSION_TERMS.test(source) ? 'RULE_VERSION' : 'NONE';
     const requiredChecks = mode === 'FULL' ? APPLICABLE_DIMENSIONS : mode === 'RULE_VERSION' ? ['AUTHORITY', 'VERSION'] : [];
     if (mode === 'NONE') return Object.freeze({ mode, required: false, qualityStatus: null, decisionLock: 'OFF', requiredChecks: Object.freeze([]) });
     const assessment = evidence.applicableAuthority || {};
-    const sources = Array.isArray(assessment.sources) ? assessment.sources : [];
-    const reviews = assessment.reviews || {};
     // VERIFIED is accepted only with source-linked review records, never a bare status flag.
-    const complete = key => {
-      const review = reviews[key];
-      return review?.status === 'VERIFIED' && Boolean(normalizeText(review.reason))
-        && Array.isArray(review.sourceIds) && review.sourceIds.length > 0
-        && review.sourceIds.every(id => sources.some(item => item.id === id && item.primary === true
-          && item.opened === true && Boolean(normalizeText(item.locator))));
-    };
-    const missingChecks = requiredChecks.filter(key => !complete(key));
+    const missingChecks = requiredChecks.filter(key => !authorityReviewComplete(assessment, key));
     const conflict = assessment.unresolvedConflict === true || evidence.contraryEvidenceCheck === 'FOUND_UNRESOLVED';
     const conditions = Array.isArray(assessment.conditions) ? assessment.conditions.filter(item => normalizeText(item)) : [];
     const qualityStatus = conflict ? 'CONFLICT' : missingChecks.length ? 'UNVERIFIED' : conditions.length ? 'CONDITIONAL' : 'VERIFIED';
@@ -314,19 +416,19 @@
   }
 
   function buildCasePrecedentGate(question, context = {}, riskLevel = 'LOW', evidence = {}) {
-    const source = normalizeForReasoning([question, context?.facts, context?.currentStage].filter(Boolean).join(' '));
+    const scope = extractAuthoritySearchScope(question, context);
+    if (evidence.retrievalCaseKey && evidence.retrievalCaseKey !== scope.caseKey) evidence = {};
     const applicableAuthorityCheck = buildApplicableAuthorityCheck(question, context, evidence);
     const interpretationIssue = applicableAuthorityCheck.mode === 'FULL';
-    if (!interpretationIssue) return Object.freeze({ required: false, interpretation_issue: false, status: 'not-required', reason: 'primary-authority-sufficient-unless-new-ambiguity-appears' });
+    const ambiguousDecision = !scope.searchable && DECISION_TERMS.test(normalizeForReasoning(question));
+    if (!interpretationIssue && !ambiguousDecision) return Object.freeze({ required: false, interpretation_issue: false, status: 'not-required', reason: 'primary-authority-sufficient-unless-new-ambiguity-appears' });
 
-    const fingerprint = extractCaseFingerprint(question, context);
+    const fingerprint = extractCaseFingerprint(question, { facts: scope.caseText });
     const ruleCaseMap = buildRuleCaseMap(fingerprint);
-    const needsScopeClarification = normalizeText(question).length < 18
-      && (!normalizeText(context.facts) || normalizeText(context.facts) === normalizeText(question))
-      && !normalizeText(context.documents) && !normalizeText(context.organizationType) && !context.hasAttachments;
+    const needsScopeClarification = scope.subjectStatus === 'SUBJECT_AMBIGUOUS';
     const evidenceState = normalizePrecedentEvidence(evidence);
-    const compactFacts = [...new Set(Object.values(fingerprint).filter(value => !String(value).startsWith('[')).map(normalizeText))].join(' ');
-    const legalPhrase = fingerprint.legal_issue.startsWith('[') ? (compactFacts || normalizeText(question)) : fingerprint.legal_issue;
+    const searchVocabulary = buildAuthoritySearchVocabulary(scope, evidence);
+    const decisionSufficiency = assessDecisionSufficiency(evidence, evidenceState);
     const precedentGatePassed = evidenceState.officialPrecedent === 'SEARCHED_NOT_FOUND'
       || (evidenceState.officialPrecedent === 'VERIFIED'
         && evidenceState.caseMatch === 'ASSESSED'
@@ -337,7 +439,9 @@
       || evidenceState.contraryEvidenceCheck === 'FOUND_RESOLVED';
     const searchCompletionPassed = evidenceState.searchStatus === 'VERIFIED'
       || evidenceState.searchStatus === 'SEARCHED_NOT_FOUND';
-    const decisionUnlocked = applicableAuthorityCheck.decisionLock === 'OFF'
+    const decisionUnlocked = scope.searchable
+      && decisionSufficiency.authoritySufficient && decisionSufficiency.factsSufficient
+      && applicableAuthorityCheck.decisionLock === 'OFF'
       && evidenceState.currentRule === 'VERIFIED'
       && precedentGatePassed
       && searchCompletionPassed
@@ -394,20 +498,22 @@
         nextAction = 'ASSESS_RULE_INTERPRETATION_CONFIDENCE';
       }
     }
-    if (needsScopeClarification) {
+    if (scope.searchable && decisionSufficiency.authoritySufficient && !decisionSufficiency.factsSufficient) {
+      workflowStatus = 'AUTHORITY_SUFFICIENT_FACTS_PENDING';
+      nextAction = 'EXPLAIN_RULE_THEN_ASK_DECISIVE_FACTS';
+    }
+    if (scope.pendingDocumentRead) {
+      workflowStatus = 'PENDING_DOCUMENT_SCOPE';
+      nextAction = 'READ_CURRENT_CASE_DOCUMENTS';
+    } else if (needsScopeClarification) {
       workflowStatus = 'BLOCKED_MISSING_SCOPE';
       nextAction = 'CLARIFY_DECISIVE_SCOPE';
     }
-    const officialDocumentLanguage = Object.freeze([
-      'หารือการพิจารณา', 'หารือแนวทางการปฏิบัติ', 'หลักเกณฑ์และแนวทาง',
-      'ซักซ้อมความเข้าใจ', 'การเบิกค่าใช้จ่าย', 'การเดินทางไปราชการ',
-      'การแต่งตั้ง', 'การรับการคัดเลือก'
-    ]);
     return Object.freeze({
       applicableAuthorityCheck,
       qualityStatus: applicableAuthorityCheck.qualityStatus,
       required: true,
-      interpretation_issue: true,
+      interpretation_issue: interpretationIssue,
       gateVersion: OFFICIAL_PRECEDENT_GATE_VERSION,
       retrievalGateVersion: OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION,
       currentRule: evidenceState.currentRule,
@@ -429,26 +535,24 @@
       fingerprint,
       ruleCaseMap,
       needsScopeClarification,
+      subjectMatter: scope.subjectMatter,
+      subjectStatus: scope.subjectStatus,
+      caseKey: scope.caseKey,
+      searchable: scope.searchable,
+      decidable: decisionUnlocked,
+      retrievalFlow: AUTHORITY_RETRIEVAL_FLOW,
+      decisionSufficiency,
       requiredEvidence: REQUIRED_PRECEDENT_EVIDENCE,
       requiredDecisionChecks: Object.freeze([...REQUIRED_PRECEDENT_EVIDENCE, 'ruleInterpretationConfidence']),
       requiredCurrentRuleChecks: REQUIRED_CURRENT_RULE_CHECKS,
       requiredPrecedentVerification: REQUIRED_PRECEDENT_VERIFICATION,
       evidenceState,
-      searchConcepts: Object.freeze({
-        factLanguage: compactFacts || source,
-        legalLanguage: legalPhrase,
-        officialDocumentLanguage,
-        sourceLanguage: normalizeText(context?.owningUnit || context?.organizationType || fingerprint.organization)
-      }),
+      searchConcepts: searchVocabulary,
       retrievalLoop: Object.freeze(['SEARCH', 'EXTRACT_LEADS', 'FOLLOW_BEST_LEAD', 'UPDATE_SEARCH', 'VERIFY']),
       leadTypes: Object.freeze(['documentNumber', 'date', 'title', 'issuingAuthority', 'legalProvision', 'officialTerminology', 'citedDocument', 'indexOrCompilation', 'pageNumber']),
       hiddenDocumentRecovery: Object.freeze(['open-pdf-or-compilation', 'inspect-index-and-table-of-contents', 'navigate-relevant-pages', 'inspect-page-images', 'ocr-only-when-needed-and-supported']),
-      searchQueries: Object.freeze(needsScopeClarification ? [] : [
-        `${compactFacts || source} หนังสือหารือ ตอบข้อหารือ แนววินิจฉัย ซักซ้อม`,
-        `${legalPhrase} ข้อ มาตรา หลักเกณฑ์ การพิจารณา แนวทางปฏิบัติ site:go.th`,
-        `รวมหนังสือหารือ ประมวลข้อหารือ สารบัญ ดัชนี คู่มือ FAQ แนววินิจฉัย ${legalPhrase} ${normalizeText(context?.owningUnit || '')} site:go.th`,
-        `เลขหนังสือ รหัสกอง วันที่ ชื่อเรื่อง หนังสือที่อ้างถึง หน่วยงานผู้ตอบ ${legalPhrase} site:go.th`
-      ]),
+      searchQueries: searchVocabulary.searchQueries,
+      identifierQueries: searchVocabulary.identifierQueries,
       searchLadder: ADAPTIVE_SEARCH_LEVELS,
       requiredPasses: Object.freeze(['current-rule-date-context', 'official-authority-retrieval', 'precedent-verification', 'case-match', 'temporal-authority', 'contrary-evidence', 'rule-interpretation-confidence']),
       matchingDimensions: Object.freeze(['person-position', 'organization', 'prior-event-status', 'current-stage-action', 'legal-provision', 'claim-power-legal-effect']),
@@ -695,27 +799,32 @@
       ...applicableAuthorityInstructions(taskPlan.applicableAuthorityCheck),
       ...(casePrecedentGate.required ? [
         '', 'GOVPROMPT — OFFICIAL AUTHORITY RETRIEVAL GATE',
-        `- retrievalGateVersion=${casePrecedentGate.retrievalGateVersion}; stateModel=Official Precedent Gate v${casePrecedentGate.gateVersion}; interpretation_issue=true`,
-        `- currentRule=${casePrecedentGate.currentRule}; officialPrecedent=${casePrecedentGate.officialPrecedent}; searchStatus=${casePrecedentGate.searchStatus}; caseMatch=${casePrecedentGate.caseMatch}; legalVersion=${casePrecedentGate.legalVersion}`,
-        `- newerOrConflictingAuthority=${casePrecedentGate.newerOrConflictingAuthority}; contraryEvidenceCheck=${casePrecedentGate.contraryEvidenceCheck}; ruleInterpretationConfidence=${casePrecedentGate.ruleInterpretationConfidence}`,
+        `- retrievalGateVersion=${casePrecedentGate.retrievalGateVersion}; stateModel=Official Precedent Gate v${casePrecedentGate.gateVersion}; interpretation_issue=${casePrecedentGate.interpretation_issue}`,
         `- decisionLock=${casePrecedentGate.decisionLock}; workflowStatus=${casePrecedentGate.workflowStatus}; nextAction=${casePrecedentGate.nextAction}`,
+        `- subjectStatus=${casePrecedentGate.subjectStatus}; searchable=${casePrecedentGate.searchable}; decidable=${casePrecedentGate.decidable}`,
+        '- ข้อมูลไม่พอสำหรับตัดสิน ไม่ได้หมายความว่าข้อมูลไม่พอสำหรับเริ่มค้น',
+        '- SUBJECT IDENTIFIABLE → SEARCH; SUBJECT AMBIGUOUS → CLARIFY; รู้เรื่องแล้วให้ค้นทันที แม้ WHO, ORG, TIME, RULE, BEFORE, STAGE ไม่ครบ ห้ามถามข้อมูลทั่วไปก่อนค้น หรือถามสิ่งที่ค้นราชการได้เอง',
+        `- Retrieval Flow: ${casePrecedentGate.retrievalFlow.join(' → ')}`,
         '- MISSION: ค้นหลักฐานราชการที่มีน้ำหนักสูง ตรงข้อเท็จจริง และใช้ได้ในวันที่เกิดกรณีก่อนฟันธง — SEARCH FOR THE CASE, NOT JUST THE WORDS.',
-        ...(casePrecedentGate.needsScopeClarification ? ['- ก่อนค้นเชิงลึก: คำถามยังสั้นและขาดบริบท ให้ถามเฉพาะประเภทเรื่อง/รายการหรือบุคคลที่เปลี่ยนฐานกฎหมายก่อน ห้ามเดาประเภทจากหมวดหรือคำกว้าง เมื่อได้ขอบเขตแล้วจึงสร้างคำค้นและเดิน Rule → Case → Later Rule → Conflict Check → Applicable Rule → Answer'] : []),
+        ...(casePrecedentGate.needsScopeClarification ? ['- ก่อนค้นเชิงลึก: ยังระบุเรื่องที่จะค้นไม่ได้อย่างสมเหตุสมผล ให้ถามว่าหมายถึงเรื่องหรือการกระทำใดเท่านั้น ห้ามใช้ความสั้นของคำถามหรือข้อเท็จจริงที่ขาดเป็นเหตุหยุดค้นเมื่อรู้เรื่องแล้ว'] : []),
+        ...(casePrecedentGate.subjectStatus === 'DOCUMENT_SCOPE_PENDING' ? ['- อ่านเนื้อหาเอกสารแนบเพื่อระบุเรื่องก่อน ห้ามถือชื่อไฟล์เป็นข้อเท็จจริง เมื่อระบุเรื่องได้ให้ค้นทันที หากยังระบุไม่ได้จึงถามให้ชัด'] : []),
         '- HARD STOP: ขณะ decisionLock=ON ห้ามสรุป ✅ ได้ หรือ ❌ ไม่ได้; เมื่อขอบเขตเรื่องชัด หากมี Web Search ให้ค้นและเปิดหลักฐานเองทันที ห้ามโยนให้ผู้ใช้ค้น',
         '', '1) RULE + CASE MAP — แยกสิ่งที่ทราบ/ไม่ทราบ ห้ามสมมติข้อเท็จจริง',
-        ...Object.entries(casePrecedentGate.ruleCaseMap.entries).map(([key, value]) => `- ${key}=${value}`),
+        ...Object.entries(casePrecedentGate.ruleCaseMap.entries).map(([key, value]) => `- ${key}=${String(value).startsWith('[') ? '[ยังไม่ทราบ]' : value}`),
         `- KNOWN=${casePrecedentGate.ruleCaseMap.known.join(', ') || 'NONE'}; UNKNOWN=${casePrecedentGate.ruleCaseMap.unknown.join(', ') || 'NONE'}`,
         '', '2) APPLICABLE RULE FIRST (currentRule = compatibility field)',
-        '- เปิดแหล่งปฐมภูมิ ตรวจตัวบท/ข้อ/มาตรา วันมีผล ฉบับแก้ไข การยกเลิก/แทนที่ บทเฉพาะกาล และหน่วยงานเจ้าของเรื่อง แล้วจับคู่กับ TIME',
+        '- เปิดแหล่งปฐมภูมิ ตรวจตัวบท/ข้อ/มาตรา วันมีผล ฉบับแก้ไข การยกเลิก/แทนที่ บทเฉพาะกาล และหน่วยงานเจ้าของเรื่อง แล้วจับคู่กับ TIME; ถ้ายังไม่ทราบวันเกิดเหตุ ให้ค้นหลักเกณฑ์และช่วงเวลาบังคับใช้ก่อน แล้วถามวันที่เฉพาะเมื่อเปลี่ยนผลวินิจฉัย',
         '- สกัดถ้อยคำกฎหมายและ legal concepts จากตัวบทจริงไปค้น authority; ห้ามใช้คำถามผู้ใช้เป็น Search Vocabulary เพียงอย่างเดียว',
+        '- สร้าง Search Vocabulary ใหม่จาก Current Case ศัพท์ที่เกี่ยวข้องและเอกสารทางการที่พบเท่านั้น ห้ามยืมจาก Router/workflow/template/case อื่น; เลขหนังสือ วันที่ มติ ชื่อระเบียบหรือเอกสารอ้างถึงใช้ค้นต่อ ห้าม hard-code ผลกฎหมาย อัตรา ตัวเลข หรือเลขหนังสือเป็นความจริงถาวร',
         '', '3–4) MULTI-ANGLE + ADAPTIVE RETRIEVAL LOOP',
-        `- FACT=${casePrecedentGate.searchConcepts.factLanguage}`,
-        `- LEGAL=${casePrecedentGate.searchConcepts.legalLanguage}`,
+        ...(casePrecedentGate.searchConcepts.factLanguage !== userQuestion ? [`- FACT=${casePrecedentGate.searchConcepts.factLanguage}`] : []),
+        ...(casePrecedentGate.searchConcepts.legalLanguage !== casePrecedentGate.searchConcepts.factLanguage ? [`- LEGAL=${casePrecedentGate.searchConcepts.legalLanguage}`] : []),
         `- OFFICIAL=${casePrecedentGate.searchConcepts.officialDocumentLanguage.join(' / ')}`,
         `- SOURCE=${casePrecedentGate.searchConcepts.sourceLanguage || '[ระบุหน่วยงานเจ้าของเรื่องและแหล่งราชการ]'}`,
         `- LOOP=${casePrecedentGate.retrievalLoop.join(' → ')}; ทุกครั้งต้องสกัด lead ใหม่: ${casePrecedentGate.leadTypes.join(', ')}`,
         '- พบ identifier จำเพาะให้เปลี่ยนจาก Topic Search เป็น Identifier Search ทันที; ห้ามค้นซ้ำคำเดิมโดยไม่เพิ่มแนวคิดหรือหลักฐาน',
         ...casePrecedentGate.searchQueries.map((query, index) => `- Query ${index + 1}: ${query}`),
+        ...casePrecedentGate.identifierQueries.map(query => `- Identifier Search: ${query}`),
         '', '5–7) DEEP / HIDDEN-DOCUMENT / CITATION RECOVERY',
         '- Direct Search ไม่พบให้ตรวจรวม/ประมวล/สารบัญ/ดัชนีข้อหารือ คู่มือ FAQ หนังสือเวียน และเอกสารที่อ้างต้นทาง; ต้องเปิดดูรายการภายใน ไม่ตัดสินจากชื่อไฟล์หรือ snippet',
         '- PDF scan อาจไม่ถูก full-text index: ตรวจสารบัญ ดัชนี เลขหน้า ภาพหน้าเอกสาร และใช้ OCR เมื่อจำเป็น/รองรับ; “ค้นข้อความไม่พบ” ไม่เท่ากับ “ไม่มีเอกสาร”',
@@ -725,12 +834,16 @@
         '- เทียบ บุคคล/สถานะ + หน่วยงาน + เหตุการณ์ก่อนหน้า + ขั้นตอน + การกระทำ + กฎ + สิทธิ/ผล แล้วจัด HIGH/MEDIUM/LOW โดยให้น้ำหนักประเด็นกฎหมายและข้อเท็จจริงสาระสำคัญมากกว่าคำหรือชื่อเรื่อง; LOW เพียงลำพังห้ามฟันธง',
         '', '9–10) AUTHORITY / VERSION / CONTRARY EVIDENCE',
         '- ตรวจฉบับแก้ไข ยกเลิก แทนที่ authority ที่สูงกว่า/ใหม่กว่า/ขัดกัน และข้อยกเว้น; ชั่ง ลำดับศักดิ์ → การใช้กับกรณี → วันมีผล/ความใหม่ → Case Match → ความเป็นต้นฉบับ',
+        '- ค้น Later Rule/Amendment และ Temporary Measure/Exception: ตรวจวันมีผล ขอบเขตบุคคล/กรณี สิ่งที่แก้ไขหรือแทนที่ ถาวร/ชั่วคราว วันสิ้นสุด การขยายเวลา บทเฉพาะกาล ผลต่อสิทธิหรือเหตุที่เกิดก่อนหน้า; ห้ามเลือกเอกสารใหม่ที่สุดโดยอัตโนมัติ',
         '- ค้นหลักฐานที่อาจหักล้างคำตอบเดิมด้วย ห้ามเลือกเฉพาะหลักฐานสนับสนุน; พบ contrary evidence ต้อง resolve ก่อน Final Decision',
         '', '11) SEARCH COMPLETION',
         '- หยุดเมื่อ (A) VERIFIED + Case Match เพียงพอ + Rule/Version/Authority ครบและไม่มี unresolved lead สำคัญ หรือ (B) ทำ Direct/Multi-Angle + Deep/Index + Identifier/Citation เมื่อมี lead ตามสมควรแล้วแต่ยังไม่พบ',
         '- SEARCH_INCOMPLETE=ยังมี lead/PDF/ฐานข้อมูลสำคัญ; SEARCHED_NOT_FOUND=ใช้ retrieval strategy ที่สมควรครบแล้วแต่ยังไม่พบจากการค้นครั้งนี้; ห้ามกล่าวว่าไม่มีเอกสารเพียงเพราะ Search Engine ไม่พบ',
+        '- Decision Sufficiency หลัง Retrieval: A. AUTHORITY_SUFFICIENT = ฐานอำนาจพออธิบายหลักเกณฑ์; B. FACTS_SUFFICIENT = ข้อเท็จจริงพอตัดสิน ใช้ผลตรวจเดิม',
+        `- สถานะเริ่มต้น A=${casePrecedentGate.decisionSufficiency.authorityStatus}; B=${casePrecedentGate.decisionSufficiency.factsStatus}; ต้องประเมินใหม่ตามหลักฐานที่เปิดตรวจจริง`,
+        '- A ผ่าน B ไม่ผ่าน: ตอบหลักทั่วไปที่ยืนยันแล้วก่อน ใช้ ⚠️ มีเงื่อนไข หรือ 🔎 หลักฐานยังไม่พอที่จะฟันธง แล้วถามเฉพาะ decisive facts ที่เปลี่ยนผลจริง ห้ามย้อนเป็น BLOCKED_MISSING_SCOPE หรือถือว่าข้อมูลขาดคือเบิกไม่ได้',
         '', '12) FINAL DECISION GATE',
-        '- ต้องผ่าน Applicable Authority Check + Current Rule (ฉบับที่ใช้กับเหตุ) + Legal Version + Official Authority Search + Case Match เมื่อพบ authority + Newer/Conflicting Check + Contrary-Evidence Check + ruleInterpretationConfidence=SUFFICIENT',
+        '- A และ B ผ่านจึงเข้าสู่ Final Decision โดยคง Decision Gate, Multi-condition Gate, Legal Version Gate, Evidence Gate, Applicable Authority Check, Contrary Evidence Check และ Human Approval เดิม; ต้องผ่าน Current Rule ฉบับที่ใช้กับเหตุ + Official Authority Search + Case Match เมื่อพบ + Newer/Conflicting Check + ruleInterpretationConfidence=SUFFICIENT',
         '- ผลใช้เพียง ✅ ได้ / ❌ ไม่ได้ / ⚠️ ได้โดยมีเงื่อนไข / 🔎 หลักฐานยังไม่พอที่จะฟันธง; VERIFIED + HIGH MATCH มีน้ำหนักสำคัญ เว้นแต่ authority สูงกว่า/ใหม่กว่าหรือกฎหมายเปลี่ยนผล',
         '- หากภายหลังพบหลักฐานราชการน้ำหนักสูงกว่าที่เปลี่ยนคำตอบ ต้องแก้ผลทันทีและแจ้งเหตุผลสั้น ๆ',
         '- AI ทำได้เฉพาะ Search / Verify / Compare / Analyze / Draft / Recommend; การอนุมัติ ลงนาม สั่งจ่าย ลงมติ หรือใช้อำนาจจริงต้องผ่าน Human Approval'
@@ -815,6 +928,6 @@
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
   window.GovPromptCore.OFFICIAL_PRECEDENT_GATE_VERSION = OFFICIAL_PRECEDENT_GATE_VERSION;
   window.GovPromptCore.OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION = OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION;
-  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.9.1';
+  window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.9.2';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
 })();
