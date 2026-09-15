@@ -21,12 +21,13 @@ test('GP008 fallback bootstrap uses the same current assets as the static produc
   assert.match(gp008, /public-health-worker-toolkit-v1\.js\?v=1\.0\.3/);
 });
 
-test('mobile home keeps all categories in two columns and composer out of the fixed-button collision zone', () => {
-  assert.match(homeCss, /@media\(max-width:620px\)/);
-  assert.match(homeCss, /\.chat-main:not\(\.has-messages\)>\.quick-actions\{[^}]*overflow:visible/s);
-  assert.match(homeCss, /\.chat-main:not\(\.has-messages\) \.composer-region\{[^}]*position:static/s);
-  assert.match(homeCss, /\.chat-main\.has-messages \.composer-region\{[^}]*position:sticky/s);
-  assert.match(homeCss, /\.answer-actions\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/s);
+test('compact home keeps the composer in document flow and the catalog responsive', async () => {
+  const index = await readFile('index.html', 'utf8');
+  const accordion = await readFile('assets/js/ui/assistant-catalog-accordion-v1.js', 'utf8');
+  assert.match(homeCss, /html:not\(\.result-route\) body\.app-shell \.composer-region\{[^}]*position:relative!important/s);
+  assert.match(index, /catalog\.before\(composer\)/);
+  assert.match(accordion, /@media\(max-width:620px\)[^`]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/s);
+  assert.match(homeCss, /html\.result-route\.result-intake \.composer-region\{[^}]*display:block!important/s);
 });
 
 test('home delegates fresh public-source retrieval to the user AI instead of consuming live search automatically', () => {

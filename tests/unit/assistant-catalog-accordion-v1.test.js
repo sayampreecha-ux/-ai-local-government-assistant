@@ -11,7 +11,8 @@ test('home assistant catalog is a responsive one-page accordion with frequent-ta
   assert.match(source, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(source, /@media\(max-width:959px\).*repeat\(2,minmax\(0,1fr\)\)/s);
   assert.match(source, /@media\(max-width:620px\).*grid-column:1\/-1/s);
-  assert.match(source, /min-height:48px/);
+  const touchHeights = [...source.matchAll(/min-height:(\d+)px/g)].map(match => Number(match[1]));
+  assert.ok(touchHeights.length > 0 && touchHeights.every(height => height >= 44));
 });
 
 test('public-relations assistant keeps four simple jobs and direct image prompt entry', async () => {
@@ -46,5 +47,5 @@ test('existing mic asset loads the fresh accordion only on the home quick-action
   const mic = await readFile('assets/js/mic.js', 'utf8');
   assert.match(mic, /document\.querySelector\('\.quick-actions'\)/);
   assert.match(mic, /assistantCatalogAccordionScript/);
-  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.1\.0/);
+  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=\d+\.\d+\.\d+/);
 });

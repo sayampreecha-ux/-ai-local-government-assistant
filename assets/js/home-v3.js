@@ -11,7 +11,41 @@
   const outputFormatButton = document.getElementById('outputFormatButton');
   const resultPromptKey = 'govprompt.resultPrompt.v1';
   const resultForceIntakeKey = 'govprompt.forceGuidedIntake.v1';
-  const resultRoute = new URLSearchParams(window.location.search).get('view') === 'result';
+  let resultRoute = new URLSearchParams(window.location.search).get('view') === 'result';
+
+  function enterResultPage() {
+    if (!resultRoute) {
+      const target = new URL(window.location.href);
+      target.searchParams.set('view', 'result');
+      target.hash = '';
+      // Keep File objects and the selected output format in this document.
+      // This runs after an accepted submission, never before the privacy gate.
+      window.history.pushState({ govpromptResult: true }, '', target.toString());
+      resultRoute = true;
+    }
+    document.documentElement.classList.add('result-route');
+    document.querySelector('.chat-main').classList.add('has-messages');
+    conversation.after(document.querySelector('.composer-region'));
+    installResultHeader();
+  }
+
+  // Guided intake handles its own submit event. Move its rendered questions to
+  // the result view too, without intercepting or replaying that submission.
+  new MutationObserver(records => {
+    const addedIntake = records.some(record => [...record.addedNodes].some(node =>
+      node.nodeType === 1 && node.classList.contains('guided-intake-message')));
+    if (!addedIntake) return;
+    enterResultPage();
+    document.documentElement.classList.add('result-intake');
+    input.placeholder = 'พิมพ์ข้อมูลเพิ่มเติมที่จำเป็น...';
+    document.querySelector('.result-page-header strong').textContent = 'ข้อมูลประกอบงาน';
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }).observe(conversation, { childList: true });
+
+  window.addEventListener('popstate', () => {
+    const nextResultRoute = new URLSearchParams(window.location.search).get('view') === 'result';
+    if (nextResultRoute !== resultRoute) window.location.reload();
+  });
 
   function installResultHeader() {
     if (!resultRoute || document.querySelector('.result-page-header')) return;
@@ -523,6 +557,9 @@
   }
 
   async function submitPrompt(text) {
+    enterResultPage();
+    document.documentElement.classList.remove('result-intake');
+    document.querySelector('.result-page-header strong').textContent = 'กำลังเตรียมงาน';
     document.querySelector('.chat-main').classList.add('has-messages');
     addUserMessage(text); addThinking();
     conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -531,12 +568,15 @@
     catch {
       document.getElementById('thinkingMessage')?.remove();
       window.GovPrompt?.toast('ระบบวิเคราะห์หรือค้นข้อมูลยังไม่พร้อม กรุณาลองใหม่อีกครั้ง');
+      document.documentElement.classList.add('result-intake');
+      document.querySelector('.result-page-header strong').textContent = 'กรุณาลองส่งอีกครั้ง';
       input.value = text; resizeInput(); input.focus(); return;
     }
     await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 250));
     document.getElementById('thinkingMessage')?.remove();
     addRouteResult(prepared); saveHistory(text, prepared.route); clearAttachments();
-    conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    document.querySelector('.result-page-header strong').textContent = 'ผลลัพธ์พร้อมใช้งาน';
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }
 
   form.addEventListener('submit', event => {
@@ -624,7 +664,7 @@
   });
 
   if (resultRoute) {
-    document.documentElement.classList.add('result-route');
+    enterResultPage();
     document.documentElement.classList.add('result-intake');
     document.querySelector('.chat-main').classList.add('has-messages');
     installResultHeader();
