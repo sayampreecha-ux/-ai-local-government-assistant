@@ -144,6 +144,30 @@
     core.__authorityRoutingV71Active = true;
   }
 
+  // iOS/in-app browser handoff guard.
+  // status-copy.js historically opens about:blank before awaiting clipboard; some iOS webviews
+  // leave that provisional tab stuck. Intercept only external AI buttons, reuse the existing
+  // privacy-aware copy action, then open the real destination synchronously from the user gesture.
+  document.addEventListener('click', event => {
+    const control = event.target.closest?.('.answer-actions button');
+    if (!control) return;
+    const label = String(control.textContent || '').trim();
+    const destinationUrl = /ChatGPT/i.test(label)
+      ? 'https://chatgpt.com/'
+      : /Gemini/i.test(label)
+        ? 'https://gemini.google.com/'
+        : '';
+    if (!destinationUrl) return;
+    const card = control.closest('.answer-card');
+    if (!card) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const copyButton = [...card.querySelectorAll('.answer-actions button')].find(button => /คัดลอก\s*(?:Prompt|คำสั่ง)/i.test(String(button.textContent || '')));
+    if (copyButton) copyButton.click();
+    const opened = window.open(destinationUrl, '_blank', 'noopener,noreferrer');
+    if (!opened) window.location.href = destinationUrl;
+  }, true);
+
   window.GovPromptCore = window.GovPromptCore || {};
   window.GovPromptCore.AGENT_AUTONOMY_LEVELS = LEVELS;
   window.GovPromptCore.PROHIBITED_AUTONOMOUS_ACTIONS = PROHIBITED_AUTONOMOUS_ACTIONS;
