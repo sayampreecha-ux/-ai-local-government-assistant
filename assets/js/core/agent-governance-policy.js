@@ -59,13 +59,15 @@
     return Object.freeze({ requestedLevel, effectiveLevel, allowed, requiresHumanApproval: requestedLevel === 'L4', technicalPermissionIsLegalAuthority: false, reservedAuthority, blockers: Object.freeze(blockers), reason: classified.reason, confidence: classified.confidence });
   }
 
-  // GovPrompt Thailand V7.1 — Authority-dependent routing policy.
+  // GovPrompt Thailand V7.1/V7.2 — Authority-dependent routing policy.
   // This augments the existing Router/Quality Gates; it does not add a new UI gate or hard-code any substantive answer.
   const AUTHORITY_DEPENDENCY = /กฎหมาย|ระเบียบ|ประกาศ|มาตรฐานกำหนดตำแหน่ง|หลักเกณฑ์|ก\.กลาง|ก\.จังหวัด|มติ|หนังสือสั่งการ|หนังสือหารือ|แนววินิจฉัย|สิทธิ|คุณสมบัติ|ครองตำแหน่ง|ดำรงตำแหน่ง|เลื่อนระดับ|แต่งตั้ง|โอน|ย้าย|สอบคัดเลือก|สอบแข่งขัน|สมัคร|เงินเดือน|อัตรา|ประสบการณ์|กี่ปี|กี่เดือน|กี่วัน|ครบหรือยัง|นับเวลา|ลดระยะเวลา/i;
   const OFFICIAL_NUMERIC = /(\d+(?:[.,]\d+)?\s*(?:ปี|เดือน|วัน|บาท|%|ร้อยละ|คะแนน|ขั้น|ระดับ))|กี่\s*(?:ปี|เดือน|วัน|บาท|เปอร์เซ็นต์|คะแนน|ขั้น|ระดับ)|อายุ|ร้อยละ|จำนวนเงิน|อัตรา|เงินเดือน|ระยะเวลา|เกณฑ์คะแนน|ครองตำแหน่ง/i;
   const PERSONNEL = /งานบุคคล|บุคลากร|ข้าราชการ|พนักงานส่วนท้องถิ่น|รองปลัด|ปลัด|นักบริหาร|ตำแหน่ง|บรรจุ|แต่งตั้ง|โอน|ย้าย|เลื่อนระดับ|สอบคัดเลือก|สอบแข่งขัน|เงินเดือน/i;
   const DRAFTING = /ร่างหนังสือ|ร่างคำสั่ง|ร่างประกาศ|เขียนคำกล่าว|เรียบเรียง|สรุปข้อมูลที่ผู้ใช้ให้|ปรับภาษา/i;
   const RIGHTS_QUALIFICATION = /สิทธิ|คุณสมบัติ|กี่ปี|กี่เดือน|กี่วัน|ครองตำแหน่ง|ดำรงตำแหน่ง|เลื่อนระดับ|แต่งตั้ง|โอน|ย้าย|สอบคัดเลือก|สอบแข่งขัน|สมัคร|เงินเดือน|อัตรา|ประสบการณ์|ครบหรือยัง|นับเวลา|ลดระยะเวลา/i;
+  const WORK_DELIVERABLE = /ร่าง|จัดทำ|ทำหนังสือ|ทำบันทึก|ทำ tor|ทำโครงการ|ทำ checklist|ทำตาราง|สรุป|แนวทาง|ขั้นตอน|เอกสาร|แบบฟอร์ม|คำสั่ง|ประกาศ/i;
+  const BLOCKING_FACTS = /ประเภทบุคลากร|ประเภท\s*อปท|หน่วยงาน|ตำแหน่ง|ระดับ|เหตุ(?:ย้าย|โอน)|วันที่|ช่วงเวลา|คำสั่ง|จำนวนเงิน|งบประมาณ|สัญญา|ข้อเท็จจริง|เอกสารประกอบ/i;
 
   function normalizeAuthorityQuery(input = '') {
     return String(input).normalize('NFC')
@@ -106,6 +108,35 @@
     });
   }
 
+  // V7.2: make the model behave like a work copilot rather than a generic chatbot.
+  // The contract is advisory metadata/instructions only; it does not invent missing facts or substantive legal answers.
+  function buildWorkContract(input = '', authorityPolicy = null) {
+    const text = String(input).trim();
+    const authorityDependent = authorityPolicy?.authorityDependent === true || classifyAuthorityDependency(text).authorityDependent;
+    const deliverableRequested = WORK_DELIVERABLE.test(text);
+    const blockingFactLanguage = BLOCKING_FACTS.test(text);
+    return Object.freeze({
+      answerFirst: true,
+      deliverableRequested,
+      authorityDependent,
+      minimumClarification: true,
+      clarificationRule: 'ถามกลับเฉพาะข้อมูลที่ขาดและมีผลต่อคำตอบ/การทำงานจริงเท่านั้น; รวมคำถามที่จำเป็นไว้ในครั้งเดียว และถ้าเริ่มค้นฐานอำนาจได้โดยไม่ต้องรอข้อมูลเฉพาะราย ให้เริ่มค้นก่อน',
+      noQuestionnaire: true,
+      evidenceBeforeConclusion: authorityDependent,
+      actionableOutput: true,
+      outputContract: Object.freeze([
+        'คำตอบ/ผลลัพธ์หลัก',
+        'เหตุผลหรือหลักฐานที่จำเป็น',
+        'สิ่งที่ผู้ใช้ต้องทำต่อ',
+        'เอกสารหรือข้อมูลที่ต้องเตรียม (ถ้ามี)',
+        'จุดเสี่ยง/สิ่งที่ยังยืนยันไม่ได้ (ถ้ามี)'
+      ]),
+      avoidGenericAdvice: true,
+      blockingFactLanguage,
+      unresolvedAuthorityMessage: authorityDependent ? 'หากหลักฐานทางการยังไม่พอ ห้ามฟันธง ให้ระบุสิ่งที่ยังยืนยันไม่ได้และข้อมูล/เอกสารที่ต้องใช้ยืนยัน' : ''
+    });
+  }
+
   function activateAuthorityRouting(core) {
     if (!core || core.__authorityRoutingV71Active) return;
     const originalCreatePlan = core.createToolRoutingPlan;
@@ -113,7 +144,14 @@
       core.createToolRoutingPlan = function createAuthorityAwareToolRoutingPlan(args = {}) {
         const base = originalCreatePlan(args);
         const policy = buildAuthorityPolicy(args.question || '');
-        if (!policy.authorityDependent) return base;
+        const workContract = buildWorkContract(args.question || '', policy);
+        if (!policy.authorityDependent) {
+          if (!base?.instructions) return Object.freeze({ ...base, workContract });
+          const instructions = Array.from(base.instructions || []);
+          instructions.push('Work Copilot Contract: ตอบผลลัพธ์หลักก่อน ถ้าข้อมูลขาดให้ถามเฉพาะข้อมูลที่เป็นตัวขวางงานจริง และส่งขั้นตอน/เอกสารที่ผู้ใช้ทำต่อได้ทันที');
+          instructions.push('ห้ามทำแบบสอบถามยาวโดยไม่จำเป็น และห้ามให้คำแนะนำทั่วไปแทนการทำงานที่ผู้ใช้ร้องขอ');
+          return Object.freeze({ ...base, instructions: Object.freeze(instructions), workContract });
+        }
         const explicitNoWeb = base?.flags?.explicitNoWeb === true;
         const tools = Array.from(base?.tools || []);
         if (!explicitNoWeb && !tools.includes('web-search')) tools.unshift('web-search');
@@ -128,6 +166,8 @@
         instructions.push('หลักกลาง: ข้อมูลไม่พอสำหรับตัดสิน ไม่ได้หมายความว่าข้อมูลไม่พอสำหรับเริ่มค้น — เมื่อระบุเรื่องที่ต้องค้นได้แล้ว ให้เริ่มค้นฐานอำนาจทันที ไม่ต้องรอข้อเท็จจริงเฉพาะรายครบทุกช่อง');
         instructions.push('ค้นแหล่งทางการ/ต้นฉบับก่อน แล้วตรวจความใช้บังคับกับประเภทบุคลากร ประเภท อปท. ระดับตำแหน่ง วิธีเข้าสู่ตำแหน่ง ช่วงเวลาเกิดเหตุ และฉบับหลักเกณฑ์ ก่อนสรุป');
         instructions.push('Answer First ใช้หลังผ่านการตรวจ Authority/Evidence/Applicability แล้วเท่านั้น; Answer First ไม่ใช่การตอบก่อนตรวจหลักฐาน');
+        instructions.push('Work Copilot Contract: ตอบผลลัพธ์หลักหลังผ่านหลักฐานที่จำเป็น แล้วระบุสิ่งที่ผู้ใช้ต้องทำต่อ เอกสารที่ต้องเตรียม และจุดที่ยังยืนยันไม่ได้');
+        instructions.push('Minimum Clarification Rule: ถ้าข้อมูลยังขาด ให้ถามเฉพาะข้อมูลที่มีผลต่อคำตอบหรือการทำงานจริง รวมคำถามที่จำเป็นไว้ในครั้งเดียว และอย่ารอข้อมูลที่ไม่จำเป็นต่อการเริ่มค้นฐานอำนาจ');
         if (policy.numericAuthority) instructions.push('Numeric Authority Rule: ตัวเลขที่มีผลต่อสิทธิหรือคุณสมบัติ เช่น ปี เดือน วัน อายุ ร้อยละ เงิน อัตรา ระดับ ขั้น หรือคะแนน ต้องมีหลักฐานทางการรองรับ ห้ามเดาจากความจำ; ถ้ายังตรวจไม่ยืนยัน ให้ตอบว่า “ยังยืนยันเกณฑ์ปัจจุบันไม่ได้”');
         if (explicitNoWeb) instructions.push('ผู้ใช้ปิดการค้นเว็บไว้: ห้ามฝ่าฝืนคำสั่งดังกล่าว แต่คำถามยังคงเป็น authority-dependent จึงห้ามฟันธงฐานกฎหมาย/ตัวเลขที่ยังไม่มีหลักฐานในบริบท ให้ตอบแบบมีเงื่อนไขหรือระบุว่ายังยืนยันไม่ได้');
         return Object.freeze({
@@ -137,6 +177,7 @@
           instructions: Object.freeze(instructions),
           reasons: Object.freeze([...(base?.reasons || []), 'คำตอบขึ้นกับฐานอำนาจ/หลักเกณฑ์ทางราชการ จึงต้องตรวจแหล่งทางการก่อนฟันธง']),
           authorityPolicy: policy,
+          workContract,
           flags: Object.freeze({ ...(base?.flags || {}), authorityDependent: true, numericAuthority: policy.numericAuthority, officialAuthorityOverride: true })
         });
       };
@@ -145,9 +186,6 @@
   }
 
   // iOS/in-app browser handoff guard.
-  // status-copy.js historically opens about:blank before awaiting clipboard; some iOS webviews
-  // leave that provisional tab stuck. Intercept only external AI buttons, reuse the existing
-  // privacy-aware copy action, then open the real destination synchronously from the user gesture.
   document.addEventListener('click', event => {
     const control = event.target.closest?.('.answer-actions button');
     if (!control) return;
@@ -176,5 +214,6 @@
   window.GovPromptCore.classifyAuthorityDependency = classifyAuthorityDependency;
   window.GovPromptCore.normalizeAuthorityQuery = normalizeAuthorityQuery;
   window.GovPromptCore.buildAuthorityPolicy = buildAuthorityPolicy;
+  window.GovPromptCore.buildWorkContract = buildWorkContract;
   activateAuthorityRouting(window.GovPromptCore);
 })();
