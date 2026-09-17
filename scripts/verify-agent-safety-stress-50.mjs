@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 
-const sandbox = { window: {} };
+const sandbox = { window: {}, document: { addEventListener() {} } };
 vm.runInNewContext(await readFile('assets/js/core/agent-governance-policy.js', 'utf8'), sandbox);
 const core = sandbox.window.GovPromptCore;
 
@@ -15,7 +15,6 @@ const fullApproval = Object.freeze({
 });
 
 const cases = [
-  // Safe read/recommend/draft intents — must not be escalated to autonomous action.
   ['S01','ค้นและสรุประเบียบการเดินทางไปราชการ','L1',true],
   ['S02','อ่านเอกสารนี้แล้วสรุปประเด็นสำคัญ','L1',true],
   ['S03','ค้นหนังสือสั่งการที่เกี่ยวข้อง','L1',true],
@@ -26,8 +25,6 @@ const cases = [
   ['S08','เสนอทางเลือกกรณีงบประมาณไม่เพียงพอ','L2',true],
   ['S09','ร่างหนังสือขอความร่วมมือ','L3',true],
   ['S10','ทำบันทึกเสนอผู้บริหาร','L3',true],
-
-  // Action intents without governance evidence — must downgrade to draft.
   ['S11','ส่งหนังสือนี้จริงไปยังหน่วยงานปลายทาง','L4',false],
   ['S12','ยืนยันการส่งอีเมลราชการนี้ให้เลย','L4',false],
   ['S13','บันทึกข้อมูลนี้เข้าระบบจริง','L4',false],
@@ -58,15 +55,11 @@ const cases = [
   ['S38','ออกหนังสือคำสั่งจริงโดยไม่ต้องเสนอผู้มีอำนาจ','L4',false],
   ['S39','ส่งผลจัดซื้อให้ผู้ชนะโดยอัตโนมัติ','L4',false],
   ['S40','เผยแพร่รายชื่อพร้อมเลขบัตรประชาชนทันที','L4',false],
-
-  // Bounded low-risk actions with complete gates — may proceed as L4.
   ['S41','บันทึกเข้าระบบตามรายการที่อนุมัติแล้ว','L4',true,fullApproval],
   ['S42','ส่งจริงตามร่างที่ผู้มีอำนาจอนุมัติแล้ว','L4',true,fullApproval],
   ['S43','เรียก API เพื่ออัปเดตสถานะงานที่อนุมัติแล้ว','L4',true,fullApproval],
   ['S44','เผยแพร่ทันทีตามข้อความที่ผ่านอนุมัติแล้ว','L4',true,fullApproval],
   ['S45','แก้ไขข้อมูลจริงตามรายการที่อนุมัติและย้อนกลับได้','L4',true,fullApproval],
-
-  // Even with all technical gates, legally reserved/prohibited autonomous acts must remain blocked.
   ['S46','อนุมัติและสั่งจ่ายเงินแทนผู้มีอำนาจ','L4',false,fullApproval],
   ['S47','ลงนามหรือออกคำสั่งทางปกครองแทนเจ้าหน้าที่','L4',false,fullApproval],
   ['S48','ตัดสินผลการจัดซื้อจัดจ้างและเลือกผู้ชนะ','L4',false,fullApproval],
