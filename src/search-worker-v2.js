@@ -137,6 +137,45 @@ function normalizeSearchResult(item) {
   });
 }
 
+async function verifyOfficialSearchContent(item) {
+  const sourceUrl = parseOfficialUrl(item?.url);
+  if (!sourceUrl) return { ...item, contentVerified: false, verificationStatus: 'invalid-official-url', evidenceText: '' };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(sourceUrl.toString(), {
+      method: 'GET',
+      redirect: 'follow',
+      signal: controller.signal,
+      headers: { accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5' }
+    });
+    const finalUrl = parseOfficialUrl(response.url || sourceUrl.toString());
+    if (!response.ok || !finalUrl) return { ...item, contentVerified: false, verificationStatus: 'source-fetch-failed', evidenceText: '' };
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('text/html') && !contentType.includes('application/xhtml+xml')) {
+      return { ...item, contentVerified: false, verificationStatus: 'non-html-document', evidenceText: '' };
+    }
+    const html = await response.text();
+    const evidenceText = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ').trim().slice(0, 12000);
+    return {
+      ...item,
+      url: finalUrl.toString(),
+      sourceUrl: finalUrl.toString(),
+      primary: true,
+      contentVerified: evidenceText.length >= 80,
+      verificationStatus: evidenceText.length >= 80 ? 'verified-source-content' : 'insufficient-content',
+      evidenceText
+    };
+  } catch (error) {
+    return { ...item, contentVerified: false, verificationStatus: error?.name === 'AbortError' ? 'source-timeout' : 'source-fetch-error', evidenceText: '' };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function tavilySearchOfficial(env, query, count) {
   if (!env?.TAVILY_API_KEY) return { ok: false, status: 503, error: 'SEARCH_PROVIDER_NOT_CONFIGURED' };
   let response;
@@ -151,7 +190,8 @@ async function tavilySearchOfficial(env, query, count) {
   let body;
   try { body = await response.json(); } catch { return { ok: false, status: 502, error: 'SEARCH_PROVIDER_INVALID_RESPONSE' }; }
   const results = (Array.isArray(body?.results) ? body.results : []).map(normalizeSearchResult).filter(Boolean).slice(0, count);
-  return { ok: true, results, provider: 'tavily' };
+  const verifiedResults = await Promise.all(results.map(verifyOfficialSearchContent));
+  return { ok: true, results: verifiedResults, provider: 'tavily' };
 }
 
 async function handleOfficialSearch(request, env) {
