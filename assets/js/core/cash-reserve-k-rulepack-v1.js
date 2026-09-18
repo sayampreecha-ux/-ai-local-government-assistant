@@ -26,7 +26,8 @@
     'ตรวจข้อ 97(1) ฉบับที่ใช้บังคับ ณ วันเกิดรายการ และตรวจต้นฉบับหนังสือ มท 0808.2/1095 ลงวันที่ 28 พฤษภาคม 2564 รวมถึงขอบเขตประเภท (13)',
     'ตรวจสัญญาแบบปรับราคาได้ สูตร ดัชนี งวดงาน วันที่เกิดสิทธิ เอกสารคำนวณ การตรวจสอบ และการอนุมัติค่า K',
     'วิเคราะห์การขอยกเว้น/ไม่ขอยกเว้นแยกต่างหาก ห้ามถือคำตอบหารือหรือภาพหน้าจอแทนต้นฉบับ และห้ามสรุปอัตโนมัติว่าทุกกรณีไม่ต้องขอ',
-    'ค้นแหล่งทางการก่อนสรุป ตรวจวันมีผล การแก้ไข และบทเฉพาะกาล หากหลักฐานไม่ครบหรือขัดแย้งให้เปิด Decision Lock',
+    'ค้นสดให้ดำเนินการโดย AI ปลายทาง/ผู้ให้บริการ AI ที่ผู้ใช้เลือกเท่านั้น ไม่เรียก officialSearchConnector ของ GovPrompt อัตโนมัติ เพื่อลดการใช้โควตาและลิมิตของระบบ',
+    'AI ปลายทางต้องค้นแหล่งทางการก่อนสรุป ตรวจวันมีผล การแก้ไข และบทเฉพาะกาล หากค้นไม่ได้ให้ระบุข้อจำกัดและเปิด Decision Lock',
     'ผลลัพธ์ต้องมีข้อเท็จจริงที่ยืนยัน/ยังไม่ยืนยัน ฐานอำนาจ ตาราง Gate หลักฐาน ความเสี่ยง แนวทางปฏิบัติ และสถานะ: ดำเนินการได้ / ต้องแก้ไขหรือเพิ่มหลักฐาน / ยังสรุปไม่ได้',
     'ห้ามกำหนดสูตร อัตรา ดัชนี หรือเงื่อนไขค่า K แบบตายตัวจากความจำหรือจากตัวอย่าง'
   ].join('\n');
@@ -41,6 +42,7 @@
       requiresPrimaryDocument: relevant,
       decisionLockDefault: relevant,
       searchableBeforeDecidable: relevant,
+      searchDelegation: relevant ? 'external-ai-only' : 'default',
       officialSourceCandidates,
       requiredFacts,
       decisionGates,
@@ -49,7 +51,7 @@
     });
   }
 
-  const rulepack = Object.freeze({ id: 'cash-reserve-k-payment', version: '2.0.0', label: 'เงินสะสม — จ่ายค่า K ให้ผู้รับจ้าง', detect, officialSourceCandidates, requiredFacts, decisionGates, policyBlock });
+  const rulepack = Object.freeze({ id: 'cash-reserve-k-payment', version: '2.1.0', label: 'เงินสะสม — จ่ายค่า K ให้ผู้รับจ้าง', detect, officialSourceCandidates, requiredFacts, decisionGates, policyBlock });
   registry['cash-reserve-k-payment'] = rulepack;
   app.cashReserveKRulePack = rulepack;
 
@@ -63,11 +65,11 @@
       return Object.freeze({
         ...result,
         prompt: `${result.prompt || ''}\n\n${policyBlock}`,
-        cashReserveKControl: Object.freeze({ id: rulepack.id, version: rulepack.version, decisionLockDefault: true, officialSourceFirst: true, requiredGates: decisionGates.map(gate => gate.id) })
+        cashReserveKControl: Object.freeze({ id: rulepack.id, version: rulepack.version, decisionLockDefault: true, officialSourceFirst: true, searchDelegation: 'external-ai-only', requiredGates: decisionGates.map(gate => gate.id) })
       });
     };
     core.__cashReserveKRuntimeInstalled = true;
-    app.emit?.('cash-k:integration-ready', { version: rulepack.version });
+    app.emit?.('cash-k:integration-ready', { version: rulepack.version, searchDelegation: 'external-ai-only' });
   } else if (!core) {
     app.emit?.('cash-k:integration-pending', { reason: 'GovPromptCore unavailable at module load' });
   }
