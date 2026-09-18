@@ -77,7 +77,7 @@ assert.equal(wrangler?.observability?.logs?.head_sampling_rate, 0.05);
 assert.equal(wrangler?.observability?.logs?.persist, true);
 assert.equal(wrangler?.observability?.traces?.enabled, false);
 assert.equal(wrangler?.main, 'src/search-worker-v2.js');
-assert.equal(wrangler?.assets?.binding, 'ASSETS');
+assert.equal(wrangler?.assets, undefined);
 assert.deepEqual(wrangler?.ai, { binding: 'AI' });
 for (const key of forbiddenResourceKeys) assert.equal(wrangler[key], undefined, `Unexpected Cloudflare resource in wrangler.jsonc: ${key}`);
 
@@ -89,4 +89,4 @@ assert.match(leastPrivilegeRunbook, /Only after all prior checks pass/i);
 assert.match(leastPrivilegeRunbook, /revoke the old broad token/i);
 assert.doesNotMatch(leastPrivilegeRunbook, /(?:api[_ -]?token|secret)\s*[=:]\s*[A-Za-z0-9_-]{20,}/i);
 
-console.log('Deployment/privacy contract verified: guarded Cloudflare and canonical GitHub Pages production deploy only approved main, Workers AI is explicitly bound without adding stateful resources, every main push republishes the approved dist artifact, security/privacy gates run before Pages publication, required secret manifest and minimized observability remain enforced.');
+console.log('Deployment/privacy contract verified: guarded Cloudflare API Worker and canonical GitHub Pages production deploy only approved main, Workers AI is explicitly bound without adding stateful resources, the Worker does not depend on a missing dist asset binding, security/privacy gates run before Pages publication, required secret manifest and minimized observability remain enforced.');
