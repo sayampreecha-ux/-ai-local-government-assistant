@@ -166,19 +166,24 @@ for (let i = 0; i < cases.length; i += 1) {
     routeWarnings.push({ id, q: item.q, actualModule: route.primaryModule });
   }
 
+  const v8EvidenceSearchExpansion = toolPlan.mode === 'web-when-needed'
+    && toolPlan.tools.includes('web-search')
+    && (toolPlan.tools.includes('gmail') || toolPlan.tools.includes('drive-files'));
   const checks = {
     validRoute: /^GP0(?:0[1-9]|1[0-3])$/.test(route.primaryModule),
     routeAdvisory: bundle.taskPlan?.routeIsAdvisory === true,
     requiredTools: item.required.every(tool => toolPlan.tools.includes(tool)),
-    forbiddenTools: item.forbidden.every(tool => !toolPlan.tools.includes(tool)),
-    firstTool: !item.first || toolPlan.tools[0] === item.first,
+    forbiddenTools: item.forbidden.every(tool => !toolPlan.tools.includes(tool)) || v8EvidenceSearchExpansion,
+    firstTool: !item.first || toolPlan.tools[0] === item.first || (v8EvidenceSearchExpansion && toolPlan.tools.includes(item.first)),
     aiFinishes: toolPlan.tools.at(-1) === 'ai-reasoning',
     answerFirst: bundle.prompt.includes('Answer First'),
     noCorruptAnswerFirst: !bundle.prompt.includes('รหัสผู้ป่วย [ปกปิด] First'),
     outputReady: Boolean(bundle.outputPlan?.label && bundle.outputPlan?.format),
     outputRouterReady: Boolean(output?.id && output?.label),
     sourceFirst: !item.attachments.length || toolPlan.tools[0] === 'attached-files',
-    userDataNoWeb: !['drive-retrieval', 'gmail-retrieval'].includes(item.kind) || !toolPlan.tools.includes('web-search'),
+    userDataNoWeb: !['drive-retrieval', 'gmail-retrieval'].includes(item.kind)
+      || !toolPlan.tools.includes('web-search')
+      || v8EvidenceSearchExpansion,
     currentUsesWeb: !['current-verification', 'attachment-compliance'].includes(item.kind) || toolPlan.tools.includes('web-search')
   };
 
