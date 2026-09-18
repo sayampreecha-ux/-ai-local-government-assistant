@@ -42,7 +42,7 @@ test('unlocks only after evidence and all authority checks pass', () => {
   const result = engine.checkApplicableAuthority({ question: 'มีสิทธิไหม', evidence: completeEvidence });
   assert.equal(result.decisionLock, 'OFF');
   assert.equal(result.qualityStatus, 'VERIFIED');
-  assert.deepEqual(result.missingChecks, []);
+  assert.equal(result.missingChecks.length, 0);
 });
 
 test('does not activate legal lock for a clearly non-decision request', () => {
