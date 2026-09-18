@@ -15,7 +15,7 @@
 
   const text = value => String(value ?? '').trim();
   const list = value => Array.isArray(value) ? value.filter(Boolean) : [];
-  const hasPrimaryEvidence = evidence => list(evidence).some(item => item && item.primary === true && text(item.title) && text(item.url));
+  const hasPrimaryEvidence = evidence => list(evidence).some(item => item && item.primary === true && item.contentVerified === true && text(item.title) && text(item.url));
   const hasRequiredMetadata = item => Boolean(item && text(item.title) && text(item.issuingAgency) && text(item.documentDate) && text(item.url));
 
   function isDecisionQuestion(question = '') {
