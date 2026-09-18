@@ -30,7 +30,7 @@ assert.match(deploy, /- 'manifest\.webmanifest'/);
 assert.match(deploy, /- 'sitemap\.xml'/);
 assert.match(verify, /Missing CLOUDFLARE_API_TOKEN/);
 assert.match(verify, /Missing CLOUDFLARE_ACCOUNT_ID/);
-assert.match(await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'), /"directory": "\.\/dist"/);
+assert.doesNotMatch(await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'), /"directory": "\.\/dist"/);
 
 // Canonical GitHub Pages production must publish the approved dist artifact on EVERY main push.
 // A restrictive paths filter can let GitHub's branch-based Pages deployment become the last writer
