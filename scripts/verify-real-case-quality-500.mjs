@@ -14,7 +14,7 @@ if (baseline.stdout) process.stdout.write(baseline.stdout);
 if (baseline.stderr) process.stderr.write(baseline.stderr);
 assert.equal(baseline.status, 0, 'accepted 300-case real-work gate must pass');
 
-const sandbox = { window: {}, location: { pathname: '/index.html' } };
+const sandbox = { window: {}, location: { pathname: '/index.html' }, document: { addEventListener() {}, baseURI: 'https://example.test/index.html' }, URL };
 for (const file of [
   'assets/js/core/shared-context.js',
   'assets/js/core/prompt-registry.js',

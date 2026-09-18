@@ -348,12 +348,50 @@
     }
 
     const workflowRuntime = await workflowRuntimePromise;
-    const searchResult = Object.freeze({
-      mode: 'delegated-user-ai',
-      results: [],
-      evidence: { primaryResults: [], conclusionEligible: false },
-      warning: 'GovPrompt ไม่ค้นเว็บสดอัตโนมัติ — ให้ AI ของผู้ใช้ค้นแหล่งราชการ/ต้นฉบับล่าสุดตาม Prompt ที่เตรียมไว้'
-    });
+    let searchResult;
+    const v8 = window.GovPromptCore.EVIDENCE_FIRST_V8;
+    const decisionTask = Boolean(v8?.isDecisionQuestion?.(text)) || ['legal','procurement','finance','human-resources','internal-audit'].includes(String(route?.transactionType || '').toLowerCase());
+    if (decisionTask && typeof core.officialSearchConnector?.search === 'function') {
+      try {
+        searchResult = Object.freeze(await core.officialSearchConnector.search(text, { count: 10, requireFreshness: true }));
+      } catch {
+        searchResult = Object.freeze({ mode: 'search-error', results: [], evidence: { primaryResults: [], conclusionEligible: false }, warning: 'การค้นแหล่งราชการสดขัดข้อง — ยังไม่ควรฟันธง' });
+      }
+    } else {
+      searchResult = Object.freeze({
+        mode: 'delegated-user-ai',
+        results: [],
+        evidence: { primaryResults: [], conclusionEligible: false },
+        warning: 'งานนี้ไม่จำเป็นต้องค้นกฎหมายสดโดยอัตโนมัติ — ใช้ Prompt ที่เตรียมไว้ตามประเภทงาน'
+      });
+    }
+    if (decisionTask && v8) {
+      const primaryResults = searchResult?.evidence?.primaryResults || [];
+      const freshnessVerified = Boolean(searchResult?.evidence?.verifiedCurrent && searchResult?.evidence?.strongPrimaryEvidence);
+      const assessment = v8.checkApplicableAuthority({
+        question: text,
+        domain: route?.transactionType,
+        evidence: {
+          documents: primaryResults.map(item => ({
+            title: item.documentTitle || item.title,
+            issuingAgency: item.issuingAgency || item.sourceName,
+            documentDate: item.documentDate,
+            url: item.sourceUrl,
+            primary: item.official === true,
+            contentVerified: item.contentVerified === true
+          })),
+          factsComplete: Boolean(text),
+          authorityConfirmed: primaryResults.some(item => item.official === true),
+          versionConfirmed: freshnessVerified,
+          timeConfirmed: freshnessVerified,
+          factMatchConfirmed: primaryResults.some(item => (item.evidenceFeatures?.relevance || 0) >= 0.45),
+          laterChangeChecked: freshnessVerified,
+          conflictTransitionChecked: false,
+          conflicts: []
+        }
+      });
+      searchResult = Object.freeze({ ...searchResult, v8Assessment: assessment });
+    }
     return Object.freeze({
       route,
       promptBundle: enrichPromptWithWorkflow(promptBundle, workflowRuntime),
@@ -513,7 +551,9 @@
         ? `GP จัดคำสั่งเฉพาะงานประชาสัมพันธ์ให้แล้ว พร้อมตรวจข้อเท็จจริง PDPA และรูปแบบสื่อ${workflowSummary}${presentationSummary}`
         : `ระบบจัดคำถาม ตรวจความเสี่ยง และเตรียม Prompt กำหนดวิธีค้นแหล่งราชการให้แล้ว — กดคัดลอกไปวางใน ChatGPT หรือ AI ที่คุณใช้${workflowSummary}${presentationSummary}`;
 
+    const v8Assessment = searchResult?.v8Assessment;
     if (isPrResult) status.textContent = '✅ พร้อมทำสื่อประชาสัมพันธ์ — ไม่ดึงกฎงานอื่นมาปน';
+    else if (v8Assessment?.decisionLock === 'ON') status.textContent = `🔒 Decision Lock ON — ${v8Assessment.reasons?.[0] || 'ต้องตรวจหลักฐาน/เงื่อนไขเพิ่มก่อนฟันธง'}`;
     else if (budgetSourceRuntime && structuredBudgetArtifact(budgetSourceRuntime)) status.textContent = '✅ ร่างงบประมาณผ่านการตรวจสมดุลและพร้อมส่งออกเป็น Working Draft';
     else if (searchResult?.mode === 'live' && searchResult?.evidence?.conclusionEligible) status.textContent = '✅ ค้นสดและยืนยันหลักฐานปัจจุบันได้ตาม metadata ที่มี';
     else if (searchResult?.mode === 'live') status.textContent = `⚠️ ค้นสดแล้ว แต่ ${searchResult.warning || 'ยังยืนยันฉบับปัจจุบันล่าสุดไม่ได้'}`;
