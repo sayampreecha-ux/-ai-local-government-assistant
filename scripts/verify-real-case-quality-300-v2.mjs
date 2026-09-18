@@ -29,7 +29,15 @@ if (baseline.stdout) process.stdout.write(baseline.stdout);
 if (baseline.stderr) process.stderr.write(baseline.stderr);
 assert.equal(baseline.status, 0, 'established simulated-work 200 baseline must pass');
 
-const browserDocument = { addEventListener() {}, baseURI: 'https://example.test/index.html' };\nconst browserLocation = { pathname: '/index.html', href: 'https://example.test/index.html' };\nconst sandbox = { window: {}, self: {}, location: browserLocation, document: browserDocument, URL };\nsandbox.window.document = browserDocument;\nsandbox.window.location = browserLocation;\nsandbox.window.URL = URL;\nsandbox.self = sandbox.window;\nsandbox.global = sandbox;\nsandbox.globalThis = sandbox;
+const browserDocument = { addEventListener() {}, baseURI: 'https://example.test/index.html' };
+const browserLocation = { pathname: '/index.html', href: 'https://example.test/index.html' };
+const sandbox = { window: {}, self: {}, location: browserLocation, document: browserDocument, URL };
+sandbox.window.document = browserDocument;
+sandbox.window.location = browserLocation;
+sandbox.window.URL = URL;
+sandbox.self = sandbox.window;
+sandbox.global = sandbox;
+sandbox.globalThis = sandbox;
 for (const file of [
   'assets/js/core/shared-context.js',
   'assets/js/core/prompt-registry.js',
