@@ -550,7 +550,9 @@
         ? `GP จัดคำสั่งเฉพาะงานประชาสัมพันธ์ให้แล้ว พร้อมตรวจข้อเท็จจริง PDPA และรูปแบบสื่อ${workflowSummary}${presentationSummary}`
         : `ระบบจัดคำถาม ตรวจความเสี่ยง และเตรียม Prompt กำหนดวิธีค้นแหล่งราชการให้แล้ว — กดคัดลอกไปวางใน ChatGPT หรือ AI ที่คุณใช้${workflowSummary}${presentationSummary}`;
 
+    const v8Assessment = searchResult?.v8Assessment;
     if (isPrResult) status.textContent = '✅ พร้อมทำสื่อประชาสัมพันธ์ — ไม่ดึงกฎงานอื่นมาปน';
+    else if (v8Assessment?.decisionLock === 'ON') status.textContent = `🔒 Decision Lock ON — ${v8Assessment.reasons?.[0] || 'ต้องตรวจหลักฐาน/เงื่อนไขเพิ่มก่อนฟันธง'}`;
     else if (budgetSourceRuntime && structuredBudgetArtifact(budgetSourceRuntime)) status.textContent = '✅ ร่างงบประมาณผ่านการตรวจสมดุลและพร้อมส่งออกเป็น Working Draft';
     else if (searchResult?.mode === 'live' && searchResult?.evidence?.conclusionEligible) status.textContent = '✅ ค้นสดและยืนยันหลักฐานปัจจุบันได้ตาม metadata ที่มี';
     else if (searchResult?.mode === 'live') status.textContent = `⚠️ ค้นสดแล้ว แต่ ${searchResult.warning || 'ยังยืนยันฉบับปัจจุบันล่าสุดไม่ได้'}`;
