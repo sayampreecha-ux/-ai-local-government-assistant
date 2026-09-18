@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import worker from '../src/search-worker-v2.js';
+import worker from '../../src/search-worker-v2.js';
 
 const origin = 'https://sayampreecha-ux.github.io';
 const assets = { fetch: async () => new Response('asset', { status: 200 }) };
