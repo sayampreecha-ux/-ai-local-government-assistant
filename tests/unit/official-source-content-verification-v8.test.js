@@ -22,7 +22,7 @@ globalThis.fetch = async (url, options = {}) => {
     }), { status: 200, headers: { 'content-type': 'application/json' } });
   }
   if (String(url) === 'https://www.cgd.go.th/example') {
-    return new Response('<html><body><h1>หลักเกณฑ์การเบิกจ่าย</h1><p>เอกสารฉบับจริงและเงื่อนไขการใช้บังคับ</p></body></html>', {
+    return new Response('<html><body><h1>หลักเกณฑ์การเบิกจ่าย</h1><p>เอกสารฉบับจริงและเงื่อนไขการใช้บังคับสำหรับหน่วยงานของรัฐ โดยให้ตรวจสอบวันที่ประกาศและการแก้ไขเพิ่มเติมก่อนนำไปใช้</p></body></html>', {
       status: 200, headers: { 'content-type': 'text/html' }
     });
   }
