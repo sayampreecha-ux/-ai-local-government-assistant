@@ -87,7 +87,7 @@ for (let i = 0; i < extra.length; i += 1) {
 
   const v8EvidenceSearchExpansion = toolPlan.mode === 'web-when-needed'
     && toolPlan.tools.includes('web-search')
-    && !item.attachments.length;
+    && (!item.attachments.length || toolPlan.tools[0] === 'attached-files');
   const modeCompatible = toolPlan.mode === item.mode
     || (v8EvidenceSearchExpansion && ['ai-only', 'user-data-first'].includes(item.mode))
     || (v8EvidenceSearchExpansion && item.mode === 'attachment-first' && toolPlan.tools[0] === 'attached-files');
