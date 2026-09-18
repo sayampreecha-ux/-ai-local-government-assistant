@@ -9,6 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  # The generated dist is committed so Cloudflare Workers Builds can deploy the assets binding without a dashboard build command.
   contents: write
 
 concurrency:
