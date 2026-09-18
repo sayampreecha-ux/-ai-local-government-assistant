@@ -9,8 +9,8 @@
   }
   if (root.__cashReserveKRuntimeV2Installed) return;
 
-  // Policy: GovPrompt must not perform live web/official-source searches itself.
-  // The selected external AI provider is responsible for live retrieval.
+  // Hard policy: GovPrompt must never execute live web/official-source searches.
+  // The AI provider selected by the user performs live retrieval externally.
   const delegatedResult = (query, channel = 'external-ai') => Object.freeze({
     status: 'delegated-to-external-ai',
     searchDelegation: 'external-ai-only',
@@ -24,23 +24,40 @@
     mode: 'external-ai-only',
     disableInternalLiveSearch: true,
     delegatedResult,
-    version: '1.0.0'
+    version: '1.1.0'
   });
 
-  // Guard known connector-style search methods if they are already exposed.
-  const guardedObjects = [root, app, app.officialSearchConnector, app.officialSourceConnector, app.searchConnector].filter(Boolean);
-  const guardedNames = ['search', 'searchOfficial', 'searchWeb', 'liveSearch', 'officialSearch'];
-  guardedObjects.forEach(target => {
+  const guardedNames = ['search', 'searchOfficial', 'searchWeb', 'liveSearch', 'officialSearch', 'executeBudgetOfficialSourceSearch'];
+  const guardedTargets = new WeakSet();
+  const guardTarget = target => {
+    if (!target || (typeof target !== 'object' && typeof target !== 'function') || guardedTargets.has(target)) return;
+    guardedTargets.add(target);
     guardedNames.forEach(name => {
       if (typeof target[name] !== 'function' || target[`__externalAiOnly_${name}`]) return;
       const original = target[name];
-      target[name] = function externalAiOnlySearchGuard(query) {
+      target[name] = function externalAiOnlySearchGuard(query, ...args) {
         return Promise.resolve(delegatedResult(query));
       };
-      target[`__externalAiOnly_${name}`] = true;
-      target[`__original_${name}`] = original;
+      try {
+        Object.defineProperty(target, `__externalAiOnly_${name}`, { value: true, configurable: true });
+        Object.defineProperty(target, `__original_${name}`, { value: original, configurable: true });
+      } catch {
+        target[`__externalAiOnly_${name}`] = true;
+        target[`__original_${name}`] = original;
+      }
     });
-  });
+  };
+
+  const scanAndGuard = () => {
+    [root, app, app.officialSearchConnector, app.officialSourceConnector, app.searchConnector,
+      app.budgetOfficialSourceRuntime, app.budgetOfficialDocumentConnector].forEach(guardTarget);
+  };
+  scanAndGuard();
+  // Cover connectors initialized after this runtime script.
+  if (typeof window.setInterval === 'function') {
+    const timer = window.setInterval(scanAndGuard, 250);
+    window.setTimeout?.(() => window.clearInterval?.(timer), 30_000);
+  }
 
   const rulepack = app.cashReserveKRulePack;
   const isRelevant = value => rulepack?.detect?.(String(value ?? '')).relevant === true
@@ -70,7 +87,7 @@
       prompt,
       cashReserveKControl: Object.freeze({
         id: 'cash-reserve-k-payment',
-        version: '2.1.0',
+        version: '2.1.1',
         decisionLockDefault: true,
         officialSourceFirst: true,
         searchDelegation: 'external-ai-only',
@@ -81,5 +98,5 @@
   };
 
   root.__cashReserveKRuntimeV2Installed = true;
-  app.emit?.('cash-k:integration-ready', { version: '2.1.0', searchDelegation: 'external-ai-only' });
+  app.emit?.('cash-k:integration-ready', { version: '2.1.1', searchDelegation: 'external-ai-only', internalLiveSearchDisabled: true });
 })();
