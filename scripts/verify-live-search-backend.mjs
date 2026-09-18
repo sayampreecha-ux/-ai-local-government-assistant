@@ -43,7 +43,7 @@ globalThis.fetch=async (url,options={})=>{
     {title:'เว็บภายนอก',url:'https://example.com/summary',content:'ต้องกรอง'}
   ]}),{status:200,headers:{'content-type':'application/json'}});
   if (String(url).includes('/extract')) return new Response(JSON.stringify({results:[{url:'https://www.py-pao.go.th/budget.pdf',raw_content:'ข้อบัญญัติงบประมาณรายจ่าย ประจำปีงบประมาณ พ.ศ. 2569\nงบบุคลากร 250,000,000 บาท\nงบลงทุน 320,000,000 บาท\nรวมรายจ่ายทั้งสิ้น 570,000,000 บาท'}],request_id:'req-1',response_time:0.1}),{status:200,headers:{'content-type':'application/json'}});
-  throw new Error('unexpected-provider-url');
+  if (String(url).startsWith('https://www.cgd.go.th/') || String(url).startsWith('https://www.py-pao.go.th/')) return new Response('<html><body><h1>official source</h1><p>verified document content</p></body></html>',{status:200,headers:{'content-type':'text/html'}});\n  throw new Error('unexpected-provider-url');
 };
 try {
   const live=await worker.fetch(request('/api/official-search',{query:'อบจ.พะเยา ข้อบัญญัติงบประมาณ 2569',count:10}),{ASSETS:assets,TAVILY_API_KEY:'test-secret',OFFICIAL_SEARCH_RATE_LIMITER:{limit:async()=>({success:true})}});
