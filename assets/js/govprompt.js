@@ -4,7 +4,7 @@
   const app = window.GovPrompt = window.GovPrompt || {};
   const events = app.events || new EventTarget();
 
-  app.version = '2.0.6';
+  app.version = '2.0.7';
   app.events = events;
   app.on = (type, listener, options) => events.addEventListener(type, listener, options);
   app.off = (type, listener, options) => events.removeEventListener(type, listener, options);
@@ -153,4 +153,9 @@
       // Progressive enhancement: legacy GP012 remains fully usable.
     });
   }
+
+  // Domain rule pack: เงินสะสม + ค่า K. Loaded at runtime without changing UI/categories.
+  import('./core/cash-reserve-k-rulepack-v1.js?v=1.0.0')
+    .then(() => app.emit('rulepack:ready', { id: 'cash-reserve-k-payment', version: '1.0.0' }))
+    .catch(error => app.emit('rulepack:error', { id: 'cash-reserve-k-payment', error: String(error?.message || error) }));
 })();
