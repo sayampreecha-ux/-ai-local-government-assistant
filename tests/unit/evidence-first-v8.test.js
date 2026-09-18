@@ -8,7 +8,7 @@ vm.runInNewContext(readFileSync('assets/js/core/evidence-first-v8.js', 'utf8'), 
 const engine = sandbox.window.GovPromptCore.EVIDENCE_FIRST_V8;
 
 const completeEvidence = {
-  documents: [{ title: 'ระเบียบต้นฉบับ', issuingAgency: 'หน่วยงานเจ้าของเรื่อง', documentDate: '2026-01-01', url: 'https://example.go.th/rule', primary: true }],
+  documents: [{ title: 'ระเบียบต้นฉบับ', issuingAgency: 'หน่วยงานเจ้าของเรื่อง', documentDate: '2026-01-01', url: 'https://example.go.th/rule', primary: true, contentVerified: true }],
   factsComplete: true,
   authorityConfirmed: true,
   versionConfirmed: true,
