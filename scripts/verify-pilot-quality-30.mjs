@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 
-const sandbox = { window: {}, location: { pathname: '/index.html' }, document: { addEventListener() {} } };
+const sandbox = { window: {}, location: { pathname: '/index.html' }, document: { addEventListener() {} }, URL };
 for (const file of [
   'assets/js/core/shared-context.js',
   'assets/js/core/prompt-registry.js',
