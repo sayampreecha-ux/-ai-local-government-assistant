@@ -377,7 +377,8 @@
             issuingAgency: item.issuingAgency || item.sourceName,
             documentDate: item.documentDate,
             url: item.sourceUrl,
-            primary: item.official === true
+            primary: item.official === true,
+            contentVerified: item.contentVerified === true
           })),
           factsComplete: Boolean(text),
           authorityConfirmed: primaryResults.some(item => item.official === true),
