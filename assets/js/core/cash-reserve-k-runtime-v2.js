@@ -9,6 +9,39 @@
   }
   if (root.__cashReserveKRuntimeV2Installed) return;
 
+  // Policy: GovPrompt must not perform live web/official-source searches itself.
+  // The selected external AI provider is responsible for live retrieval.
+  const delegatedResult = (query, channel = 'external-ai') => Object.freeze({
+    status: 'delegated-to-external-ai',
+    searchDelegation: 'external-ai-only',
+    query: String(query ?? ''),
+    channel,
+    executedInternally: false,
+    message: 'โปรดให้ AI ภายนอกที่ผู้ใช้เลือกค้นสดจากแหล่งทางการ แล้วนำหลักฐานกลับมาให้ GovPrompt ตรวจสอบ'
+  });
+
+  app.searchPolicy = Object.freeze({
+    mode: 'external-ai-only',
+    disableInternalLiveSearch: true,
+    delegatedResult,
+    version: '1.0.0'
+  });
+
+  // Guard known connector-style search methods if they are already exposed.
+  const guardedObjects = [root, app, app.officialSearchConnector, app.officialSourceConnector, app.searchConnector].filter(Boolean);
+  const guardedNames = ['search', 'searchOfficial', 'searchWeb', 'liveSearch', 'officialSearch'];
+  guardedObjects.forEach(target => {
+    guardedNames.forEach(name => {
+      if (typeof target[name] !== 'function' || target[`__externalAiOnly_${name}`]) return;
+      const original = target[name];
+      target[name] = function externalAiOnlySearchGuard(query) {
+        return Promise.resolve(delegatedResult(query));
+      };
+      target[`__externalAiOnly_${name}`] = true;
+      target[`__original_${name}`] = original;
+    });
+  });
+
   const rulepack = app.cashReserveKRulePack;
   const isRelevant = value => rulepack?.detect?.(String(value ?? '')).relevant === true
     || /(เงินสะสม|ค่า\s*K|ค่าชดเชยสัญญา|สัญญาแบบปรับราคาได้|ว\s*1095|ข้อ\s*97\s*\(\s*1\s*\))/i.test(String(value ?? ''));
@@ -20,7 +53,7 @@
     '2) ตรวจต้นฉบับหนังสือ มท 0808.2/1095 ลงวันที่ 28 พฤษภาคม 2564 และขอบเขตประเภท (13) โดยห้ามถือภาพหน้าจอหรือคำตอบหารือแทนต้นฉบับ',
     '3) ตรวจสัญญาแบบปรับราคาได้ สูตร ดัชนี งวดงาน วันที่เกิดสิทธิ เอกสารคำนวณ การตรวจสอบ และการอนุมัติค่า K',
     '4) วิเคราะห์เรื่องการขอยกเว้น/ไม่ขอยกเว้นแยกต่างหาก ต้องระบุฐานอำนาจ เงื่อนไข และข้อเท็จจริงที่ทำให้เข้าเกณฑ์ ห้ามสรุปอัตโนมัติว่าทุกกรณีไม่ต้องขอ',
-    '5) ค้นแหล่งทางการก่อนสรุป: ระเบียบฉบับปัจจุบัน หนังสือกรมส่งเสริมฯ และเอกสารราชการปฐมภูมิที่เกี่ยวข้อง พร้อมตรวจวันมีผล การแก้ไข และบทเฉพาะกาล',
+    '5) ให้ AI ภายนอกที่ผู้ใช้เลือกค้นแหล่งทางการก่อนสรุป; GovPrompt ห้ามค้นสดเอง และทำหน้าที่ตรวจหลักฐาน/เงื่อนไข/ความขัดแย้ง',
     '6) หากไม่มีต้นฉบับหรือหลักฐานสำคัญไม่ครบ ให้เปิด Decision Lock และตอบเป็นคำวิเคราะห์เบื้องต้นแบบมีเงื่อนไข พร้อมรายการหลักฐานที่ต้องเพิ่ม',
     '7) ผลลัพธ์ต้องมี: ข้อเท็จจริงที่ยืนยัน/ยังไม่ยืนยัน, ฐานอำนาจ, ตารางตรวจ Gate, ผลการตรวจค่า K, วิเคราะห์ข้อยกเว้น, ความเสี่ยง, แนวทางปฏิบัติ และสถานะสุดท้าย',
     'ห้ามกำหนดสูตร อัตรา ดัชนี หรือเงื่อนไขค่า K แบบตายตัวจากความจำหรือจากกรณีตัวอย่าง'
@@ -37,14 +70,16 @@
       prompt,
       cashReserveKControl: Object.freeze({
         id: 'cash-reserve-k-payment',
-        version: '2.0.0',
+        version: '2.1.0',
         decisionLockDefault: true,
         officialSourceFirst: true,
+        searchDelegation: 'external-ai-only',
+        internalLiveSearchDisabled: true,
         requiredGates: ['classification', 'authority', 'k-entitlement', 'waiver-exemption', 'evidence']
       })
     });
   };
 
   root.__cashReserveKRuntimeV2Installed = true;
-  app.emit?.('cash-k:integration-ready', { version: '2.0.0' });
+  app.emit?.('cash-k:integration-ready', { version: '2.1.0', searchDelegation: 'external-ai-only' });
 })();
