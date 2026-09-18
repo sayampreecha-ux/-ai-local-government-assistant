@@ -265,6 +265,78 @@ function normalizeResult(item) {
   };
 }
 
+function stripHtmlToEvidence(html, max = 12000) {
+  return String(html || '')
+    .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')
+    .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')
+    .replace(/<noscript[\\s\\S]*?<\\/noscript>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/\\s+/g, ' ')
+    .trim()
+    .slice(0, max);
+}
+
+async function verifyOfficialDocument(url) {
+  let parsed;
+  try { parsed = new URL(url); } catch { return { contentVerified: false, status: 'invalid-url' }; }
+  if (parsed.protocol !== 'https:' || !isOfficialHost(parsed.hostname)) {
+    return { contentVerified: false, status: 'untrusted-host' };
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(parsed.toString(), {
+      method: 'GET',
+      redirect: 'follow',
+      signal: controller.signal,
+      headers: { accept: 'text/html,application/xhtml+xml,application/pdf;q=0.9,*/*;q=0.5' }
+    });
+    const finalUrl = new URL(response.url || parsed.toString());
+    if (!response.ok || finalUrl.protocol !== 'https:' || !isOfficialHost(finalUrl.hostname)) {
+      return { contentVerified: false, status: 'source-fetch-failed', httpStatus: response.status };
+    }
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('text/html') && !contentType.includes('application/xhtml+xml')) {
+      return { contentVerified: false, status: 'non-html-document', httpStatus: response.status, finalUrl: finalUrl.toString() };
+    }
+    const html = await response.text();
+    const evidenceText = stripHtmlToEvidence(html);
+    if (evidenceText.length < 80) {
+      return { contentVerified: false, status: 'insufficient-content', httpStatus: response.status, finalUrl: finalUrl.toString() };
+    }
+    return {
+      contentVerified: true,
+      status: 'verified-source-content',
+      httpStatus: response.status,
+      finalUrl: finalUrl.toString(),
+      evidenceText
+    };
+  } catch (error) {
+    return { contentVerified: false, status: error?.name === 'AbortError' ? 'source-timeout' : 'source-fetch-error' };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function enrichOfficialResults(results) {
+  return Promise.all(results.map(async item => {
+    const evidence = await verifyOfficialDocument(item.url);
+    return {
+      ...item,
+      sourceUrl: evidence.finalUrl || item.url,
+      contentVerified: evidence.contentVerified === true,
+      primary: item.sourceTier === 'primary',
+      evidenceText: evidence.evidenceText || '',
+      verificationStatus: evidence.status,
+      verificationHttpStatus: evidence.httpStatus ?? null
+    };
+  }));
+}
+
 async function searchTavily(env, payload) {
   if (!env.TAVILY_API_KEY) {
     return { ok: false, status: 503, error: 'SEARCH_PROVIDER_NOT_CONFIGURED' };
@@ -298,7 +370,8 @@ async function searchTavily(env, payload) {
 
   const data = await response.json();
   const results = (Array.isArray(data?.results) ? data.results : []).map(normalizeResult).filter(Boolean);
-  return { ok: true, results, provider: 'tavily' };
+  const enrichedResults = await enrichOfficialResults(results);
+  return { ok: true, results: enrichedResults, provider: 'tavily' };
 }
 
 async function fetchAsset(request, env, url) {
