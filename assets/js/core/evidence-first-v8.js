@@ -79,8 +79,9 @@
   }
 
   function formatDecisionStatus(assessment) {
-    if (!assessment || assessment.decisionLock === 'ON') return '🔎 หลักฐานยังไม่พอที่จะฟันธง';
+    if (!assessment) return '🔎 หลักฐานยังไม่พอที่จะฟันธง';
     if (assessment.qualityStatus === 'CONFLICT') return '⚠️ พบความขัดแย้ง ต้องตรวจเพิ่ม';
+    if (assessment.decisionLock === 'ON') return '🔎 หลักฐานยังไม่พอที่จะฟันธง';
     if (assessment.qualityStatus === 'VERIFIED') return '✅ ผ่านการตรวจหลักฐานตามข้อมูลที่มี';
     return '🔎 ต้องตรวจเพิ่ม';
   }
