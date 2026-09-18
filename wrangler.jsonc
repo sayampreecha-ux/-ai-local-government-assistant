@@ -6,12 +6,6 @@
   "ai": {
     "binding": "AI"
   },
-  "assets": {
-    "directory": "./dist",
-    "binding": "ASSETS",
-    "html_handling": "none",
-    "not_found_handling": "404-page"
-  },
   "secrets": {
     "required": [
       "TAVILY_API_KEY",
