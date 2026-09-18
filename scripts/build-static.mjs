@@ -70,13 +70,12 @@ if (!distIndex.includes(hotfixScript)) {
   distIndex = distIndex.replace(hybridScript, `${hybridScript}${hotfixScript}`);
 }
 
+const officialSearchScript = '<script src="assets/js/core/official-search-connector.js?v=2.4.2" defer></script>';
 const evidenceFirstV8Script = '<script src="assets/js/core/evidence-first-v8.js?v=8.0.0" defer></script>';
 if (!distIndex.includes(evidenceFirstV8Script)) {
   if (!distIndex.includes(officialSearchScript)) throw new Error("Official search connector script marker not found for Evidence-First v8 injection");
   distIndex = distIndex.replace(officialSearchScript, `${officialSearchScript}${evidenceFirstV8Script}`);
 }
-
-const officialSearchScript = '<script src="assets/js/core/official-search-connector.js?v=2.4.2" defer></script>';
 const outcomeSearchScript = '<script src="assets/js/core/outcome-first-search-policy.js?v=1.0.0" defer></script>';
 if (!distIndex.includes(outcomeSearchScript)) {
   if (!distIndex.includes(officialSearchScript)) throw new Error("Official search connector script marker not found in dist/index.html");
