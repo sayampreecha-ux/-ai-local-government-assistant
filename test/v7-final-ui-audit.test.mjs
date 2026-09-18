@@ -30,7 +30,8 @@ test('compact home keeps the composer in document flow and the catalog responsiv
   assert.match(homeCss, /html\.result-route\.result-intake \.composer-region\{[^}]*display:block!important/s);
 });
 
-test('home delegates fresh public-source retrieval to the user AI instead of consuming live search automatically', () => {
-  assert.match(homeJs, /mode: 'delegated-user-ai'/);
-  assert.match(homeJs, /GovPrompt ไม่ค้นเว็บสดอัตโนมัติ/);
+test('home routes decision/legal requests through v8 evidence-first retrieval and decision lock', () => {
+  assert.match(homeJs, /officialSearchConnector\.search/);
+  assert.match(homeJs, /v8Assessment/);
+  assert.match(homeJs, /Decision Lock ON/);
 });
