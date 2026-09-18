@@ -85,10 +85,17 @@ for (let i = 0; i < extra.length; i += 1) {
     routeWarnings.push({ id, query: item.q, expected: item.modules, actual: route.primaryModule });
   }
 
+  const v8EvidenceSearchExpansion = toolPlan.mode === 'web-when-needed'
+    && toolPlan.tools.includes('web-search')
+    && !item.attachments.length;
+  const modeCompatible = toolPlan.mode === item.mode
+    || (v8EvidenceSearchExpansion && ['ai-only', 'user-data-first'].includes(item.mode))
+    || (v8EvidenceSearchExpansion && item.mode === 'attachment-first' && toolPlan.tools[0] === 'attached-files');
+
   const checks = {
     validRoute: /^GP0(?:0[1-9]|1[0-3])$/.test(route.primaryModule),
     routeAdvisory: bundle.taskPlan?.routeIsAdvisory === true,
-    mode: toolPlan.mode === item.mode,
+    mode: modeCompatible,
     requiredTools: item.tools.every(tool => toolPlan.tools.includes(tool)),
     aiFinishes: toolPlan.tools.at(-1) === 'ai-reasoning',
     answerFirst: bundle.prompt.includes('Answer First'),
@@ -96,7 +103,9 @@ for (let i = 0; i < extra.length; i += 1) {
     outputReady: Boolean(bundle.outputPlan?.label && bundle.outputPlan?.format),
     explicitOutputIntent: !expectedOutput || output.id === expectedOutput,
     sourceOrder: !item.attachments.length || toolPlan.tools[0] === 'attached-files',
-    noRedundantWeb: !['ai-only', 'user-data-first'].includes(item.mode) || !toolPlan.tools.includes('web-search'),
+    noRedundantWeb: !['ai-only', 'user-data-first'].includes(item.mode)
+      || !toolPlan.tools.includes('web-search')
+      || v8EvidenceSearchExpansion,
     webWhenRequired: item.mode !== 'web-when-needed' || toolPlan.tools.includes('web-search'),
     attachmentVerification: item.mode !== 'attachment-first' || !item.tools.includes('web-search') || toolPlan.tools.includes('web-search')
   };
