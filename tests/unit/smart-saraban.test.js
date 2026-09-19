@@ -27,11 +27,15 @@ test('raises authority check for elevated administrative content', () => {
   const result = classifySarabanRisk(createSarabanContext({ subject: 'ขออนุมัติงบประมาณ' }));
   assert.equal(result.level, 'elevated');
   assert.equal(result.authorityCheckRequired, true);
+  assert.equal(result.liveSearchRequired, true);
 });
 
-test('prompt explicitly prohibits invented official facts', () => {
-  const prompt = buildSarabanPrompt(createSarabanContext({ subject: 'รายงาน', purpose: 'เพื่อทราบ', facts: 'ข้อมูลจากหน่วยงาน' }));
-  assert.match(prompt, /ห้ามสมมติข้อเท็จจริง/u);
+test('prompt explicitly requires live official-source search for elevated tasks', () => {
+  const prompt = buildSarabanPrompt(createSarabanContext({ subject: 'ขออนุมัติจัดซื้อวัสดุสำนักงาน', purpose: 'เพื่อพิจารณา', facts: 'มีความจำเป็นต้องจัดซื้อ' }));
+  assert.match(prompt, /ใช้ Web Search ของแพลตฟอร์มนี้ทันที/u);
+  assert.match(prompt, /เปิดอ่านเอกสารต้นฉบับจริง/u);
+  assert.match(prompt, /Rule → Case → Later Rule → Conflict Check → Applicable Rule → Answer/u);
+  assert.match(prompt, /ห้ามอ้างว่าได้ค้นสดแล้ว/u);
   assert.match(prompt, /ผลลัพธ์ที่ต้องส่งกลับ/u);
 });
 
