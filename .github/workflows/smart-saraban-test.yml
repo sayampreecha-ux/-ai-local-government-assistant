@@ -1,0 +1,23 @@
+name: Smart Saraban MVP Test
+
+on:
+  push:
+    branches: [main, feature/gp-smart-saraban-mvp]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test-smart-saraban:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run focused tests
+        run: node --test tests/unit/smart-saraban.test.js

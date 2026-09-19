@@ -1,0 +1,44 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  createSarabanContext,
+  inspectSarabanInput,
+  classifySarabanRisk,
+  buildSarabanPrompt,
+  runSarabanQualityGate
+} from '../../assets/js/features/smart-saraban.js';
+
+test('creates a normalized Saraban context without mutating input arrays', () => {
+  const attachments = ['doc-1'];
+  const context = createSarabanContext({ subject: 'รายงานผล', attachments });
+  assert.equal(context.taskId, 'GP-SB001');
+  assert.deepEqual(context.attachments, ['doc-1']);
+  assert.notEqual(context.attachments, attachments);
+});
+
+test('detects incomplete input and preserves missing fields', () => {
+  const result = inspectSarabanInput(createSarabanContext({ subject: 'เรื่อง', purpose: 'เพื่อทราบ', facts: 'ข้อเท็จจริง' }));
+  assert.equal(result.status, 'incomplete');
+  assert.ok(result.missingFields.includes('owningUnit'));
+  assert.equal(result.canDraft, true);
+});
+
+test('raises authority check for elevated administrative content', () => {
+  const result = classifySarabanRisk(createSarabanContext({ subject: 'ขออนุมัติงบประมาณ' }));
+  assert.equal(result.level, 'elevated');
+  assert.equal(result.authorityCheckRequired, true);
+});
+
+test('prompt explicitly prohibits invented official facts', () => {
+  const prompt = buildSarabanPrompt(createSarabanContext({ subject: 'รายงาน', purpose: 'เพื่อทราบ', facts: 'ข้อมูลจากหน่วยงาน' }));
+  assert.match(prompt, /ห้ามสมมติข้อเท็จจริง/u);
+  assert.match(prompt, /ผลลัพธ์ที่ต้องส่งกลับ/u);
+});
+
+test('quality gate requires human review and locks elevated decisions', () => {
+  const context = createSarabanContext({ subject: 'ขออนุมัติจัดซื้อ', purpose: 'เพื่อพิจารณา', facts: 'ข้อเท็จจริง' });
+  const result = runSarabanQualityGate(context, 'ร่างบันทึกข้อความ');
+  assert.equal(result.humanReviewRequired, true);
+  assert.equal(result.decisionLock, true);
+  assert.equal(result.status, 'yellow');
+});
