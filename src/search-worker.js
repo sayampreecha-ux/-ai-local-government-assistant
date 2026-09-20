@@ -4,107 +4,33 @@ const ADMIN_SESSION_TTL_SECONDS = 15 * 60;
 const MAX_REQUEST_BYTES = 16 * 1024;
 const SECURITY_POLICY_VERSION = 'user-ai-search-only-1.0';
 const SENSITIVE_QUERY_BLOCKED = 'SENSITIVE_QUERY_BLOCKED';
+const ORIGIN_NOT_ALLOWED = 'ORIGIN_NOT_ALLOWED';
 const SEARCH_REQUEST_POLICY = Object.freeze({ include_raw_content: false, include_answer: false });
 const JSON_HEADERS = Object.freeze({
   'content-type': 'application/json; charset=utf-8',
-  'cache-control': 'no-store',
-  pragma: 'no-cache',
-  'x-content-type-options': 'nosniff',
-  'x-frame-options': 'DENY',
-  'referrer-policy': 'no-referrer',
+  'cache-control': 'no-store', pragma: 'no-cache', 'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY', 'referrer-policy': 'no-referrer',
   'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
   'permissions-policy': 'camera=(), microphone=(), geolocation=()',
   'x-govprompt-security': SECURITY_POLICY_VERSION,
   'access-control-allow-origin': FRONTEND_ORIGIN,
   'access-control-allow-methods': 'POST, OPTIONS',
   'access-control-allow-headers': 'authorization, content-type',
-  'access-control-expose-headers': 'x-govprompt-security',
-  'access-control-max-age': '600',
-  vary: 'Origin'
+  'access-control-expose-headers': 'x-govprompt-security', 'access-control-max-age': '600', vary: 'Origin'
 });
 const encoder = new TextEncoder();
-
-function json(body, status = 200, extraHeaders = {}) {
-  return new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...extraHeaders } });
-}
-function cleanText(value, max = 500) {
-  return String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
-}
+function json(body, status = 200, extraHeaders = {}) { return new Response(JSON.stringify(body), { status, headers: { ...JSON_HEADERS, ...extraHeaders } }); }
+function cleanText(value, max = 500) { return String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max); }
 function bytesToHex(bytes) { return [...bytes].map(value => value.toString(16).padStart(2, '0')).join(''); }
 function bytesToBase64Url(bytes) { let binary = ''; for (const byte of bytes) binary += String.fromCharCode(byte); return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/u, ''); }
-function constantTimeEqual(left, right) {
-  const a = encoder.encode(String(left)); const b = encoder.encode(String(right));
-  let difference = a.length ^ b.length; const length = Math.max(a.length, b.length);
-  for (let index = 0; index < length; index += 1) difference |= (a[index % a.length] ?? 0) ^ (b[index % b.length] ?? 0);
-  return difference === 0;
-}
-async function hmac(secret, value) {
-  const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  return new Uint8Array(await crypto.subtle.sign('HMAC', key, encoder.encode(value)));
-}
+function constantTimeEqual(left, right) { const a = encoder.encode(String(left)); const b = encoder.encode(String(right)); let difference = a.length ^ b.length; const length = Math.max(a.length, b.length); for (let index = 0; index < length; index += 1) difference |= (a[index % a.length] ?? 0) ^ (b[index % b.length] ?? 0); return difference === 0; }
+async function hmac(secret, value) { const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']); return new Uint8Array(await crypto.subtle.sign('HMAC', key, encoder.encode(value))); }
 async function sha256(value) { return bytesToHex(new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(value)))); }
 function accessSecretsConfigured(env) { return Boolean(env.ACCESS_CODE_SECRET && env.ACCESS_ADMIN_PASSWORD_HASH && env.ACCESS_ADMIN_SESSION_SECRET); }
-async function validateAccessCode(code, env) {
-  const match = ACCESS_CODE_PATTERN.exec(cleanText(code, 32).toUpperCase());
-  if (!match || !env.ACCESS_CODE_SECRET) return false;
-  const expected = bytesToHex(await hmac(env.ACCESS_CODE_SECRET, match[1])).slice(0, 8).toUpperCase();
-  return constantTimeEqual(expected, match[2]);
-}
-async function createAdminSession(env) {
-  const payload = bytesToBase64Url(encoder.encode(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + ADMIN_SESSION_TTL_SECONDS, nonce: crypto.randomUUID() })));
-  const signature = bytesToBase64Url(await hmac(env.ACCESS_ADMIN_SESSION_SECRET, payload));
-  return `${payload}.${signature}`;
-}
-async function validateAdminSession(request, env) {
-  const authorization = request.headers.get('authorization') || ''; const token = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
-  const [payload, suppliedSignature, extra] = token.split('.');
-  if (!payload || !suppliedSignature || extra || !env.ACCESS_ADMIN_SESSION_SECRET) return false;
-  const expectedSignature = bytesToBase64Url(await hmac(env.ACCESS_ADMIN_SESSION_SECRET, payload));
-  if (!constantTimeEqual(expectedSignature, suppliedSignature)) return false;
-  try {
-    const base64 = payload.replaceAll('-', '+').replaceAll('_', '/').padEnd(Math.ceil(payload.length / 4) * 4, '=');
-    const decoded = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(base64), character => character.charCodeAt(0))));
-    return Number.isSafeInteger(decoded.exp) && decoded.exp > Math.floor(Date.now() / 1000);
-  } catch { return false; }
-}
-async function readJson(request, maxBytes = 2048) {
-  const length = Number(request.headers.get('content-length') || 0); if (length > maxBytes) throw new Error('PAYLOAD_TOO_LARGE');
-  const raw = await request.text(); if (encoder.encode(raw).byteLength > maxBytes) throw new Error('PAYLOAD_TOO_LARGE');
-  return JSON.parse(raw);
-}
-async function handleAccessApi(request, env, url) {
-  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS });
-  if (request.method !== 'POST') return json({ ok: false, error: 'METHOD_NOT_ALLOWED' }, 405);
-  if (!accessSecretsConfigured(env)) return json({ ok: false, error: 'ACCESS_SERVICE_NOT_CONFIGURED' }, 503);
-  let body;
-  try { body = await readJson(request); } catch (error) { return json({ ok: false, error: error.message === 'PAYLOAD_TOO_LARGE' ? error.message : 'INVALID_JSON' }, error.message === 'PAYLOAD_TOO_LARGE' ? 413 : 400); }
-  if (url.pathname === '/api/access/validate') return (await validateAccessCode(body?.code, env)) ? json({ ok: true }) : json({ ok: false, error: 'INVALID_ACCESS_CODE' }, 401);
-  if (url.pathname === '/api/access/admin/login') {
-    const suppliedHash = await sha256(cleanText(body?.password, 256));
-    if (!constantTimeEqual(suppliedHash, env.ACCESS_ADMIN_PASSWORD_HASH)) return json({ ok: false, error: 'INVALID_ADMIN_CREDENTIALS' }, 401);
-    return json({ ok: true, token: await createAdminSession(env), expiresIn: ADMIN_SESSION_TTL_SECONDS });
-  }
-  if (url.pathname === '/api/access/admin/issue') {
-    if (!(await validateAdminSession(request, env))) return json({ ok: false, error: 'UNAUTHORIZED' }, 401);
-    const serial = cleanText(body?.serial, 4); if (!/^\d{4}$/.test(serial)) return json({ ok: false, error: 'INVALID_SERIAL' }, 400);
-    const signature = bytesToHex(await hmac(env.ACCESS_CODE_SECRET, serial)).slice(0, 8).toUpperCase();
-    return json({ ok: true, code: `GP69-${serial}-${signature}` });
-  }
-  return json({ ok: false, error: 'NOT_FOUND' }, 404);
-}
-async function fetchAsset(request, env, url) {
-  if (!env?.ASSETS || typeof env.ASSETS.fetch !== 'function') return new Response('Not Found', { status: 404 });
-  if (url.pathname === '/') { const indexUrl = new URL(request.url); indexUrl.pathname = '/index.html'; return env.ASSETS.fetch(new Request(indexUrl, request)); }
-  return env.ASSETS.fetch(request);
-}
-
-export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
-    if (url.pathname.startsWith('/api/access/')) return handleAccessApi(request, env, url);
-    if (url.pathname === '/api/official-search') {
-      return json({ ok: false, error: SENSITIVE_QUERY_BLOCKED, policy: 'user-ai-search-only', search: SEARCH_REQUEST_POLICY, message: 'GovPrompt does not perform live searches. Use the prepared search plan with the user-selected AI platform.', requestId: request.headers.get('cf-ray') || crypto.randomUUID() }, 410);
-    }
-    return fetchAsset(request, env, url);
-  }
-};
+async function validateAccessCode(code, env) { const match = ACCESS_CODE_PATTERN.exec(cleanText(code, 32).toUpperCase()); if (!match || !env.ACCESS_CODE_SECRET) return false; const expected = bytesToHex(await hmac(env.ACCESS_CODE_SECRET, match[1])).slice(0, 8).toUpperCase(); return constantTimeEqual(expected, match[2]); }
+async function createAdminSession(env) { const payload = bytesToBase64Url(encoder.encode(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + ADMIN_SESSION_TTL_SECONDS, nonce: crypto.randomUUID() }))); const signature = bytesToBase64Url(await hmac(env.ACCESS_ADMIN_SESSION_SECRET, payload)); return `${payload}.${signature}`; }
+async function validateAdminSession(request, env) { const authorization = request.headers.get('authorization') || ''; const token = authorization.startsWith('Bearer ') ? authorization.slice(7) : ''; const [payload, suppliedSignature, extra] = token.split('.'); if (!payload || !suppliedSignature || extra || !env.ACCESS_ADMIN_SESSION_SECRET) return false; const expectedSignature = bytesToBase64Url(await hmac(env.ACCESS_ADMIN_SESSION_SECRET, payload)); if (!constantTimeEqual(expectedSignature, suppliedSignature)) return false; try { const base64 = payload.replaceAll('-', '+').replaceAll('_', '/').padEnd(Math.ceil(payload.length / 4) * 4, '='); const decoded = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(base64), character => character.charCodeAt(0)))); return Number.isSafeInteger(decoded.exp) && decoded.exp > Math.floor(Date.now() / 1000); } catch { return false; } }
+async function readJson(request, maxBytes = 2048) { const length = Number(request.headers.get('content-length') || 0); if (length > maxBytes) throw new Error('PAYLOAD_TOO_LARGE'); const raw = await request.text(); if (encoder.encode(raw).byteLength > maxBytes) throw new Error('PAYLOAD_TOO_LARGE'); return JSON.parse(raw); }
+async function handleAccessApi(request, env, url) { if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: JSON_HEADERS }); if (request.method !== 'POST') return json({ ok: false, error: 'METHOD_NOT_ALLOWED' }, 405); if (!accessSecretsConfigured(env)) return json({ ok: false, error: 'ACCESS_SERVICE_NOT_CONFIGURED' }, 503); let body; try { body = await readJson(request); } catch (error) { return json({ ok: false, error: error.message === 'PAYLOAD_TOO_LARGE' ? error.message : 'INVALID_JSON' }, error.message === 'PAYLOAD_TOO_LARGE' ? 413 : 400); } if (url.pathname === '/api/access/validate') return (await validateAccessCode(body?.code, env)) ? json({ ok: true }) : json({ ok: false, error: 'INVALID_ACCESS_CODE' }, 401); if (url.pathname === '/api/access/admin/login') { const suppliedHash = await sha256(cleanText(body?.password, 256)); if (!constantTimeEqual(suppliedHash, env.ACCESS_ADMIN_PASSWORD_HASH)) return json({ ok: false, error: 'INVALID_ADMIN_CREDENTIALS' }, 401); return json({ ok: true, token: await createAdminSession(env), expiresIn: ADMIN_SESSION_TTL_SECONDS }); } if (url.pathname === '/api/access/admin/issue') { if (!(await validateAdminSession(request, env))) return json({ ok: false, error: 'UNAUTHORIZED' }, 401); const serial = cleanText(body?.serial, 4); if (!/^\d{4}$/.test(serial)) return json({ ok: false, error: 'INVALID_SERIAL' }, 400); const signature = bytesToHex(await hmac(env.ACCESS_CODE_SECRET, serial)).slice(0, 8).toUpperCase(); return json({ ok: true, code: `GP69-${serial}-${signature}` }); } return json({ ok: false, error: 'NOT_FOUND' }, 404); }
+async function fetchAsset(request, env, url) { if (!env?.ASSETS || typeof env.ASSETS.fetch !== 'function') return new Response('Not Found', { status: 404 }); if (url.pathname === '/') { const indexUrl = new URL(request.url); indexUrl.pathname = '/index.html'; return env.ASSETS.fetch(new Request(indexUrl, request)); } return env.ASSETS.fetch(request); }
+export default { async fetch(request, env) { const url = new URL(request.url); if (url.pathname.startsWith('/api/access/')) return handleAccessApi(request, env, url); if (url.pathname === '/api/official-search') return json({ ok: false, error: SENSITIVE_QUERY_BLOCKED, policy: 'user-ai-search-only', search: SEARCH_REQUEST_POLICY, originError: ORIGIN_NOT_ALLOWED, message: 'GovPrompt does not perform live searches. Use the prepared search plan with the user-selected AI platform.', requestId: request.headers.get('cf-ray') || crypto.randomUUID() }, 410); return fetchAsset(request, env, url); } };
