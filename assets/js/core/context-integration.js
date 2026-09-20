@@ -75,6 +75,11 @@
     }
   }
 
+  function loadProcurementFeature() {
+    if (typeof document !== 'object' || !document.createElement) return;
+    appendScript('serviceContractRoutingOverridesScript', 'assets/js/core/service-contract-routing-overrides.js?v=1.0.0');
+  }
+
   window.GovPromptCore.FIELD_MAP = FIELD_MAP;
   window.GovPromptCore.collectAssistantContext = collectAssistantContext;
   window.GovPromptCore.refreshAssistantContext = refreshAssistantContext;
@@ -83,8 +88,8 @@
 
   if (typeof document === 'object') {
     const pageModuleId = window.GovPromptCore.detectModuleId();
-    // GP008 tools are user-facing UI and must not depend on successful context routing.
     loadModuleFeature(pageModuleId);
+    loadProcurementFeature();
     try {
       refreshAssistantContext();
     } catch (error) {
