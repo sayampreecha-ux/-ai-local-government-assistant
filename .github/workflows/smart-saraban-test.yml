@@ -19,5 +19,5 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Run focused tests
-        run: node --test tests/unit/smart-saraban.test.js tests/unit/approval-workflow.test.js
+      - name: Run focused workflow tests
+        run: node --test tests/unit/smart-saraban.test.js tests/unit/approval-workflow.test.js tests/unit/smart-saraban-approval-bridge.test.js
