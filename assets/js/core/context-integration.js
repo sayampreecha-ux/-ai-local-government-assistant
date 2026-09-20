@@ -78,6 +78,7 @@
   function loadProcurementFeature() {
     if (typeof document !== 'object' || !document.createElement) return;
     appendScript('serviceContractRoutingOverridesScript', 'assets/js/core/service-contract-routing-overrides.js?v=1.0.0');
+    appendScript('universalTorEngineScript', 'assets/js/core/universal-tor-engine-v1.js?v=1.0.0');
   }
 
   window.GovPromptCore.FIELD_MAP = FIELD_MAP;
