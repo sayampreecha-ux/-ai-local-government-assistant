@@ -23,19 +23,22 @@ test('detects incomplete input and preserves missing fields', () => {
   assert.equal(result.canDraft, true);
 });
 
-test('raises authority check for elevated administrative content', () => {
+test('raises authority check for elevated administrative content without enabling GP live search', () => {
   const result = classifySarabanRisk(createSarabanContext({ subject: 'ขออนุมัติงบประมาณ' }));
   assert.equal(result.level, 'elevated');
   assert.equal(result.authorityCheckRequired, true);
-  assert.equal(result.liveSearchRequired, true);
+  assert.equal(result.liveSearchRequired, false);
+  assert.equal(result.userAISearchRecommended, true);
 });
 
-test('prompt explicitly requires live official-source search for elevated tasks', () => {
+test('prompt routes all live official-source search to the user AI only', () => {
   const prompt = buildSarabanPrompt(createSarabanContext({ subject: 'ขออนุมัติจัดซื้อวัสดุสำนักงาน', purpose: 'เพื่อพิจารณา', facts: 'มีความจำเป็นต้องจัดซื้อ' }));
-  assert.match(prompt, /ใช้ Web Search ของแพลตฟอร์มนี้ทันที/u);
+  assert.match(prompt, /GP นี้ไม่ค้นเว็บสด/u);
+  assert.match(prompt, /AI ฝั่งผู้ใช้เป็นผู้ค้นสดทั้งหมด/u);
   assert.match(prompt, /เปิดอ่านเอกสารต้นฉบับจริง/u);
   assert.match(prompt, /Rule → Case → Later Rule → Conflict Check → Applicable Rule → Answer/u);
-  assert.match(prompt, /ห้ามอ้างว่าได้ค้นสดแล้ว/u);
+  assert.match(prompt, /ห้ามอ้างว่า GP หรือผู้ช่วยได้ค้นสดแล้ว/u);
+  assert.doesNotMatch(prompt, /ให้ใช้ Web Search ของแพลตฟอร์มนี้ทันที/u);
   assert.match(prompt, /ผลลัพธ์ที่ต้องส่งกลับ/u);
 });
 
