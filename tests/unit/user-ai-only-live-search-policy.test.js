@@ -31,7 +31,7 @@ function findViolations() {
   const violations = [];
   for (const file of collectFiles(ROOT)) {
     const relative = path.relative(ROOT, file);
-    if (relative === SELF) continue;
+    if (relative === SELF || relative.startsWith('tests/')) continue;
     const content = fs.readFileSync(file, 'utf8');
     for (const pattern of patterns) {
       if (pattern.regex.test(content)) {
@@ -43,7 +43,7 @@ function findViolations() {
   return violations;
 }
 
-test('repository-wide policy: live search is delegated to the user-selected AI', () => {
+test('repository-wide runtime policy: live search is delegated to the user-selected AI', () => {
   const violations = findViolations();
   assert.deepEqual(violations, [], `Live-search policy violations found:\n${violations.join('\n')}`);
 });
