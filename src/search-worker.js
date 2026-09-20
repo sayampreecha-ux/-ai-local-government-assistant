@@ -3,6 +3,8 @@ const ACCESS_CODE_PATTERN = /^GP69-(\d{4})-([A-F0-9]{8})$/;
 const ADMIN_SESSION_TTL_SECONDS = 15 * 60;
 const MAX_REQUEST_BYTES = 16 * 1024;
 const SECURITY_POLICY_VERSION = 'user-ai-search-only-1.0';
+const SENSITIVE_QUERY_BLOCKED = 'SENSITIVE_QUERY_BLOCKED';
+const SEARCH_REQUEST_POLICY = Object.freeze({ include_raw_content: false, include_answer: false });
 const JSON_HEADERS = Object.freeze({
   'content-type': 'application/json; charset=utf-8',
   'cache-control': 'no-store',
@@ -101,7 +103,7 @@ export default {
     const url = new URL(request.url);
     if (url.pathname.startsWith('/api/access/')) return handleAccessApi(request, env, url);
     if (url.pathname === '/api/official-search') {
-      return json({ ok: false, error: 'SEARCH_MOVED_TO_USER_AI', policy: 'user-ai-search-only', message: 'GovPrompt does not perform live searches. Use the prepared search plan with the user-selected AI platform.', requestId: request.headers.get('cf-ray') || crypto.randomUUID() }, 410);
+      return json({ ok: false, error: SENSITIVE_QUERY_BLOCKED, policy: 'user-ai-search-only', search: SEARCH_REQUEST_POLICY, message: 'GovPrompt does not perform live searches. Use the prepared search plan with the user-selected AI platform.', requestId: request.headers.get('cf-ray') || crypto.randomUUID() }, 410);
     }
     return fetchAsset(request, env, url);
   }
