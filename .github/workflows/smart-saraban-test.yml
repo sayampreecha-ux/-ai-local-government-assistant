@@ -9,6 +9,8 @@ on:
 permissions:
   contents: read
 
+timeout-minutes: 5
+
 jobs:
   test-smart-saraban:
     runs-on: ubuntu-latest
