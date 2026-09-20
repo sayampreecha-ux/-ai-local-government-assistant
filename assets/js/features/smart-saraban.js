@@ -4,12 +4,17 @@
  * Additive, dependency-free workflow helpers for GP-SB001.
  * This module does not replace the existing Router, Context Manager,
  * Prompt Registry, Governance Layer, or Quality Gates.
+ *
+ * Search policy:
+ * - GP itself never performs or requires live web search.
+ * - Any live search must be performed by the user's selected AI platform.
+ * - GP only prepares a search instruction and preserves evidence boundaries.
  */
 
 export const SMART_SARABAN_TASK = Object.freeze({
   id: 'GP-SB001',
   name: 'ร่างบันทึกข้อความราชการ',
-  version: '1.1.0'
+  version: '1.2.0'
 });
 
 export const SARABAN_FIELDS = Object.freeze([
@@ -58,9 +63,11 @@ export function classifySarabanRisk(context) {
   return {
     level: authorityCheckRequired ? 'elevated' : 'routine',
     authorityCheckRequired,
-    liveSearchRequired: authorityCheckRequired,
+    // Deliberately false: GP must not execute or require live search.
+    liveSearchRequired: false,
+    userAISearchRecommended: authorityCheckRequired,
     reason: authorityCheckRequired
-      ? 'พบคำหรือบริบทที่อาจเกี่ยวข้องกับอำนาจ กฎหมาย หรือผลกระทบทางราชการ'
+      ? 'พบคำหรือบริบทที่อาจเกี่ยวข้องกับอำนาจ กฎหมาย หรือผลกระทบทางราชการ ต้องให้ AI ฝั่งผู้ใช้ตรวจแหล่งปฐมภูมิเมื่อจำเป็น'
       : 'ไม่พบตัวบ่งชี้ความเสี่ยงสูงจากข้อความที่ให้มา'
   };
 }
@@ -68,23 +75,19 @@ export function classifySarabanRisk(context) {
 export function buildSarabanPrompt(context, { evidence = [], authorityResult = null } = {}) {
   const inspection = inspectSarabanInput(context);
   const risk = classifySarabanRisk(context);
-  const liveAuthorityInstruction = risk.liveSearchRequired
-    ? [
-        'คำสั่งค้นข้อมูลสดสำหรับ AI ฝั่งผู้ใช้: ให้ใช้ Web Search ของแพลตฟอร์มนี้ทันที',
-        '- ค้นจากแหล่งปฐมภูมิและเว็บไซต์ราชการที่ตรวจสอบได้ก่อน เช่น ราชกิจจานุเบกษา กฤษฎีกา กรมบัญชีกลาง กระทรวงมหาดไทย สถ. และหน่วยงานเจ้าของเรื่อง',
-        '- เปิดอ่านเอกสารต้นฉบับจริง ไม่สรุปจากผลค้นหาหรือ Snippet เพียงอย่างเดียว',
-        '- ค้น Rule → Case → Later Rule → Conflict Check → Applicable Rule → Answer',
-        '- ตรวจวันมีผลใช้บังคับ ฉบับแก้ไข การยกเลิก ฉบับใหม่กว่า และบทเฉพาะกาล',
-        '- เทียบวันที่ของข้อเท็จจริงกับวันที่กฎมีผล ห้ามนำกฎต่างช่วงเวลามาปะปนโดยไม่อธิบาย',
-        '- ค้นหลักฐานที่อาจโต้แย้งหรือหักล้างข้อสรุปด้วย ไม่เลือกเฉพาะหลักฐานที่สนับสนุน',
-        '- ระบุชื่อหน่วยงานผู้ออก เลขหนังสือ/เลขที่เอกสาร วันที่ ข้อ/มาตรา และ URL ที่เปิดตรวจได้',
-        '- หากค้นไม่พบหรือยืนยันฉบับที่ใช้บังคับไม่ได้ ให้ระบุว่า “ยังยืนยันหลักฐานที่ใช้บังคับกับกรณีไม่ได้ — ยังไม่ควรฟันธง”',
-        '- ห้ามอ้างว่าได้ค้นสดแล้ว หากยังไม่ได้ใช้ Web Search และเปิดตรวจแหล่งข้อมูลจริง'
-      ]
-    : [
-        'การค้นเว็บสด: พิจารณาค้นเมื่อพบประเด็นกฎหมาย อำนาจ งบประมาณ หรือข้อเท็จจริงที่เปลี่ยนแปลงได้',
-        'หากจำเป็นต้องค้น ให้ใช้ Web Search ของ AI ฝั่งผู้ใช้และอ้างแหล่งต้นฉบับที่เปิดตรวจจริง'
-      ];
+  const userAISearchInstruction = [
+    'นโยบายค้นข้อมูล: GP นี้ไม่ค้นเว็บสดและไม่เรียกใช้ Web Search ภายในระบบ',
+    'หากจำเป็นต้องตรวจสอบกฎหมาย ระเบียบ หนังสือสั่งการ หรือข้อมูลปัจจุบัน ให้ AI ฝั่งผู้ใช้เป็นผู้ค้นสดทั้งหมด',
+    '- ใช้แหล่งปฐมภูมิและเว็บไซต์ราชการที่ตรวจสอบได้ก่อน เช่น ราชกิจจานุเบกษา กฤษฎีกา กรมบัญชีกลาง กระทรวงมหาดไทย สถ. และหน่วยงานเจ้าของเรื่อง',
+    '- เปิดอ่านเอกสารต้นฉบับจริง ไม่สรุปจากผลค้นหาหรือ Snippet เพียงอย่างเดียว',
+    '- ค้น Rule → Case → Later Rule → Conflict Check → Applicable Rule → Answer เมื่อประเด็นนั้นต้องใช้หลักฐานกฎหมาย',
+    '- ตรวจวันมีผลใช้บังคับ ฉบับแก้ไข การยกเลิก ฉบับใหม่กว่า และบทเฉพาะกาล',
+    '- เทียบวันที่ของข้อเท็จจริงกับวันที่กฎมีผล ห้ามนำกฎต่างช่วงเวลามาปะปนโดยไม่อธิบาย',
+    '- ค้นหลักฐานที่อาจโต้แย้งหรือหักล้างข้อสรุปด้วย ไม่เลือกเฉพาะหลักฐานที่สนับสนุน',
+    '- ระบุชื่อหน่วยงานผู้ออก เลขหนังสือ/เลขที่เอกสาร วันที่ ข้อ/มาตรา และ URL ที่เปิดตรวจได้',
+    '- หากค้นไม่พบหรือยืนยันฉบับที่ใช้บังคับไม่ได้ ให้ระบุว่า “ยังยืนยันหลักฐานที่ใช้บังคับกับกรณีไม่ได้ — ยังไม่ควรฟันธง”',
+    '- ห้ามอ้างว่า GP หรือผู้ช่วยได้ค้นสดแล้ว หาก AI ฝั่งผู้ใช้ยังไม่ได้ค้นและเปิดตรวจแหล่งข้อมูลจริง'
+  ];
 
   return [
     'บทบาท: Government AI Copilot สำหรับงานราชการไทย และผู้ช่วยร่างบันทึกข้อความราชการ',
@@ -105,18 +108,19 @@ export function buildSarabanPrompt(context, { evidence = [], authorityResult = n
     '- หากข้อมูลหรือหลักฐานไม่ครบ ให้ระบุช่องว่างและห้ามฟันธงแทนการเดา',
     '- การร่างไม่ใช่การอนุมัติ ลงนาม สั่งจ่าย หรือใช้อำนาจแทนเจ้าหน้าที่',
     '',
-    ...liveAuthorityInstruction,
+    ...userAISearchInstruction,
     '',
     `สถานะข้อมูล: ${inspection.status}`,
     `ความเสี่ยงเบื้องต้น: ${risk.level}`,
     `ต้องตรวจฐานอำนาจ: ${risk.authorityCheckRequired ? 'ใช่' : 'ตามเนื้อหาที่ตรวจพบ'}`,
+    'ผู้ดำเนินการค้นสด: AI ฝั่งผู้ใช้เท่านั้น เมื่อจำเป็นและเมื่อผู้ใช้สั่ง/อนุญาต',
     `หลักฐานที่ให้มา: ${JSON.stringify(evidence)}`,
     `ผลตรวจฐานอำนาจที่มีอยู่: ${JSON.stringify(authorityResult)}`,
     '',
     'รูปแบบผลลัพธ์ที่ต้องส่งกลับ:',
     '1. Answer First: ข้อสรุปสถานะ — ดำเนินการได้ / มีเงื่อนไข / มีความเสี่ยง / ยังฟันธงไม่ได้',
     '2. ข้อเท็จจริงที่รับทราบและข้อเท็จจริงที่ยังขาด',
-    '3. ฐานอำนาจและแหล่งปฐมภูมิที่เปิดตรวจจริง',
+    '3. ฐานอำนาจและแหล่งปฐมภูมิที่เปิดตรวจจริงโดย AI ฝั่งผู้ใช้ (ถ้าจำเป็น)',
     '4. ตารางเทียบเงื่อนไขทีละข้อ: ผ่าน / ไม่ผ่าน / ยังไม่ทราบ',
     '5. ร่างบันทึกข้อความที่ไม่สร้างข้อเท็จจริงขึ้นเอง',
     '6. ความเสี่ยงและเอกสารที่ต้องตรวจเพิ่ม',
@@ -134,7 +138,7 @@ export function runSarabanQualityGate(context, draft = '') {
     { id: 'DQ-04', name: 'วัตถุประสงค์', status: asText(context?.purpose) ? 'pass' : 'fail' },
     { id: 'DQ-05', name: 'ร่างผลลัพธ์', status: text ? 'review' : 'fail' },
     { id: 'DQ-06', name: 'ข้อมูลที่ต้องยืนยัน', status: 'review' },
-    { id: 'DQ-07', name: 'การตรวจแหล่งปฐมภูมิเมื่อมีความเสี่ยงสูง', status: classifySarabanRisk(context).authorityCheckRequired ? 'review' : 'pass' },
+    { id: 'DQ-07', name: 'การตรวจแหล่งปฐมภูมิเมื่อมีความเสี่ยงสูงโดย AI ฝั่งผู้ใช้', status: classifySarabanRisk(context).authorityCheckRequired ? 'review' : 'pass' },
     { id: 'DQ-08', name: 'Human Review', status: 'review' }
   ];
   const hasFail = checks.some((check) => check.status === 'fail');
