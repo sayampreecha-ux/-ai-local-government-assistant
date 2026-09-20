@@ -22,4 +22,4 @@ jobs:
         with:
           node-version: 20
       - name: Run focused workflow tests
-        run: node --test tests/unit/smart-saraban.test.js tests/unit/approval-workflow.test.js tests/unit/smart-saraban-approval-bridge.test.js
+        run: node --test tests/unit/smart-saraban.test.js tests/unit/approval-workflow.test.js tests/unit/smart-saraban-approval-bridge.test.js tests/unit/user-ai-only-live-search-policy.test.js
