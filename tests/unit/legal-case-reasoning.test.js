@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyCase, analyze } from '../../assets/js/core/legal-case-reasoning-v1.js';
+import '../../assets/js/core/legal-case-reasoning-v1.js';
+
+const { classifyCase, analyze } = globalThis.GovPromptLegalCaseReasoning;
 
 test('classifies final inspection plus work-scope amendment as high-risk review', () => {
   const result = classifyCase({ question: 'ตรวจรับงวดสุดท้ายแล้ว ขอแก้ไขปริมาณเนื้องาน' });
