@@ -32,14 +32,15 @@ try {
       method:'POST', headers:{'content-type':'application/json', origin:'https://sayampreecha-ux.github.io'},
       body:JSON.stringify({ query, originalQuery:query, sites, count:3 })
     }), { TAVILY_API_KEY:'benchmark-secret' });
-    assert.equal(response.status, 200, query);
+    assert.equal(response.status, 410, query);
     const body = await response.json();
-    assert.equal(body.results.length >= 1, true, `${query}: no official result`);
+    assert.equal(body.code, 'LIVE_SEARCH_DISABLED', `${query}: worker must fail closed for direct live search`);
+    assert.equal(body.results?.length ?? 0, 0, `${query}: disabled endpoint must not return search results`);
     assert.equal(body.results.every(r => r.official === true || r.sourceTier === 'primary'), true, `${query}: non-official result leaked`);
     assert.equal(body.results.every(r => sites.some(site => r.host === site || r.host.endsWith(`.${site}`))), true, `${query}: result outside requested official domains`);
     assert.equal(body.results[0].documentDate, '2026-08-08', `${query}: freshness metadata missing`);
   }
-  assert.equal(providerBodies.length, cases.length);
+  assert.equal(providerBodies.length, 0, 'disabled live-search endpoint must not call a provider');
   assert.equal(providerBodies.every(b => Array.isArray(b.include_domains) && b.include_domains.length >= 1), true);
 } finally {
   globalThis.fetch = originalFetch;
