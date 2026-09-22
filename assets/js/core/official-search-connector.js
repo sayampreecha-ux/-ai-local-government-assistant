@@ -23,7 +23,7 @@
       originalQuery,
       query: planQuery,
       routedModules: module ? [module] : [],
-      sources: Object.freeze(['ratchakitcha.soc.go.th', 'krisdika.go.th', 'cgd.go.th', 'moi.go.th', 'dla.go.th']),
+      sources: Object.freeze(['ratchakitcha.soc.go.th', 'krisdika.go.th', 'cgd.go.th', 'moi.go.th', 'dla.go.th', 'bb.go.th', 'admincourt.go.th', 'coj.go.th', 'nacc.go.th', 'audit.go.th']),
       userAiOnly: true,
       liveSearchRequired: false,
       execution: 'user-selected-ai'
