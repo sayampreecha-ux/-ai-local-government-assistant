@@ -34,7 +34,9 @@ try {
     }), { TAVILY_API_KEY:'benchmark-secret' });
     assert.equal(response.status, 410, query);
     const body = await response.json();
-    assert.equal(body.code, 'LIVE_SEARCH_DISABLED', `${query}: worker must fail closed for direct live search`);
+    assert.equal(body.ok, false, `${query}: worker must fail closed for direct live search`);
+    assert.equal(body.policy, 'user-ai-search-only', `${query}: worker policy mismatch`);
+    assert.match(body.message, /does not perform live searches/i);
     assert.equal(body.results?.length ?? 0, 0, `${query}: disabled endpoint must not return search results`);
     assert.equal(body.results.every(r => r.official === true || r.sourceTier === 'primary'), true, `${query}: non-official result leaked`);
     assert.equal(body.results.every(r => sites.some(site => r.host === site || r.host.endsWith(`.${site}`))), true, `${query}: result outside requested official domains`);
