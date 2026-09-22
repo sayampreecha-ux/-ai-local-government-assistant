@@ -80,15 +80,16 @@ assert.ok(core.scoreOfficialSearchAnswerFit(relevant, query, goals) > core.score
 const reranked = core.rankOfficialSearchResultsForOutcome([unrelated, relevant], query, goals);
 assert.equal(reranked[0].title, relevant.title);
 
-const live = await core.officialSearchConnector.search(query, { count: 5 });
-assert.equal(live.mode, 'live');
-assert.ok(requests.length >= 1);
-assert.match(requests[0].query, /มาตรฐานกำหนดตำแหน่ง/);
-assert.equal(live.plan.originalQuery, query);
-assert.equal(live.plan.routedModulesAdvisory, true);
-assert.ok(live.evidence.answerFitScore >= 0.45);
-assert.equal(live.evidence.answerFitEligible, true);
-assert.ok(live.results[0].answerFit > live.results[1].answerFit);
+const planned = await core.officialSearchConnector.search(query, { count: 5 });
+assert.equal(planned.mode, 'plan-only');
+assert.equal(requests.length, 0);
+assert.equal(planned.plan.originalQuery, query);
+assert.equal(planned.plan.routedModulesAdvisory, true);
+assert.match(planned.plan.outcomeQuery, /มาตรฐานกำหนดตำแหน่ง/);
+assert.match(planned.plan.outcomeQuery, /ระยะเวลาดำรงตำแหน่ง/);
+assert.equal(planned.plan.userAiOnly, true);
+assert.equal(planned.plan.liveSearchRequired, false);
+assert.equal(planned.evidence.conclusionEligible, false);
 
 const taskCases = [
   ['เบิกค่าแท็กซี่ได้ไหม', 'eligibility-decision'],
