@@ -3,6 +3,9 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const source = fs.readFileSync('assets/js/core/procurement-safety.js', 'utf8');
+const benchmark = JSON.parse(fs.readFileSync('tests/gp003-benchmark-v1.2.json', 'utf8'));
+assert.equal(benchmark.cases.length, 30);
+assert.deepEqual(benchmark.cases.map(x => x.id), Array.from({ length: 30 }, (_, i) => `GP003-C${String(i + 1).padStart(2, '0')}`));
 const context = { window: { GovPromptCore: {} } };
 vm.createContext(context);
 vm.runInContext(source, context);
@@ -51,4 +54,7 @@ const nonProcurement = core.analyzeProcurementSafety({
 assert.equal(nonProcurement.isProcurement, false);
 assert.equal(nonProcurement.decisionLock, false);
 
-console.log('GP003 safety tests: PASS');
+assert.ok(benchmark.gates.includes('AUTHORITY'));
+assert.ok(benchmark.gates.includes('DECISION'));
+assert.ok(benchmark.releaseBlockers.includes('missed decision lock'));
+console.log('GP003 safety + 30-case benchmark tests: PASS');
