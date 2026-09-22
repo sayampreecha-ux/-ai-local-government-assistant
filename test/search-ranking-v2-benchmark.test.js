@@ -16,43 +16,35 @@ async function loadCore() {
 }
 
 const cases = [
-  ['เบิกค่าเดินทางไปราชการได้อะไรบ้าง','ค่าใช้จ่ายในการเดินทางไปราชการ','ประกาศจัดซื้อจัดจ้าง'],
-  ['เบิกค่าเครื่องบินได้ไหม','ค่าโดยสารเครื่องบิน','TOR'],
-  ['เบิกค่าโรงแรมได้ไหม','ค่าเช่าที่พัก','ประกาศจัดซื้อ'],
-  ['รถเสียระหว่างไปราชการทำอย่างไร','ซ่อมรถราชการ','TOR เช่ารถ'],
-  ['ค่าซ่อมรถราชการเบิกได้ไหม','ค่าซ่อมรถราชการ','ค่าเดินทาง'],
-  ['ตรวจ TOR ถนน','TOR งานก่อสร้างถนน','ค่าเดินทางไปราชการ'],
-  ['ตรวจ TOR จ้างที่ปรึกษา','TOR จ้างที่ปรึกษา','เงินบำรุง'],
-  ['ซื้อคอมใช้วิธีไหน','จัดซื้อคอมพิวเตอร์','ค่าเดินทาง'],
-  ['จัดซื้ออาหารโรงเรียน','จัดซื้ออาหารโรงเรียน','เบี้ยเลี้ยง'],
-  ['เงินบำรุงซื้อวัสดุได้ไหม','การใช้จ่ายเงินบำรุง','TOR'],
-  ['รพ.สต.ทำโครงการได้ไหม','อำนาจหน้าที่ รพ.สต. โครงการสาธารณสุข','ประกาศจัดซื้อ'],
-  ['ขาดราชการ 16 วันทำไง','วินัย ขาดราชการ','TOR'],
-  ['โอนย้ายข้าราชการท้องถิ่น','โอนย้าย ข้าราชการส่วนท้องถิ่น','ค่าเดินทาง'],
-  ['เปิดประชุมสภาท้องถิ่น','สมัยประชุมสภาท้องถิ่น','TOR'],
-  ['ญัตติงบประมาณทำอย่างไร','ญัตติ งบประมาณ สภาท้องถิ่น','จัดซื้อจัดจ้าง'],
-  ['โอนงบทำอย่างไร','โอนงบประมาณ องค์กรปกครองส่วนท้องถิ่น','TOR'],
-  ['ตรวจการเบิกเงิน','ตรวจสอบภายใน การเบิกจ่าย','ข่าวประชาสัมพันธ์'],
-  ['ถนนพังตรวจรับอย่างไร','มาตรฐานงานทาง ตรวจรับ ถนน','ค่าเดินทาง'],
-  ['ร่างหนังสือถึงผู้ว่า','หนังสือราชการ งานสารบรรณ','TOR'],
-  ['โพสต์ข่าวประชาสัมพันธ์','ข่าวประชาสัมพันธ์ภาครัฐ','ระเบียบค่าเดินทาง']
+  ['เบิกค่าเดินทางไปราชการได้อะไรบ้าง', 'GP005', 'cgd.go.th'],
+  ['เบิกค่าเครื่องบินได้ไหม', 'GP005', 'cgd.go.th'],
+  ['รถเสียระหว่างไปราชการทำอย่างไร', 'GP005', 'cgd.go.th'],
+  ['ตรวจ TOR ถนน', 'GP003', 'cgd.go.th'],
+  ['ซื้อคอมใช้วิธีไหน', 'GP003', 'cgd.go.th'],
+  ['เงินบำรุงซื้อวัสดุได้ไหม', 'GP008', 'dla.go.th'],
+  ['ขาดราชการ 16 วันทำไง', 'GP006', 'dla.go.th'],
+  ['โอนงบทำอย่างไร', 'GP004', 'dla.go.th'],
+  ['ตรวจการเบิกเงิน', 'GP010', 'audit.go.th'],
+  ['โพสต์ข่าวประชาสัมพันธ์', 'GP012', 'dla.go.th']
 ];
 
-function officialResult(title, snippet, id) {
-  return { title, snippet, url:`https://www.dla.go.th/doc/${id}`, sourceTier:'primary', sourcePriority:100 };
-}
-
-test('search ranking v2 benchmark prefers intent-aligned evidence across 20 common local-government queries', async () => {
+test('search ranking v2 benchmark validates deterministic official-source routing without live-search execution', async () => {
   const core = await loadCore();
-  assert.equal(typeof core.rankOfficialSearchResults, 'function');
-  for (const [query, good, bad] of cases) {
-    const plan = core.createOfficialSearchPlan(query);
-    const ranked = core.rankOfficialSearchResults([
-      officialResult(bad, `${bad} เอกสารราชการ`, 'bad'),
-      officialResult(good, `${good} หลักเกณฑ์และแนวทางราชการ`, 'good')
-    ], plan);
-    assert.equal(ranked.length, 2, query);
-    assert.equal(ranked[0].title, good, `${query}: irrelevant evidence outranked intent-aligned evidence`);
-    assert.ok(ranked[0].queryRelevance >= ranked[1].queryRelevance, `${query}: score ordering invalid`);
+  for (const [query, module, expectedHost] of cases) {
+    const plan = core.createOfficialSearchPlan(query, { module });
+    assert.equal(plan.userAiOnly, true, query);
+    assert.equal(plan.liveSearchRequired, false, query);
+    assert.equal(plan.execution, 'user-selected-ai', query);
+    assert.equal(plan.routedModules.includes(module), true, query);
+    assert.equal(plan.sources.includes(expectedHost), true, `${query}: expected official source not in handoff plan`);
   }
+});
+
+test('connector remains fail-closed when no user-selected AI execution is attached', async () => {
+  const core = await loadCore();
+  const result = await core.createOfficialSearchConnector().search('ตรวจ TOR ถนน', { module: 'GP003' });
+  assert.equal(result.mode, 'plan-only');
+  assert.equal(result.results.length, 0);
+  assert.equal(result.evidence.conclusionEligible, false);
+  assert.equal(result.errorCode, 'USER_AI_SEARCH_ONLY');
 });
