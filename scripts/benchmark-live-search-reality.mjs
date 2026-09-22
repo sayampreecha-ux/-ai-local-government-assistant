@@ -43,7 +43,6 @@ try {
     assert.equal(body.results?.[0]?.documentDate ?? null, null, `${query}: disabled endpoint must not expose result freshness`);
   }
   assert.equal(providerBodies.length, 0, 'disabled live-search endpoint must not call a provider');
-  assert.equal(providerBodies.every(b => Array.isArray(b.include_domains) && b.include_domains.length >= 1), true);
 } finally {
   globalThis.fetch = originalFetch;
 }
