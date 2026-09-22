@@ -6,7 +6,7 @@
   }
 
   function composeGovernancePrompt({ role, task, context, routing, quality, domainPrompt = '' }) {
-    const contextText = window.GovPromptCore?.contextToText
+    const procurementSafety = window.GovPromptCore?.analyzeProcurementSafety && String(context?.transactionType || routing?.transactionType || routing?.routes || '').toLowerCase().includes('procurement')\n      ? window.GovPromptCore.analyzeProcurementSafety(context, routing)\n      : null;\n    const procurementSafetyText = procurementSafety && window.GovPromptCore?.procurementSafetyPromptBlock\n      ? window.GovPromptCore.procurementSafetyPromptBlock(procurementSafety)\n      : '';\n\n    const contextText = window.GovPromptCore?.contextToText
       ? window.GovPromptCore.contextToText(context)
       : '';
 
@@ -38,7 +38,7 @@
       '- เมื่อข้อมูลไม่ครบ ให้ระบุ [ต้องตรวจสอบ/เพิ่มเติม] และตอบแบบมีเงื่อนไขเท่าที่ทำได้',
       '- ตรวจ PDPA ข้อมูลข่าวสาร ความลับราชการ ผลประโยชน์ทับซ้อน และหลักฐานตรวจสอบย้อนกลับ',
       '- ระบุระดับ Human Review: ใช้ได้หลังตรวจทาน / ต้องผู้เชี่ยวชาญตรวจ / ควรหยุดดำเนินการ',
-      domainPrompt ? `\nข้อกำหนดเฉพาะด้าน\n${domainPrompt}` : '',
+      domainPrompt ? `\nข้อกำหนดเฉพาะด้าน\n${domainPrompt}` : '',\n      procurementSafetyText ? `\n${procurementSafetyText}` : '',
       '',
       'รูปแบบผลลัพธ์',
       '1. ข้อสรุปทันที',
