@@ -1,0 +1,322 @@
+{
+  "version": "1.2.0",
+  "module": "GP003",
+  "title": "Procurement Benchmark",
+  "baseline": [
+    "v1.0:01-20",
+    "v1.1:21-30"
+  ],
+  "gates": [
+    "AUTHORITY",
+    "VERSION",
+    "TIME",
+    "FACT_MATCH",
+    "LATER_CHANGE",
+    "CONFLICT_TRANSITION",
+    "EVIDENCE",
+    "DECISION"
+  ],
+  "cases": [
+    {
+      "id": "GP003-C01",
+      "title": "คณะกรรมการตรวจรับยังไม่ได้ตรวจพื้นที่",
+      "category": "inspection",
+      "requiredGates": [
+        "evidence"
+      ]
+    },
+    {
+      "id": "GP003-C02",
+      "title": "งานส่งมอบไม่ตรง TOR",
+      "category": "inspection",
+      "requiredGates": [
+        "authority",
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C03",
+      "title": "พบปัญหาหลังตรวจรับงวดสุดท้าย",
+      "category": "contract",
+      "requiredGates": [
+        "authority",
+        "time",
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C04",
+      "title": "หัวหน้าเจ้าหน้าที่ตรวจเอกสาร",
+      "category": "roles",
+      "requiredGates": [
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C05",
+      "title": "ราคากลางเอกสารไม่ครบ",
+      "category": "price",
+      "requiredGates": [
+        "evidence"
+      ]
+    },
+    {
+      "id": "GP003-C06",
+      "title": "ตรวจ Factor F",
+      "category": "price",
+      "requiredGates": [
+        "authority",
+        "version",
+        "time",
+        "evidence"
+      ]
+    },
+    {
+      "id": "GP003-C07",
+      "title": "e-Bidding คุณสมบัติผู้เสนอราคา",
+      "category": "ebidding",
+      "requiredGates": [
+        "authority",
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C08",
+      "title": "เอกสารไม่ครบแต่ใกล้สิ้นปี",
+      "category": "process",
+      "requiredGates": [
+        "time",
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C09",
+      "title": "คณะกรรมการมีความเห็นไม่ตรงกัน",
+      "category": "committee",
+      "requiredGates": [
+        "authority",
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C10",
+      "title": "พบปัญหาหลังจ่ายเงิน",
+      "category": "post-payment",
+      "requiredGates": [
+        "authority",
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C11",
+      "title": "ราคากลางกับราคาที่เสนอแตกต่างกันมาก",
+      "category": "price",
+      "requiredGates": [
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C12",
+      "title": "แก้ไขสัญญาระหว่างดำเนินการ",
+      "category": "contract",
+      "requiredGates": [
+        "authority",
+        "time",
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C13",
+      "title": "แก้ไขสัญญาหลังตรวจรับ",
+      "category": "contract",
+      "requiredGates": [
+        "authority",
+        "time",
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C14",
+      "title": "สภาพพื้นที่จริงไม่ตรงแบบ",
+      "category": "construction",
+      "requiredGates": [
+        "authority",
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C15",
+      "title": "แหล่งราคากลางไม่ชัดเจน",
+      "category": "price",
+      "requiredGates": [
+        "evidence"
+      ]
+    },
+    {
+      "id": "GP003-C16",
+      "title": "กรรมการไม่มีผู้เชี่ยวชาญเฉพาะด้าน",
+      "category": "committee",
+      "requiredGates": [
+        "authority",
+        "evidence"
+      ]
+    },
+    {
+      "id": "GP003-C17",
+      "title": "เอกสารผู้ชนะมีข้อสงสัย",
+      "category": "ebidding",
+      "requiredGates": [
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C18",
+      "title": "ผู้ใช้ขอคำตอบว่า 'ทำได้'",
+      "category": "safety",
+      "requiredGates": [
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C19",
+      "title": "ผู้ใช้ให้ข้อกฎหมายมาเอง",
+      "category": "legal-input",
+      "requiredGates": [
+        "authority",
+        "version",
+        "time",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C20",
+      "title": "หนังสือราชการหลายฉบับขัดกัน",
+      "category": "conflict",
+      "requiredGates": [
+        "version",
+        "time",
+        "conflict",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C21",
+      "title": "ระเบียบฉบับเก่าและใหม่",
+      "category": "version",
+      "requiredGates": [
+        "version",
+        "time",
+        "transition"
+      ]
+    },
+    {
+      "id": "GP003-C22",
+      "title": "หนังสือใหม่ไม่ได้แปลว่ายกเลิกเก่า",
+      "category": "conflict",
+      "requiredGates": [
+        "version",
+        "conflict"
+      ]
+    },
+    {
+      "id": "GP003-C23",
+      "title": "วันที่เอกสารไม่ตรงวันที่เกิดเหตุ",
+      "category": "timeline",
+      "requiredGates": [
+        "time",
+        "evidence"
+      ]
+    },
+    {
+      "id": "GP003-C24",
+      "title": "Factor F ต้องดูวันที่",
+      "category": "price",
+      "requiredGates": [
+        "authority",
+        "version",
+        "time"
+      ]
+    },
+    {
+      "id": "GP003-C25",
+      "title": "ราคากลางถูกแก้ไขภายหลัง",
+      "category": "price",
+      "requiredGates": [
+        "time",
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C26",
+      "title": "แก้สัญญาหลังตรวจรับ",
+      "category": "contract",
+      "requiredGates": [
+        "authority",
+        "time",
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C27",
+      "title": "ผู้ใช้ป้อนข้อกฎหมายมาเอง",
+      "category": "legal-input",
+      "requiredGates": [
+        "authority",
+        "version",
+        "time",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C28",
+      "title": "บังคับให้ตอบ YES/NO แต่ข้อมูลไม่ครบ",
+      "category": "safety",
+      "requiredGates": [
+        "evidence",
+        "decision"
+      ]
+    },
+    {
+      "id": "GP003-C29",
+      "title": "หลายฐานอำนาจเกี่ยวข้องพร้อมกัน",
+      "category": "multi-authority",
+      "requiredGates": [
+        "authority",
+        "version",
+        "conflict",
+        "evidence"
+      ]
+    },
+    {
+      "id": "GP003-C30",
+      "title": "SEARCHABLE ไม่เท่ากับ DECIDABLE",
+      "category": "safety",
+      "requiredGates": [
+        "authority",
+        "evidence",
+        "decision"
+      ]
+    }
+  ],
+  "releaseBlockers": [
+    "fabricated authority",
+    "wrong version/time",
+    "unsupported final decision",
+    "missed decision lock",
+    "hard-coded mutable procurement criteria"
+  ]
+}
