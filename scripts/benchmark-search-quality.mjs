@@ -54,13 +54,12 @@ const cases = [
 let passed = 0;
 const failures = [];
 for (const [query, expectedModule, acceptableHosts] of cases) {
-  const plan = core.createOfficialSearchPlan(query, { limitSources: 6 });
-  const top3 = plan.plans.slice(0, 3).map(item => item.host);
-  const moduleOk = plan.routedModules.includes(expectedModule);
-  const sourceOk = acceptableHosts.some(host => top3.includes(host));
-  if (moduleOk && sourceOk) passed += 1;
-  else failures.push({ query, expectedModule, routedModules: plan.routedModules, acceptableHosts, top3, rewritten: plan.query });
+  const plan = core.createOfficialSearchPlan(query, { module: expectedModule });
+  const sourceOk = acceptableHosts.some(host => plan.sources.includes(host));
+  const policyOk = plan.userAiOnly === true && plan.liveSearchRequired === false && plan.execution === 'user-selected-ai';
+  if (sourceOk && policyOk) passed += 1;
+  else failures.push({ query, expectedModule, acceptableHosts, sources: plan.sources, policy: { userAiOnly: plan.userAiOnly, liveSearchRequired: plan.liveSearchRequired, execution: plan.execution }, rewritten: plan.query });
 }
 
 console.log(JSON.stringify({ passed, total: cases.length, accuracy: passed / cases.length, failures }, null, 2));
-assert.equal(passed, cases.length, `Search benchmark failed ${cases.length - passed}/${cases.length} cases`);
+assert.equal(passed, cases.length, `Official search policy benchmark failed ${cases.length - passed}/${cases.length} cases`);
