@@ -155,7 +155,7 @@
 
   function buildEvidenceRetrievalPlan(question = '', context = {}) {
     const q = normalize(question);
-    const identifiers = (q.match(/(?:มาตรา|ข้อ|เลขที่)\\s*[\\wก-๙./-]+/gi) || []).map(normalize);
+    const identifiers = []; const words = q.split(' '); ['มาตรา', 'ข้อ', 'เลขที่'].forEach(term => { words.forEach((word, index) => { if (word === term && words[index + 1]) identifiers.push(term + ' ' + words[index + 1]); }); });
     return Object.freeze({
       version: ASSURANCE_VERSION,
       levels: RETRIEVAL_LEVELS,
