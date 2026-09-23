@@ -350,7 +350,8 @@
     const workflowRuntime = await workflowRuntimePromise;
     let searchResult;
     const v8 = window.GovPromptCore.EVIDENCE_FIRST_V8;
-    const decisionTask = Boolean(v8?.isDecisionQuestion?.(text)) || ['legal','procurement','finance','human-resources','internal-audit'].includes(String(route?.transactionType || '').toLowerCase());
+    const kAuditTask = route?.moduleId === 'GP007' && /ค่า\\s*K|ค่าชดเชยค่างานก่อสร้าง|สัญญาแบบปรับราคาได้|เงินชดเชยค่างาน|CUCEM[-\\s]?K/i.test(text);
+    const decisionTask = Boolean(v8?.isDecisionQuestion?.(text)) || ['legal','procurement','finance','human-resources','internal-audit'].includes(String(route?.transactionType || '').toLowerCase()) || kAuditTask;
     if (decisionTask && typeof core.officialSearchConnector?.search === 'function') {
       try {
         searchResult = Object.freeze(await core.officialSearchConnector.search(text, { count: 10, requireFreshness: true }));
