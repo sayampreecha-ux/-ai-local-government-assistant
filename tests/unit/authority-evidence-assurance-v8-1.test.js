@@ -94,7 +94,7 @@ test('full assurance unlocks only when all required evidence dimensions are sati
   });
   assert.equal(result.decisionLock, 'OFF');
   assert.equal(result.decidable, true);
-  assert.deepEqual(result.blockers, []);
+  assert.equal(result.blockers.length, 0);
 });
 
 test('assurance keeps decision locked when primary evidence or later-change review is missing', () => {
