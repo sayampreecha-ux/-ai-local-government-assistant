@@ -96,7 +96,7 @@
   const PRECEDENT_REQUIRED = Object.freeze(['issuingAuthority', 'documentNumber', 'documentDate', 'title', 'consultedFacts', 'adjudicatedIssue', 'citedRules', 'reasoning', 'conclusion', 'officialSource']);
 
   const normalize = value => text(value).normalize('NFKC').replace(/\\s+/g, ' ').trim();
-  const sourceHost = value => { try { return new URL(text(value)).hostname.replace(/^www\\./, '').toLowerCase(); } catch { return text(value).toLowerCase().replace(/^www\\./, ''); } };
+  const sourceHost = value => { const raw = text(value); try { return new URL(raw).hostname.replace(/^www\\./, '').toLowerCase(); } catch { return raw.replace(/^[a-z]+:\\/\\//i, '').split('/')[0].split('?')[0].split('#')[0].replace(/^www\\./, '').toLowerCase(); } };
 
   function verifyPrimarySource(document = {}) {
     const host = sourceHost(document.url || document.source);
@@ -155,7 +155,7 @@
 
   function buildEvidenceRetrievalPlan(question = '', context = {}) {
     const q = normalize(question);
-    const identifiers = (q.match(/(?:มาตรา|ข้อ|เลขที่|ที่\\s*)[\\wก-๙./-]+/gi) || []).map(normalize);
+    const identifiers = (q.match(/(?:มาตรา|ข้อ|เลขที่)\\s*[\\wก-๙./-]+/gi) || []).map(normalize);
     return Object.freeze({
       version: ASSURANCE_VERSION,
       levels: RETRIEVAL_LEVELS,
