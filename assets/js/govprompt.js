@@ -158,4 +158,8 @@
   import('./core/cash-reserve-k-rulepack-v1.js?v=1.0.0')
     .then(() => app.emit('rulepack:ready', { id: 'cash-reserve-k-payment', version: '1.0.0' }))
     .catch(error => app.emit('rulepack:error', { id: 'cash-reserve-k-payment', error: String(error?.message || error) }));
+
+  import('./core/engineering-k-audit-rulepack-v1.js?v=1.0.0')
+    .then(() => app.emit('rulepack:ready', { id: 'engineering-k-audit', version: '1.0.0' }))
+    .catch(error => app.emit('rulepack:error', { id: 'engineering-k-audit', error: String(error?.message || error) }));
 })();
