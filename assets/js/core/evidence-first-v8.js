@@ -96,7 +96,7 @@
   const PRECEDENT_REQUIRED = Object.freeze(['issuingAuthority', 'documentNumber', 'documentDate', 'title', 'consultedFacts', 'adjudicatedIssue', 'citedRules', 'reasoning', 'conclusion', 'officialSource']);
 
   const normalize = value => text(value).normalize('NFKC').replace(/\\s+/g, ' ').trim();
-  const sourceHost = value => { const raw = text(value); try { return new URL(raw).hostname.replace(/^www\\./, '').toLowerCase(); } catch { return raw.replace(/^[a-z]+:\\/\\//i, '').split('/')[0].split('?')[0].split('#')[0].replace(/^www\\./, '').toLowerCase(); } };
+  const sourceHost = value => { const raw = text(value); try { return new URL(raw).hostname.replace(/^www\\./, '').toLowerCase(); } catch { const schemeIndex = raw.indexOf('://'); const hostText = schemeIndex >= 0 ? raw.slice(schemeIndex + 3) : raw; return hostText.split('/')[0].split('?')[0].split('#')[0].replace(/^www\\./, '').toLowerCase(); } };
 
   function verifyPrimarySource(document = {}) {
     const host = sourceHost(document.url || document.source);
