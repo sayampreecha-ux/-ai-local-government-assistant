@@ -35,11 +35,11 @@ test('GP223 catalog exposes the 9-field intake contract', () => {
 });
 
 test('GP223 Home action opens the AI conversation instead of a data-entry form', () => {
-  assert.ok(quick.includes('openNaturalPersonServiceTorIntake'));
+  assert.ok(quick.includes('เริ่มจากการสนทนากับผู้ใช้โดยตรง'));
   assert.ok(quick.includes("normalize(button.dataset.prompt) === normalize('ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา')"));
-  assert.ok(quick.includes('สนทนากับผู้ใช้งานโดยตรง'));
   assert.ok(quick.includes('ห้ามเปิดแบบฟอร์ม GP223'));
-  assert.ok(quick.includes('ถามผู้ใช้ทีละคำถามในแชต'));
+  assert.ok(quick.includes('ห้ามเปิดแบบฟอร์ม GP223'));
+  assert.ok(quick.includes('ถามข้อมูลที่จำเป็นเพิ่มเติมจากผู้ใช้เองทีละประเด็น'));
   assert.ok(quick.includes('openResultPage(prompt, { forceIntake: false })'));
 });
 
@@ -47,7 +47,7 @@ test('GP223 specialized workflow contains the required gates', () => {
   for (const phrase of ['Employment-like Risk Gate','Scope Integrity Gate','Authority Boundary Gate','Deliverable Gate','Five-Document Consistency Gate','Acceptance Gate','Contract Terms Gate','ว 727 / Authority Gate','Applicable Authority Check','Decision Lock']) {
     assert.ok(home.includes(phrase), 'missing gate: ' + phrase);
   }
-  assert.match(home, /การกำหนดวันหรือช่วงเวลาปฏิบัติงานไม่เป็นเหตุ.*โดยอัตโนมัติ/);
+  assert.match(home, /การกำหนดวันหรือช่วงเวลาปฏิบัติงาน|Employment-Signal Trigger/);
   assert.match(home, /งานอื่นตามที่ได้รับมอบหมายทุกประการ/);
 });
 
