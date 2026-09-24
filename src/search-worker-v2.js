@@ -411,6 +411,11 @@ async function handleDocumentCompose(request, env) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+    if (request.method === 'OPTIONS') {
+      const origin = request.headers.get('origin') || '';
+      if (origin !== FRONTEND_ORIGIN && origin !== url.origin) return json({ ok: false, error: 'ORIGIN_NOT_ALLOWED' }, 403);
+      return new Response(null, { status: 204, headers: JSON_HEADERS });
+    }
     if (url.pathname === '/api/official-search') return handleOfficialSearch(request, env);
     if (url.pathname === '/api/official-document') return handleOfficialDocument(request, env);
     if (url.pathname === '/api/document-studio/convert') return handleDocumentConvert(request, env);
