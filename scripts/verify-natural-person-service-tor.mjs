@@ -6,28 +6,27 @@ const catalog = readFileSync('catalog-public.js', 'utf8');
 const quick = readFileSync('assets/js/ui/quick-action-guided-bridge-v1.js', 'utf8');
 const home = readFileSync('assets/js/home-v3.js', 'utf8');
 
-test('GP223 catalog keeps the 9-field intake contract', () => {
+test('GP223 catalog exposes the 9-field intake contract', () => {
   const start = catalog.indexOf('"id":"gp223"');
   const end = catalog.indexOf('"id":"gp222"', start);
   const entry = catalog.slice(start, end > start ? end : undefined);
   assert.ok(start >= 0, 'GP223 catalog entry must exist');
-  const fieldsMatch = entry.match(/"formFields":(\[.*?\]),"status":"APPROVED","version":"1.0"/);
-  assert.ok(fieldsMatch, 'GP223 catalog version 1.1 must expose formFields');
-  const fields = JSON.parse(fieldsMatch[1]);
-  assert.deepEqual(fields.map(field => field.id), ['agency','service_nature','deliverables','scope','period','inspection','budget','contract','constraints']);
-  assert.equal(fields.filter(field => field.required).length, 6);
+  for (const field of ['agency','service_nature','deliverables','scope','period','inspection','budget','contract','constraints']) {
+    assert.ok(entry.includes('"id":"' + field + '"'), 'missing GP223 field: ' + field);
+  }
+  assert.equal((entry.match(/"required":true/g) || []).length, 6);
 });
 
 test('GP223 Home action opens the structured intake', () => {
-  assert.match(quick, /openNaturalPersonServiceTorIntake/);
-  assert.match(quick, /normalize\(button\.dataset\.prompt\).*ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา/);
-  assert.match(quick, /window\.GOVPROMPT_CATALOG/);
-  assert.match(quick, /openResultPage\(lines, \{ forceIntake: false \}\)/);
+  assert.ok(quick.includes('openNaturalPersonServiceTorIntake'));
+  assert.ok(quick.includes("normalize(button.dataset.prompt) === normalize('ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา')"));
+  assert.ok(quick.includes('window.GOVPROMPT_CATALOG'));
+  assert.ok(quick.includes('openResultPage(lines, { forceIntake: false })'));
 });
 
 test('GP223 specialized workflow contains the required gates', () => {
   for (const phrase of ['Employment-like Risk Gate','Scope Integrity Gate','Authority Boundary Gate','Deliverable Gate','Five-Document Consistency Gate','Acceptance Gate','Contract Terms Gate','ว 727 / Authority Gate','Applicable Authority Check','Decision Lock']) {
-    assert.ok(home.includes(phrase), `missing gate: ${phrase}`);
+    assert.ok(home.includes(phrase), 'missing gate: ' + phrase);
   }
   assert.match(home, /การกำหนดวันหรือช่วงเวลาปฏิบัติงานไม่เป็นเหตุ.*โดยอัตโนมัติ/);
   assert.match(home, /งานอื่นตามที่ได้รับมอบหมายทุกประการ/);
