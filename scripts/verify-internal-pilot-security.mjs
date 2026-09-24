@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 
-const [index, trust, privacyNotice, terms, privacyGuard, submitGuard, home, worker, wrangler] = await Promise.all([
+const [index, trust, privacyNotice, terms, privacyGuard, submitGuard, home, worker, workerV2, wrangler] = await Promise.all([
   readFile('index.html', 'utf8'),
   readFile('trust.html', 'utf8'),
   readFile('privacy-notice.html', 'utf8'),
@@ -11,6 +11,7 @@ const [index, trust, privacyNotice, terms, privacyGuard, submitGuard, home, work
   readFile('assets/js/core/privacy-submit-guard.js', 'utf8'),
   readFile('assets/js/home-v3.js', 'utf8'),
   readFile('src/search-worker.js', 'utf8'),
+  readFile('src/search-worker-v2.js', 'utf8'),
   readFile('wrangler.jsonc', 'utf8')
 ]);
 
@@ -47,7 +48,7 @@ assert.match(worker, /RATE_LIMIT_BINDING_MISSING/);
 assert.match(worker, /RATE_LIMIT_CHECK_FAILED/);
 assert.match(worker, /include_answer: false/);
 assert.match(worker, /include_raw_content: false/);
-assert.match(worker, /TAVILY_API_KEY/);
+assert.match(workerV2, /TAVILY_API_KEY/);
 assert.match(worker, /ACCESS_CODE_SECRET/);
 assert.match(worker, /ACCESS_ADMIN_PASSWORD_HASH/);
 assert.match(worker, /ACCESS_ADMIN_SESSION_SECRET/);
