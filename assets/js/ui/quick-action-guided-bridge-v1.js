@@ -180,156 +180,28 @@
   const RESULT_FORCE_INTAKE_KEY = 'govprompt.forceGuidedIntake.v1';
 
   function openNaturalPersonServiceTorIntake() {
-    if (!dialog || !dialogTitle || !dialogEyebrow || !dialogContent) return false;
-
-    const catalogTool = window.GOVPROMPT_CATALOG?.find?.(tool => String(tool.code).toUpperCase() === 'GP223');
-    const catalogFields = Array.isArray(catalogTool?.formFields) ? catalogTool.formFields : [];
-    const fieldById = id => catalogFields.find(field => field.id === id) || {};
-
-    const root = document.createElement('form');
-    root.className = 'gp223-intake';
-
-    const title = document.createElement('div');
-    title.className = 'gp223-intake-title';
-    title.innerHTML = '<strong>📑 เล่างานให้ GP ฟังก่อน</strong><small>ไม่ต้องรู้กฎหมายหรือศัพท์ TOR ก็ได้ — บอกงานตามที่เข้าใจ แล้ว GP จะช่วยจัดโครงให้</small>';
-    root.append(title);
-
-
-    const makeField = (id, label, placeholder, required, type = 'textarea') => {
-      const source = fieldById(id);
-      const wrap = document.createElement('label');
-      wrap.className = 'gp223-intake-field';
-      const caption = document.createElement('span');
-      caption.textContent = label + (required ? ' *' : '');
-      const control = document.createElement(type === 'textarea' ? 'textarea' : 'input');
-      control.name = id;
-      control.placeholder = placeholder || source.placeholder || '';
-      control.required = Boolean(required);
-      if (type !== 'textarea') control.type = type;
-      wrap.append(caption, control);
-      return { wrap, control };
-    };
-
-    const agency = makeField('agency', 'หน่วยงาน', 'เช่น สำนักปลัด / กองช่าง / โรงพยาบาลส่งเสริมสุขภาพตำบล', true, 'text');
-    const service = makeField(
-      'service_nature',
-      '1) ต้องการจ้างอะไร / ให้ทำอะไร',
-      'เช่น ต้องการจ้างคนขับรถเพื่อขับรถส่วนกลางและดูแลความพร้อมของรถ',
-      true
-    );
-    const period = makeField(
-      'period',
-      '2) จ้างช่วงไหน และประมาณเท่าไร',
-      'เช่น 1 ต.ค. 2569 – 31 มี.ค. 2570 / วงเงินประมาณ 54,000 บาท',
-      true
-    );
-    const deliverables = makeField(
-      'deliverables',
-      '3) ถ้ามี — งานหรือผลงานที่อยากให้ส่งมอบ',
-      'ถ้ายังไม่รู้ ไม่ต้องคิดเอง กด “ยังไม่กำหนด” ได้',
-      false
-    );
-
-    root.append(agency.wrap, service.wrap, period.wrap, deliverables.wrap);
-
-    const unknown = document.createElement('button');
-    unknown.type = 'button';
-    unknown.className = 'gp223-unknown';
-    unknown.textContent = 'ยังไม่กำหนดผลส่งมอบ — ให้ GP ช่วยวิเคราะห์';
-    unknown.addEventListener('click', () => {
-      deliverables.control.value = 'ยังไม่กำหนด — ให้ GP วิเคราะห์และเสนอผลส่งมอบที่ควรมี โดยแยกข้อเสนอออกจากข้อเท็จจริง';
-      unknown.classList.add('selected');
-    });
-    root.append(unknown);
-
-    const more = document.createElement('details');
-    more.className = 'gp223-more';
-    const summary = document.createElement('summary');
-    summary.textContent = '＋ มีข้อมูลเพิ่มเติมไหม? (ไม่มีก็ข้ามได้)';
-    more.append(summary);
-
-    const scope = makeField('scope', 'ขอบเขต/จำนวนงาน', 'เช่น 1 คน, 2 คัน, พื้นที่ 5 แห่ง หรือรายละเอียดปริมาณงาน', false);
-    const inspection = makeField('inspection', 'วิธีตรวจรับที่มีอยู่', 'ถ้ามีวิธีตรวจรับเดิมให้ใส่ไว้ ถ้าไม่มีให้เว้นว่าง', false);
-    const budget = makeField('budget', 'งบประมาณ', 'ถ้ามีข้อมูลวงเงิน ให้ระบุ', false, 'text');
-    const contract = makeField('contract', 'TOR/สัญญาเดิม', 'วางสาระสำคัญหรือข้อความที่ต้องการให้ตรวจ', false);
-    const constraints = makeField('constraints', 'เงื่อนไขเฉพาะ', 'เช่น สถานที่ อุปกรณ์ ช่วงเวลาทำการ หรือข้อจำกัดอื่น', false);
-    more.append(scope.wrap, inspection.wrap, budget.wrap, contract.wrap, constraints.wrap);
-    root.append(more);
-
-    const note = document.createElement('p');
-    note.className = 'gp223-intake-note';
-    note.innerHTML = '<strong>GP จะทำต่อให้:</strong> จำแนกลักษณะงาน → ช่วยกำหนดผลส่งมอบ → ตรวจ ว727/แบบสัญญา → ตรวจความเสี่ยง → ร่าง TOR<br><span>การกำหนดวันหรือช่วงเวลาปฏิบัติงานจะไม่ถูกตีความว่าเป็นการจ้างแรงงานโดยอัตโนมัติ</span>';
-    root.append(note);
-
-    const actions = document.createElement('div');
-    actions.className = 'gp223-intake-actions';
-    const cancel = document.createElement('button');
-    cancel.type = 'button'; cancel.className = 'gp223-intake-cancel'; cancel.textContent = 'ยกเลิก';
-    cancel.addEventListener('click', () => dialog.close());
-    const submit = document.createElement('button');
-    submit.type = 'submit'; submit.className = 'gp223-intake-submit'; submit.textContent = 'วิเคราะห์ให้ผม →';
-    actions.append(cancel, submit);
-    root.append(actions);
-
-    root.addEventListener('submit', event => {
-      event.preventDefault();
-      [agency.control, service.control, period.control].forEach(control => control.setCustomValidity(''));
-      const required = [agency.control, service.control, period.control];
-      const firstMissing = required.find(control => !String(control.value || '').trim());
-      if (firstMissing) {
-        firstMissing.setCustomValidity('กรุณาระบุข้อมูลนี้');
-        firstMissing.reportValidity();
-        return;
-      }
-
-      const value = id => String(root.querySelector(`[name="${id}"]`)?.value || '').trim() || '[ไม่ได้ระบุ]';
-      const lines = [
-        'ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา',
-        'GP223 Smart Intake — ผู้ใช้ให้ข้อเท็จจริงเท่าที่ทราบ ระบบต้องไม่แต่งข้อเท็จจริง',
-        `- หน่วยงาน: ${value('agency')}`,
-        `- ลักษณะงาน: ${value('service_nature')}`,
-        `- ระยะเวลา/วงเงินที่ผู้ใช้ให้: ${value('period')}`,
-        `- ผลงานที่ผู้ใช้ระบุ: ${value('deliverables')}`,
-        `- ขอบเขต/จำนวน: ${value('scope')}`,
-        `- วิธีตรวจรับ: ${value('inspection')}`,
-        `- งบประมาณเพิ่มเติม: ${value('budget')}`,
-        `- TOR/สัญญาเดิม: ${value('contract')}`,
-        `- เงื่อนไขเฉพาะ: ${value('constraints')}`,
-        '',
-        'ทำงานต่อโดย: วิเคราะห์ลักษณะงานจริง ไม่ยึดชื่อตำแหน่ง; หากผลส่งมอบยังไม่ชัด ให้เสนอ “ร่างข้อเสนอ” แยกจากข้อเท็จจริงและระบุสิ่งที่ต้องยืนยัน; ตรวจ ว 727 และแบบสัญญาจ้างงานบริการสำหรับบุคคลธรรมดาจากแหล่งทางการที่เป็นปัจจุบัน; ตรวจ Employment-like Risk, Scope Integrity, Authority Boundary, Deliverable/Acceptance และ TOR↔สัญญา↔ผลส่งมอบ↔ตรวจรับ↔จ่ายเงิน; ใช้ Applicable Authority Check และ Decision Lock เมื่อข้อมูลหรือฐานอำนาจยังไม่พอ',
-        'ผลลัพธ์: Answer First → สิ่งที่ทราบ → สิ่งที่เสนอ → ฐานอำนาจ/หลักฐาน → ความเสี่ยง → ข้อมูลที่ต้องยืนยัน → ร่าง TOR → checklist'
-      ].join('\\n');
-      if (dialog?.open) dialog.close();
-      openResultPage(lines, { forceIntake: false });
-    });
-
-    if (!document.getElementById('gp223IntakeStyles')) {
-      const style = document.createElement('style');
-      style.id = 'gp223IntakeStyles';
-      style.textContent = `
-        .gp223-intake{display:grid;gap:10px;max-height:72vh;overflow:auto;padding:2px}
-        .gp223-intake-title{display:grid;gap:3px;margin-bottom:1px}
-        .gp223-intake-title small,.gp223-intake-note{color:#617068;font-size:.88rem;line-height:1.5}
-        .gp223-intake-field{display:grid;gap:5px}
-        .gp223-intake-field span{font-weight:750;font-size:.9rem}
-        .gp223-intake-field input,.gp223-intake-field textarea{box-sizing:border-box;width:100%;border:1px solid #c8d7d0;border-radius:12px;padding:10px;font:inherit;background:#fff}
-        .gp223-intake-field textarea{min-height:68px;resize:vertical}
-        .gp223-unknown{border:1px dashed #aabbb3;background:#f7faf8;color:#24483a;border-radius:11px;padding:9px 11px;text-align:left;font:inherit;cursor:pointer}
-        .gp223-unknown.selected{border-style:solid}
-        .gp223-more{border:1px solid #d8e1dd;border-radius:12px;padding:2px 10px;background:#fafcfb}
-        .gp223-more summary{cursor:pointer;padding:9px 0;font-weight:750;color:#315346}
-        .gp223-more[open] summary{margin-bottom:7px}
-        .gp223-intake-actions{display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;padding-top:8px;background:#fff}
-        .gp223-intake-cancel,.gp223-intake-submit{border:0;border-radius:12px;padding:10px 14px;font:inherit;font-weight:800;cursor:pointer}
-        .gp223-intake-submit{background:#12372a;color:#fff}.gp223-intake-cancel{background:#edf2ef;color:#12372a}
-      `;
-      document.head.append(style);
-    }
-    dialogTitle.textContent = '📑 GP223 · ร่าง TOR จ้างเหมาบริการ';
-    dialogEyebrow.textContent = 'บอกงานตามที่รู้ — GP ช่วยจัดโครงและตรวจความเสี่ยงให้';
-    dialogContent.replaceChildren(root);
-    if (!dialog.open) dialog.showModal();
-    queueMicrotask(() => agency.control.focus());
+    const prompt = [
+      'ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา',
+      '',
+      'ให้ทำหน้าที่เป็น Government AI Copilot สำหรับเรื่องนี้ และสนทนากับผู้ใช้งานโดยตรง',
+      'ห้ามเปิดแบบฟอร์ม GP223 และห้ามบังคับให้ผู้ใช้กรอกช่องข้อมูลล่วงหน้า',
+      'ให้เริ่มจากถามผู้ใช้ทีละคำถามในแชต เฉพาะข้อมูลที่จำเป็นจริง ๆ และปรับคำถามตามคำตอบก่อนหน้า',
+      'ถ้าผู้ใช้ให้ข้อมูลมาแล้วบางส่วน ห้ามถามซ้ำ ให้ใช้ข้อมูลนั้นเป็นฐาน',
+      'ถามครั้งละไม่เกิน 1–2 ประเด็น และช่วยยกตัวอย่างภาษาง่าย ๆ เมื่อผู้ใช้ไม่แน่ใจ',
+      'เป้าหมายคือเก็บข้อเท็จจริงให้พอสำหรับร่าง TOR โดยไม่ให้ผู้ใช้ต้องรู้ศัพท์กฎหมายหรือศัพท์ TOR',
+      '',
+      'ลำดับการสนทนาให้พิจารณา: หน่วยงาน → งานที่ต้องการจ้าง/ลักษณะงานจริง → ระยะเวลาและวงเงินถ้ามี → สิ่งที่ต้องส่งมอบ/ผลสำเร็จ → ขอบเขตหรือปริมาณ → วิธีตรวจรับ/หลักฐาน → เงื่อนไขเฉพาะ',
+      'ไม่จำเป็นต้องถามทุกข้อ หากข้อมูลจากผู้ใช้เพียงพอหรือสามารถสรุปได้อย่างมีเหตุผล',
+      'หากผลส่งมอบหรือขอบเขตงานยังไม่ชัด ให้เสนอทางเลือกที่เป็นไปได้และถามให้ผู้ใช้เลือก/ยืนยัน แต่อย่าแต่งข้อเท็จจริงแทนหน่วยงาน',
+      '',
+      'เมื่อข้อมูลเพียงพอ ให้ทำ Answer First และจัดทำร่าง TOR พร้อมตรวจลักษณะงานจริง ความเป็นงานบริการ ความเสี่ยงการกลายเป็นการจ้างแรงงาน ขอบเขตงาน อำนาจหน้าที่ ผลส่งมอบ การตรวจรับ การจ่ายเงิน และความสอดคล้อง TOR↔สัญญา↔ผลส่งมอบ↔ตรวจรับ↔จ่ายเงิน',
+      'ตรวจ ว 727 ลงวันที่ 22 กันยายน 2569 และแบบสัญญาจ้างงานบริการประเภทจ้างเหมาบริการบุคคลธรรมดาจากแหล่งทางการที่เป็นปัจจุบัน รวมถึงฐานอำนาจอื่นที่เกี่ยวข้อง',
+      'ใช้ Applicable Authority Check: AUTHORITY, VERSION, TIME, FACT_MATCH, LATER_CHANGE, CONFLICT_TRANSITION และใช้ Decision Lock เมื่อข้อมูลหรือฐานอำนาจยังไม่พอสำหรับข้อสรุป',
+      'แยกข้อเท็จจริงของผู้ใช้ออกจากข้อเสนอของระบบอย่างชัดเจน และห้ามสร้างตัวเลข อัตรา เงื่อนไข หรือฐานกฎหมายที่ไม่ได้ตรวจสอบ',
+      '',
+      'เริ่มสนทนาด้วยคำถามแรกที่จำเป็นที่สุดทันที ไม่ต้องอธิบายขั้นตอนการทำงานยาว ๆ'
+    ].join('\\n');
+    openResultPage(prompt, { forceIntake: false });
     return true;
   }
 
