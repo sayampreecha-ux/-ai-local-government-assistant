@@ -6,14 +6,6 @@
   "ai": {
     "binding": "AI"
   },
-  "secrets": {
-    "required": [
-      "TAVILY_API_KEY",
-      "ACCESS_CODE_SECRET",
-      "ACCESS_ADMIN_PASSWORD_HASH",
-      "ACCESS_ADMIN_SESSION_SECRET"
-    ]
-  },
   "observability": {
     "enabled": true,
     "logs": {
