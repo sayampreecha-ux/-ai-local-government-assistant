@@ -6,6 +6,23 @@ const catalog = readFileSync('catalog-public.js', 'utf8');
 const quick = readFileSync('assets/js/ui/quick-action-guided-bridge-v1.js', 'utf8');
 const home = readFileSync('assets/js/home-v3.js', 'utf8');
 
+const roleMatrix = [
+  'คนขับรถยนต์',
+  'ธุรการ',
+  'ขับเครื่องจักรขนาดหนัก',
+  'ตรวจมาตรวัดน้ำประปา',
+  'เจ้าหน้าที่รักษาความปลอดภัย',
+  'ด้านจัดเก็บรายได้',
+  'ด้านธุรการ',
+  'ด้านนิติการและรับเรื่องร้องทุกข์',
+  'ด้านป้องกันและบรรเทาสาธารณภัย',
+  'ดูแลระบบประปา',
+  'นักการภารโรง',
+  'ปฏิบัติงานสอนและสนับสนุนการจัดการศึกษา',
+  'พนักงานทำความสะอาด',
+  'พยาบาล-นักวิชาการสาธารณสุข'
+];
+
 test('GP223 catalog exposes the 9-field intake contract', () => {
   const start = catalog.indexOf('"id":"gp223"');
   const end = catalog.indexOf('"id":"gp222"', start);
@@ -43,4 +60,14 @@ test('GP223 remains deliverable-centric and protects authority boundaries', () =
 test('GP223 does not hard-code a guarantee exemption as a universal rule', () => {
   assert.match(home, /หลักประกัน\/ค่าปรับตามฉบับและฐานอำนาจที่ใช้จริง/);
   assert.match(home, /ห้าม hard-code ตัวเลข อัตรา หรือข้อยกเว้น/);
+});
+
+test('GP223 role matrix routes every supplied position into the same conversational workflow', () => {
+  assert.equal(roleMatrix.length, 14);
+  for (const role of roleMatrix) {
+    const prompt = 'ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา ตำแหน่ง/ลักษณะงาน: ' + role;
+    assert.match(prompt, /ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา/);
+    assert.match(home, /จ้างเหมาบริการบุคคลธรรมดา|ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา/);
+    assert.match(home, /จำแนกลักษณะงานจากงานจริงและผลสำเร็จ ไม่ตัดสินจากชื่อตำแหน่ง/);
+  }
 });
