@@ -194,10 +194,6 @@
     title.innerHTML = '<strong>📑 เล่างานให้ GP ฟังก่อน</strong><small>ไม่ต้องรู้กฎหมายหรือศัพท์ TOR ก็ได้ — บอกงานตามที่เข้าใจ แล้ว GP จะช่วยจัดโครงให้</small>';
     root.append(title);
 
-    const progress = document.createElement('div');
-    progress.className = 'gp223-intake-progress';
-    progress.innerHTML = '<span class="active">1</span><i></i><span>2</span><i></i><span>3</span>';
-    root.append(progress);
 
     const makeField = (id, label, placeholder, required, type = 'textarea') => {
       const source = fieldById(id);
@@ -314,10 +310,6 @@
         .gp223-intake{display:grid;gap:10px;max-height:72vh;overflow:auto;padding:2px}
         .gp223-intake-title{display:grid;gap:3px;margin-bottom:1px}
         .gp223-intake-title small,.gp223-intake-note{color:#617068;font-size:.88rem;line-height:1.5}
-        .gp223-intake-progress{display:flex;align-items:center;gap:6px;margin:1px 0 3px}
-        .gp223-intake-progress span{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#edf2ef;color:#617068;font-size:.8rem;font-weight:800}
-        .gp223-intake-progress span.active{background:#12372a;color:#fff}
-        .gp223-intake-progress i{height:1px;flex:1;background:#d5dfda}
         .gp223-intake-field{display:grid;gap:5px}
         .gp223-intake-field span{font-weight:750;font-size:.9rem}
         .gp223-intake-field input,.gp223-intake-field textarea{box-sizing:border-box;width:100%;border:1px solid #c8d7d0;border-radius:12px;padding:10px;font:inherit;background:#fff}
