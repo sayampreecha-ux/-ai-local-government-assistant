@@ -55,12 +55,7 @@ assert.match(deploy, /verify-production-security\.mjs/);
 assert.match(deploy, /permissions:\s*\r?\n\s+contents:\s*read/);
 assert.doesNotMatch(deploy, /permissions:\s*write-all/);
 
-assert.deepEqual(wrangler?.secrets?.required, [
-  'TAVILY_API_KEY',
-  'ACCESS_CODE_SECRET',
-  'ACCESS_ADMIN_PASSWORD_HASH',
-  'ACCESS_ADMIN_SESSION_SECRET'
-]);
+assert.equal(wrangler?.secrets, undefined);
 const worker = await readFile('src/search-worker.js', 'utf8');
 assert.match(worker, /OFFICIAL_SEARCH_RATE_LIMITER/);
 assert.match(worker, /RATE_LIMIT_BINDING_MISSING/);
