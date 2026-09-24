@@ -47,7 +47,10 @@ assert.match(worker, /RATE_LIMIT_BINDING_MISSING/);
 assert.match(worker, /RATE_LIMIT_CHECK_FAILED/);
 assert.match(worker, /include_answer: false/);
 assert.match(worker, /include_raw_content: false/);
-assert.match(worker, /TAVILY_API_KEY/);\nassert.match(worker, /ACCESS_CODE_SECRET/);\nassert.match(worker, /ACCESS_ADMIN_PASSWORD_HASH/);\nassert.match(worker, /ACCESS_ADMIN_SESSION_SECRET/);
+assert.match(worker, /TAVILY_API_KEY/);
+assert.match(worker, /ACCESS_CODE_SECRET/);
+assert.match(worker, /ACCESS_ADMIN_PASSWORD_HASH/);
+assert.match(worker, /ACCESS_ADMIN_SESSION_SECRET/);
 assert.match(wrangler, /head_sampling_rate/);
 
 const guardPos = index.indexOf('assets/js/core/privacy-guard.js');
