@@ -17,11 +17,13 @@ test('GP223 catalog exposes the 9-field intake contract', () => {
   assert.equal((entry.match(/"required":true/g) || []).length, 6);
 });
 
-test('GP223 Home action opens the structured intake', () => {
+test('GP223 Home action opens the AI conversation instead of a data-entry form', () => {
   assert.ok(quick.includes('openNaturalPersonServiceTorIntake'));
   assert.ok(quick.includes("normalize(button.dataset.prompt) === normalize('ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา')"));
-  assert.ok(quick.includes('window.GOVPROMPT_CATALOG'));
-  assert.ok(quick.includes('openResultPage(lines, { forceIntake: false })'));
+  assert.ok(quick.includes('สนทนากับผู้ใช้งานโดยตรง'));
+  assert.ok(quick.includes('ห้ามเปิดแบบฟอร์ม GP223'));
+  assert.ok(quick.includes('ถามผู้ใช้ทีละคำถามในแชต'));
+  assert.ok(quick.includes('openResultPage(prompt, { forceIntake: false })'));
 });
 
 test('GP223 specialized workflow contains the required gates', () => {
