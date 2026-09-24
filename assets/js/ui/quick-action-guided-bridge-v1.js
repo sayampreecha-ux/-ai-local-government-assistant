@@ -179,6 +179,97 @@
   const RESULT_PROMPT_KEY = 'govprompt.resultPrompt.v1';
   const RESULT_FORCE_INTAKE_KEY = 'govprompt.forceGuidedIntake.v1';
 
+  function openNaturalPersonServiceTorIntake() {
+    if (!dialog || !dialogTitle || !dialogEyebrow || !dialogContent) return false;
+
+    const fallbackFields = [
+      { id: 'agency', label: 'หน่วยงานและส่วนราชการ', type: 'text', required: true, placeholder: 'ระบุหน่วยงานเจ้าของเรื่อง' },
+      { id: 'service_nature', label: 'ลักษณะงานที่ต้องการจ้าง', type: 'textarea', required: true, placeholder: 'อธิบายงานที่จะจ้างตามลักษณะงานจริง' },
+      { id: 'deliverables', label: 'ผลผลิต/งานที่ต้องส่งมอบ', type: 'textarea', required: true, placeholder: 'ระบุผลงาน ผลสำเร็จ งวดงาน หรือหลักฐานส่งมอบ' },
+      { id: 'scope', label: 'จำนวนหรือขอบเขตงาน', type: 'textarea', required: true, placeholder: 'ระบุปริมาณ ขอบเขต พื้นที่ หรือภารกิจ' },
+      { id: 'period', label: 'ระยะเวลาการจ้าง', type: 'text', required: true, placeholder: 'ระบุวันเริ่มต้นและสิ้นสุดจากข้อมูลจริง' },
+      { id: 'inspection', label: 'วิธีตรวจรับและหลักฐานส่งมอบ', type: 'textarea', required: true, placeholder: 'ระบุเกณฑ์ตรวจรับ ผู้ตรวจรับ และหลักฐาน' },
+      { id: 'budget', label: 'วงเงิน/งบประมาณ', type: 'text', required: false, placeholder: 'ระบุวงเงินจากเอกสารจริง' },
+      { id: 'contract', label: 'TOR หรือสัญญาตัวอย่างที่มี', type: 'textarea', required: false, placeholder: 'วางหรือแนบสาระจากเอกสารเดิม' },
+      { id: 'constraints', label: 'ข้อจำกัดหรือเงื่อนไขเฉพาะของงาน', type: 'textarea', required: false, placeholder: 'เช่น สถานที่ ช่วงเวลาทำการ อุปกรณ์ หรือเงื่อนไขเฉพาะ' }
+    ];
+    const catalogTool = window.GOVPROMPT_CATALOG?.find?.(tool => String(tool.code).toUpperCase() === 'GP223');
+    const fields = Array.isArray(catalogTool?.formFields) && catalogTool.formFields.length ? catalogTool.formFields : fallbackFields;
+
+    const root = document.createElement('form');
+    root.className = 'gp223-intake';
+    root.addEventListener('submit', event => {
+      event.preventDefault();
+      const values = Object.fromEntries(fields.map(field => [field.id, String(root.querySelector(`[name="${field.id}"]`)?.value || '').trim()]));
+      const missing = fields.filter(field => field.required && !values[field.id]);
+      if (missing.length) {
+        const first = root.querySelector(`[name="${missing[0].id}"]`);
+        first?.focus();
+        first?.setCustomValidity?.('กรุณาระบุข้อมูลนี้');
+        first?.reportValidity?.();
+        return;
+      }
+      fields.forEach(field => root.querySelector(`[name="${field.id}"]`)?.setCustomValidity?.(''));
+      const lines = [
+        'ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา',
+        'GP223 Intake — ใช้ข้อเท็จจริงจากแบบฟอร์มเป็นฐาน ห้ามแต่งข้อมูลที่ไม่ได้ให้',
+        ...fields.map(field => `- ${field.label}: ${values[field.id] || '[ไม่ได้ระบุ]'}`),
+        '',
+        'ให้วิเคราะห์ตามลักษณะงานจริง ตรวจ ว 727 และแบบสัญญาจ้างงานบริการสำหรับบุคคลธรรมดาจากแหล่งทางการที่เป็นปัจจุบัน ตรวจ Employment-like Risk, Scope Integrity, Authority Boundary, Deliverable/Acceptance, ความสอดคล้อง TOR↔สัญญา↔ผลส่งมอบ↔ตรวจรับ↔จ่ายเงิน และใช้ Applicable Authority Check + Decision Lock ก่อนสรุปข้อกฎหมายหรือเงื่อนไขที่ยังยืนยันไม่ได้',
+        'ผลลัพธ์: Answer First → ข้อเท็จจริง → จำแนกลักษณะงาน → ฐานอำนาจ/หลักฐาน → ความเสี่ยง → ข้อมูลที่ขาด → ร่าง TOR → checklist ความสอดคล้องเอกสาร'
+      ].join('\\n');
+      if (dialog?.open) dialog.close();
+      openResultPage(lines, { forceIntake: false });
+    });
+
+    const title = document.createElement('div');
+    title.className = 'gp223-intake-title';
+    title.innerHTML = '<strong>📑 ข้อมูลตั้งต้นสำหรับร่าง TOR</strong><small>กรอกเท่าที่มี · ช่องที่จำเป็นต้องระบุจะถูกตรวจให้ก่อนส่ง</small>';
+    root.append(title);
+
+    fields.forEach(field => {
+      const wrap = document.createElement('label');
+      wrap.className = 'gp223-intake-field';
+      const caption = document.createElement('span');
+      caption.textContent = field.label + (field.required ? ' *' : '');
+      const control = document.createElement(field.type === 'textarea' ? 'textarea' : 'input');
+      control.name = field.id;
+      control.placeholder = field.placeholder || '';
+      control.required = Boolean(field.required);
+      if (field.type !== 'textarea') control.type = field.type || 'text';
+      wrap.append(caption, control);
+      root.append(wrap);
+    });
+
+    const note = document.createElement('p');
+    note.className = 'gp223-intake-note';
+    note.textContent = 'หมายเหตุ: การกำหนดวันหรือช่วงเวลาปฏิบัติงานไม่ถูกตีความว่าเป็นการจ้างแรงงานโดยอัตโนมัติ ระบบจะตรวจร่วมกับลักษณะการควบคุม ผลส่งมอบ และเงื่อนไขสัญญา';
+    root.append(note);
+
+    const actions = document.createElement('div');
+    actions.className = 'gp223-intake-actions';
+    const cancel = document.createElement('button');
+    cancel.type = 'button'; cancel.className = 'gp223-intake-cancel'; cancel.textContent = 'ยกเลิก';
+    cancel.addEventListener('click', () => dialog.close());
+    const submit = document.createElement('button');
+    submit.type = 'submit'; submit.className = 'gp223-intake-submit'; submit.textContent = 'วิเคราะห์และร่าง TOR →';
+    actions.append(cancel, submit);
+    root.append(actions);
+
+    if (!document.getElementById('gp223IntakeStyles')) {
+      const style = document.createElement('style');
+      style.id = 'gp223IntakeStyles';
+      style.textContent = `.gp223-intake{display:grid;gap:10px;max-height:70vh;overflow:auto;padding:2px}.gp223-intake-title{display:grid;gap:3px;margin-bottom:4px}.gp223-intake-title small,.gp223-intake-note{color:#617068;font-size:.88rem}.gp223-intake-field{display:grid;gap:5px}.gp223-intake-field span{font-weight:750;font-size:.9rem}.gp223-intake-field input,.gp223-intake-field textarea{box-sizing:border-box;width:100%;border:1px solid #c8d7d0;border-radius:12px;padding:10px;font:inherit;background:#fff}.gp223-intake-field textarea{min-height:76px;resize:vertical}.gp223-intake-actions{display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;padding-top:8px;background:#fff}.gp223-intake-cancel,.gp223-intake-submit{border:0;border-radius:12px;padding:10px 14px;font:inherit;font-weight:800;cursor:pointer}.gp223-intake-submit{background:#12372a;color:#fff}.gp223-intake-cancel{background:#edf2ef;color:#12372a}`;
+      document.head.append(style);
+    }
+    dialogTitle.textContent = '📑 GP223 · จ้างเหมาบริการบุคคลธรรมดา';
+    dialogEyebrow.textContent = 'ระบุงานจริงและผลส่งมอบก่อนให้ระบบวิเคราะห์';
+    dialogContent.replaceChildren(root);
+    if (!dialog.open) dialog.showModal();
+    queueMicrotask(() => root.querySelector('input,textarea')?.focus());
+    return true;
+  }
+
   function openResultPage(prompt, options = {}) {
     const value = String(prompt || '').trim();
     if (!value) return;
@@ -323,6 +414,13 @@
   document.addEventListener('click', event => {
     const button = event.target.closest?.('[data-prompt]');
     if (!button) return;
+
+    if (normalize(button.dataset.prompt) === normalize('ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา')) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openNaturalPersonServiceTorIntake();
+      return;
+    }
 
     if (button.dataset.localIntake === 'pr-video') {
       event.preventDefault();
