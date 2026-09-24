@@ -306,6 +306,28 @@
     return Object.freeze({ ...promptBundle, prompt: `${promptBundle.prompt}\n\n${searchBlock}` });
   }
 
+  function enrichNaturalPersonServiceTor(promptBundle, text) {
+    const q = String(text || '');
+    if (!/จ้างเหมาบริการบุคคลธรรมดา|ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา/i.test(q)) return promptBundle;
+    const block = [
+      '',
+      '=== SPECIALIZED WORKFLOW: จ้างเหมาบริการบุคคลธรรมดา ===',
+      '1. วิเคราะห์ลักษณะงานจริง ไม่ตัดสินจากชื่อตำแหน่ง เช่น คนขับรถ รปภ. แม่บ้าน คนสวน ธุรการ การเงิน พัสดุ ช่าง IT สาธารณสุข หรือการศึกษา',
+      '2. แยก “งานบริการ/ผลส่งมอบ” ออกจากลักษณะที่อาจทำให้ความสัมพันธ์คล้ายการจ้างแรงงาน',
+      '3. ตรวจความเสี่ยงจากการกำหนดเวลาปฏิบัติงาน การลา การควบคุมสั่งการโดยตรง การกำหนดสถานะเสมือนลูกจ้าง และข้อความ “งานอื่นตามที่ได้รับมอบหมาย” ที่กว้างเกินจำเป็น',
+      '4. ห้ามกำหนดให้ผู้รับจ้างใช้อำนาจรัฐแทนเจ้าหน้าที่ เช่น อนุมัติ อนุญาต สั่งการ วินิจฉัย รับรอง หรือออกคำสั่งในนามหน่วยงาน',
+      '5. จัด TOR แบบผลลัพธ์เป็นฐาน: ขอบเขตงาน → ผลผลิต/งานส่งมอบ → กำหนดส่ง → หลักฐาน → เกณฑ์ตรวจรับ → การจ่ายเงิน',
+      '6. ตรวจความสอดคล้อง TOR ↔ สัญญา/ข้อตกลง ↔ ผลส่งมอบ ↔ ตรวจรับ ↔ จ่ายเงิน',
+      '7. ตรวจฐานอำนาจ กฎหมาย ระเบียบ หนังสือสั่งการ และฉบับที่ใช้บังคับ ณ เวลาจัดทำจากแหล่งทางการ โดยไม่ hard-code เลขหนังสือ วันที่ อัตรา หรือเงื่อนไขที่ยังไม่ได้ยืนยัน',
+      '8. ใช้ Applicable Authority Check: AUTHORITY, VERSION, TIME, FACT_MATCH, LATER_CHANGE, CONFLICT_TRANSITION',
+      '9. หากหลักฐานหรือเงื่อนไขสำคัญยังไม่พอ ให้เปิด Decision Lock และระบุสิ่งที่ต้องค้น/ตรวจเพิ่ม แทนการฟันธง',
+      '10. ผลลัพธ์ต้องมี: ข้อเท็จจริง · จำแนกลักษณะงาน · ฐานอำนาจที่ตรวจแล้ว · ความเสี่ยง · ข้อมูลที่ขาด · ร่าง TOR · checklist ความสอดคล้องเอกสาร',
+      'Template Library ใช้เป็นข้อมูลอ้างอิงเท่านั้น หากไม่มีแบบตรงกับงาน ให้สังเคราะห์จากลักษณะงานจริง',
+      '=== END SPECIALIZED WORKFLOW ==='
+    ].join('\\n');
+    return Object.freeze({ ...promptBundle, prompt: `${promptBundle.prompt}${block}`, serviceContractNaturalPerson: true });
+  }
+
   async function preparePrompt(text) {
     const core = requireCore();
     const safeAttachments = sanitizedAttachmentMetadata(core);
@@ -325,13 +347,14 @@
     const toolRoutingBlock = toolPlan && typeof core.formatToolRoutingInstructions === 'function'
       ? core.formatToolRoutingInstructions(toolPlan)
       : '';
-    const promptBundle = toolRoutingBlock
+    const routedPromptBundle = toolRoutingBlock
       ? Object.freeze({
           ...promptBundleBase,
           prompt: `${promptBundleBase.prompt}\n\nแนวทางเลือกเครื่องมือ\n${toolRoutingBlock}`,
           toolRoutingPlan: toolPlan
         })
       : promptBundleBase;
+    const promptBundle = enrichNaturalPersonServiceTor(routedPromptBundle, text);
 
     const isPr = Boolean(promptBundle?.prMode);
 
