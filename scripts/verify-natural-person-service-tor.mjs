@@ -11,7 +11,7 @@ test('GP223 catalog keeps the 9-field intake contract', () => {
   const end = catalog.indexOf('"id":"gp222"', start);
   const entry = catalog.slice(start, end > start ? end : undefined);
   assert.ok(start >= 0, 'GP223 catalog entry must exist');
-  const fieldsMatch = entry.match(/"formFields":(\[.*?\]),"status":"APPROVED","version":"1\\.1"/);
+  const fieldsMatch = entry.match(/"formFields":(\[.*?\]),"status":"APPROVED","version":"1\.1"/);
   assert.ok(fieldsMatch, 'GP223 catalog version 1.1 must expose formFields');
   const fields = JSON.parse(fieldsMatch[1]);
   assert.deepEqual(fields.map(field => field.id), ['agency','service_nature','deliverables','scope','period','inspection','budget','contract','constraints']);
