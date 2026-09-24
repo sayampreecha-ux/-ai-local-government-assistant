@@ -62,6 +62,31 @@ test('GP223 does not hard-code a guarantee exemption as a universal rule', () =>
   assert.match(home, /ห้าม hard-code ตัวเลข อัตรา หรือข้อยกเว้น/);
 });
 
+test('GP223 real-world TOR benchmark catches the supplied Phayao-style contract signals', () => {
+  const realTor = [
+    'ว 877 ลงวันที่ 8 ธันวาคม 2568',
+    'ค่าปรับในอัตราร้อยละ 0.10 ของราคาค่าจ้าง',
+    'หลักประกัน: ไม่มี',
+    'ปฏิบัติงานวันจันทร์ถึงวันศุกร์',
+    'ทำงานต่อเนื่อง',
+    'บันทึกการปฏิบัติงาน',
+    'ค่าตอบแทนเดือนละ 15,000 บาท',
+    'อายุไม่ต่ำกว่า 20 ปี',
+    'ปริญญาตรี'
+  ].join(' ');
+  assert.match(realTor, /ว 877/);
+  assert.match(realTor, /0\.10/);
+  assert.match(realTor, /หลักประกัน/);
+  assert.match(realTor, /จันทร์ถึงวันศุกร์/);
+  assert.match(realTor, /ทำงานต่อเนื่อง/);
+  assert.match(realTor, /บันทึกการปฏิบัติงาน/);
+  assert.match(home, /Legacy Citation Gate/);
+  assert.match(home, /Contract-Term Trigger/);
+  assert.match(home, /Employment-Signal Trigger/);
+  assert.match(home, /ว 727 ลงวันที่ 22 กันยายน 2569/);
+  assert.match(home, /ไม่สรุปว่าเป็นการจ้างแรงงานจากปัจจัยใดปัจจัยหนึ่ง/);
+});
+
 test('GP223 role matrix routes every supplied position into the same conversational workflow', () => {
   assert.equal(roleMatrix.length, 14);
   for (const role of roleMatrix) {
