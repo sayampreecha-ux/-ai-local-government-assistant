@@ -33,7 +33,7 @@ const cases = roles.flatMap(([role, clean, employment, authority]) => [
 const requiredGates = [
   'Employment-like Risk Gate','Scope Integrity Gate','Authority Boundary Gate',
   'Deliverable Gate','Five-Document Consistency Gate','Acceptance Gate',
-  'Contract Terms Gate','ว 727 / Authority Gate','Applicable Authority Check',
+  'Contract Terms Gate','ว 727 / Authority Gate','Local Government Authority Gate','Applicable Authority Check',
   'Decision Lock','Legacy Citation Gate','Contract-Term Trigger','Employment-Signal Trigger'
 ];
 
@@ -52,6 +52,8 @@ test('GP223 catalog and conversational routing remain available', () => {
 test('GP223 contains every required safety and legal gate', () => {
   for (const gate of requiredGates) assert.ok(home.includes(gate), 'missing gate: '+gate);
   assert.match(home, /ว 727 ลงวันที่ 22 กันยายน 2569/);
+  assert.match(home, /มท 0808\.2\/ว 5418 ลงวันที่ 24 กันยายน 2569/);
+  assert.match(home, /มท 0803\.3\/ว 5389 ลงวันที่ 23 กันยายน 2569/);
   assert.match(home, /ไม่สรุปว่าเป็นการจ้างแรงงานจากปัจจัยใดปัจจัยหนึ่ง/);
   assert.match(home, /ห้าม hard-code ตัวเลข อัตรา หรือข้อยกเว้น/);
 });
