@@ -44,7 +44,7 @@ test('GP223 Home action opens the AI conversation instead of a data-entry form',
 });
 
 test('GP223 specialized workflow contains the required gates', () => {
-  for (const phrase of ['Employment-like Risk Gate','Scope Integrity Gate','Authority Boundary Gate','Deliverable Gate','Five-Document Consistency Gate','Acceptance Gate','Contract Terms Gate','ว 727 / Authority Gate','Applicable Authority Check','Decision Lock']) {
+  for (const phrase of ['Employment-like Risk Gate','Scope Integrity Gate','Authority Boundary Gate','Deliverable Gate','Five-Document Consistency Gate','Acceptance Gate','Contract Terms Gate','ว 727 / Authority Gate','Local Government Authority Gate','Applicable Authority Check','Decision Lock']) {
     assert.ok(home.includes(phrase), 'missing gate: ' + phrase);
   }
   assert.match(home, /การกำหนดวันหรือช่วงเวลาปฏิบัติงาน|Employment-Signal Trigger/);
@@ -95,4 +95,13 @@ test('GP223 role matrix routes every supplied position into the same conversatio
     assert.match(home, /จ้างเหมาบริการบุคคลธรรมดา|ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา/);
     assert.match(home, /จำแนกลักษณะงานจากงานจริงและผลสำเร็จ ไม่ตัดสินจากชื่อตำแหน่ง/);
   }
+});
+
+
+test('GP223 checks the current local-government circular layer without replacing primary-source verification', () => {
+  assert.match(home, /Local Government Authority Gate/);
+  assert.match(home, /มท 0808\.2\/ว 5418 ลงวันที่ 24 กันยายน 2569/);
+  assert.match(home, /มท 0803\.3\/ว 5389 ลงวันที่ 23 กันยายน 2569/);
+  assert.match(home, /ตรวจต้นฉบับทางการ/);
+  assert.match(home, /ห้ามถือเลขหนังสือหรือข้อความสรุปจากแหล่งรองเป็นฐานตัดสิน/);
 });
