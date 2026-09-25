@@ -34,7 +34,7 @@ const requiredGates = [
   'Employment-like Risk Gate','Scope Integrity Gate','Authority Boundary Gate',
   'Deliverable Gate','Five-Document Consistency Gate','Acceptance Gate',
   'Contract Terms Gate','ว 727 / Authority Gate','Local Government Authority Gate','Applicable Authority Check',
-  'Decision Lock','Legacy Citation Gate','Contract-Term Trigger','Employment-Signal Trigger'
+  'Decision Lock','Legacy Citation Gate','Contract-Term Trigger','Employment-Signal Trigger','Travel-and-Training Gate','External-Person Training Gate','Travel Expense Gate'
 ];
 
 test('GP223 adversarial benchmark has 45 simulated real-world cases', () => {
@@ -54,6 +54,9 @@ test('GP223 contains every required safety and legal gate', () => {
   assert.match(home, /ว 727 ลงวันที่ 22 กันยายน 2569/);
   assert.match(home, /มท 0808\.2\/ว 5418 ลงวันที่ 24 กันยายน 2569/);
   assert.match(home, /มท 0803\.3\/ว 5389 ลงวันที่ 23 กันยายน 2569/);
+  assert.match(home, /ระเบียบกระทรวงมหาดไทยว่าด้วยค่าใช้จ่ายในการเดินทางไปราชการของเจ้าหน้าที่ท้องถิ่น พ\.ศ\. 2555/);
+  assert.match(home, /ระเบียบกระทรวงมหาดไทยว่าด้วยค่าใช้จ่ายในการฝึกอบรมและการเข้ารับการฝึกอบรมของเจ้าหน้าที่ท้องถิ่น พ\.ศ\. 2557/);
+  assert.match(home, /อปท\. ไม่สามารถส่งบุคคลภายนอกเข้ารับการฝึกอบรมได้/);
   assert.match(home, /ไม่สรุปว่าเป็นการจ้างแรงงานจากปัจจัยใดปัจจัยหนึ่ง/);
   assert.match(home, /ห้าม hard-code ตัวเลข อัตรา หรือข้อยกเว้น/);
 });
