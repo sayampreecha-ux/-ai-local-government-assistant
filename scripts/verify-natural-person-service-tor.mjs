@@ -105,3 +105,25 @@ test('GP223 checks the current local-government circular layer without replacing
   assert.match(home, /ตรวจต้นฉบับทางการ/);
   assert.match(home, /ห้ามถือเลขหนังสือหรือข้อความสรุปจากแหล่งรองเป็นฐานตัดสิน/);
 });
+
+
+test('GP223 accounting-support benchmark catches deliverable and employment-risk signals', () => {
+  const tor = [
+    'งานสนับสนุนการจัดทำทะเบียนและข้อมูลด้านบัญชีและรายงานทางการเงิน',
+    'ค่าตอบแทนเดือนละ 9,000 บาท',
+    '12 งวด',
+    'วันจันทร์ถึงวันศุกร์ เวลา 08.30-16.30 น.',
+    'มุ่งผลสำเร็จของงาน',
+    'จัดทำทะเบียนและชุดข้อมูล',
+    'จัดทำข้อมูลเปรียบเทียบและรายการผลต่าง',
+    'ส่งมอบและตรวจรับ',
+    'ไม่มีอำนาจอนุมัติหรือวินิจฉัยแทนเจ้าหน้าที่'
+  ].join(' ');
+  assert.match(tor, /งานสนับสนุนการจัดทำทะเบียนและข้อมูลด้านบัญชีและรายงานทางการเงิน/);
+  assert.match(tor, /วันจันทร์ถึงวันศุกร์/);
+  assert.match(tor, /มุ่งผลสำเร็จของงาน/);
+  assert.match(home, /งานสนับสนุนการจัดทำทะเบียนและข้อมูลด้านบัญชีและรายงานทางการเงิน/);
+  assert.match(home, /Employment-like Risk Gate/);
+  assert.match(home, /Deliverable Gate/);
+  assert.match(home, /Authority Boundary Gate/);
+});
