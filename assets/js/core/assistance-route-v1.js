@@ -69,7 +69,7 @@
   ]);
 
   function normalize(value) {
-    return String(value ?? '').normalize('NFKC').toLocaleLowerCase().trim();
+    return String(value ?? '').normalize('NFC').toLocaleLowerCase().trim();
   }
 
   function countMatches(text, patterns) {
