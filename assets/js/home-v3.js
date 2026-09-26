@@ -364,7 +364,18 @@
           toolRoutingPlan: toolPlan
         })
       : promptBundleBase;
-    const promptBundle = enrichNaturalPersonServiceTor(routedPromptBundle, text);
+    let promptBundle = enrichNaturalPersonServiceTor(routedPromptBundle, text);
+
+    const assistanceRoute = typeof core.detectAssistanceRoute === 'function'
+      ? core.detectAssistanceRoute(text)
+      : null;
+    if (assistanceRoute && typeof core.buildAssistancePromptBlock === 'function') {
+      promptBundle = Object.freeze({
+        ...promptBundle,
+        prompt: `${promptBundle.prompt}\n\n${core.buildAssistancePromptBlock(assistanceRoute)}`,
+        assistanceRoute
+      });
+    }
 
     const isPr = Boolean(promptBundle?.prMode);
 
