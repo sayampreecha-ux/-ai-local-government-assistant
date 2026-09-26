@@ -272,80 +272,6 @@
     return true;
   }
 
-  function openProcurementIndividualIntake() {
-    if (!dialog || !dialogTitle || !dialogEyebrow || !dialogContent) return false;
-
-    const root = document.createElement('div');
-    root.className = 'prc-intake';
-
-    const label = document.createElement('label');
-    label.className = 'prc-label';
-    label.htmlFor = 'prcWork';
-    label.textContent = 'จะจ้างเหมางานอะไร?';
-
-    const work = document.createElement('textarea');
-    work.id = 'prcWork';
-    work.className = 'prc-input';
-    work.rows = 3;
-    work.required = true;
-    work.placeholder = 'เช่น จ้างเหมาช่วยจัดทำเอกสารด้านการเงินและการเบิกจ่าย';
-
-    const extraLabel = document.createElement('label');
-    extraLabel.className = 'prc-label';
-    extraLabel.htmlFor = 'prcExtra';
-    extraLabel.textContent = 'ข้อมูลเพิ่มเติม (ถ้ามี)';
-
-    const extra = document.createElement('textarea');
-    extra.id = 'prcExtra';
-    extra.className = 'prc-input';
-    extra.rows = 3;
-    extra.placeholder = 'เช่น กองคลัง / 1 ราย / 1 ปี / งบประมาณประมาณ 108,000 บาท';
-
-    const help = document.createElement('p');
-    help.className = 'prc-help';
-    help.textContent = 'กรอกเท่าที่มี ไม่ต้องกรอกครบ และไม่ต้องแนบไฟล์ที่นี่ — หากมีเอกสารเพิ่มเติม ให้แนบใน AI ที่ใช้ต่อได้เลย';
-
-    const start = document.createElement('button');
-    start.type = 'button';
-    start.className = 'prc-start';
-    start.textContent = 'เริ่มให้ AI วิเคราะห์';
-
-    start.addEventListener('click', () => {
-      const workText = String(work.value || '').trim();
-      const extraText = String(extra.value || '').trim();
-      if (!workText) {
-        work.focus();
-        return;
-      }
-
-      const prompt = [
-        'ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา',
-        'ข้อมูลตั้งต้นจากผู้ใช้:',
-        'งานที่จะจ้าง: ' + workText,
-        extraText ? 'ข้อมูลเพิ่มเติม: ' + extraText : 'ข้อมูลเพิ่มเติม: ยังไม่ได้ระบุ',
-        '',
-        'ทำงานต่อจากข้อมูลตั้งต้นนี้ทันที ไม่ต้องให้ผู้ใช้กรอกแบบฟอร์มซ้ำ',
-        'ถามเฉพาะข้อมูลที่จำเป็นและยังไม่มี ทีละประเด็น ใช้ภาษาง่าย และไม่ถามสิ่งที่ผู้ใช้ให้ไว้แล้ว',
-        'หากผู้ใช้มีเอกสารเพิ่มเติม ให้รับเอกสารที่ผู้ใช้แนบใน AI ปลายทางและตรวจร่วมกับข้อเท็จจริง',
-        'ตรวจลักษณะงานจริง ไม่ยึดชื่อตำแหน่ง; ตรวจ Employment-like Risk, Scope Integrity, Authority Boundary, Deliverable/Acceptance และความสอดคล้อง TOR↔สัญญา↔ผลส่งมอบ↔ตรวจรับ↔จ่ายเงิน',
-        'ตรวจแหล่งทางการที่เป็นปัจจุบัน โดยเฉพาะ ว 727 ลงวันที่ 22 กันยายน 2569 และฐานอำนาจ/แบบสัญญาที่เกี่ยวข้อง',
-        'ห้ามแต่งข้อเท็จจริง หากข้อมูลยังไม่พอให้ถามหรือระบุว่าไม่ทราบ และใช้ Applicable Authority Check + Decision Lock เมื่อยังยืนยันไม่ได้',
-        'เมื่อข้อมูลเพียงพอ ให้จัดทำ TOR พร้อมฐานอำนาจ หลักฐาน ความเสี่ยง และ checklist ความสอดคล้องเอกสาร'
-      ].join('\\n');
-
-      if (dialog?.open) dialog.close();
-      openResultPage(prompt, { forceIntake: false });
-    });
-
-    root.append(label, work, extraLabel, extra, help, start);
-    dialogTitle.textContent = '👤 ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา';
-    dialogEyebrow.textContent = 'กรอกข้อมูลเริ่มต้นเท่าที่มี — ให้ AI ถามต่อเอง';
-    dialogContent.replaceChildren(root);
-    if (!dialog.open) dialog.showModal();
-    queueMicrotask(() => work.focus());
-    return true;
-  }
-
   function openPrVideoIntake() {
     if (!dialog || !dialogTitle || !dialogEyebrow || !dialogContent) return false;
 
@@ -407,7 +333,17 @@
     if (normalize(button.dataset.prompt) === normalize('ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา')) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      openProcurementIndividualIntake();
+      openResultPage([
+        'ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา',
+        'ใช้ Guided Intake มาตรฐานของ GovPrompt ให้ผู้ใช้ตอบข้อมูลตั้งต้นในช่องสนทนาหลัก ไม่เปิด Modal/Form เฉพาะงานนี้ และไม่บังคับให้แนบไฟล์',
+        'เริ่มจากข้อมูลที่ผู้ใช้มี แล้วถามข้อมูลที่จำเป็นสำหรับงานนี้ต่ออย่างเป็นระบบ โดยไม่ถามสิ่งที่ผู้ใช้ให้ไว้แล้ว',
+        'เมื่อข้อมูลเพียงพอ ให้ทำงานต่อทันทีโดยไม่ให้ผู้ใช้กรอกแบบฟอร์มซ้ำ',
+        'หากมีเอกสารเพิ่มเติม ผู้ใช้สามารถแนบผ่านช่องเอกสารประกอบงานมาตรฐานของ GovPrompt ได้',
+        'ตรวจลักษณะงานจริง ไม่ยึดชื่อตำแหน่ง; ตรวจ Employment-like Risk, Scope Integrity, Authority Boundary, Deliverable/Acceptance และความสอดคล้อง TOR↔สัญญา↔ผลส่งมอบ↔ตรวจรับ↔จ่ายเงิน',
+        'ตรวจแหล่งทางการที่เป็นปัจจุบัน โดยเฉพาะ ว 727 ลงวันที่ 22 กันยายน 2569 และฐานอำนาจ/แบบสัญญาที่เกี่ยวข้อง',
+        'ห้ามแต่งข้อเท็จจริง หากข้อมูลยังไม่พอให้ถามหรือระบุว่าไม่ทราบ และใช้ Applicable Authority Check + Decision Lock เมื่อยังยืนยันไม่ได้',
+        'เป้าหมายสุดท้าย: จัดทำ TOR พร้อมฐานอำนาจ หลักฐาน ความเสี่ยง และ checklist ความสอดคล้องเอกสาร'
+      ].join('\\n'), { forceIntake: true });
       return;
     }
 
