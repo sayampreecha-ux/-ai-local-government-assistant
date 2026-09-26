@@ -66,9 +66,17 @@
 
   const TOR_FIRST_SUCCESS_COPY = Object.freeze({
     label: 'เริ่ม TOR อย่างเป็นขั้นตอน',
-    heading: 'ร่าง TOR ให้เริ่มง่าย — บอก GP 3 เรื่อง',
-    intro: 'ไม่ต้องเขียน Prompt และยังไม่ต้องรู้สเปกทั้งหมด ตอบเท่าที่มี แล้ว GP จะช่วยตั้งโครงงานต่อให้',
-    note: 'จากนั้น GP จะช่วย 3 อย่าง: จัดโครง TOR · ตรวจจุดเสี่ยงล็อกสเปก/การแข่งขัน · บอกข้อมูลหรือหลักฐานที่ยังต้องยืนยัน — ผู้ใช้ตรวจและอนุมัติก่อนใช้จริง',
+    heading: 'ร่าง TOR ให้เริ่มง่าย — บอกข้อมูลตั้งต้น',
+    intro: 'ไม่ต้องเขียน Prompt และยังไม่ต้องรู้รายละเอียดทั้งหมด ตอบเท่าที่มี แล้ว GP จะถามต่อเฉพาะสิ่งที่จำเป็น',
+    note: 'จากนั้น GP จะช่วยจัดโครง TOR ตรวจลักษณะงานและความเสี่ยงของการจ้างเหมาบริการ พร้อมบอกข้อมูลหรือหลักฐานที่ยังต้องยืนยัน',
+    unknown: 'ยังไม่ทราบ — ให้ GP ช่วยตั้งต้น'
+  });
+
+  const INDIVIDUAL_CONTRACTOR_COPY = Object.freeze({
+    label: 'เริ่มงานจ้างเหมาอย่างเป็นขั้นตอน',
+    heading: 'จ้างเหมาบริการ — เริ่มจากงานที่จะจ้าง',
+    intro: 'บอกก่อนว่า “จะจ้างเหมางานอะไร” ไม่ต้องกรอกแบบฟอร์มยาว แล้ว GP จะถามข้อมูลที่จำเป็นต่อเองทีละเรื่อง',
+    note: 'GP จะช่วยตรวจลักษณะงาน ความเสี่ยงการจ้างในลักษณะคล้ายการจ้างแรงงาน ผลส่งมอบ และจัดทำ TOR ให้สอดคล้องกับสัญญาและการตรวจรับ',
     unknown: 'ยังไม่ทราบ — ให้ GP ช่วยตั้งต้น'
   });
 
@@ -195,7 +203,8 @@
     function scrollLatest() { conversation.lastElementChild?.scrollIntoView?.({ behavior: 'smooth', block: 'end' }); }
 
     function appendQuestionCard(assessment, subject) {
-      const copy = assessment.intent === 'procurement' && isTorRequest(subject) ? TOR_FIRST_SUCCESS_COPY : DEFAULT_COPY;
+      const isIndividualContractorTor = /จ้างเหมาบริการบุคคลธรรมดา|จ้างเหมาบริการ.*บุคคลธรรมดา/i.test(normalize(subject));
+      const copy = isIndividualContractorTor ? INDIVIDUAL_CONTRACTOR_COPY : (assessment.intent === 'procurement' && isTorRequest(subject) ? TOR_FIRST_SUCCESS_COPY : DEFAULT_COPY);
       const article = document.createElement('article');
       article.className = 'message assistant guided-intake-message';
       const mark = document.createElement('span');
