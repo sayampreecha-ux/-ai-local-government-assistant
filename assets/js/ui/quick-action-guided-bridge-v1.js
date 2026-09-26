@@ -168,12 +168,6 @@
       .pr-video-row .is-selected{background:#12372a;color:#fff}
       .pr-video-help{margin:0;color:#617068;font-size:.92rem}
       .pr-video-create{border:0;border-radius:14px;padding:12px 16px;background:#12372a;color:#fff;font:inherit;font-weight:800;cursor:pointer}
-      .prc-intake{display:grid;gap:12px}
-      .prc-label{font-weight:800;color:#12372a}
-      .prc-input{width:100%;box-sizing:border-box;border:1px solid #c8d7d0;border-radius:14px;padding:12px;font:inherit;resize:vertical;min-height:48px;background:#fff}
-      .prc-input:focus{outline:2px solid #12372a;outline-offset:1px}
-      .prc-help{margin:0;color:#617068;font-size:.9rem}
-      .prc-start{border:0;border-radius:14px;padding:12px 16px;background:#12372a;color:#fff;font:inherit;font-weight:800;cursor:pointer}
 `;
     document.head.append(style);
   }
