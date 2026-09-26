@@ -168,6 +168,12 @@
       .pr-video-row .is-selected{background:#12372a;color:#fff}
       .pr-video-help{margin:0;color:#617068;font-size:.92rem}
       .pr-video-create{border:0;border-radius:14px;padding:12px 16px;background:#12372a;color:#fff;font:inherit;font-weight:800;cursor:pointer}
+      .prc-intake{display:grid;gap:12px}
+      .prc-label{font-weight:800;color:#12372a}
+      .prc-input{width:100%;box-sizing:border-box;border:1px solid #c8d7d0;border-radius:14px;padding:12px;font:inherit;resize:vertical;min-height:48px;background:#fff}
+      .prc-input:focus{outline:2px solid #12372a;outline-offset:1px}
+      .prc-help{margin:0;color:#617068;font-size:.9rem}
+      .prc-start{border:0;border-radius:14px;padding:12px 16px;background:#12372a;color:#fff;font:inherit;font-weight:800;cursor:pointer}
 `;
     document.head.append(style);
   }
@@ -266,6 +272,80 @@
     return true;
   }
 
+  function openProcurementIndividualIntake() {
+    if (!dialog || !dialogTitle || !dialogEyebrow || !dialogContent) return false;
+
+    const root = document.createElement('div');
+    root.className = 'prc-intake';
+
+    const label = document.createElement('label');
+    label.className = 'prc-label';
+    label.htmlFor = 'prcWork';
+    label.textContent = 'จะจ้างเหมางานอะไร?';
+
+    const work = document.createElement('textarea');
+    work.id = 'prcWork';
+    work.className = 'prc-input';
+    work.rows = 3;
+    work.required = true;
+    work.placeholder = 'เช่น จ้างเหมาช่วยจัดทำเอกสารด้านการเงินและการเบิกจ่าย';
+
+    const extraLabel = document.createElement('label');
+    extraLabel.className = 'prc-label';
+    extraLabel.htmlFor = 'prcExtra';
+    extraLabel.textContent = 'ข้อมูลเพิ่มเติม (ถ้ามี)';
+
+    const extra = document.createElement('textarea');
+    extra.id = 'prcExtra';
+    extra.className = 'prc-input';
+    extra.rows = 3;
+    extra.placeholder = 'เช่น กองคลัง / 1 ราย / 1 ปี / งบประมาณประมาณ 108,000 บาท';
+
+    const help = document.createElement('p');
+    help.className = 'prc-help';
+    help.textContent = 'กรอกเท่าที่มี ไม่ต้องกรอกครบ และไม่ต้องแนบไฟล์ที่นี่ — หากมีเอกสารเพิ่มเติม ให้แนบใน AI ที่ใช้ต่อได้เลย';
+
+    const start = document.createElement('button');
+    start.type = 'button';
+    start.className = 'prc-start';
+    start.textContent = 'เริ่มให้ AI วิเคราะห์';
+
+    start.addEventListener('click', () => {
+      const workText = String(work.value || '').trim();
+      const extraText = String(extra.value || '').trim();
+      if (!workText) {
+        work.focus();
+        return;
+      }
+
+      const prompt = [
+        'ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา',
+        'ข้อมูลตั้งต้นจากผู้ใช้:',
+        'งานที่จะจ้าง: ' + workText,
+        extraText ? 'ข้อมูลเพิ่มเติม: ' + extraText : 'ข้อมูลเพิ่มเติม: ยังไม่ได้ระบุ',
+        '',
+        'ทำงานต่อจากข้อมูลตั้งต้นนี้ทันที ไม่ต้องให้ผู้ใช้กรอกแบบฟอร์มซ้ำ',
+        'ถามเฉพาะข้อมูลที่จำเป็นและยังไม่มี ทีละประเด็น ใช้ภาษาง่าย และไม่ถามสิ่งที่ผู้ใช้ให้ไว้แล้ว',
+        'หากผู้ใช้มีเอกสารเพิ่มเติม ให้รับเอกสารที่ผู้ใช้แนบใน AI ปลายทางและตรวจร่วมกับข้อเท็จจริง',
+        'ตรวจลักษณะงานจริง ไม่ยึดชื่อตำแหน่ง; ตรวจ Employment-like Risk, Scope Integrity, Authority Boundary, Deliverable/Acceptance และความสอดคล้อง TOR↔สัญญา↔ผลส่งมอบ↔ตรวจรับ↔จ่ายเงิน',
+        'ตรวจแหล่งทางการที่เป็นปัจจุบัน โดยเฉพาะ ว 727 ลงวันที่ 22 กันยายน 2569 และฐานอำนาจ/แบบสัญญาที่เกี่ยวข้อง',
+        'ห้ามแต่งข้อเท็จจริง หากข้อมูลยังไม่พอให้ถามหรือระบุว่าไม่ทราบ และใช้ Applicable Authority Check + Decision Lock เมื่อยังยืนยันไม่ได้',
+        'เมื่อข้อมูลเพียงพอ ให้จัดทำ TOR พร้อมฐานอำนาจ หลักฐาน ความเสี่ยง และ checklist ความสอดคล้องเอกสาร'
+      ].join('\\n');
+
+      if (dialog?.open) dialog.close();
+      openResultPage(prompt, { forceIntake: false });
+    });
+
+    root.append(label, work, extraLabel, extra, help, start);
+    dialogTitle.textContent = '👤 ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา';
+    dialogEyebrow.textContent = 'กรอกข้อมูลเริ่มต้นเท่าที่มี — ให้ AI ถามต่อเอง';
+    dialogContent.replaceChildren(root);
+    if (!dialog.open) dialog.showModal();
+    queueMicrotask(() => work.focus());
+    return true;
+  }
+
   function openPrVideoIntake() {
     if (!dialog || !dialogTitle || !dialogEyebrow || !dialogContent) return false;
 
@@ -327,17 +407,7 @@
     if (normalize(button.dataset.prompt) === normalize('ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา')) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      openResultPage([
-        'ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา',
-        'เริ่มจากการสนทนากับผู้ใช้โดยตรง ห้ามเปิดแบบฟอร์ม GP223 และห้ามบังคับให้ผู้ใช้กรอกข้อมูลเป็นช่อง',
-        'หน้าที่ของ AI: ฟังคำอธิบายงานก่อน แล้วถามข้อมูลที่จำเป็นเพิ่มเติมจากผู้ใช้เองทีละประเด็น ใช้ภาษาง่าย ไม่ถามสิ่งที่มีข้อมูลอยู่แล้ว และไม่ถามรวดเดียวหลายข้อ',
-        'เมื่อข้อมูลเพียงพอ ให้ทำงานต่อทันทีโดยไม่ต้องให้ผู้ใช้กรอกแบบฟอร์มซ้ำ',
-        'หากข้อมูลยังไม่พอสำหรับข้อสรุปทางกฎหมาย ให้แยก “ข้อมูลที่ทราบ” กับ “ข้อมูลที่ต้องยืนยัน” และเริ่มค้นฐานอำนาจ/แหล่งทางการได้โดยไม่รอข้อมูลที่ไม่จำเป็น',
-        'ต้องตรวจแหล่งทางการที่เป็นปัจจุบัน โดยเฉพาะ ว 727 ลงวันที่ 22 กันยายน 2569 และแบบสัญญาจ้างงานบริการประเภทจ้างเหมาบริการบุคคลธรรมดา รวมทั้งฐานอำนาจที่เกี่ยวข้อง',
-        'ตรวจลักษณะงานจริง ไม่ยึดชื่อตำแหน่ง; ตรวจ Employment-like Risk, Scope Integrity, Authority Boundary, Deliverable/Acceptance และความสอดคล้อง TOR↔สัญญา↔ผลส่งมอบ↔ตรวจรับ↔จ่ายเงิน',
-        'ห้ามแต่งข้อเท็จจริง หากยังไม่มีข้อมูลให้ถามผู้ใช้หรือระบุว่าไม่ทราบ และใช้ Applicable Authority Check + Decision Lock เมื่อยังยืนยันไม่ได้',
-        'เป้าหมายสุดท้าย: จัดทำ TOR ที่พร้อมนำไปตรวจสอบต่อ พร้อมฐานอำนาจ หลักฐาน ความเสี่ยง และ checklist ความสอดคล้องเอกสาร'
-      ].join('\\n'), { forceIntake: false });
+      openProcurementIndividualIntake();
       return;
     }
 
