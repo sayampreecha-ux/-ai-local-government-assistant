@@ -11,7 +11,7 @@
   if (!form || !input || !quickActions) return;
 
   const CATALOG_ORDER = Object.freeze([
-    'assistance', 'pr', 'records', 'audit', 'finance', 'planning', 'procurement',
+    'pr', 'records', 'audit', 'finance', 'planning', 'procurement',
     'hr', 'executive', 'engineering', 'health', 'education', 'council'
   ]);
 
@@ -218,7 +218,7 @@
     heading.className = 'work-catalog-heading';
     title.textContent = 'เลือกผู้ช่วยตามงาน';
     intro.className = 'work-catalog-intro';
-    intro.textContent = '12 หมวดงาน + เส้นทางช่วยเหลือประชาชนและสาธารณภัย';
+    intro.textContent = '12 หมวดงาน เรียงจากงานที่ใช้บ่อย • มีเส้นทางช่วยเหลือประชาชนและสาธารณภัยอัตโนมัติ';
     groups.className = 'work-catalog-groups';
 
     const categories = new Map(WORK_CATALOG.map(category => [category.id, category]));
