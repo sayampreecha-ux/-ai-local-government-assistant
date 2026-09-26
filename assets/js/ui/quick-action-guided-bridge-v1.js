@@ -11,11 +11,22 @@
   if (!form || !input || !quickActions) return;
 
   const CATALOG_ORDER = Object.freeze([
-    'pr', 'records', 'audit', 'finance', 'planning', 'procurement',
+    'assistance', 'pr', 'records', 'audit', 'finance', 'planning', 'procurement',
     'hr', 'executive', 'engineering', 'health', 'education', 'council'
   ]);
 
   const WORK_CATALOG = Object.freeze([
+  Object.freeze({
+      id: 'assistance', title: 'ช่วยเหลือประชาชนและสาธารณภัย', keywords: 'ช่วยเหลือประชาชน ผู้ประสบภัย ภัยพิบัติ สาธารณภัย น้ำท่วม น้ำป่า ดินถล่ม วาตภัย อัคคีภัย ภัยแล้ง ถุงยังชีพ เงินทดรองราชการ',
+      tasks: Object.freeze([
+        Object.freeze({ label: 'ตรวจว่าช่วยเหลือได้หรือไม่', prompt: 'ตรวจว่ากรณีนี้สามารถช่วยเหลือประชาชนได้หรือไม่ พร้อมฐานอำนาจ เงื่อนไข ข้อเท็จจริงที่ต้องตรวจ และความเสี่ยง' }),
+        Object.freeze({ label: 'ตรวจสิทธิ / อัตรา / วงเงิน', prompt: 'ตรวจสิทธิ เงื่อนไข อัตรา และวงเงินการช่วยเหลือกรณีนี้ โดยตรวจหลักเกณฑ์ที่ใช้บังคับ ณ วันที่เกิดเหตุจากแหล่งทางการ และห้ามสรุปสิทธิจากตัวเลขเพียงอย่างเดียว' }),
+        Object.freeze({ label: 'ตรวจกรณีภัยพิบัติ', prompt: 'ตรวจกรณีภัยพิบัติหรือสาธารณภัยว่าต้องใช้ฐานกฎหมายใด เงื่อนไขใด เอกสารใด และต้องดำเนินการอย่างไร' }),
+        Object.freeze({ label: 'ทำ Checklist เจ้าหน้าที่', prompt: 'ทำ Checklist เจ้าหน้าที่สำหรับการช่วยเหลือประชาชนหรือผู้ประสบภัย ตั้งแต่รับเรื่อง ตรวจข้อเท็จจริง ตรวจหลักฐาน เสนออนุมัติ จ่ายเงิน และจัดเก็บหลักฐานตรวจสอบ' }),
+        Object.freeze({ label: 'ทำบันทึกเสนอผู้บริหาร', prompt: 'ทำบันทึกเสนอผู้บริหารเรื่องการช่วยเหลือประชาชน โดยแยกข้อเท็จจริง ฐานอำนาจ เงื่อนไข งบประมาณ ความเสี่ยง และข้อเสนอเพื่อพิจารณา' }),
+        Object.freeze({ label: 'ตรวจความเสี่ยงก่อนจ่าย', prompt: 'ตรวจความเสี่ยงก่อนจ่ายเงินช่วยเหลือประชาชนหรือผู้ประสบภัย รวมถึงอำนาจ เงื่อนไข การช่วยเหลือซ้ำซ้อน หลักฐาน แหล่งเงิน และ Audit Trail' })
+      ])
+    }),
     Object.freeze({
       id: 'executive', title: 'บริหารและผู้บริหาร', keywords: 'บริหาร ผู้บริหาร ปลัด นายก ประชุม ตัดสินใจ',
       tasks: Object.freeze([
@@ -207,7 +218,7 @@
     heading.className = 'work-catalog-heading';
     title.textContent = 'เลือกผู้ช่วยตามงาน';
     intro.className = 'work-catalog-intro';
-    intro.textContent = '12 หมวดงาน เรียงจากงานที่ใช้บ่อย';
+    intro.textContent = '12 หมวดงาน + เส้นทางช่วยเหลือประชาชนและสาธารณภัย';
     groups.className = 'work-catalog-groups';
 
     const categories = new Map(WORK_CATALOG.map(category => [category.id, category]));
