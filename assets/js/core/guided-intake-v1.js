@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.2.1';
+  const VERSION = '1.2.2';
   const MAX_QUESTIONS = 3;
   const UNKNOWN_PATTERN = /(?:ไม่ทราบ|ยังไม่ทราบ|ยังไม่กำหนด|ยังไม่มีข้อมูล)/i;
   const CREATE_PATTERN = /(?:^|\s)(?:ร่าง|จัดทำ|ทำ|สร้าง|เขียน|เตรียม|ออกแบบ|จัดซื้อ|จัดจ้าง|จัดอบรม)(?:\s|$|[^ก-๙a-z0-9])/i;
@@ -16,6 +16,11 @@
       Object.freeze({ key: 'item', question: 'จะซื้อ จ้าง หรือก่อสร้างอะไร? ถ้ามีชื่อโครงการ บอกชื่อสั้น ๆ ได้เลย' }),
       Object.freeze({ key: 'purpose', question: 'ต้องการนำไปใช้ทำอะไร หรืออยากได้ผลลัพธ์แบบไหนจากงานนี้?' }),
       Object.freeze({ key: 'budget', question: 'วงเงินโดยประมาณเท่าไร และถ้าทราบ ใช้งบจากแหล่งใด? ถ้ายังไม่ทราบพิมพ์ “ไม่ทราบ” ได้' })
+    ]),
+    individualContractor: Object.freeze([
+      Object.freeze({ key: 'contractWork', question: 'จะจ้างเหมางานอะไร? บอกลักษณะงานสั้น ๆ ได้เลย' }),
+      Object.freeze({ key: 'deliverable', question: 'ต้องการให้ผู้รับจ้างทำหรือส่งมอบอะไรเป็นหลัก?' }),
+      Object.freeze({ key: 'contractTerms', question: 'ถ้าทราบ ระยะเวลาจ้างและวงเงินประมาณเท่าไร? ถ้ายังไม่ทราบพิมพ์ “ไม่ทราบ” ได้' })
     ]),
     project: Object.freeze([
       Object.freeze({ key: 'topic', question: 'โครงการหรือการอบรมนี้เกี่ยวกับเรื่องอะไร และต้องการแก้ปัญหา/พัฒนาเรื่องใด?' }),
@@ -123,6 +128,9 @@
     if (UNKNOWN_PATTERN.test(value)) return true;
     switch (key) {
       case 'item': return meaningfulTopic(value) && !/^(?:ช่วย)?\s*(?:ร่าง\s*)?tor(?:\s*หรือขอบเขตของงาน)?$/i.test(value);
+      case 'contractWork': return meaningfulTopic(value) && !/^(?:ช่วย)?\s*(?:ร่าง\s*)?tor(?:\s*หรือขอบเขตของงาน)?$/i.test(value);
+      case 'deliverable': return value.length >= 12 || /(?:ส่งมอบ|ผลงาน|ผลผลิต|รายงาน|เอกสาร|ชิ้นงาน|งานที่ต้องทำ|ต้องทำ)/i.test(value);
+      case 'contractTerms': return UNKNOWN_PATTERN.test(value) || /(?:\d[\d,]*(?:\.\d+)?\s*(?:บาท|ล้าน|แสน)|วงเงิน|งบประมาณ|\d+\s*(?:เดือน|ปี|วัน))/i.test(value);
       case 'topic': return meaningfulTopic(value);
       case 'purpose': return /(?:เพื่อ|วัตถุประสงค์|ต้องการ(?:นำไป)?ใช้|ใช้งาน|ขออนุมัติ|ขอความร่วมมือ|แจ้ง|หารือ|แก้ปัญหา|พัฒนา|ส่งเสริม|ป้องกัน|ตรวจ|วิเคราะห์|จัดทำ|ร่าง)/i.test(value) && value.length > 20;
       case 'budget': return /(?:\d[\d,]*(?:\.\d+)?\s*(?:บาท|ล้าน|แสน)|(?:งบ|วงเงิน)\s*(?:ประมาณ)?\s*[:=]?\s*\d)/i.test(value);
@@ -161,7 +169,8 @@
     const intent = inferIntent(value, activeRoute);
     if (!options.force && !shouldGuide(value)) return Object.freeze({ ready: true, intent, route: activeRoute, missingFields: Object.freeze([]), questions: Object.freeze([]) });
     const unknown = new Set((acknowledgedUnknown || []).map(String));
-    const profile = PROFILES[intent] || PROFILES.general;
+    const isIndividualContractorTor = intent === 'procurement' && /จ้างเหมาบริการบุคคลธรรมดา|จ้างเหมาบริการ.*บุคคลธรรมดา/i.test(value);
+    const profile = isIndividualContractorTor ? PROFILES.individualContractor : (PROFILES[intent] || PROFILES.general);
     const missing = profile.filter(item => !unknown.has(item.key) && (options.force || !fieldSatisfied(item.key, value))).slice(0, MAX_QUESTIONS);
     return Object.freeze({
       ready: missing.length === 0,
