@@ -222,7 +222,8 @@
     groups.className = 'work-catalog-groups';
 
     const categories = new Map(WORK_CATALOG.map(category => [category.id, category]));
-    CATALOG_ORDER.map(id => categories.get(id)).filter(Boolean).forEach((category, index) => {
+    const renderCategory = (category, index) => {
+      if (!category) return;
       const section = document.createElement('section');
       const heading = document.createElement('h3');
       const tasks = document.createElement('div');
@@ -246,6 +247,13 @@
       });
       section.append(heading, tasks);
       groups.append(section);
+    };
+
+    // Assistance Route is a dedicated public-service entry, separate from the 12 core work categories.
+    // This preserves the existing 12-category contract while keeping citizen-assistance actions visible.
+    renderCategory(categories.get('assistance'), 0);
+    CATALOG_ORDER.map(id => categories.get(id)).filter(Boolean).forEach((category, index) => {
+      renderCategory(category, index + 1);
     });
 
     heading.append(title, intro);
