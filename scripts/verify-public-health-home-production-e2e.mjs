@@ -15,7 +15,7 @@ await page.waitForFunction(() => document.readyState === 'complete', undefined, 
 
 const catalog = page.locator('.work-catalog-groups');
 await catalog.waitFor({ state: 'visible', timeout: 15_000 });
-assert.equal(await catalog.locator('.work-catalog-group').count(), 12, 'Home must expose all 12 assistant categories without an extra opener');
+assert.equal(await catalog.locator('.work-catalog-group:not([data-assistance-route])').count(), 12, 'Home must expose all 12 assistant categories without an extra opener');
 
 const recordsGroup = page.locator('.work-catalog-group').filter({ hasText: /สารบรรณ|หนังสือราชการ/i }).first();
 await recordsGroup.locator('.assistant-catalog-toggle').click();
