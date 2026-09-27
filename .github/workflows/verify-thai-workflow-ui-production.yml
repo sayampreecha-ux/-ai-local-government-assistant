@@ -6,6 +6,8 @@ on:
     paths:
       - 'index.html'
       - 'service-worker.js'
+      - 'assets/js/core/assistance-route-v1.js'
+      - 'assets/js/core/emergency-procurement-gate-v1.js'
       - 'assets/js/ui/workflow-progress-ui-v1.js'
       - 'assets/js/core/government-workflow-runtime-v5.js'
       - 'scripts/verify-thai-workflow-ui-production-e2e.mjs'
