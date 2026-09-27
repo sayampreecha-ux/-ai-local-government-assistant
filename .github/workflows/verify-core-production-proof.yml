@@ -22,6 +22,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  # Production contract verification remains release-blocking.
   contents: read
   issues: write
 
