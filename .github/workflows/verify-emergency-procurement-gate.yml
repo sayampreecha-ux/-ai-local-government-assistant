@@ -7,6 +7,7 @@ on:
       - 'assets/js/core/assistance-route-v1.js'
       - 'assets/js/core/emergency-procurement-gate-v1.js'
       - 'scripts/verify-emergency-procurement-gate.mjs'
+      - 'scripts/verify-assistance-route.mjs'
       - 'package.json'
       - '.github/workflows/verify-emergency-procurement-gate.yml'
   workflow_dispatch:
@@ -33,6 +34,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Syntax check
         run: node --check assets/js/core/assistance-route-v1.js && node --check assets/js/core/emergency-procurement-gate-v1.js && node --check scripts/verify-emergency-procurement-gate.mjs
+      - name: Assistance Route Authority Matrix regression
+        run: node scripts/verify-assistance-route.mjs
       - name: Emergency Procurement Gate regression
         run: node scripts/verify-emergency-procurement-gate.mjs
       - name: Production build
