@@ -14,6 +14,7 @@ const serviceWorkerUrl = page('service-worker.js');
 const quickActionBridgeUrl = page('assets/js/ui/quick-action-guided-bridge-v1.js?v=1.3.1');
 const RELEASE = Object.freeze({ home:'6.4.13', homeCss:'2.6.4', serviceWorker:'6.4.10', mic:'2.4.0', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
 const WORKFLOW_RUNTIME_VERSION = '5.6.4';
+const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.6.2';
 const WORKFLOW_UI_VERSION = '1.3';
 
 const runtimeSourceFiles = Object.freeze([
@@ -123,7 +124,7 @@ assert.match(css.text,/budget-review-table/);
 assert.match(css.text,/budget-purpose-picker/);
 assert.match(css.text,/budget-review-overlay/);
 assert.match(css.text,/budget-review-dialog/);
-assert.match(runtimeBridge.text,new RegExp(`WORKFLOW_RUNTIME_BRIDGE_VERSION = '${WORKFLOW_RUNTIME_VERSION.replaceAll('.','\\.')}'`));
+assert.match(runtimeBridge.text,new RegExp(`WORKFLOW_RUNTIME_BRIDGE_VERSION = '${WORKFLOW_RUNTIME_BRIDGE_VERSION.replaceAll('.','\\.')}'`));
 assert.match(runtimeBridge.text,/rawEvidenceValuesReturned: false/);
 assert.match(runtimeBridge.text,/autoApprovalAllowed: false/);
 assert.match(runtimeBridge.text,/gov\.citizen-service/);
