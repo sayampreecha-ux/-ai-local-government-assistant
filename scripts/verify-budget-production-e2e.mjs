@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 
 const frontend = process.env.GOVPROMPT_FRONTEND_URL || 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/index.html';
-const RELEASE_HOME_VERSION = '6.4.5';
+const RELEASE_HOME_VERSION = '6.4.13';
 const browser = await chromium.launch({ headless:true });
 const context = await browser.newContext({ serviceWorkers:'allow', viewport:{width:390,height:844}, isMobile:true, hasTouch:true });
 const page = await context.newPage();
@@ -25,6 +25,7 @@ await page.waitForFunction(()=>document.readyState==='complete' && document.getE
 // “ยังไม่ทราบ...ทำต่อ” path that finalizes the pending intake, preserves missing fields as explicit unknowns, and lets the governed
 // budget runtime proceed fail-closed rather than inventing facts. Exercise that exact production path here.
 const prompt='จัดทำร่างงบประมาณ';
+await page.locator('#chatForm').evaluate(form => { form.dataset.forceGuidedIntake = 'true'; });
 await page.locator('#promptInput').fill(prompt);
 await page.locator('#chatForm .send-button').click();
 const intakeCard=page.locator('.guided-intake-message').last();
