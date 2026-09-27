@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.0.0';
+  const VERSION = '1.1.0';
   const OWNER_GROUP = 'G09';
   const ROUTE_ID = 'assistance';
   const ROUTE_LABEL = 'ช่วยเหลือประชาชนและสาธารณภัย';
@@ -27,6 +27,14 @@
       rule: 'ห้ามใช้ตัวเลขหรืออัตราโดยไม่ตรวจฉบับที่ใช้บังคับ วันที่เกิดเหตุ และเงื่อนไขของรายการนั้น'
     })
   ]);
+
+  // Authority Matrix: ระเบียบ มท. 2566 ข้อ 19 เป็นฐานเชื่อมประเภทความช่วยเหลือไปยังหลักเกณฑ์เฉพาะ
+  const AUTHORITY_MATRIX = Object.freeze({
+    DISASTER_EMERGENCY: Object.freeze({ key: 'DISASTER_EMERGENCY', label: 'สาธารณภัย/ภัยพิบัติฉุกเฉิน', baseRule: 'MOI-ASSIST-2566-19-1', criteriaAuthority: 'กระทรวงการคลัง', criteriaSourceId: 'MOF-DISASTER-2569', operationalAuthority: 'กรมป้องกันและบรรเทาสาธารณภัย', operationalRole: 'ข้อมูล/การประสานงาน/การปฏิบัติด้านสาธารณภัย และเผยแพร่หลักเกณฑ์ที่เกี่ยวข้อง; ไม่ใช้แทนเจ้าของหลักเกณฑ์ด้านอัตรา', resolver: 'ตรวจหลักเกณฑ์ กค. ที่ใช้บังคับตามวันที่เกิดภัย' }),
+    QUALITY_OF_LIFE: Object.freeze({ key: 'QUALITY_OF_LIFE', label: 'ส่งเสริมและพัฒนาคุณภาพชีวิต', baseRule: 'MOI-ASSIST-2566-19-2', criteriaAuthority: 'กระทรวงมหาดไทย หรือกระทรวงการพัฒนาสังคมและความมั่นคงของมนุษย์', criteriaSourceId: null, operationalAuthority: null, operationalRole: null, resolver: 'ตรวจหลักเกณฑ์ของ มท./พม. ที่ตรงกับประเภทความช่วยเหลือและมีผลใช้บังคับ ณ เวลานั้น' }),
+    COMMUNICABLE_DISEASE: Object.freeze({ key: 'COMMUNICABLE_DISEASE', label: 'ป้องกันและควบคุมโรคติดต่อ', baseRule: 'MOI-ASSIST-2566-19-3', criteriaAuthority: 'กระทรวงมหาดไทย หรือกระทรวงสาธารณสุข', criteriaSourceId: null, operationalAuthority: 'กระทรวงสาธารณสุข', operationalRole: 'ตรวจหลักเกณฑ์/มาตรฐาน/แนวทางด้านสาธารณสุขที่ตรงกับกรณี', resolver: 'ตรวจหลักเกณฑ์ของ มท./สธ. ที่ตรงกับประเภทโรค/กิจกรรมและช่วงเวลาที่เกี่ยวข้อง' }),
+    LOW_INCOME_FARMER: Object.freeze({ key: 'LOW_INCOME_FARMER', label: 'เกษตรกรผู้มีรายได้น้อย', baseRule: 'MOI-ASSIST-2566-19-4', criteriaAuthority: 'กระทรวงมหาดไทย หรือกระทรวงเกษตรและสหกรณ์', criteriaSourceId: null, operationalAuthority: 'กระทรวงเกษตรและสหกรณ์', operationalRole: 'ตรวจหลักเกณฑ์/ทะเบียน/เงื่อนไขเฉพาะด้านการเกษตรที่ตรงกับกรณี', resolver: 'ตรวจหลักเกณฑ์ของ มท./กษ. ที่ตรงกับประเภทความเสียหายและคุณสมบัติ ณ เวลานั้น' })
+  });
 
   const AP = Object.freeze({
     AP001: { label: 'ตรวจว่าช่วยเหลือได้หรือไม่', keywords: [/ช่วยเหลือประชาชน/, /ขอความช่วยเหลือ/, /ช่วยได้ไหม/, /ช่วยได้หรือไม่/] },
@@ -94,9 +102,11 @@
     const ap = detectAP(source);
     const decisionTask = DECISION_WORDS.some(pattern => pattern.test(source));
     const disaster = /ภัยพิบัติ|สาธารณภัย|น้ำท่วม|น้ำป่า|ดินถล่ม|วาตภัย|อัคคีภัย|ภัยแล้ง|ผู้ประสบภัยพิบัติ|เงินทดรองราชการ/.test(source);
-    const legalBase = disaster
-      ? ['MOI-ASSIST-2566', 'MOF-DISASTER-2569']
-      : ['MOI-ASSIST-2566'];
+    const communicableDisease = /โรคติดต่อ|ควบคุมโรค|ป้องกันโรค|ระบาด|ติดเชื้อ|สาธารณสุข/.test(source);
+    const lowIncomeFarmer = /เกษตรกร|ผู้มีรายได้น้อย.*เกษตร|พืชผล|ปศุสัตว์|ประมง|ผลผลิตเสียหาย/.test(source);
+    const qualityOfLife = /คุณภาพชีวิต|สังคมสงเคราะห์|ผู้ยากไร้|ผู้ด้อยโอกาส|ผู้สูงอายุ|คนพิการ|เด็ก|ครอบครัวเปราะบาง/.test(source);
+    const authorityProfile = disaster ? AUTHORITY_MATRIX.DISASTER_EMERGENCY : communicableDisease ? AUTHORITY_MATRIX.COMMUNICABLE_DISEASE : lowIncomeFarmer ? AUTHORITY_MATRIX.LOW_INCOME_FARMER : qualityOfLife ? AUTHORITY_MATRIX.QUALITY_OF_LIFE : null;
+    const legalBase = disaster ? ['MOI-ASSIST-2566', 'MOF-DISASTER-2569'] : ['MOI-ASSIST-2566'];
 
     return Object.freeze({
       version: VERSION,
@@ -111,6 +121,11 @@
       decisionTask,
       decisionLock: decisionTask,
       legalBase: Object.freeze(legalBase),
+      authorityProfile: authorityProfile ? Object.freeze(authorityProfile) : null,
+      authorityRule: authorityProfile?.baseRule || null,
+      criteriaAuthority: authorityProfile?.criteriaAuthority || null,
+      operationalAuthority: authorityProfile?.operationalAuthority || null,
+      criteriaResolver: authorityProfile?.resolver || 'ตรวจหลักเกณฑ์เฉพาะเรื่องจากแหล่งทางการและวันที่มีผลบังคับใช้',
       requiredFacts: REQUIRED_FACTS,
       crossModules: Object.freeze(['G03', 'G05', 'G07', 'G11']),
       gates: Object.freeze([
@@ -139,8 +154,12 @@
       'สถานะ: ' + (route.decisionLock ? 'Decision Lock — ต้องตรวจสอบก่อนสรุปสิทธิ/วงเงิน/อำนาจ' : 'วิเคราะห์เบื้องต้นได้ แต่ห้ามสมมติข้อเท็จจริง'),
       '',
       'หลักการบังคับ',
-      '1. แยกฐานกฎหมาย “การช่วยเหลือประชาชนตามอำนาจหน้าที่ของ อปท.” ออกจาก “เงินทดรองราชการเพื่อช่วยเหลือผู้ประสบภัยพิบัติกรณีฉุกเฉิน” ทุกครั้ง',
-      '2. ตรวจ AUTHORITY → VERSION → TIME → FACT_MATCH → LATER_CHANGE → CONFLICT_TRANSITION ก่อนสรุปผล',
+      '1. ใช้ระเบียบ มท. 2566 เป็นฐานอำนาจของ อปท. แล้วจำแนกประเภทความช่วยเหลือเพื่อเลือกหลักเกณฑ์เฉพาะตามข้อ 19',
+      '1.1 ข้อ 19(1) สาธารณภัย/ภัยพิบัติฉุกเฉิน → ตรวจหลักเกณฑ์กระทรวงการคลัง; ปภ. เป็นหน่วยงานด้านการปฏิบัติ/ประสานงานและแหล่งข้อมูล ไม่แทนเจ้าของหลักเกณฑ์ด้านอัตรา',
+      '1.2 ข้อ 19(2) คุณภาพชีวิต → ตรวจหลักเกณฑ์ มท./พม. ตามกรณี',
+      '1.3 ข้อ 19(3) โรคติดต่อ → ตรวจหลักเกณฑ์ มท./สธ. ตามกรณี',
+      '1.4 ข้อ 19(4) เกษตรกรผู้มีรายได้น้อย → ตรวจหลักเกณฑ์ มท./กษ. ตามกรณี',
+      '2. ตรวจ AUTHORITY → VERSION → TIME → FACT_MATCH → LATER_CHANGE → CONFLICT_TRANSITION ก่อนสรุปผล และแยกเจ้าของหลักเกณฑ์ออกจากหน่วยงานปฏิบัติ/แหล่งข้อมูล',
       '3. ห้าม hard-code อัตรา/วงเงิน/จำนวนวัน/คุณสมบัติจากความจำหรือจากอินโฟกราฟิก หากยังไม่ได้ตรวจต้นฉบับที่ใช้บังคับ',
       '4. ตัวเลขที่พบในเอกสารเป็น “อัตราตามหลักเกณฑ์” ไม่ใช่การรับรองสิทธิอัตโนมัติ ต้องตรวจองค์ประกอบและหลักฐานก่อน',
       '5. หากข้อมูลไม่พอตัดสิน ให้ค้นฐานอำนาจก่อน แล้วแสดง “ข้อมูลที่ยังขาด” แยกจาก “ข้อมูลที่ใช้เริ่มค้นได้”',
@@ -178,6 +197,7 @@
     ASSISTANCE_OWNER_GROUP: OWNER_GROUP,
     ASSISTANCE_AP: AP,
     ASSISTANCE_SOURCES: SOURCES,
+    ASSISTANCE_AUTHORITY_MATRIX: AUTHORITY_MATRIX,
     detectAssistanceRoute,
     buildAssistancePromptBlock,
     getAssistanceKnowledgeEntries: getKnowledgeEntries
