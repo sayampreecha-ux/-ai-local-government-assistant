@@ -19,6 +19,7 @@ url.searchParams.set('budget-e2e','2570');
 url.searchParams.set('nonce',`${Date.now()}-${Math.random().toString(16).slice(2)}`);
 await page.goto(url.toString(),{waitUntil:'domcontentloaded',timeout:30_000});
 await page.waitForFunction(()=>document.readyState==='complete' && document.getElementById('chatForm')?.dataset?.privacySubmitGuard==='3' && typeof window.GovPromptCore?.officialSearchConnector?.search==='function',undefined,{timeout:20_000});
+await page.waitForFunction(()=>Boolean(window.GovPromptGuidedIntake?.version) && document.getElementById('chatForm')?.dataset?.guidedIntakeInstalled === window.GovPromptGuidedIntake.version,undefined,{timeout:20_000});
 
 // Keep production verification organization-neutral: never inject a real organization/place name into the visible chat surface.
 // The short generic budget command is intentionally handled by Guided Intake first. The public UI includes a deterministic
