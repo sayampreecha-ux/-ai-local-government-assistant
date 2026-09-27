@@ -8,6 +8,7 @@ on:
       - 'assets/js/core/emergency-procurement-gate-v1.js'
       - 'scripts/verify-emergency-procurement-gate.mjs'
       - 'scripts/verify-assistance-route.mjs'
+      - 'scripts/verify-assistance-scenarios.mjs'
       - 'package.json'
       - '.github/workflows/verify-emergency-procurement-gate.yml'
   workflow_dispatch:
@@ -36,6 +37,8 @@ jobs:
         run: node --check assets/js/core/assistance-route-v1.js && node --check assets/js/core/emergency-procurement-gate-v1.js && node --check scripts/verify-emergency-procurement-gate.mjs
       - name: Assistance Route Authority Matrix regression
         run: node scripts/verify-assistance-route.mjs
+      - name: Assistance Route real-world scenario simulation
+        run: node scripts/verify-assistance-scenarios.mjs
       - name: Emergency Procurement Gate regression
         run: node scripts/verify-emergency-procurement-gate.mjs
       - name: Production build
