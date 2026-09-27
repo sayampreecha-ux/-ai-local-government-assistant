@@ -1,0 +1,45 @@
+name: Verify Emergency Procurement Gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'assets/js/core/assistance-route-v1.js'
+      - 'assets/js/core/emergency-procurement-gate-v1.js'
+      - 'scripts/verify-emergency-procurement-gate.mjs'
+      - 'package.json'
+      - '.github/workflows/verify-emergency-procurement-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: emergency-procurement-gate
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Syntax check
+        run: node --check assets/js/core/assistance-route-v1.js && node --check assets/js/core/emergency-procurement-gate-v1.js && node --check scripts/verify-emergency-procurement-gate.mjs
+      - name: Emergency Procurement Gate regression
+        run: node scripts/verify-emergency-procurement-gate.mjs
+      - name: Production build
+        run: pnpm build
+      - name: Verify production build contains Gate
+        run: |
+          grep -q 'emergency-procurement-gate-v1.js?v=1.1.0' dist/index.html
+          grep -q 'guided-intake-v1.js?v=1.2.1' dist/index.html
+          test -f dist/assets/js/core/emergency-procurement-gate-v1.js
+          test -f dist/assets/js/core/assistance-route-v1.js
