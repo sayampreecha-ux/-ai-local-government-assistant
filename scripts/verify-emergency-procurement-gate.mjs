@@ -16,8 +16,8 @@ assert.ok(route, 'assistance route must be detected');
 assert.ok(route.emergencyProcurementGate, 'emergency procurement gate must attach');
 assert.equal(route.emergencyProcurementGate.decisionLock, true);
 assert.equal(route.emergencyProcurementGate.amountBand, 'LE_500K');
-assert.match(route.emergencyProcurementGate.candidateBases.join(' '), /ม\\.56\\(2\\)\\(ข\\)/);
-assert.match(route.emergencyProcurementGate.candidateBases.join(' '), /ข้อ 2\\(5\\)/);
+assert.match(route.emergencyProcurementGate.candidateBases.join(' '), /ม\.56\(2\)\(ข\)/);
+assert.match(route.emergencyProcurementGate.candidateBases.join(' '), /ข้อ 2\(5\)/);
 
 const block = core.buildAssistancePromptBlock(route);
 assert.match(block, /EMERGENCY PROCUREMENT DECISION GATE/);
