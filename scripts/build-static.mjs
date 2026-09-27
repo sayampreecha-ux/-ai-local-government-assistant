@@ -3,7 +3,7 @@ import { extname, join } from "node:path";
 import { build as bundle } from "esbuild";
 
 const output = "dist";
-const RELEASE_VERSIONS = Object.freeze({ home: "6.4.10", homeCss: "2.6.4", serviceWorker: "6.4.10", quickActionBridge: "1.2.1", guidedIntake: "1.2.1", statusCopy: "1.4.3", mic: "2.4.0", outputFormats: "1.0.1", promptOrchestrator: "7.9.1", automationPilot: "1.0.0", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0", documentStudio: "1.0.0", caseList: "1.0.0", searchTimeoutGuard: "1.1.0", budgetUiWatchdog: "1.2.0" });
+const RELEASE_VERSIONS = Object.freeze({ home: "6.4.10", homeCss: "2.6.4", serviceWorker: "6.4.10", quickActionBridge: "1.3.1", guidedIntake: "1.2.1", emergencyProcurementGate: "1.1.0", statusCopy: "1.4.3", mic: "2.4.0", outputFormats: "1.0.1", promptOrchestrator: "7.9.1", automationPilot: "1.0.0", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0", documentStudio: "1.0.0", caseList: "1.0.0", searchTimeoutGuard: "1.1.0", budgetUiWatchdog: "1.2.0" });
 const publicExtensions = new Set([
   ".html", ".htlm", ".css", ".js", ".json", ".webmanifest", ".txt", ".xml"
 ]);
@@ -106,6 +106,7 @@ distIndex = distIndex
   .replace(/assets\/js\/home-v3\.js\?v=[^"'\s<]+/g, `assets/js/home-v3.js?v=${RELEASE_VERSIONS.home}`)
   .replace(/assets\/js\/ui\/quick-action-guided-bridge-v1\.js\?v=[^"'\s<]+/g, `assets/js/ui/quick-action-guided-bridge-v1.js?v=${RELEASE_VERSIONS.quickActionBridge}`)
   .replace(/assets\/js\/core\/guided-intake-v1\.js\?v=[^"'\s<]+/g, `assets/js/core/guided-intake-v1.js?v=${RELEASE_VERSIONS.guidedIntake}`)
+  .replace(/assets\/js\/core\/emergency-procurement-gate-v1\.js\?v=[^"\'\s<]+/g, `assets/js/core/emergency-procurement-gate-v1.js?v=${RELEASE_VERSIONS.emergencyProcurementGate}`)
   .replace(/assets\/js\/ui\/status-copy\.js\?v=[^"'\s<]+/g, `assets/js/ui/status-copy.js?v=${RELEASE_VERSIONS.statusCopy}`)
   .replace(/assets\/js\/mic\.js\?v=[^"'\s<]+/g, `assets/js/mic.js?v=${RELEASE_VERSIONS.mic}`)
   .replace(/service-worker\.js\?v=[^"'\s<)]+/g, `service-worker.js?v=${RELEASE_VERSIONS.serviceWorker}`);
@@ -130,6 +131,7 @@ if (!distIndex.includes(`assets/css/home-v3.css?v=${RELEASE_VERSIONS.homeCss}`))
 if (!distIndex.includes(`assets/js/mic.js?v=${RELEASE_VERSIONS.mic}`)) throw new Error("Mic loader release cache-bust version missing from dist/index.html");
 if (!distIndex.includes(`assets/js/core/output-format-presets-v1.js?v=${RELEASE_VERSIONS.outputFormats}`)) throw new Error("Output-format presets release script missing from dist/index.html");
 if (!distIndex.includes(`assets/js/core/prompt-orchestrator.js?v=${RELEASE_VERSIONS.promptOrchestrator}`)) throw new Error("Prompt orchestrator release version missing from dist/index.html");
+if (!distIndex.includes(`assets/js/core/emergency-procurement-gate-v1.js?v=${RELEASE_VERSIONS.emergencyProcurementGate}`)) throw new Error("Emergency procurement gate release version missing from dist/index.html");
 if (!distIndex.includes(`service-worker.js?v=${RELEASE_VERSIONS.serviceWorker}`)) throw new Error("Service worker release cache-bust version missing from dist/index.html");
 if (!distIndex.includes(`assets/js/core/official-search-timeout-guard-v1.js?v=${RELEASE_VERSIONS.searchTimeoutGuard}`)) throw new Error("Official-search timeout guard missing from dist/index.html");
 if (!distIndex.includes(`assets/js/core/budget-ui-failclosed-watchdog-v1.js?v=${RELEASE_VERSIONS.budgetUiWatchdog}`)) throw new Error("Budget UI fail-closed watchdog missing from dist/index.html");
