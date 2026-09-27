@@ -31,6 +31,7 @@ await page.locator('#promptInput').fill(prompt);
 await page.locator('#chatForm .send-button').click();
 const intakeCard=page.locator('.guided-intake-message').last();
 await intakeCard.waitFor({state:'visible',timeout:10_000});
+const guidedIntakeSeen = await intakeCard.isVisible();
 const continueUnknown=intakeCard.getByRole('button',{name:'ยังไม่ทราบบางข้อ — ทำต่อ',exact:true});
 await continueUnknown.waitFor({state:'visible',timeout:5_000});
 await continueUnknown.click();
@@ -38,7 +39,7 @@ await page.locator('.budget-runtime-result').waitFor({state:'visible',timeout:12
 await page.waitForTimeout(1000);
 
 const state=await page.evaluate(()=>({
-  guidedIntakeVisible:Boolean(document.querySelector('.guided-intake-message')),
+  guidedIntakeVisible:guidedIntakeSeen,
   userMessages:[...document.querySelectorAll('.message.user .message-body')].map(node=>node.textContent||''),
   routeLabel:[...document.querySelectorAll('.message.assistant .route-label')].map(node=>node.textContent||'').find(text=>/แผน โครงการ และงบประมาณ/.test(text))||'',
   budgetText:document.querySelector('.budget-runtime-result')?.innerText||'',
