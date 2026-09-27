@@ -229,6 +229,7 @@
       const tasks = document.createElement('div');
       section.className = `work-catalog-group work-catalog-tone-${(index % 6) + 1}`;
       section.dataset.categoryId = category.id;
+      if (category.id === 'assistance') section.dataset.assistanceRoute = 'true';
       section.dataset.search = normalize(`${category.title} ${category.keywords} ${category.tasks.map(task => `${task.label} ${task.prompt}`).join(' ')}`);
       heading.textContent = category.title;
       tasks.className = 'work-catalog-tasks';
