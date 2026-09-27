@@ -39,8 +39,7 @@ await page.locator('.budget-runtime-result').waitFor({state:'visible',timeout:12
 await page.waitForTimeout(1000);
 
 const state=await page.evaluate(()=>({
-  guidedIntakeVisible:guidedIntakeSeen,
-  userMessages:[...document.querySelectorAll('.message.user .message-body')].map(node=>node.textContent||''),
+    userMessages:[...document.querySelectorAll('.message.user .message-body')].map(node=>node.textContent||''),
   routeLabel:[...document.querySelectorAll('.message.assistant .route-label')].map(node=>node.textContent||'').find(text=>/แผน โครงการ และงบประมาณ/.test(text))||'',
   budgetText:document.querySelector('.budget-runtime-result')?.innerText||'',
   assistantText:[...document.querySelectorAll('.message.assistant')].map(node=>node.innerText||'').join('\n'),
@@ -51,7 +50,7 @@ const state=await page.evaluate(()=>({
 }));
 
 assert.equal(state.submitGuardVersion,'3','privacy submit guard must remain active');
-assert.equal(state.guidedIntakeVisible,true,'generic budget command must pass through Guided Intake before runtime execution');
+assert.equal(guidedIntakeSeen,true,'generic budget command must pass through Guided Intake before runtime execution');
 assert.ok(state.userMessages.some(message=>message.includes(prompt)),'guided intake continue path did not create expected safe user message');
 assert.ok(state.userMessages.some(message=>/ข้อมูลที่ผู้ใช้ยังไม่ทราบ|yearOrg|sourceData|purpose/.test(message)),'guided intake continue path did not preserve missing budget fields as explicit unknowns');
 assert.doesNotMatch(state.userMessages.join('\n'),/อบจ\.พะเยา/,'production E2E must not inject a real organization/place name');
