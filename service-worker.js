@@ -1,4 +1,4 @@
-const APP_VERSION = '3.0';
+const APP_VERSION = '3.1';
 const CACHE = `lg-assistant-ready-v${APP_VERSION.replace('.', '-')}`;
 const ASSETS = [
   './',
@@ -12,6 +12,8 @@ const ASSETS = [
 const PRECACHE_URLS = new Set(ASSETS.map(asset => new URL(asset, self.registration.scope).href));
 const NETWORK_FRESH_MODULES = Object.freeze([
   '/assets/js/core/prompt-orchestrator.js',
+  '/assets/js/core/assistance-route-v1.js',
+  '/assets/js/core/emergency-procurement-gate-v1.js',
   '/assets/js/ui/quick-action-guided-bridge-v1.js',
   '/assets/js/core/government-workflow-runtime-v5.js',
   '/src/government-workflow-suite.js',
