@@ -62,7 +62,7 @@ assert.match(state.homeScript,new RegExp(`home-v3\\.js\\?v=${RELEASE_HOME_VERSIO
 assert.equal(pageErrors.length,0,`page errors: ${JSON.stringify(pageErrors)}`);
 assert.equal(requests.some(item=>/\/api\/official-search/.test(item.url)),false,'budget workflow must not call GovPrompt official search automatically');
 assert.equal(responses.some(item=>/\/api\/official-search/.test(item.url)),false,'budget workflow unexpectedly received GovPrompt official-search response');
-assert.match(state.assistantText,/ให้ AI ของผู้ใช้ค้นเว็บสด|พร้อมส่งต่อ/,'budget workflow missing delegated user-AI live-search handoff');
+assert.match(state.assistantText,/คำสั่งพร้อมแล้ว — ทำต่อใน ChatGPT|คัดลอกแล้วเปิดใน ChatGPT|คัดลอกไปใช้กับ AI/,'budget workflow missing delegated user-AI handoff');
 
 for (const item of requests.filter(item=>/\/api\/official-document/.test(item.url))) {
   assert.match(item.url,/ai-local-government-assistant\.sayampreecha\.workers\.dev\/api\/official-document/,'document read used a non-production endpoint');
