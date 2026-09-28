@@ -19,6 +19,7 @@
   const INTERPRETATION_DECISION_TERMS = /(?:เบิก.{0,80}(?:ได้ไหม|ได้หรือไม่)|มีสิทธิ(?:ไหม|หรือไม่)?|จ่าย.{0,80}(?:ได้ไหม|ได้หรือไม่)|ทำ.{0,80}(?:ได้ไหม|ได้หรือไม่)|ผิดหรือไม่|ใครมีอำนาจ|แต่งตั้ง.{0,40}(?:ได้ไหม|ได้หรือไม่)|ย้าย|โอน|รับโอน|ต้องคืนเงิน(?:ไหม|หรือไม่)|เข้าข่าย|ถือเป็น|วิธีนี้ถูกต้องหรือไม่)/i;
   const INTERPRETATION_FACTORS = /(?:ถือว่า|เข้าลักษณะ|จำเป็น|เพื่อประโยชน์ราชการ|รับการคัดเลือก|โดยอนุโลม|เหตุจำเป็น|ตามความเหมาะสม|ตีความ|ข้อเท็จจริง|หลายกฎหมาย|หลายขั้นตอน|ความเห็น.{0,30}ขัด|แนวปฏิบัติ.{0,30}ขัด|เสียสิทธิ|ความรับผิด|อำนาจหน้าที่|จ่ายเงิน|เบิก|สิทธิ|แต่งตั้ง|โอน|ย้าย)/i;
   const EXPLICIT_PRECEDENT_TERMS = /(?:หนังสือหารือ|ตอบข้อหารือ|แนววินิจฉัย|แนวปฏิบัติ|กรณีเทียบเคียง|กรณีหารือ|ซักซ้อมความเข้าใจ|หนังสือสั่งการ|คำพิพากษา|official precedent|official authority)/i;
+  const OFFICIAL_DOCUMENT_DECISION_TERMS = /(?:หนังสือ|ประกาศ|คำสั่ง|หนังสือเวียน)[^\n]{0,180}(?:ลงวันที่|เลขที่|ว\d|ที่\s*[ก-ฮ]{1,6}\d|ใช้เป็นฐาน|นำไปใช้|มีผล).{0,100}(?:ได้ไหม|ได้หรือไม่|หรือไม่)/i;
   const INTERPRETATION_DISPUTE_TERMS = /(?:ไม่ตรง(?:กับ)?(?:ถ้อยคำ|ระเบียบ|กฎหมาย)|ข้อโต้แย้ง|ทักท้วง|ไม่ให้เบิก|ความเห็น.{0,50}(?:ขัด|ต่าง)|การเงิน|คลัง|พัสดุ|นิติกร|ผู้ตรวจสอบ).{0,80}(?:แย้ง|ทักท้วง|ไม่เห็นด้วย|ไม่ให้|ขัด)/i;
   const MULTI_AUTHORITY_TERMS = /(?:หลายเงื่อนไข|หลายบท|หลายกฎหมาย|กฎหมาย.{0,40}(?:ร่วมกัน|ประกอบ)|ระเบียบ.{0,40}(?:ร่วมกัน|ประกอบ))/i;
   const INTERPRETATION_ANALYSIS_TERMS = /(?:วิเคราะห์|วินิจฉัย|ตีความ|พิจารณา|ตรวจสอบ).{0,80}(?:กฎหมาย|กฎ|ระเบียบ|สิทธิ|อำนาจ|เบิก|จ่าย|พัสดุ|บุคคล|งบประมาณ)/i;
@@ -293,7 +294,8 @@
   function buildApplicableAuthorityCheck(question, context = {}, evidence = {}) {
     const source = normalizeForReasoning([question, context.facts, context.currentStage].filter(Boolean).join(' '));
     const precedentUsed = EXPLICIT_PRECEDENT_TERMS.test(source) || evidence.officialPrecedent === 'VERIFIED' || evidence.reliesOnPrecedent === true;
-    const full = precedentUsed || detectInterpretationIssue(source) || MULTI_CONDITION_TERMS.test(source)
+    const full = precedentUsed || detectInterpretationIssue(source) || OFFICIAL_DOCUMENT_DECISION_TERMS.test(source)
+      || MULTI_CONDITION_TERMS.test(source)
       || /(?:การเงิน|การคลัง|สวัสดิการ|สิทธิประโยชน์|บุคคล|บุคลากร|ข้าราชการ|งบประมาณ)/i.test(source);
     const mode = full ? 'FULL' : LEGAL_VERSION_TERMS.test(source) ? 'RULE_VERSION' : 'NONE';
     const requiredChecks = mode === 'FULL' ? APPLICABLE_DIMENSIONS : mode === 'RULE_VERSION' ? ['AUTHORITY', 'VERSION'] : [];
