@@ -42,3 +42,13 @@ test('status cannot be spoofed by bare VERIFIED; complete, conditional and confl
   const unknownSource = applicableEvidence(); unknownSource.reviews.TIME.sourceIds = ['missing'];
   assert.equal(evaluate(unknownSource).decisionLock, 'ON');
 });
+
+test('real-world adversarial case: สป0023.6/ว738 dated 23 June 2569 must remain evidence-gated', () => {
+  const question = 'หนังสือ สป0023.6/ว738 ลงวันที่ 23 มิถุนายน 2569 เรื่องมาตรการป้องกันและลดอุบัติเหตุทางถนนในช่วงฤดูฝน ปี พ.ศ. 2569 ใช้เป็นฐานตัดสินใจได้ทันทีหรือไม่';
+  const result = core.buildApplicableAuthorityCheck(question);
+  assert.equal(result.mode, 'FULL');
+  assert.equal(result.decisionLock, 'ON');
+  assert.equal(result.qualityStatus, 'UNVERIFIED');
+  assert.ok(result.missingChecks.length > 0);
+  assert.deepEqual([...result.searchFlow], ['Rule', 'Case', 'Later Rule', 'Conflict Check', 'Applicable Rule', 'Answer']);
+});
