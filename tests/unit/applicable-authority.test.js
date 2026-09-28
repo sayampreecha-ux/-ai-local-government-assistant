@@ -52,3 +52,24 @@ test('real-world adversarial case: สป0023.6/ว738 dated 23 June 2569 must r
   assert.ok(result.missingChecks.length > 0);
   assert.deepEqual([...result.searchFlow], ['Rule', 'Case', 'Later Rule', 'Conflict Check', 'Applicable Rule', 'Answer']);
 });
+
+test('precedent gate rejects bare VERIFIED/negative authority flags without source provenance', () => {
+  const assessment = applicableEvidence();
+  const evidence = {
+    applicableAuthority: assessment,
+    currentRule: 'VERIFIED',
+    currentRuleChecks: ['law','rule','regulation','announcement','primaryDirective','amendments','repealOrReplacement','transitionalProvisions','effectiveDate','dateContextMatched'],
+    officialPrecedent: 'SEARCHED_NOT_FOUND',
+    searchLevelsCompleted: ['LEVEL_1_DIRECT_FACT_SEARCH','LEVEL_2_LEGAL_OFFICIAL_LANGUAGE_SEARCH','LEVEL_3_PRECEDENT_INDEX_RECOVERY'],
+    legalVersion: 'VERIFIED',
+    newerOrConflictingAuthority: 'CHECKED_NONE_FOUND',
+    contraryEvidenceCheck: 'CHECKED_NONE_FOUND',
+    ruleInterpretationConfidence: 'SUFFICIENT'
+  };
+  const result = core.buildCasePrecedentGate('หนังสือหารือกรณีนี้ใช้เป็นฐานตัดสินใจได้หรือไม่', {}, 'HIGH', evidence);
+  assert.equal(result.decisionLock, 'ON');
+  assert.ok(result.evidenceState.validationIssues.includes('LEGAL_VERSION_PROVENANCE_INCOMPLETE'));
+  assert.ok(result.evidenceState.validationIssues.includes('AUTHORITY_CHECK_PROVENANCE_INCOMPLETE'));
+  assert.ok(result.evidenceState.validationIssues.includes('CONTRARY_EVIDENCE_PROVENANCE_INCOMPLETE'));
+});
+
