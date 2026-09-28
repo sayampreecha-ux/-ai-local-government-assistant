@@ -179,6 +179,17 @@
     return required.every(item => completed.includes(item));
   }
 
+  function sourceLinkedVerification(evidence = {}, key, expectedStatus) {
+    const record = evidence?.verificationProvenance?.[key] || evidence?.verificationRecords?.[key];
+    if (!record || record.status !== expectedStatus) return false;
+    const sources = Array.isArray(evidence?.sources) ? evidence.sources : [];
+    return Array.isArray(record.sourceIds) && record.sourceIds.length > 0
+      && record.sourceIds.every(id => sources.some(item => item.id === id
+        && item.primary === true
+        && item.opened === true
+        && Boolean(normalizeText(item.locator))));
+  }
+
   function normalizePrecedentEvidence(evidence = {}) {
     const validationIssues = [];
     const currentRuleChecks = normalizeCompletedChecks(evidence?.currentRuleChecks, REQUIRED_CURRENT_RULE_CHECKS);
@@ -223,18 +234,28 @@
     const caseMatchLevel = caseMatch === 'ASSESSED' ? requestedMatchLevel : 'NOT_ASSESSED';
     if (caseMatch === 'ASSESSED' && caseMatchLevel === 'NOT_ASSESSED') validationIssues.push('CASE_MATCH_LEVEL_MISSING');
 
-    const legalVersion = evidence?.legalVersion === 'VERIFIED' || evidence?.legalVersion === true ? 'VERIFIED' : 'NOT_VERIFIED';
+    const requestedLegalVersion = evidence?.legalVersion === 'VERIFIED' || evidence?.legalVersion === true;
+    const legalVersion = requestedLegalVersion && sourceLinkedVerification(evidence, 'legalVersion', 'VERIFIED') ? 'VERIFIED' : 'NOT_VERIFIED';
+    if (requestedLegalVersion && legalVersion !== 'VERIFIED') validationIssues.push('LEGAL_VERSION_PROVENANCE_INCOMPLETE');
     const rawAuthority = evidence?.newerOrConflictingAuthority
       || (evidence?.conflictingOrNewerAuthority === true ? 'CHECKED_NONE_FOUND' : 'NOT_CHECKED');
-    const newerOrConflictingAuthority = AUTHORITY_STATUSES.includes(rawAuthority) ? rawAuthority : 'NOT_CHECKED';
+    let newerOrConflictingAuthority = AUTHORITY_STATUSES.includes(rawAuthority) ? rawAuthority : 'NOT_CHECKED';
+    if (newerOrConflictingAuthority !== 'NOT_CHECKED' && !sourceLinkedVerification(evidence, 'newerOrConflictingAuthority', newerOrConflictingAuthority)) {
+      newerOrConflictingAuthority = 'NOT_CHECKED';
+      validationIssues.push('AUTHORITY_CHECK_PROVENANCE_INCOMPLETE');
+    }
     const authorityAnalysisComplete = newerOrConflictingAuthority !== 'FOUND' || evidence?.authorityAnalysisComplete === true;
     if (newerOrConflictingAuthority === 'FOUND' && !authorityAnalysisComplete) validationIssues.push('CONFLICTING_AUTHORITY_ANALYSIS_INCOMPLETE');
     const ruleInterpretationConfidence = RULE_CONFIDENCE_STATUSES.includes(evidence?.ruleInterpretationConfidence)
       ? evidence.ruleInterpretationConfidence
       : 'NOT_ASSESSED';
-    const contraryEvidenceCheck = CONTRARY_EVIDENCE_STATUSES.includes(evidence?.contraryEvidenceCheck)
+    let contraryEvidenceCheck = CONTRARY_EVIDENCE_STATUSES.includes(evidence?.contraryEvidenceCheck)
       ? evidence.contraryEvidenceCheck
       : 'NOT_CHECKED';
+    if (contraryEvidenceCheck !== 'NOT_CHECKED' && !sourceLinkedVerification(evidence, 'contraryEvidenceCheck', contraryEvidenceCheck)) {
+      contraryEvidenceCheck = 'NOT_CHECKED';
+      validationIssues.push('CONTRARY_EVIDENCE_PROVENANCE_INCOMPLETE');
+    }
     if (contraryEvidenceCheck === 'FOUND_UNRESOLVED') validationIssues.push('CONTRARY_EVIDENCE_UNRESOLVED');
     const precedentContradictsPriorAnalysis = evidence?.precedentContradictsPriorAnalysis === true;
 
@@ -258,7 +279,12 @@
       ruleInterpretationConfidence,
       contraryEvidenceCheck,
       precedentContradictsPriorAnalysis,
-      validationIssues: Object.freeze(validationIssues)
+      validationIssues: Object.freeze(validationIssues),
+      provenanceVerified: Object.freeze({
+        legalVersion: legalVersion === 'VERIFIED',
+        newerOrConflictingAuthority: newerOrConflictingAuthority !== 'NOT_CHECKED',
+        contraryEvidenceCheck: contraryEvidenceCheck !== 'NOT_CHECKED'
+      })
     });
   }
 
