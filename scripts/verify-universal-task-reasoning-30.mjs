@@ -126,6 +126,12 @@ const levelOne = ['LEVEL_1_DIRECT_FACT_SEARCH'];
 const levelOneToThree = ['LEVEL_1_DIRECT_FACT_SEARCH', 'LEVEL_2_LEGAL_OFFICIAL_LANGUAGE_SEARCH', 'LEVEL_3_PRECEDENT_INDEX_RECOVERY'];
 const verifiedEvidence = {
   applicableAuthority: applicableEvidence(),
+  sources: [{ id: 'rule', primary: true, opened: true, locator: 'fixture://primary-rule#section-1' }],
+  verificationProvenance: {
+    legalVersion: { status: 'VERIFIED', sourceIds: ['rule'] },
+    newerOrConflictingAuthority: { status: 'CHECKED_NONE_FOUND', sourceIds: ['rule'] },
+    contraryEvidenceCheck: { status: 'CHECKED_NONE_FOUND', sourceIds: ['rule'] }
+  },
   currentRule: 'VERIFIED',
   currentRuleChecks,
   officialPrecedent: 'VERIFIED',
