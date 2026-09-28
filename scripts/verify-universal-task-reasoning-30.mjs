@@ -221,19 +221,36 @@ const insufficientConfidence = core.buildCasePrecedentGate(precedentQuestion, pr
 assert.equal(insufficientConfidence.decisionLock, 'ON');
 assert.equal(insufficientConfidence.workflowStatus, 'BLOCKED_RULE_INTERPRETATION');
 
-const unresolvedConflict = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', { ...verifiedEvidence, newerOrConflictingAuthority: 'FOUND' });
+const unresolvedConflict = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', {
+  ...verifiedEvidence,
+  newerOrConflictingAuthority: 'FOUND',
+  verificationProvenance: { ...verifiedEvidence.verificationProvenance, newerOrConflictingAuthority: { status: 'FOUND', sourceIds: ['rule'] } }
+});
 assert.equal(unresolvedConflict.decisionLock, 'ON');
 assert.equal(unresolvedConflict.workflowStatus, 'BLOCKED_AUTHORITY_CHECK');
-const resolvedConflict = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', { ...verifiedEvidence, newerOrConflictingAuthority: 'FOUND', authorityAnalysisComplete: true });
+const resolvedConflict = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', {
+  ...verifiedEvidence,
+  newerOrConflictingAuthority: 'FOUND',
+  authorityAnalysisComplete: true,
+  verificationProvenance: { ...verifiedEvidence.verificationProvenance, newerOrConflictingAuthority: { status: 'FOUND', sourceIds: ['rule'] } }
+});
 assert.equal(resolvedConflict.decisionLock, 'OFF');
 
 const contraryNotChecked = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', { ...verifiedEvidence, contraryEvidenceCheck: 'NOT_CHECKED' });
 assert.equal(contraryNotChecked.decisionLock, 'ON');
 assert.equal(contraryNotChecked.nextAction, 'EXECUTE_CONTRARY_EVIDENCE_CHECK');
-const contraryUnresolved = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', { ...verifiedEvidence, contraryEvidenceCheck: 'FOUND_UNRESOLVED' });
+const contraryUnresolved = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', {
+  ...verifiedEvidence,
+  contraryEvidenceCheck: 'FOUND_UNRESOLVED',
+  verificationProvenance: { ...verifiedEvidence.verificationProvenance, contraryEvidenceCheck: { status: 'FOUND_UNRESOLVED', sourceIds: ['rule'] } }
+});
 assert.equal(contraryUnresolved.decisionLock, 'ON');
 assert.equal(contraryUnresolved.nextAction, 'RESOLVE_CONTRARY_EVIDENCE');
-const contraryResolved = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', { ...verifiedEvidence, contraryEvidenceCheck: 'FOUND_RESOLVED' });
+const contraryResolved = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', {
+  ...verifiedEvidence,
+  contraryEvidenceCheck: 'FOUND_RESOLVED',
+  verificationProvenance: { ...verifiedEvidence.verificationProvenance, contraryEvidenceCheck: { status: 'FOUND_RESOLVED', sourceIds: ['rule'] } }
+});
 assert.equal(contraryResolved.decisionLock, 'OFF');
 
 const correctionRequired = core.buildCasePrecedentGate(precedentQuestion, precedentContext, 'HIGH', { ...verifiedEvidence, precedentContradictsPriorAnalysis: true });
