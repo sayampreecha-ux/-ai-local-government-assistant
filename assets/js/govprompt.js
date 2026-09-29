@@ -138,7 +138,7 @@
     });
   }
 
-  addAttachmentNotice();
+  // Homepage intentionally does not expose attachment controls or attachment notice.
   document.addEventListener('click', event => { if (event.target.closest('#make,button[type="submit"]')) setTimeout(enhanceGeneratedPrompt, 0); });
   document.addEventListener('submit', () => setTimeout(enhanceGeneratedPrompt, 0));
   document.addEventListener('keydown', event => {
