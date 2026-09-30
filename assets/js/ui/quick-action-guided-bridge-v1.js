@@ -202,6 +202,30 @@
         .work-catalog-group h3::before{width:24px;height:24px}
       }
 
+
+      /* Final mobile/card normalization: remove inherited nested boxes. */
+      .work-catalog-group{overflow:hidden}
+      .work-catalog-group > h3{
+        display:flex!important;
+        box-sizing:border-box!important;
+        width:100%!important;
+        max-width:none!important;
+        margin:0!important;
+        border:0!important;
+        outline:0!important;
+        background:transparent!important;
+        box-shadow:none!important;
+        font-family:inherit!important;
+        font-weight:800!important;
+        text-align:left!important;
+        white-space:normal!important;
+        word-break:normal!important;
+        overflow-wrap:normal!important;
+      }
+      .work-catalog-group > h3:focus-visible{outline:2px solid #12372a!important;outline-offset:2px}
+      .work-catalog-group.is-open{border-color:#8fb9a5}
+      .work-catalog-group.is-open > h3::after{content:'⌃'}
+      .work-catalog-tasks[hidden]{display:none!important}
       .pr-video-intake{display:grid;gap:12px}
       .pr-video-label{font-weight:800;color:#12372a}
       .pr-video-topic{width:100%;box-sizing:border-box;border:1px solid #c8d7d0;border-radius:14px;padding:12px;font:inherit;resize:vertical;min-height:120px}
@@ -275,6 +299,22 @@
         button.dataset.search = normalize(`${category.title} ${category.keywords} ${task.label} ${task.prompt}`);
         button.textContent = task.label;
         tasks.append(button);
+      });
+      heading.setAttribute('role', 'button');
+      heading.setAttribute('tabindex', '0');
+      heading.setAttribute('aria-expanded', 'false');
+      const toggleCategory = () => {
+        const nextHidden = !tasks.hidden;
+        tasks.hidden = nextHidden;
+        heading.setAttribute('aria-expanded', String(!nextHidden));
+        section.classList.toggle('is-open', !nextHidden);
+      };
+      heading.addEventListener('click', toggleCategory);
+      heading.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          toggleCategory();
+        }
       });
       section.append(heading, tasks);
       groups.append(section);
