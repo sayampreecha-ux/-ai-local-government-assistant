@@ -8,6 +8,7 @@ test('home assistant catalog is a responsive one-page accordion with frequent-ta
   assert.match(source, /aria-expanded/);
   assert.match(source, /work-catalog-tasks/);
   assert.match(source, /collapseOthers/);
+  assert.match(source, /toggle\.addEventListener\('click',\s*event\s*=>\s*\{\s*event\.stopPropagation\(\);/);
   assert.match(source, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(source, /@media\(max-width:959px\).*repeat\(2,minmax\(0,1fr\)\)/s);
   assert.match(source, /@media\(max-width:620px\).*grid-column:1\/-1/s);

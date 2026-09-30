@@ -94,7 +94,7 @@
     const countLabel = isHealthGroup ? `${visibleCount} เมนูเด่น` : `${visibleCount} งาน`;
     const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'assistant-catalog-toggle'; toggle.setAttribute('aria-expanded', 'false'); toggle.setAttribute('aria-controls', tasks.id);
     toggle.innerHTML = `<span class="assistant-catalog-icon" aria-hidden="true">${iconFor(title)}</span><span class="assistant-catalog-name">${title}</span><span class="assistant-task-count">${countLabel}</span><span class="assistant-catalog-caret" aria-hidden="true">⌄</span>`;
-    toggle.addEventListener('click', () => { const willOpen = toggle.getAttribute('aria-expanded') !== 'true'; collapseOthers(group); setExpanded(group, willOpen); if (willOpen) group.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' }); });
+    toggle.addEventListener('click', event => { event.stopPropagation(); const willOpen = toggle.getAttribute('aria-expanded') !== 'true'; collapseOthers(group); setExpanded(group, willOpen); if (willOpen) group.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' }); });
     heading.textContent = ''; heading.appendChild(toggle); group.dataset.assistantAccordion = 'true'; group.classList.add('assistant-catalog-group'); setExpanded(group, false);
   }
 
