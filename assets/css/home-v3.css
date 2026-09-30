@@ -373,3 +373,34 @@ html.result-route .welcome,html.result-route .quick-actions,html.result-route .c
   body.app-shell .assistant-catalog-icon{display:grid!important;visibility:visible!important}
   body.app-shell .assistant-catalog-name{flex:1 1 auto!important;min-width:0!important}
 }
+
+/* GP MOBILE AUTHORITATIVE CATEGORY HEADER v1.2 — UI only.
+   Icons and chevrons are DOM elements; legacy pseudo-elements are disabled. */
+@media (max-width:620px){
+  body.app-shell .work-catalog-group > h3::before,
+  body.app-shell .work-catalog-group > h3::after{
+    display:none!important;
+    content:none!important;
+    background:none!important;
+    background-image:none!important;
+  }
+  body.app-shell .assistant-catalog-chevron{
+    flex:0 0 22px!important;
+    width:22px!important;
+    margin-left:auto!important;
+    display:grid!important;
+    place-items:center!important;
+    color:#60736a!important;
+    font-size:20px!important;
+    line-height:1!important;
+    font-weight:800!important;
+    pointer-events:none!important;
+  }
+  body.app-shell .assistant-catalog-icon{
+    flex:0 0 38px!important;
+    width:38px!important;
+    height:38px!important;
+    display:grid!important;
+    place-items:center!important;
+  }
+}

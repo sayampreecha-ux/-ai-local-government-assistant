@@ -320,7 +320,11 @@
       icon.textContent = CATEGORY_ICONS[category.id] || '•';
       name.className = 'assistant-catalog-name';
       name.textContent = category.title;
-      heading.append(icon, name);
+      const chevron = document.createElement('span');
+      chevron.className = 'assistant-catalog-chevron';
+      chevron.setAttribute('aria-hidden', 'true');
+      chevron.textContent = '⌄';
+      heading.append(icon, name, chevron);
       tasks.className = 'work-catalog-tasks';
       tasks.hidden = true;
       category.tasks.forEach(task => {
