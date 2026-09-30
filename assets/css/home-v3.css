@@ -127,3 +127,65 @@ html.result-route .welcome,html.result-route .quick-actions,html.result-route .c
   .output-format-control label{font-size:10px!important}
   .output-format-control select{height:38px!important;font-size:12px!important;border-radius:10px!important}
 }
+
+
+/* GP MOBILE HARD FIX — production UI only. Do not alter catalog data or behavior. */
+@media (max-width:900px){
+  .work-catalog-home,
+  .work-catalog-groups,
+  .work-catalog-group,
+  .work-catalog-group > h3,
+  .work-catalog-tasks,
+  .work-catalog-task{
+    box-sizing:border-box!important;
+  }
+  .work-catalog-groups{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    width:100%!important;
+    max-width:none!important;
+    gap:10px!important;
+  }
+  .work-catalog-group{
+    display:block!important;
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    padding:0!important;
+    overflow:hidden!important;
+  }
+  .work-catalog-group h3,
+  .work-catalog-group > h3{
+    display:flex!important;
+    position:relative!important;
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    height:auto!important;
+    min-height:64px!important;
+    margin:0!important;
+    padding:12px 48px 12px 58px!important;
+    border:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+    white-space:normal!important;
+    word-break:normal!important;
+    overflow-wrap:anywhere!important;
+    writing-mode:horizontal-tb!important;
+    text-orientation:mixed!important;
+    font-size:17px!important;
+    line-height:1.35!important;
+    text-align:left!important;
+  }
+  .work-catalog-tasks{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    width:100%!important;
+    min-width:0!important;
+    padding:0 12px 12px!important;
+  }
+  .work-catalog-task{
+    width:100%!important;
+    min-width:0!important;
+  }
+}
