@@ -548,15 +548,18 @@
     if (!documents.length) return Object.freeze({ block: '', matches: Object.freeze([]) });
 
     const source = normalizeForReasoning(question);
-    const terms = [...new Set(source.split(/\\s+/).filter(term => term.length >= 2))];
+    const terms = [...new Set(source.split(/\s+/).filter(term => term.length >= 2))];
     const scored = documents.map(document => {
+      const keywords = Array.isArray(document.keywords) ? document.keywords.map(normalizeForReasoning).filter(Boolean) : [];
       const haystack = normalizeForReasoning([
         document.title,
         document.category,
-        ...(Array.isArray(document.keywords) ? document.keywords : []),
+        ...keywords,
         document.summary
       ].join(' '));
-      const score = terms.reduce((total, term) => total + (haystack.includes(term) ? 1 : 0), 0);
+      const tokenScore = terms.reduce((total, term) => total + (haystack.includes(term) ? 1 : 0), 0);
+      const phraseScore = keywords.reduce((total, keyword) => total + (keyword.length >= 2 && source.includes(keyword) ? 2 : 0), 0);
+      const score = tokenScore + phraseScore;
       return { document, score };
     })
       .filter(item => item.score > 0)
