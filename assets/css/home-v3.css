@@ -37,3 +37,28 @@ html.result-route .welcome,html.result-route .quick-actions,html.result-route .c
   .output-format-mobile-button{display:block;font-size:11px}
   .output-format-picker-grid{grid-template-columns:1fr}
 }
+
+
+/* v7.1 UI polish — visual/layout only; no behavior or routing changes. */
+@media(max-width:620px){
+  body.app-shell .chat-main{padding-top:calc(var(--nav-height) + 10px);padding-left:12px;padding-right:12px;padding-bottom:82px}
+  body.app-shell .welcome{padding-top:0}
+  body.app-shell .welcome-mark{width:42px;height:42px;border-radius:14px}
+  body.app-shell .eyebrow{margin-top:6px;font-size:9px;letter-spacing:.1em}
+  body.app-shell .welcome h1{font-size:24px;line-height:1.2}
+  body.app-shell .welcome>p:not(.eyebrow){margin-top:5px;font-size:11.5px;line-height:1.45}
+  body.app-shell .quick-actions{margin-top:10px}
+  body.app-shell .composer-region{margin-top:10px}
+  body.app-shell .composer{padding:6px;border-radius:17px;box-shadow:0 5px 16px rgba(18,55,42,.055)}
+  body.app-shell .composer textarea{min-height:34px;font-size:13.5px;padding:6px 9px 2px}
+  body.app-shell .output-format-control{margin-top:2px}
+  body.app-shell .composer-tools{padding-top:1px}
+  body.app-shell .tool-button{width:36px;height:36px;border-radius:10px}
+  body.app-shell .send-button{width:38px;height:38px;border-radius:11px}
+  body.app-shell .privacy-note{margin-top:4px;font-size:7.5px;line-height:1.45}
+}
+@media(max-width:380px){
+  body.app-shell .welcome h1{font-size:22px}
+  body.app-shell .welcome>p:not(.eyebrow){font-size:10.5px}
+  body.app-shell .chat-main{padding-left:10px;padding-right:10px}
+}
