@@ -4,6 +4,8 @@ import test from 'node:test';
 
 const bridge = readFileSync('assets/js/ui/quick-action-guided-bridge-v1.js', 'utf8');
 const index = readFileSync('index.html', 'utf8');
+const homeCss = readFileSync('assets/css/home-v3.css', 'utf8');
+const buildScript = readFileSync('scripts/build-static.mjs', 'utf8');
 
 test('quick action buttons are rerouted through the form submit path', () => {
   assert.match(bridge, /\[data-prompt\]/);
@@ -20,4 +22,13 @@ test('production home loads quick action bridge before home-v3', () => {
   assert.match(bridge, /\?v=\d+\.\d+\.\d+$/);
   assert.match(home, /\?v=\d+\.\d+\.\d+$/);
   assert.ok(index.indexOf(bridge) < index.indexOf(home), 'bridge must load before home-v3');
+});
+
+test('collapsed catalog groups stay hidden and bridge build version matches production HTML', () => {
+  assert.match(bridge, /\.work-catalog-tasks\[hidden\]\{display:none!important\}/);
+  assert.match(homeCss, /html body\.app-shell \.quick-actions \.work-catalog-home \.work-catalog-tasks:not\(\[hidden\]\)\s*\{\s*display:grid!important;/);
+  const indexVersion = index.match(/quick-action-guided-bridge-v1\.js\?v=([^"'&]+)/)?.[1];
+  const buildVersion = buildScript.match(/quickActionBridge:\s*"([^"]+)"/)?.[1];
+  assert.ok(indexVersion, 'production HTML must version the bridge asset');
+  assert.equal(buildVersion, indexVersion, 'static build must preserve the production bridge asset version');
 });

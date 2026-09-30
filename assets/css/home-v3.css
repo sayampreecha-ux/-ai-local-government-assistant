@@ -236,7 +236,7 @@ html.result-route .welcome,html.result-route .quick-actions,html.result-route .c
     overflow-wrap:anywhere!important;
     writing-mode:horizontal-tb!important;
   }
-  html body.app-shell .quick-actions .work-catalog-home .work-catalog-tasks{
+  html body.app-shell .quick-actions .work-catalog-home .work-catalog-tasks:not([hidden]){
     display:grid!important;
     grid-template-columns:minmax(0,1fr)!important;
     width:100%!important;
