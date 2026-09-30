@@ -218,7 +218,7 @@
     heading.className = 'work-catalog-heading';
     title.textContent = 'เลือกผู้ช่วยตามงาน';
     intro.className = 'work-catalog-intro';
-    intro.textContent = '12 หมวดงาน เรียงจากงานที่ใช้บ่อย • มีเส้นทางช่วยเหลือประชาชนและสาธารณภัยอัตโนมัติ';
+    intro.textContent = '13 หมวดงาน เรียงจากงานที่ใช้บ่อย • มีเส้นทางช่วยเหลือประชาชนและสาธารณภัยอัตโนมัติ';
     groups.className = 'work-catalog-groups';
 
     const categories = new Map(WORK_CATALOG.map(category => [category.id, category]));
