@@ -459,5 +459,16 @@
   }, true);
 
   addCatalogStyles();
+  const mobileFinalStyle = document.createElement('style');
+  mobileFinalStyle.id = 'gp-mobile-final-override';
+  mobileFinalStyle.textContent = `
+    @media (max-width:620px){
+      .work-catalog-groups{display:grid!important;grid-template-columns:1fr!important;gap:10px!important;width:100%!important}
+      .work-catalog-group{display:block!important;width:100%!important;min-width:0!important;min-height:0!important}
+      .work-catalog-group>h3{display:flex!important;width:100%!important;min-width:0!important;box-sizing:border-box!important;white-space:normal!important;word-break:normal!important;overflow-wrap:anywhere!important;font-size:17px!important;line-height:1.35!important;padding:12px 42px 12px 58px!important;min-height:64px!important}
+      .work-catalog-tasks{display:grid!important;grid-template-columns:1fr!important;width:100%!important;box-sizing:border-box!important}
+    }
+  `;
+  document.head.append(mobileFinalStyle);
   quickActions.replaceChildren(buildCatalog());
 })();
