@@ -252,3 +252,8 @@ html.result-route .welcome,html.result-route .quick-actions,html.result-route .c
     display:none!important;
   }
 }
+
+/* The attachment disclosure is removed from the composer at every viewport. */
+.composer-tools .gp-attachment-notice{
+  display:none!important;
+}
