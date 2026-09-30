@@ -189,3 +189,66 @@ html.result-route .welcome,html.result-route .quick-actions,html.result-route .c
     min-width:0!important;
   }
 }
+
+
+/* Production mobile catalog layout: keep category cards readable at phone widths. */
+@media (max-width:620px){
+  html body.app-shell .quick-actions .work-catalog-home .work-catalog-groups{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    gap:10px!important;
+  }
+  html body.app-shell .quick-actions .work-catalog-home .work-catalog-group{
+    display:block!important;
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
+  }
+  html body.app-shell .quick-actions .work-catalog-home .work-catalog-group>h3{
+    display:block!important;
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
+    writing-mode:horizontal-tb!important;
+    white-space:normal!important;
+    word-break:normal!important;
+    overflow-wrap:anywhere!important;
+    text-align:left!important;
+    font-size:17px!important;
+    line-height:1.35!important;
+  }
+  html body.app-shell .quick-actions .work-catalog-home .work-catalog-group>h3>.assistant-catalog-toggle{
+    display:flex!important;
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    box-sizing:border-box!important;
+  }
+  html body.app-shell .quick-actions .work-catalog-home .assistant-catalog-name{
+    min-width:0!important;
+    white-space:normal!important;
+    word-break:normal!important;
+    overflow-wrap:anywhere!important;
+    writing-mode:horizontal-tb!important;
+  }
+  html body.app-shell .quick-actions .work-catalog-home .work-catalog-tasks{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+  }
+  html body.app-shell .quick-actions .work-catalog-home .work-catalog-task{
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+  }
+  html body.app-shell .composer-tools .gp-attachment-notice{
+    display:none!important;
+  }
+}
