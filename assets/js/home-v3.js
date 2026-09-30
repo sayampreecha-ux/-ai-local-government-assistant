@@ -572,13 +572,14 @@
   function collectFiles(fileList) {
     const incoming = Array.from(fileList || []);
     attachments = [...attachments, ...incoming].slice(0, 5);
-    attachmentStatus.textContent = attachments.length ? `แนบแล้ว ${attachments.length} ไฟล์ · พิมพ์ “สรุป” เพื่อสรุปใช้ปฏิบัติงาน` : '';
+    if (attachmentStatus) attachmentStatus.textContent = attachments.length ? `แนบแล้ว ${attachments.length} ไฟล์ · พิมพ์ “สรุป” เพื่อสรุปใช้ปฏิบัติงาน` : '';
     if (incoming.length) window.GovPrompt?.toast('🔐 ไฟล์ยังอยู่ในเบราว์เซอร์ ระบบคำนวณ hash และอ่านเฉพาะข้อมูลโครงสร้างที่จำเป็น');
   }
-  attachmentInput.addEventListener('change', () => collectFiles(attachmentInput.files));
-  cameraInput.addEventListener('change', () => collectFiles(cameraInput.files));
+  if (attachmentInput) attachmentInput.addEventListener('change', () => collectFiles(attachmentInput.files));
+  if (cameraInput) cameraInput.addEventListener('change', () => collectFiles(cameraInput.files));
 
-  document.getElementById('micButton').addEventListener('click', () => {
+  const micButton = document.getElementById('micButton');
+  if (micButton) micButton.addEventListener('click', () => {
     const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Recognition) { window.GovPrompt?.toast('เบราว์เซอร์นี้ยังไม่รองรับการพิมพ์ด้วยเสียง'); return; }
     const recognition = new Recognition(); const button = document.getElementById('micButton');
