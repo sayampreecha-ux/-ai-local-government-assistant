@@ -10,6 +10,22 @@
   const dialogContent = document.getElementById('dialogContent');
   if (!form || !input || !quickActions) return;
 
+  const CATEGORY_ICONS = Object.freeze({
+    assistance: '🚨',
+    pr: '📣',
+    records: '📄',
+    audit: '⚖️',
+    finance: '💰',
+    planning: '📊',
+    procurement: '🛒',
+    hr: '👥',
+    executive: '👔',
+    engineering: '🏗️',
+    health: '🩺',
+    education: '🎓',
+    council: '🏛️'
+  });
+
   const CATALOG_ORDER = Object.freeze([
     'pr', 'records', 'audit', 'finance', 'planning', 'procurement',
     'hr', 'executive', 'engineering', 'health', 'education', 'council'
@@ -297,7 +313,14 @@
       section.dataset.categoryId = category.id;
       if (category.id === 'assistance') section.dataset.assistanceRoute = 'true';
       section.dataset.search = normalize(`${category.title} ${category.keywords} ${category.tasks.map(task => `${task.label} ${task.prompt}`).join(' ')}`);
-      heading.textContent = category.title;
+      const icon = document.createElement('span');
+      const name = document.createElement('span');
+      icon.className = 'assistant-catalog-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = CATEGORY_ICONS[category.id] || '•';
+      name.className = 'assistant-catalog-name';
+      name.textContent = category.title;
+      heading.append(icon, name);
       tasks.className = 'work-catalog-tasks';
       tasks.hidden = true;
       category.tasks.forEach(task => {
