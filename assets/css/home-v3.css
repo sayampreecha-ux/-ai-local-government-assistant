@@ -272,3 +272,18 @@ html.result-route.result-intake .privacy-note{display:none}
   html.result-route .message.assistant{gap:7px}
   html.result-route .assistant-mark{flex-basis:30px;height:30px}
 }
+
+
+/* v7 mobile-first composer: text + output format + send only */
+@media(max-width:620px){
+  .composer-region{left:6px;right:6px;bottom:calc(70px + env(safe-area-inset-bottom));width:auto;transform:none}
+  .composer{padding:8px 9px 9px;border-radius:18px}
+  .composer textarea{min-height:48px;max-height:104px;padding:10px 8px 5px;font-size:16px;line-height:1.4}
+  .composer-tools{justify-content:flex-end;padding-top:3px}
+  .composer-tools .send-button{width:48px;height:48px;min-width:48px;min-height:48px;border-radius:14px}
+  .composer-tools .send-button svg{width:23px;height:23px}
+  .output-format-control{gap:5px;margin:1px 0 2px;padding:4px 2px;border-top:1px solid #edf1ee}
+  .output-format-control label{font-size:10px}
+  .output-format-control select{height:38px;font-size:12px;border-radius:10px}
+  .quick-actions{margin-top:14px;padding-bottom:4px}
+}
