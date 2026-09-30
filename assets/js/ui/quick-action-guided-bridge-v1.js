@@ -186,18 +186,19 @@
         .work-catalog-heading{display:block;margin-bottom:10px}
         .work-catalog-heading h2{font-size:1.1rem}
         .work-catalog-intro{margin-top:3px;font-size:.82rem}
-        .work-catalog-groups{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-        .work-catalog-group{padding:9px 8px;border-radius:15px;box-shadow:0 2px 9px rgba(18,55,42,.04)}
-        .work-catalog-group:hover{transform:none}
-        .work-catalog-group h3{padding:1px 20px 1px 36px;font-size:.91rem;line-height:1.38;min-height:48px}
-        .work-catalog-group h3::before{left:3px;width:26px;height:26px;border-radius:8px;font-size:15px}
-        .work-catalog-group h3::after{right:1px;font-size:14px}
-        .work-catalog-tasks{grid-column:1/-1;gap:6px;padding-top:7px}
+        .work-catalog-groups{grid-template-columns:1fr;gap:9px}
+        .work-catalog-group{padding:0;border-radius:15px;box-shadow:0 2px 9px rgba(18,55,42,.04)}
+        .work-catalog-group h3{padding:10px 36px 10px 54px;font-size:1rem;line-height:1.35;min-height:60px}
+        .work-catalog-group h3::before{left:10px;width:32px;height:32px;border-radius:9px;font-size:17px}
+        .work-catalog-group h3::after{right:10px;font-size:16px}
+        .work-catalog-tasks{grid-template-columns:1fr;gap:6px;padding:0 10px 10px}
         .work-catalog-task{width:100%;border-radius:10px;padding:9px 10px;font-size:.84rem}
       }
       @media(max-width:360px){
         .work-catalog-groups{gap:7px}
-        .work-catalog-group{padding:8px 6px}
+        .work-catalog-group h3{padding-left:50px;font-size:.92rem}
+      }
+      .work-catalog-group{padding:8px 6px}
         .work-catalog-group h3{padding-left:33px;font-size:.84rem}
         .work-catalog-group h3::before{width:24px;height:24px}
       }
