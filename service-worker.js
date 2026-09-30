@@ -1,10 +1,10 @@
-const APP_VERSION = '3.6.5';
+const APP_VERSION = '3.6.6';
 const CACHE = `lg-assistant-ready-v${APP_VERSION.replace('.', '-')}`;
 const ASSETS = [
   './',
   './index.html',
   './assets/css/govprompt.css',
-  './assets/css/home-v3.css?v=2.6.12',
+  './assets/css/home-v3.css?v=2.6.13',
   './assets/js/core/output-format-presets-v1.js',
   './assets/js/home-v3.js',
   './manifest.webmanifest',
