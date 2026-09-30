@@ -542,6 +542,47 @@
     });
   }
 
+  function buildKnowledgeGuidance(question) {
+    const repository = window.GovPromptCore?.knowledgeRepository;
+    const documents = Array.isArray(repository?.documents) ? repository.documents : [];
+    if (!documents.length) return Object.freeze({ block: '', matches: Object.freeze([]) });
+
+    const source = normalizeForReasoning(question);
+    const terms = [...new Set(source.split(/\\s+/).filter(term => term.length >= 2))];
+    const scored = documents.map(document => {
+      const haystack = normalizeForReasoning([
+        document.title,
+        document.category,
+        ...(Array.isArray(document.keywords) ? document.keywords : []),
+        document.summary
+      ].join(' '));
+      const score = terms.reduce((total, term) => total + (haystack.includes(term) ? 1 : 0), 0);
+      return { document, score };
+    })
+      .filter(item => item.score > 0)
+      .sort((a, b) => b.score - a.score || String(a.document.title).localeCompare(String(b.document.title)))
+      .slice(0, 2);
+
+    if (!scored.length) return Object.freeze({ block: '', matches: Object.freeze([]) });
+
+    const lines = [
+      'บริบทจาก GovPrompt Knowledge Registry (ใช้เป็น guidance/lead เท่านั้น ไม่ใช่ฐานอำนาจ)',
+      '- เอกสารใน Registry ช่วยชี้ประเด็นและคำค้นที่เกี่ยวข้อง ห้ามใช้แทนกฎหมาย ระเบียบ หนังสือสั่งการ หรือแหล่งปฐมภูมิ',
+      ...scored.flatMap(({ document }) => [
+        `[Knowledge] ${document.title} | ${document.agency} | version=${document.version} | effective=${document.effectiveDate}`,
+        `Summary: ${document.summary}`,
+        String(document.content || '').slice(0, 1800),
+        `Source/lead: ${document.source}`,
+        document.notes ? `Caution: ${document.notes}` : ''
+      ].filter(Boolean))
+    ];
+
+    return Object.freeze({
+      block: lines.join('\\n'),
+      matches: Object.freeze(scored.map(item => item.document.id))
+    });
+  }
+
   function createGovernmentPrompt({ question, route, context, attachments = [], outputFormatId = 'auto' } = {}) {
     const userQuestion = normalizeText(question);
     if (!userQuestion) throw new TypeError('question must be a non-empty string');
@@ -552,6 +593,7 @@
     const riskFlags = detectRiskFlags([userQuestion, ...attachmentNames].join(' '));
     const relatedModules = Array.isArray(activeRoute.modules) && activeRoute.modules.length ? activeRoute.modules.join(', ') : activeRoute.moduleId;
     const taskPlan = planUniversalTask(userQuestion, normalizedContext);
+    const knowledgeGuidance = buildKnowledgeGuidance(userQuestion);
     const gates = taskPlan.qualityGates;
     const casePrecedentGate = buildCasePrecedentGate(userQuestion, { ...normalizedContext, hasAttachments: attachments.length > 0 }, taskPlan.riskLevel);
     const operationalSummary = taskPlan.action === 'summarize'
@@ -672,6 +714,7 @@
         qualityGates: gates,
         context: normalizedContext,
         attachmentNames: Object.freeze(attachmentNames),
+      knowledgeMatches: knowledgeGuidance.matches,
         prMode: true
       });
     }
@@ -768,6 +811,7 @@
       '- หมวดดังกล่าวมีไว้ช่วยเลือกบริบท/เครื่องมือเท่านั้น ห้ามลดคุณภาพคำตอบหรือปฏิเสธงานเพียงเพราะ Route ไม่ตรง',
       '- หาก Route ขัดกับเจตนาของผู้ใช้ ให้ยึดเจตนา ชิ้นงาน และหลักฐานที่งานนั้นต้องใช้เป็นหลัก',
       '- งานหนึ่งเรื่องอาจใช้หลายความสามารถพร้อมกัน เช่น โครงการ + งบประมาณ + พัสดุ + หนังสือราชการ + PR โดยไม่ต้องบังคับผู้ใช้เลือกหมวด',
+      ...(knowledgeGuidance.block ? ['', knowledgeGuidance.block] : []),
       '', 'บริบทที่ GovPrompt จัดให้',
       `- หมวดที่ระบบคาดการณ์: ${activeRoute.moduleId} — ${activeRoute.assistant.title}`,
       `- หมวดที่อาจเกี่ยวข้อง: ${relatedModules}`,
