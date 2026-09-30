@@ -283,6 +283,17 @@
       const heading = document.createElement('h3');
       const tasks = document.createElement('div');
       section.className = `work-catalog-group work-catalog-tone-${(index % 6) + 1}`;
+      // Mobile UI hardening: keep each category card and heading full-width.
+      section.style.width = '100%';
+      section.style.minWidth = '0';
+      section.style.boxSizing = 'border-box';
+      heading.style.width = '100%';
+      heading.style.maxWidth = 'none';
+      heading.style.minWidth = '0';
+      heading.style.boxSizing = 'border-box';
+      heading.style.whiteSpace = 'normal';
+      heading.style.wordBreak = 'normal';
+      heading.style.overflowWrap = 'normal';
       section.dataset.categoryId = category.id;
       if (category.id === 'assistance') section.dataset.assistanceRoute = 'true';
       section.dataset.search = normalize(`${category.title} ${category.keywords} ${category.tasks.map(task => `${task.label} ${task.prompt}`).join(' ')}`);
