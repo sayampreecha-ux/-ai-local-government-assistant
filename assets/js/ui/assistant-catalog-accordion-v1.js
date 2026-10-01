@@ -28,6 +28,7 @@
   }
 
   function appendHealthShortcuts(group, tasks) {
+    // เมนูเด่น: คัดเฉพาะงานสุขภาพที่ใช้บ่อยสำหรับหน้าแรก
     const title = String(group.querySelector('h3')?.textContent || group.textContent || '');
     if (!/สาธารณสุข|รพ\.สต/i.test(title) || tasks.dataset.healthFeaturedCurated === 'true') return;
     [...tasks.querySelectorAll('.work-catalog-task')].forEach(button => {
@@ -87,6 +88,7 @@
   function enhanceGroup(group, index) {
     if (group.dataset.assistantAccordion === 'true') return;
     const heading = group.querySelector(':scope > h3');
+    const toggle = heading;
     const tasks = group.querySelector(':scope > .work-catalog-tasks');
     if (!heading || !tasks) return;
 
@@ -113,16 +115,17 @@
     heading.setAttribute('aria-expanded', 'false');
     heading.setAttribute('aria-controls', tasks.id);
 
-    const toggle = () => {
+    const handleToggle = event => {
+      event.stopPropagation();
       const willOpen = heading.getAttribute('aria-expanded') !== 'true';
       if (willOpen) collapseOthers(group);
       setExpanded(group, willOpen);
     };
-    heading.addEventListener('click', toggle);
+    toggle.addEventListener('click', event => { event.stopPropagation(); handleToggle(event); });
     heading.addEventListener('keydown', event => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        toggle();
+        handleToggle(event);
       }
     });
 
