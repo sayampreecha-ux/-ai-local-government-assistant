@@ -47,8 +47,7 @@ const healthGroup = page.locator('.work-catalog-group').filter({ hasText: /ส�
 await healthGroup.waitFor({ state: 'visible', timeout: 10_000 });
 const healthToggle = healthGroup.locator('h3.assistant-catalog-toggle');
 await healthToggle.waitFor({ state: 'visible', timeout: 10_000 });
-assert.match(await healthToggle.locator('.assistant-task-count').innerText(), /5\s*เมนูเด่น/);
-assert.doesNotMatch(await healthToggle.locator('.assistant-task-count').innerText(), /5\s*งาน/);
+assert.equal(await healthToggle.locator('.assistant-task-count').count(), 0, 'compact category headings must not add a duplicate task-count label');
 await healthToggle.click();
 
 const shortcut = healthGroup.locator('[data-health-shortcut="true"]').filter({ hasText: 'แผนลูกจ้างเงินบำรุง' }).first();
