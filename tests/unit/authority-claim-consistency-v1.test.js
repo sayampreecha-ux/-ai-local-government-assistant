@@ -42,7 +42,7 @@ test("accepts the verified official circular number after correction", () => {
     "อ้างหนังสือ มท 0808.2/ว 7508",
     [verifiedW7508]
   );
-  assert.deepEqual(result.claims, [
+  assert.deepEqual(JSON.parse(JSON.stringify(result.claims)), [
     {
       documentNumber: "ว7508",
       raw: "มท 0808.2/ว 7508",
