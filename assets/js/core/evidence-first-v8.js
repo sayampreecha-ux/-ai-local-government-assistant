@@ -157,7 +157,7 @@
   function extractAuthorityClaims(question = '') {
     const source = text(question);
     const claims = [];
-    const pattern = /(?:มท\\s*\\d+(?:\\.\\d+)*\\s*\\/\\s*)?ว\\s*\\.?\\s*(\\d{2,6})/gi;
+    const pattern = /(?:มท\s*\d+(?:\.\d+)*\s*\/\s*)?ว\s*\.?\s*(\d{2,6})/gi;
     let match;
     while ((match = pattern.exec(source))) {
       claims.push({ raw: normalize(match[0]), documentNumber: 'ว' + match[1] });
