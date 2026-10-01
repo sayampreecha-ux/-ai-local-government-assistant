@@ -89,6 +89,8 @@
     if (group.dataset.assistantAccordion === 'true') return;
     const heading = group.querySelector(':scope > h3');
     const toggle = heading;
+    // Compatibility hook: v7 reuses the existing heading DOM; this class is a semantic toggle hook, not a rebuilt wrapper.
+    toggle.classList.add('assistant-catalog-toggle');
     const tasks = group.querySelector(':scope > .work-catalog-tasks');
     if (!heading || !tasks) return;
 
