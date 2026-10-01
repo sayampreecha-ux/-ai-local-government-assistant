@@ -321,6 +321,22 @@
       searchFlow: Object.freeze(mode === 'FULL' ? ['Rule', 'Case', 'Later Rule', 'Conflict Check', 'Applicable Rule', 'Answer'] : ['Rule', 'Version', 'Answer']) });
   }
 
+  // Cross-reference authority resolver: trace incorporated rules without assuming automatic entitlement.
+  function crossReferenceAuthorityInstructions() {
+    return [
+      '',
+      'CROSS-REFERENCE AUTHORITY RESOLVER v1.0 — ตรวจสายการอ้างอิง/นำหลักเกณฑ์มาใช้',
+      '- เมื่อเอกสารหนึ่งอ้างถึงหรือกำหนดให้นำกฎหมาย ระเบียบ หนังสือสั่งการ หรือหลักเกณฑ์อื่นมาใช้ ให้สร้าง Authority Chain: เอกสารต้นเรื่อง → ข้อ/วรรคที่อ้าง → กฎหรือระเบียบปลายทาง → เงื่อนไขและข้อจำกัดที่เกี่ยวข้อง',
+      '- แยกให้ชัดระหว่าง (ก) กล่าวถึง/อ้างอิงเพื่อประกอบความเข้าใจ (ข) ให้นำหลักเกณฑ์มาใช้โดยตรงหรือโดยอนุโลม (ค) กำหนดสิทธิหรือค่าใช้จ่ายไว้เอง และ (ง) อ้างอิงพร้อมกำหนดเงื่อนไขเพิ่มเติม; ห้ามอนุมานว่าเป็นการให้อำนาจหรือสิทธิเบิกจ่ายเพียงเพราะมีการอ้างชื่อระเบียบ',
+      '- เปิดตรวจข้อความต้นฉบับของทั้งเอกสารต้นเรื่องและข้อกำหนดปลายทาง โดยเฉพาะถ้อยคำเรื่องผู้มีสิทธิ ขอบเขตบุคคล/หน่วยงาน ประเภทค่าใช้จ่าย ผู้อนุมัติ วิธีคำนวณ เอกสารหลักฐาน แหล่งงบประมาณ และข้อยกเว้น',
+      '- ตรวจวันเกิดเหตุและวันใช้บังคับของเอกสารทุกชั้น รวมการแก้ไข ยกเลิก แทนที่ และบทเฉพาะกาล; อย่านำกฎปลายทางมาใช้เกินขอบเขตที่เอกสารต้นเรื่องอนุญาต',
+      '- จัดทำ Rule-to-Claim Mapping: ข้อสรุปแต่ละข้อ ↔ ข้อความต้นฉบับ/ข้อกฎหมายที่รองรับ ↔ ข้อเท็จจริงที่ตรงกัน ↔ เงื่อนไขที่ยังขาด',
+      '- หากค้นพบเพียงการอ้างถึงแต่ยังเปิดตรวจต้นฉบับไม่ได้ ให้ระบุว่า “ยังยืนยันสายอำนาจและขอบเขตการนำหลักเกณฑ์มาใช้ไม่ได้”; ห้ามสร้างเลขข้อหรือถ้อยคำแทนต้นฉบับ',
+      '- เมื่อข้อสรุปขึ้นกับการเชื่อมโยงหลายฉบับ ให้ Decision Lock คง ON เฉพาะประเด็นที่ยังไม่ผ่านการตรวจ และแสดงข้อเท็จจริง/หลักฐานที่ค้นต่อได้โดยไม่ปิดกั้นการค้นหา',
+      '- การผ่านการตรวจสายอ้างอิงไม่ใช่การอนุมัติหรือสั่งจ่ายเงินจริง; คง Human Review และตรวจงบประมาณ/การอนุมัติตามอำนาจแยกต่างหาก'
+    ];
+  }
+
   function applicableAuthorityInstructions(check) {
     if (!check.required) return [];
     return [
@@ -721,6 +737,7 @@
         '- หากแหล่งสรุปขัดกับต้นฉบับ ให้ยึดต้นฉบับ และหากต้นฉบับหลายฉบับขัดกันให้ตรวจลำดับศักดิ์ วันมีผล และฉบับแก้ไข'
       ] : []),
       ...applicableAuthorityInstructions(taskPlan.applicableAuthorityCheck),
+      ...(taskPlan.applicableAuthorityCheck.required || gates.evidenceRequired ? crossReferenceAuthorityInstructions() : []),
       ...(casePrecedentGate.required ? [
         '', 'GOVPROMPT — OFFICIAL AUTHORITY RETRIEVAL GATE',
         `- retrievalGateVersion=${casePrecedentGate.retrievalGateVersion}; stateModel=Official Precedent Gate v${casePrecedentGate.gateVersion}; interpretation_issue=true`,
@@ -838,6 +855,8 @@
   window.GovPromptCore.classifyPromptRiskLevel = classifyRiskLevel;
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
   window.GovPromptCore.buildApplicableAuthorityCheck = buildApplicableAuthorityCheck;
+  window.GovPromptCore.CROSS_REFERENCE_AUTHORITY_RESOLVER_VERSION = '1.0';
+  window.GovPromptCore.buildCrossReferenceAuthorityInstructions = crossReferenceAuthorityInstructions;
   window.GovPromptCore.buildCasePrecedentGate = buildCasePrecedentGate;
   window.GovPromptCore.planUniversalTask = planUniversalTask;
   window.GovPromptCore.UNIVERSAL_TASK_REASONING_VERSION = '7.1';
