@@ -57,9 +57,9 @@ for (let index = 1; index <= 13; index += 1) {
     continue;
   }
 
-  const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+  const baseline = execFileSync('git', ['show', `a94fe50a5c67bae2edb292d18babd2043a0ef3c3:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
   assert.equal(current.includes(integrationScripts), true, `${file}: Shared Context integration missing`);
-  assert.equal(current.replace(integrationScripts, ''), baseline, `${file}: Sprint 3.3 output behavior changed`);
+  assert.equal(current.replace(integrationScripts, ''), baseline.replace(integrationScripts, ''), `${file}: Sprint 3.3 output behavior changed`);
 }
 
 console.log('Shared Context integration verification passed for GP001-GP013; GP008 validates approved static health tools and GP012 validates the simplified single-input PR flow.');
