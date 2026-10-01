@@ -148,7 +148,8 @@ for (let index = 1; index <= 13; index += 1) {
 
   const baseline = execFileSync('git', ['show', `a94fe50a5c67bae2edb292d18babd2043a0ef3c3:${file}`], { encoding: 'utf8' });
   assert.equal(current.includes(insertedScripts), true, `${file}: router scripts not integrated`);
-  assert.equal(normalizeEol(current.replace(insertedScripts, '')), normalizeEol(baseline), `${file}: existing UI or prompt behavior changed`);
+  const normalizeBaseline = baseline.replace(insertedScripts, '');
+  assert.equal(normalizeEol(current.replace(insertedScripts, '')), normalizeEol(normalizeBaseline), `${file}: existing UI or prompt behavior changed`);
 }
 
 console.log('GovPrompt hybrid intent router verification passed for GP001-GP013, cross-domain adversarial cases, GP008 static health tools, simplified GP012 UX, and 36 real-language production queries.');
