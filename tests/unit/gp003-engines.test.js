@@ -95,13 +95,13 @@ test("classifies cumulative procurement and contract risk", () => {
   assert.equal(risk.score, 1);
 });
 
-test("builds a nine-item procurement audit checklist", () => {
+test("builds an eleven-item procurement audit checklist", () => {
   const compliance = buildComplianceChecklist({
     input: { documents: { budgetApproved: true, procurementPlan: true } },
     tor: cleanTOR, competition: { level: "fair" }, vendors: { assessments: [], qualifiedCount: 0 },
-    pricing: { sampleSize: 3 }, procurement: { recommendedMethod: "e-bidding" }, knowledgeCount: 7,
+    pricing: { sampleSize: 3 }, procurement: { recommendedMethod: "e-bidding" }, knowledgeCount: 9,
   });
-  assert.equal(compliance.total, 10);
+  assert.equal(compliance.total, 11);
   assert.equal(compliance.compliant, true);
 });
 
@@ -129,7 +129,7 @@ test("formats all procurement output envelopes", () => {
   assert.equal(formatGP003Output(result, "api-response").moduleId, "GP003");
 });
 
-test("registers six templates and seven controlled knowledge sources", () => {
+test("registers six templates and nine controlled knowledge sources", () => {
   assert.equal(GP003_TEMPLATES.length, 6);
-  assert.equal(GP003_KNOWLEDGE.length, 8);
+  assert.equal(GP003_KNOWLEDGE.length, 9);
 });
