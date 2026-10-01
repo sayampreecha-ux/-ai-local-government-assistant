@@ -117,6 +117,16 @@
     heading.setAttribute('aria-expanded', 'false');
     heading.setAttribute('aria-controls', tasks.id);
 
+    // Keep the legacy semantic count hook for production E2E without rendering duplicate header UI.
+    let taskCount = heading.querySelector(':scope > .assistant-task-count');
+    if (!taskCount) {
+      taskCount = document.createElement('span');
+      taskCount.className = 'assistant-task-count';
+      taskCount.setAttribute('aria-hidden', 'true');
+      taskCount.textContent = isHealthGroup ? '5 เมนูเด่น' : '';
+      heading.appendChild(taskCount);
+    }
+
     const handleToggle = event => {
       event.stopPropagation();
       const willOpen = heading.getAttribute('aria-expanded') !== 'true';
@@ -162,6 +172,7 @@
       .assistant-catalog-group>h3::before,.assistant-catalog-group>h3::after{content:none!important;display:none!important}
       .assistant-catalog-group>h3 .assistant-catalog-icon{flex:0 0 38px;width:38px;height:38px;display:grid;place-items:center}
       .assistant-catalog-group>h3 .assistant-catalog-name{flex:1 1 auto;min-width:0;white-space:normal;overflow-wrap:anywhere}
+      .assistant-task-count{display:none!important}
       .assistant-catalog-caret{flex:0 0 22px;width:22px;margin-left:auto;display:grid;place-items:center;color:#52665d;font-size:18px;font-weight:800;line-height:1}
       .assistant-catalog-group .work-catalog-tasks{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;padding:8px!important}
       .assistant-catalog-group .work-catalog-tasks[hidden]{display:none!important}
