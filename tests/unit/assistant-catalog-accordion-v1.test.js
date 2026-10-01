@@ -4,14 +4,25 @@ import { readFile } from 'node:fs/promises';
 
 test('home assistant catalog is a responsive one-page accordion with frequent-task lists', async () => {
   const source = await readFile('assets/js/ui/assistant-catalog-accordion-v1.js', 'utf8');
+  const homeCss = await readFile('assets/css/home-v3.css', 'utf8');
   assert.match(source, /assistant-catalog-toggle/);
   assert.match(source, /aria-expanded/);
   assert.match(source, /work-catalog-tasks/);
   assert.match(source, /collapseOthers/);
   assert.match(source, /toggle\.addEventListener\('click',\s*event\s*=>\s*\{\s*event\.stopPropagation\(\);/);
+  assert.match(source, /heading\.querySelector\(':scope > \.assistant-catalog-name'\)/);
+  assert.match(source, /heading\.querySelector\(':scope > \.assistant-catalog-icon'\)/);
+  assert.match(source, /toggle\.append\(icon, name, count, caret\)/);
+  assert.doesNotMatch(source, /toggle\.innerHTML/);
   assert.match(source, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
-  assert.match(source, /@media\(max-width:959px\).*repeat\(2,minmax\(0,1fr\)\)/s);
+  assert.match(source, /@media\(max-width:959px\) and \(min-width:621px\).*repeat\(3,minmax\(0,1fr\)\)/s);
   assert.match(source, /@media\(max-width:620px\).*grid-column:1\/-1/s);
+  assert.match(source, /@media\(max-width:620px\).*grid-template-columns:minmax\(0,1fr\)!important/s);
+  assert.doesNotMatch(source, /@media\(max-width:620px\).*grid-template-columns:repeat\(2,/s);
+  assert.match(homeCss, /work-catalog-group>h3::before,[\s\S]*?work-catalog-group>h3::after\{[\s\S]*?display:none!important;[\s\S]*?content:none!important;/);
+  assert.match(homeCss, /assistant-catalog-name\{[^}]*font-size:17px!important;[^}]*line-height:1\.35!important;/);
+  assert.match(homeCss, /chat-main\{\s*padding-bottom:calc\(150px \+ env\(safe-area-inset-bottom\)\)!important;/);
+  assert.match(homeCss, /bottom-nav\{\s*height:calc\(68px \+ env\(safe-area-inset-bottom\)\)!important;\s*padding-bottom:env\(safe-area-inset-bottom\)!important;/);
   const touchHeights = [...source.matchAll(/min-height:(\d+)px/g)].map(match => Number(match[1]));
   assert.ok(touchHeights.length > 0 && touchHeights.every(height => height >= 44));
 });

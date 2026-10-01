@@ -15,6 +15,7 @@
     const tasks = group.querySelector('.work-catalog-tasks');
     if (!toggle || !tasks) return;
     toggle.setAttribute('aria-expanded', String(expanded));
+    group.querySelector(':scope > h3')?.setAttribute('aria-expanded', String(expanded));
     tasks.hidden = !expanded;
     group.classList.toggle('is-open', expanded);
     const caret = toggle.querySelector('.assistant-catalog-caret');
@@ -87,13 +88,21 @@
   function enhanceGroup(group, index) {
     if (group.dataset.assistantAccordion === 'true') return;
     const heading = group.querySelector('h3'); const tasks = group.querySelector('.work-catalog-tasks'); if (!heading || !tasks) return;
-    const title = String(heading.textContent || '').trim(); const isHealthGroup = /สาธารณสุข|รพ\.สต/i.test(title);
+    const sourceName = heading.querySelector(':scope > .assistant-catalog-name');
+    const sourceIcon = heading.querySelector(':scope > .assistant-catalog-icon');
+    const title = String(sourceName?.textContent || heading.textContent || '').trim();
+    const catalogIcon = String(sourceIcon?.textContent || '').trim() || iconFor(title);
+    const isHealthGroup = /สาธารณสุข|รพ\.สต/i.test(title);
     tasks.id = tasks.id || `assistantCatalogTasks${index}`;
     appendHealthShortcuts(group, tasks); curatePublicRelations(group, tasks);
     const visibleCount = tasks.querySelectorAll('.work-catalog-task').length;
     const countLabel = isHealthGroup ? `${visibleCount} เมนูเด่น` : `${visibleCount} งาน`;
     const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'assistant-catalog-toggle'; toggle.setAttribute('aria-expanded', 'false'); toggle.setAttribute('aria-controls', tasks.id);
-    toggle.innerHTML = `<span class="assistant-catalog-icon" aria-hidden="true">${iconFor(title)}</span><span class="assistant-catalog-name">${title}</span><span class="assistant-task-count">${countLabel}</span><span class="assistant-catalog-caret" aria-hidden="true">⌄</span>`;
+    const icon = document.createElement('span'); icon.className = 'assistant-catalog-icon'; icon.setAttribute('aria-hidden', 'true'); icon.textContent = catalogIcon;
+    const name = document.createElement('span'); name.className = 'assistant-catalog-name'; name.textContent = title;
+    const count = document.createElement('span'); count.className = 'assistant-task-count'; count.textContent = countLabel;
+    const caret = document.createElement('span'); caret.className = 'assistant-catalog-caret'; caret.setAttribute('aria-hidden', 'true'); caret.textContent = '⌄';
+    toggle.append(icon, name, count, caret);
     toggle.addEventListener('click', event => { event.stopPropagation(); const willOpen = toggle.getAttribute('aria-expanded') !== 'true'; collapseOthers(group); setExpanded(group, willOpen); if (willOpen) group.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' }); });
     heading.textContent = ''; heading.appendChild(toggle); group.dataset.assistantAccordion = 'true'; group.classList.add('assistant-catalog-group'); setExpanded(group, false);
   }
@@ -133,7 +142,7 @@
       .assistant-catalog-group .work-catalog-task{width:100%!important;min-height:44px!important;border-radius:10px!important;padding:8px 10px!important;text-align:left!important;font-weight:700!important;background:rgba(255,255,255,.88)!important}
       .assistant-direct-tool{border-color:#9bbcaf!important;background:#f5fbf8!important}
       @media(max-width:959px) and (min-width:621px){.assistant-catalog-accordion{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}.assistant-task-count{display:none}.assistant-catalog-toggle{min-height:50px;padding:6px 8px}.assistant-catalog-name{font-size:.86rem}}
-      @media(max-width:620px){.assistant-catalog-accordion{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important}.assistant-catalog-group.is-open{grid-column:1/-1}.assistant-catalog-toggle{min-height:54px;padding:7px;grid-template-columns:auto minmax(0,1fr) auto;gap:5px;font-size:.8rem}.assistant-catalog-icon{font-size:1.05rem}.assistant-task-count{display:none}.assistant-catalog-caret{font-size:.85rem}.assistant-catalog-group .work-catalog-tasks{grid-template-columns:1fr!important;padding:2px 7px 7px!important}.assistant-catalog-group .work-catalog-task{font-size:.82rem!important}}
+      @media(max-width:620px){.assistant-catalog-accordion{width:100%!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important}.assistant-catalog-group{width:100%;min-width:0;display:block}.assistant-catalog-group.is-open{grid-column:1/-1}.assistant-catalog-toggle{width:100%;min-width:0;min-height:64px;padding:8px 12px;display:flex;align-items:center;gap:10px;font-size:17px;line-height:1.35}.assistant-catalog-icon{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;font-size:30px}.assistant-catalog-name{flex:1 1 auto;min-width:0;white-space:normal;word-break:normal;overflow-wrap:anywhere;font-size:17px;line-height:1.35}.assistant-task-count{display:none}.assistant-catalog-caret{flex:0 0 auto;margin-left:auto;font-size:1.15rem}.assistant-catalog-group .work-catalog-tasks{width:100%;min-width:0;grid-template-columns:minmax(0,1fr)!important;padding:2px 7px 7px!important}.assistant-catalog-group .work-catalog-task{font-size:.82rem!important}}
     `;
     document.head.appendChild(style);
   }
