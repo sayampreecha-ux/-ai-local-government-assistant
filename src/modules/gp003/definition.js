@@ -17,7 +17,7 @@ export const GP003_PROMPT = Object.freeze({
 
 export const GP003_WORKFLOW = Object.freeze([
   "input-validation", "routing", "knowledge-retrieval", "knowledge-authorization",
-  "tor-review", "specification-lock-detection", "service-contract-727-review", "competition-analysis",
+  "tor-review", "specification-lock-detection", "service-contract-727-review", "service-contract-9636-travel-training-review", "competition-analysis",
   "vendor-qualification", "pricing-analysis", "method-recommendation", "egp-workflow",
   "contract-risk", "compliance-checklist", "prompt-authorization", "output-validation",
   "context-update", "audit-and-metrics",
