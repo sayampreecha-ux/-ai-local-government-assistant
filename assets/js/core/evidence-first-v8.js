@@ -173,8 +173,8 @@
     const results = claims.map(claim => {
       const matches = normalizedDocuments.filter(document => {
         const number = normalize(document.documentNumber || document.referenceNumber || document.number)
-          .replace(/\\s+/g, '')
-          .replace(/^มท\\s*\\d+(?:\\.\\d+)*\\s*\\/\\s*/i, '');
+          .replace(/\s+/g, '')
+          .replace(/^มท\s*\d+(?:\.\d+)*\s*\/\s*/i, '');
         return number && number === claim.documentNumber;
       });
       const verified = matches.some(document => verifyPrimarySource(document).verified);
