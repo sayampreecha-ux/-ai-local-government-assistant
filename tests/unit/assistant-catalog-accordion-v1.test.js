@@ -57,7 +57,9 @@ test('public-health assistant keeps a clean five-entry landing menu', async () =
 
 test('existing mic asset loads the fresh accordion only on the home quick-action surface', async () => {
   const mic = await readFile('assets/js/mic.js', 'utf8');
+  const productionVerifier = await readFile('scripts/verify-gp008-production.mjs', 'utf8');
   assert.match(mic, /document\.querySelector\('\.quick-actions'\)/);
   assert.match(mic, /assistantCatalogAccordionScript/);
-  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=\d+\.\d+\.\d+/);
+  assert.match(mic, /assistant-catalog-accordion-v1\.js\?v=1\.2\.3/);
+  assert.equal(productionVerifier.includes('assistant-catalog-accordion-v1\\.js\\?v=1\\.2\\.3'), true);
 });
