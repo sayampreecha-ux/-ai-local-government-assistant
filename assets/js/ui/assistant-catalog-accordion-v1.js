@@ -133,7 +133,8 @@
       if (willOpen) collapseOthers(group);
       setExpanded(group, willOpen);
     };
-    toggle.addEventListener('click', event => { event.stopPropagation(); handleToggle(event); });
+    // The v7 bridge already owns the click handler on this heading. Do not toggle twice.
+    toggle.addEventListener('click', event => { event.stopPropagation(); });
     heading.addEventListener('keydown', event => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
