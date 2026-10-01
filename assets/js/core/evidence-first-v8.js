@@ -153,6 +153,46 @@
     return Object.freeze({ checked, found: precedent.length > 0, verifiedCount: verified.length, unresolved, caseMatch, status: !checked ? 'SEARCH_INCOMPLETE' : verified.length ? 'VERIFIED' : precedent.length ? 'FOUND_UNVERIFIED' : 'SEARCHED_NOT_FOUND' });
   }
 
+
+  function extractAuthorityClaims(question = '') {
+    const source = text(question);
+    const claims = [];
+    const pattern = /(?:มท\\s*\\d+(?:\\.\\d+)*\\s*\\/\\s*)?ว\\s*\\.?\\s*(\\d{2,6})/gi;
+    let match;
+    while ((match = pattern.exec(source))) {
+      claims.push({ raw: normalize(match[0]), documentNumber: 'ว' + match[1] });
+    }
+    const unique = new Map();
+    claims.forEach(item => unique.set(item.documentNumber, item));
+    return Object.freeze([...unique.values()]);
+  }
+
+  function checkAuthorityClaimConsistency(question = '', documents = []) {
+    const claims = extractAuthorityClaims(question);
+    const normalizedDocuments = list(documents);
+    const results = claims.map(claim => {
+      const matches = normalizedDocuments.filter(document => {
+        const number = normalize(document.documentNumber || document.referenceNumber || document.number)
+          .replace(/\\s+/g, '')
+          .replace(/^มท\\s*\\d+(?:\\.\\d+)*\\s*\\/\\s*/i, '');
+        return number && number === claim.documentNumber;
+      });
+      const verified = matches.some(document => verifyPrimarySource(document).verified);
+      return Object.freeze({
+        documentNumber: claim.documentNumber,
+        raw: claim.raw,
+        matched: matches.length > 0,
+        verified,
+        status: verified ? 'VERIFIED' : matches.length ? 'MATCH_UNVERIFIED' : 'CLAIM_NOT_VERIFIED'
+      });
+    });
+    return Object.freeze({
+      checked: claims.length > 0,
+      claims: Object.freeze(results),
+      unresolved: results.some(item => item.status !== 'VERIFIED')
+    });
+  }
+
   function buildEvidenceRetrievalPlan(question = '', context = {}) {
     const q = normalize(question);
     const identifiers = []; const words = q.split(' '); ['มาตรา', 'ข้อ', 'เลขที่'].forEach(term => { words.forEach((word, index) => { if (word === term && words[index + 1]) identifiers.push(term + ' ' + words[index + 1]); }); });
@@ -187,17 +227,19 @@
     const versions = documents.map(document => checkLegalVersion(document, documents, input.asOf));
     const later = checkLaterRuleTransition(input.evidence || {});
     const precedent = checkOfficialPrecedent(input.evidence || {});
+    const authorityClaims = checkAuthorityClaimConsistency(input.question, documents);
     const base = checkApplicableAuthority(input);
     const versionReady = versions.length === 0 ? false : versions.some(item => item.currentCandidate || item.transitionalProvisions);
     const laterReady = later.checked && !later.unresolved;
     const precedentRequired = Boolean(input.reliesOnPrecedent || evidence.precedentChecked || precedent.found);
     const precedentReady = !precedentRequired || (precedent.status === 'VERIFIED' && !precedent.unresolved);
-    const decisionLock = base.decisionLock === 'ON' || !primaryReady || !versionReady || !laterReady || !precedentReady;
+    const decisionLock = base.decisionLock === 'ON' || !primaryReady || !versionReady || !laterReady || !precedentReady || authorityClaims.unresolved;
     const blockers = [];
     if (!primaryReady) blockers.push('PRIMARY_SOURCE_NOT_VERIFIED');
     if (!versionReady) blockers.push('LEGAL_VERSION_NOT_CONFIRMED');
     if (!laterReady) blockers.push('LATER_RULE_TRANSITION_NOT_CHECKED');
     if (!precedentReady) blockers.push('PRECEDENT_NOT_VERIFIED');
+    if (authorityClaims.unresolved) blockers.push('AUTHORITY_CLAIM_NOT_VERIFIED');
     return Object.freeze({
       version: ASSURANCE_VERSION,
       caseFingerprint: caseFingerprint(input.question, input.context, input.evidence),
@@ -206,6 +248,7 @@
       legalVersion: Object.freeze({ verified: versionReady, documents: Object.freeze(versions) }),
       laterRuleTransition: later,
       precedent,
+      authorityClaims,
       authority: base,
       decisionLock: decisionLock ? 'ON' : 'OFF',
       blockers: Object.freeze(blockers),
@@ -227,6 +270,8 @@
     checkLegalVersion,
     checkLaterRuleTransition,
     checkOfficialPrecedent,
+    extractAuthorityClaims,
+    checkAuthorityClaimConsistency,
     buildEvidenceRetrievalPlan,
     caseFingerprint,
     buildAssuranceAssessment
