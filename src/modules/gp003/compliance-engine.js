@@ -5,6 +5,7 @@ export function buildComplianceChecklist({ input, tor, competition, vendors, pri
     ["tor-complete", tor.completenessScore === 1],
     ["no-specification-lock", !tor.specificationLockDetected],
     ["service-contract-727-review", tor.serviceContractReview?.status !== "review-required"],
+    ["service-contract-9636-travel-training-review", !tor.travelTrainingReview?.decisionLock],
     ["competition-fair", competition.level === "fair"],
     ["vendor-qualification", vendors.assessments.length === 0 || vendors.qualifiedCount > 0],
     ["reference-price", pricing.sampleSize >= 3],
