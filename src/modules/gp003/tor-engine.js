@@ -1,6 +1,8 @@
-const LOCK_TERMS = /\b(brand only|single brand|exact model|proprietary only|no equivalent)\b/i;
+import { reviewServiceContract727 } from "./service-contract-727-engine.js";
 
-export function reviewTOR(specifications) {
+const LOCK_TERMS = /\\b(brand only|single brand|exact model|proprietary only|no equivalent)\\b/i;
+
+export function reviewTOR(specifications, serviceContractInput = {}) {
   const findings = specifications.map((specification, index) => {
     const text = specification.requirement;
     const reasons = [
@@ -12,16 +14,18 @@ export function reviewTOR(specifications) {
       index,
       requirement: text,
       clear: text.trim().length >= 10,
-      measurable: Boolean(specification.measurement || /\d/.test(text)),
+      measurable: Boolean(specification.measurement || /\\d/.test(text)),
       specificationLock: reasons.length > 0,
       lockReasons: reasons,
     };
   });
+  const serviceContractReview = reviewServiceContract727(serviceContractInput);
   return {
     findings,
     specificationLockDetected: findings.some(({ specificationLock }) => specificationLock),
     completenessScore: findings.length
       ? findings.reduce((sum, item) => sum + Number(item.clear) + Number(item.measurable), 0) / (findings.length * 2)
       : 0,
+    serviceContractReview,
   };
 }
