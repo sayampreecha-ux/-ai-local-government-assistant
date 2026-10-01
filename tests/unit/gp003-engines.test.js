@@ -25,6 +25,32 @@ test("detects restrictive and brand-locked specifications", () => {
   assert.deepEqual(result.findings[0].lockReasons, ["brand-without-equivalent", "restrictive-language"]);
 });
 
+test("detects ว 727 control-risk by substance, not blacklist words", () => {
+  const result = reviewTOR([
+    { requirement: "จัดทำรายงานผลสำเร็จและส่งมอบรายเดือน" },
+  ], {
+    objective: "งานจ้างเหมาบริการ",
+    specifications: [
+      { requirement: "ลงเวลา 08.30 - 16.30 น. และปฏิบัติงานตามที่ผู้บังคับบัญชามอบหมาย" },
+    ],
+  });
+  assert.equal(result.serviceContractReview.status, "review-required");
+  assert.equal(result.serviceContractReview.decisionLock, true);
+  assert.equal(result.serviceContractReview.prohibitedWordRule, false);
+});
+
+test("does not auto-fail a single contextual phrase", () => {
+  const result = reviewTOR([
+    { requirement: "จัดทำรายงานผลสำเร็จและส่งมอบตามงวดงาน" },
+  ], {
+    objective: "จ้างเหมาบริการจัดทำรายงาน",
+    specifications: [
+      { requirement: "ผู้รับจ้างดำเนินการด้วยตนเองหรือจัดหาผู้แทนที่มีคุณสมบัติเหมาะสมได้" },
+    ],
+  });
+  assert.equal(result.serviceContractReview.status, "no-control-risk-detected");
+});
+
 test("scores competition fairness deterministically", () => {
   const result = analyzeCompetition({ tor: { specificationLockDetected: true }, vendors: [{ id: "one" }], submissionDays: 3 });
   assert.equal(result.fairnessScore, 10);
@@ -75,7 +101,7 @@ test("builds a nine-item procurement audit checklist", () => {
     tor: cleanTOR, competition: { level: "fair" }, vendors: { assessments: [], qualifiedCount: 0 },
     pricing: { sampleSize: 3 }, procurement: { recommendedMethod: "e-bidding" }, knowledgeCount: 7,
   });
-  assert.equal(compliance.total, 9);
+  assert.equal(compliance.total, 10);
   assert.equal(compliance.compliant, true);
 });
 
@@ -105,5 +131,5 @@ test("formats all procurement output envelopes", () => {
 
 test("registers six templates and seven controlled knowledge sources", () => {
   assert.equal(GP003_TEMPLATES.length, 6);
-  assert.equal(GP003_KNOWLEDGE.length, 7);
+  assert.equal(GP003_KNOWLEDGE.length, 8);
 });
