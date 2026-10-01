@@ -146,7 +146,7 @@ for (let index = 1; index <= 13; index += 1) {
     continue;
   }
 
-  const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' });
+  const baseline = execFileSync('git', ['show', `a94fe50a5c67bae2edb292d18babd2043a0ef3c3:${file}`], { encoding: 'utf8' });
   assert.equal(current.includes(insertedScripts), true, `${file}: router scripts not integrated`);
   assert.equal(normalizeEol(current.replace(insertedScripts, '')), normalizeEol(baseline), `${file}: existing UI or prompt behavior changed`);
 }
