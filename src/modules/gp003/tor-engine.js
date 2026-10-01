@@ -1,6 +1,6 @@
 import { reviewServiceContract727 } from "./service-contract-727-engine.js";
 
-const LOCK_TERMS = /\\b(brand only|single brand|exact model|proprietary only|no equivalent)\\b/i;
+const LOCK_TERMS = /\b(brand only|single brand|exact model|proprietary only|no equivalent)\b/i;
 
 export function reviewTOR(specifications, serviceContractInput = {}) {
   const findings = specifications.map((specification, index) => {
@@ -14,7 +14,7 @@ export function reviewTOR(specifications, serviceContractInput = {}) {
       index,
       requirement: text,
       clear: text.trim().length >= 10,
-      measurable: Boolean(specification.measurement || /\\d/.test(text)),
+      measurable: Boolean(specification.measurement || /\d/.test(text)),
       specificationLock: reasons.length > 0,
       lockReasons: reasons,
     };
