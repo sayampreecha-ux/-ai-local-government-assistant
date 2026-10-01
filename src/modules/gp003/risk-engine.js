@@ -1,5 +1,6 @@
 export function assessProcurementRisk({ tor, competition, vendors, pricing, procurement, contractTerms }) {
   const factors = [
+    ...(tor.serviceContractReview?.decisionLock ? [{ code: "service-contract-727-control-risk", weight: 0.35 }] : []),
     ...(tor.specificationLockDetected ? [{ code: "specification-lock", weight: 0.35 }] : []),
     ...(competition.level !== "fair" ? [{ code: "competition", weight: 0.2 }] : []),
     ...(vendors.assessments.length > 0 && vendors.qualifiedCount < 2 ? [{ code: "vendor-concentration", weight: 0.15 }] : []),
