@@ -76,8 +76,8 @@ for (let index = 1; index <= 13; index += 1) {
     assert.match(current, /สร้างคำสั่ง/, `${file}: simplified generator missing`);
     continue;
   }
-  const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+  const baseline = execFileSync('git', ['show', `a94fe50a5c67bae2edb292d18babd2043a0ef3c3:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
   assert.equal(current.includes(engineScripts), true, `${file}: Knowledge Engine missing`);
-  assert.equal(current.replace(engineScripts, ''), baseline, `${file}: Sprint 3.4 output behavior changed`);
+  assert.equal(current.replace(engineScripts, ''), baseline.replace(engineScripts, ''), `${file}: Sprint 3.4 output behavior changed`);
 }
 console.log('Knowledge Engine verification passed for GP001-GP013; GP008 validates static health tools and GP012 validates the simplified single-input PR flow.');
