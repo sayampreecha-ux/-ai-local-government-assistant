@@ -48,7 +48,7 @@ test("registers GP003 prompt, workflow, templates, policies, and knowledge idemp
   const current = runtime();
   new GP003Module(current);
   assert.equal(current.promptRegistry.getPrompt("GP003", "2.1.0").metadata.owner, "government-procurement-team");
-  assert.equal(current.knowledgeRegistry.search("", {}).filter(({ id }) => id.startsWith("gp003-")).length, 8);
+  assert.equal(current.knowledgeRegistry.search("", {}).filter(({ id }) => id.startsWith("gp003-")).length, 9);
 });
 
 test("executes deterministically through all Sprint 1 Core services", async () => {
