@@ -9,8 +9,8 @@ const categories = [
 ];
 for (const category of categories) await access(`knowledge/${category}`);
 const index = JSON.parse(await readFile('knowledge/index.json', 'utf8'));
-assert.equal(index.schemaVersion, '1.1');
-assert.deepEqual(index.documents, ['ai-safe-work-basics.json', 'document-destruction-checklist.json']);
+assert.equal(index.schemaVersion, '1.0');
+assert.deepEqual(index.documents, []);
 
 const sandbox = { window: {}, URL };
 vm.runInNewContext(await readFile('assets/js/core/document-loader.js', 'utf8'), sandbox);
@@ -85,9 +85,9 @@ for (let index = 1; index <= 13; index += 1) {
     assert.match(current, /สร้างคำสั่ง/, `${file}: simplified generator missing`);
     continue;
   }
-  const baseline = execFileSync('git', ['show', `a94fe50a5c67bae2edb292d18babd2043a0ef3c3:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+  const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
   assert.equal(current.includes(loaderScripts), true, `${file}: document loader missing`);
-  assert.equal(current.replace(loaderScripts, ''), baseline.replace(loaderScripts, ''), `${file}: Sprint 4.1 output changed`);
+  assert.equal(current.replace(loaderScripts, ''), baseline, `${file}: Sprint 4.1 output changed`);
 }
 
 console.log('Government Knowledge Repository document loader verification passed for GP001-GP013; GP008 validates static health tools and GP012 validates the simplified single-input PR flow.');

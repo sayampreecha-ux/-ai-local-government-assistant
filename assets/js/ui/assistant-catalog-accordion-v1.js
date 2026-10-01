@@ -11,14 +11,13 @@
   const iconFor = title => ICONS.find(([pattern]) => pattern.test(title))?.[1] || '🧰';
 
   function setExpanded(group, expanded) {
-    const toggle = group.querySelector('.assistant-catalog-toggle');
-    const tasks = group.querySelector('.work-catalog-tasks');
+    const toggle = group.querySelector(':scope > h3');
+    const tasks = group.querySelector(':scope > .work-catalog-tasks');
     if (!toggle || !tasks) return;
     toggle.setAttribute('aria-expanded', String(expanded));
-    group.querySelector(':scope > h3')?.setAttribute('aria-expanded', String(expanded));
     tasks.hidden = !expanded;
     group.classList.toggle('is-open', expanded);
-    const caret = toggle.querySelector('.assistant-catalog-caret');
+    const caret = toggle.querySelector(':scope > .assistant-catalog-caret');
     if (caret) caret.textContent = expanded ? '⌃' : '⌄';
   }
 
@@ -87,24 +86,49 @@
 
   function enhanceGroup(group, index) {
     if (group.dataset.assistantAccordion === 'true') return;
-    const heading = group.querySelector('h3'); const tasks = group.querySelector('.work-catalog-tasks'); if (!heading || !tasks) return;
+    const heading = group.querySelector(':scope > h3');
+    const tasks = group.querySelector(':scope > .work-catalog-tasks');
+    if (!heading || !tasks) return;
+
     const sourceName = heading.querySelector(':scope > .assistant-catalog-name');
-    const sourceIcon = heading.querySelector(':scope > .assistant-catalog-icon');
     const title = String(sourceName?.textContent || heading.textContent || '').trim();
-    const catalogIcon = String(sourceIcon?.textContent || '').trim() || iconFor(title);
     const isHealthGroup = /สาธารณสุข|รพ\.สต/i.test(title);
+
     tasks.id = tasks.id || `assistantCatalogTasks${index}`;
-    appendHealthShortcuts(group, tasks); curatePublicRelations(group, tasks);
-    const visibleCount = tasks.querySelectorAll('.work-catalog-task').length;
-    const countLabel = isHealthGroup ? `${visibleCount} เมนูเด่น` : `${visibleCount} งาน`;
-    const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'assistant-catalog-toggle'; toggle.setAttribute('aria-expanded', 'false'); toggle.setAttribute('aria-controls', tasks.id);
-    const icon = document.createElement('span'); icon.className = 'assistant-catalog-icon'; icon.setAttribute('aria-hidden', 'true'); icon.textContent = catalogIcon;
-    const name = document.createElement('span'); name.className = 'assistant-catalog-name'; name.textContent = title;
-    const count = document.createElement('span'); count.className = 'assistant-task-count'; count.textContent = countLabel;
-    const caret = document.createElement('span'); caret.className = 'assistant-catalog-caret'; caret.setAttribute('aria-hidden', 'true'); caret.textContent = '⌄';
-    toggle.append(icon, name, count, caret);
-    toggle.addEventListener('click', event => { event.stopPropagation(); const willOpen = toggle.getAttribute('aria-expanded') !== 'true'; collapseOthers(group); setExpanded(group, willOpen); if (willOpen) group.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' }); });
-    heading.textContent = ''; heading.appendChild(toggle); group.dataset.assistantAccordion = 'true'; group.classList.add('assistant-catalog-group'); setExpanded(group, false);
+    appendHealthShortcuts(group, tasks);
+    curatePublicRelations(group, tasks);
+
+    // Keep the v7 bridge's existing icon/name DOM. Do not rebuild the header.
+    let caret = heading.querySelector(':scope > .assistant-catalog-caret');
+    if (!caret) {
+      caret = document.createElement('span');
+      caret.className = 'assistant-catalog-caret';
+      caret.setAttribute('aria-hidden', 'true');
+      caret.textContent = '⌄';
+      heading.appendChild(caret);
+    }
+
+    heading.setAttribute('role', 'button');
+    heading.setAttribute('tabindex', '0');
+    heading.setAttribute('aria-expanded', 'false');
+    heading.setAttribute('aria-controls', tasks.id);
+
+    const toggle = () => {
+      const willOpen = heading.getAttribute('aria-expanded') !== 'true';
+      if (willOpen) collapseOthers(group);
+      setExpanded(group, willOpen);
+    };
+    heading.addEventListener('click', toggle);
+    heading.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        toggle();
+      }
+    });
+
+    group.dataset.assistantAccordion = 'true';
+    group.classList.add('assistant-catalog-group');
+    setExpanded(group, false);
   }
 
   function enhanceCatalog(root = document) {
@@ -120,7 +144,7 @@
     const style = document.createElement('style');
     style.id = 'assistantCatalogAccordionStyles';
     style.textContent = `
-      .assistant-catalog-accordion{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px!important}
+      .assistant-catalog-accordion{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px!important}
       .assistant-catalog-group{--catalog-tint:#f3f8f5;--catalog-line:#c8d9d0;padding:0!important;overflow:hidden;background:var(--catalog-tint)!important;border-color:var(--catalog-line)!important;align-self:start;box-shadow:0 3px 12px rgba(18,55,42,.04)}
       .assistant-catalog-group.work-catalog-tone-1{--catalog-tint:#edf8f1;--catalog-line:#b9d9c4}
       .assistant-catalog-group.work-catalog-tone-2{--catalog-tint:#eef5fb;--catalog-line:#bfd3e3}
@@ -129,20 +153,28 @@
       .assistant-catalog-group.work-catalog-tone-5{--catalog-tint:#fff1ef;--catalog-line:#e8c6c0}
       .assistant-catalog-group.work-catalog-tone-6{--catalog-tint:#eef8f8;--catalog-line:#bddada}
       .assistant-catalog-group.is-open{grid-column:1/-1}
-      .assistant-catalog-group>h3{margin:0!important}
-      .assistant-catalog-toggle{width:100%;min-height:52px;border:0;background:transparent;color:#12372a;padding:7px 10px;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:6px;align-items:center;text-align:left;font:inherit;font-weight:800;line-height:1.2;cursor:pointer}
-      .assistant-catalog-toggle:hover,.assistant-catalog-toggle:focus-visible,.assistant-catalog-toggle[aria-expanded="true"]{background:rgba(255,255,255,.55);outline:none}
-      .assistant-catalog-toggle:focus-visible{box-shadow:inset 0 0 0 2px #12372a}
-      .assistant-catalog-icon{font-size:1.15rem}
-      .assistant-catalog-name{min-width:0;overflow-wrap:anywhere;font-size:.93rem}
-      .assistant-task-count{font-size:.72rem;font-weight:700;color:#64756d;white-space:nowrap}
-      .assistant-catalog-caret{font-size:.9rem;color:#52665d}
-      .assistant-catalog-group .work-catalog-tasks{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;padding:2px 8px 8px!important}
+      .assistant-catalog-group>h3{width:100%!important;min-width:0!important;box-sizing:border-box!important;margin:0!important}
+      .assistant-catalog-group>h3::before,.assistant-catalog-group>h3::after{content:none!important;display:none!important}
+      .assistant-catalog-group>h3 .assistant-catalog-icon{flex:0 0 38px;width:38px;height:38px;display:grid;place-items:center}
+      .assistant-catalog-group>h3 .assistant-catalog-name{flex:1 1 auto;min-width:0;white-space:normal;overflow-wrap:anywhere}
+      .assistant-catalog-caret{flex:0 0 22px;width:22px;margin-left:auto;display:grid;place-items:center;color:#52665d;font-size:18px;font-weight:800;line-height:1}
+      .assistant-catalog-group .work-catalog-tasks{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;padding:8px!important}
       .assistant-catalog-group .work-catalog-tasks[hidden]{display:none!important}
       .assistant-catalog-group .work-catalog-task{width:100%!important;min-height:44px!important;border-radius:10px!important;padding:8px 10px!important;text-align:left!important;font-weight:700!important;background:rgba(255,255,255,.88)!important}
       .assistant-direct-tool{border-color:#9bbcaf!important;background:#f5fbf8!important}
-      @media(max-width:959px) and (min-width:621px){.assistant-catalog-accordion{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}.assistant-task-count{display:none}.assistant-catalog-toggle{min-height:50px;padding:6px 8px}.assistant-catalog-name{font-size:.86rem}}
-      @media(max-width:620px){.assistant-catalog-accordion{width:100%!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important}.assistant-catalog-group{width:100%;min-width:0;display:block}.assistant-catalog-group.is-open{grid-column:1/-1}.assistant-catalog-toggle{width:100%;min-width:0;min-height:64px;padding:8px 12px;display:flex;align-items:center;gap:10px;font-size:17px;line-height:1.35}.assistant-catalog-icon{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;font-size:30px}.assistant-catalog-name{flex:1 1 auto;min-width:0;white-space:normal;word-break:normal;overflow-wrap:anywhere;font-size:17px;line-height:1.35}.assistant-task-count{display:none}.assistant-catalog-caret{flex:0 0 auto;margin-left:auto;font-size:1.15rem}.assistant-catalog-group .work-catalog-tasks{width:100%;min-width:0;grid-template-columns:minmax(0,1fr)!important;padding:2px 7px 7px!important}.assistant-catalog-group .work-catalog-task{font-size:.82rem!important}}
+      @media(max-width:959px) and (min-width:621px){
+        .assistant-catalog-accordion{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+        .assistant-catalog-group>h3{min-height:58px!important;padding:8px 12px!important;display:flex!important;align-items:center!important;gap:9px!important;font-size:16px!important;line-height:1.3!important;text-align:left!important}
+        .assistant-task-count{display:none}
+      }
+      @media(max-width:620px){
+        .assistant-catalog-accordion{width:100%!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
+        .assistant-catalog-group{width:100%!important;min-width:0!important;display:block!important}
+        .assistant-catalog-group>h3{min-height:64px!important;padding:9px 12px!important;display:flex!important;align-items:center!important;gap:10px!important;font-size:17px!important;line-height:1.35!important;text-align:left!important;writing-mode:horizontal-tb!important}
+        .assistant-catalog-group>h3 .assistant-catalog-icon{flex:0 0 44px;width:44px;height:44px;font-size:30px}
+        .assistant-catalog-group>h3 .assistant-catalog-name{font-size:17px;line-height:1.35}
+        .assistant-catalog-group .work-catalog-tasks{width:100%;min-width:0;grid-template-columns:minmax(0,1fr)!important;padding:2px 7px 7px!important}
+      }
     `;
     document.head.appendChild(style);
   }

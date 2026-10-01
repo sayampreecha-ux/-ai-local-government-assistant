@@ -12,7 +12,7 @@ const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
 const quickActionBridgeUrl = page('assets/js/ui/quick-action-guided-bridge-v1.js?v=1.3.12');
-const RELEASE = Object.freeze({ home:'6.4.17', homeCss:'2.6.15', serviceWorker:'3.6.8', mic:'2.4.2', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
+const RELEASE = Object.freeze({ home:'6.4.17', homeCss:'2.6.16', serviceWorker:'3.6.9', mic:'2.4.2', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
 const WORKFLOW_RUNTIME_VERSION = '5.6.4';
 const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.6.2';
 const WORKFLOW_UI_VERSION = '1.3';

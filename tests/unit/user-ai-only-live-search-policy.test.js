@@ -5,8 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const toPortablePath = value => value.split(path.sep).join('/');
-const SELF = toPortablePath(path.relative(ROOT, fileURLToPath(import.meta.url)));
+const SELF = path.relative(ROOT, fileURLToPath(import.meta.url));
 const SKIP_DIRS = new Set(['.git', 'node_modules']);
 const TEXT_EXTENSIONS = new Set([
   '.js', '.mjs', '.cjs', '.html', '.css', '.json', '.md', '.txt', '.yml', '.yaml'
@@ -31,7 +30,7 @@ function findViolations() {
   ];
   const violations = [];
   for (const file of collectFiles(ROOT)) {
-    const relative = toPortablePath(path.relative(ROOT, file));
+    const relative = path.relative(ROOT, file);
     if (relative === SELF || relative.startsWith('tests/')) continue;
     const content = fs.readFileSync(file, 'utf8');
     for (const pattern of patterns) {

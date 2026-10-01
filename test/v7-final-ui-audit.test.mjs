@@ -26,8 +26,7 @@ test('compact home keeps the composer in document flow and the catalog responsiv
   const accordion = await readFile('assets/js/ui/assistant-catalog-accordion-v1.js', 'utf8');
   assert.match(homeCss, /html:not\(\.result-route\) body\.app-shell \.composer-region\{[^}]*position:relative!important/s);
   assert.match(index, /catalog\.before\(composer\)/);
-  assert.match(accordion, /@media\(max-width:620px\)[^`]*grid-template-columns:minmax\(0,1fr\)!important/s);
-  assert.doesNotMatch(accordion, /@media\(max-width:620px\)[^`]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/s);
+  assert.match(accordion, /@media\(max-width:620px\)[^`]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/s);
   assert.match(homeCss, /html\.result-route\.result-intake \.composer-region\{[^}]*display:block!important/s);
 });
 

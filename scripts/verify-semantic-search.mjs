@@ -50,8 +50,8 @@ for (let number = 1; number <= 13; number += 1) {
     assert.match(current, /สร้างคำสั่ง/, `${file}: simplified generator missing`);
     continue;
   }
-  const baseline = execFileSync('git', ['show', `a94fe50a5c67bae2edb292d18babd2043a0ef3c3:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
+  const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' }).replace(/\r\n/g, '\n');
   assert.equal(current.includes(semanticScript), true, `${file}: semantic search missing`);
-  assert.equal(current.replace(semanticScript, ''), baseline.replace(semanticScript, ''), `${file}: Sprint 4.4 output changed`);
+  assert.equal(current.replace(semanticScript, ''), baseline, `${file}: Sprint 4.4 output changed`);
 }
 console.log('Semantic Knowledge Search verification passed for GP001-GP013; GP008 validates static health tools and GP012 validates the simplified single-input PR flow.');
