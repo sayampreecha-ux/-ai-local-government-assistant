@@ -1,4 +1,5 @@
 import { reviewServiceContract727 } from "./service-contract-727-engine.js";
+import { reviewServiceContract9636 } from "./service-contract-9636-engine.js";
 
 const LOCK_TERMS = /\b(brand only|single brand|exact model|proprietary only|no equivalent)\b/i;
 
@@ -20,6 +21,7 @@ export function reviewTOR(specifications, serviceContractInput = {}) {
     };
   });
   const serviceContractReview = reviewServiceContract727(serviceContractInput);
+  const travelTrainingReview = reviewServiceContract9636(serviceContractInput);
   return {
     findings,
     specificationLockDetected: findings.some(({ specificationLock }) => specificationLock),
@@ -27,5 +29,6 @@ export function reviewTOR(specifications, serviceContractInput = {}) {
       ? findings.reduce((sum, item) => sum + Number(item.clear) + Number(item.measurable), 0) / (findings.length * 2)
       : 0,
     serviceContractReview,
+    travelTrainingReview,
   };
 }
