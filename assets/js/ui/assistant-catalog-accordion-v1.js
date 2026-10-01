@@ -117,24 +117,12 @@
     heading.setAttribute('aria-expanded', 'false');
     heading.setAttribute('aria-controls', tasks.id);
 
-    // Keep the legacy semantic count hook for production E2E without rendering duplicate header UI.
-    let taskCount = heading.querySelector(':scope > .assistant-task-count');
-    if (!taskCount) {
-      taskCount = document.createElement('span');
-      taskCount.className = 'assistant-task-count';
-      taskCount.setAttribute('aria-hidden', 'true');
-      taskCount.textContent = isHealthGroup ? '5 เมนูเด่น' : '';
-      heading.appendChild(taskCount);
-    }
-
     const handleToggle = event => {
       event.stopPropagation();
       const willOpen = heading.getAttribute('aria-expanded') !== 'true';
       if (willOpen) collapseOthers(group);
       setExpanded(group, willOpen);
     };
-    // The v7 bridge already owns the click handler on this heading. Do not toggle twice.
-    toggle.addEventListener('click', event => { event.stopPropagation(); });
     heading.addEventListener('keydown', event => {
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
@@ -173,7 +161,6 @@
       .assistant-catalog-group>h3::before,.assistant-catalog-group>h3::after{content:none!important;display:none!important}
       .assistant-catalog-group>h3 .assistant-catalog-icon{flex:0 0 38px;width:38px;height:38px;display:grid;place-items:center}
       .assistant-catalog-group>h3 .assistant-catalog-name{flex:1 1 auto;min-width:0;white-space:normal;overflow-wrap:anywhere}
-      .assistant-task-count{display:none!important}
       .assistant-catalog-caret{flex:0 0 22px;width:22px;margin-left:auto;display:grid;place-items:center;color:#52665d;font-size:18px;font-weight:800;line-height:1}
       .assistant-catalog-group .work-catalog-tasks{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;padding:8px!important}
       .assistant-catalog-group .work-catalog-tasks[hidden]{display:none!important}
@@ -182,11 +169,9 @@
       @media(max-width:959px) and (min-width:621px){
         .assistant-catalog-accordion{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
         .assistant-catalog-group>h3{min-height:58px!important;padding:8px 12px!important;display:flex!important;align-items:center!important;gap:9px!important;font-size:16px!important;line-height:1.3!important;text-align:left!important}
-        .assistant-task-count{display:none}
       }
       @media(max-width:620px){
         .assistant-catalog-accordion{width:100%!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
-        /* P0 compatibility marker: grid-template-columns:repeat(2,minmax(0,1fr)) is the tablet rule; mobile intentionally overrides to one column. */
         .assistant-catalog-group{width:100%!important;min-width:0!important;display:block!important;grid-column:1/-1!important}
         .assistant-catalog-group>h3{min-height:64px!important;padding:9px 12px!important;display:flex!important;align-items:center!important;gap:10px!important;font-size:17px!important;line-height:1.35!important;text-align:left!important;writing-mode:horizontal-tb!important}
         .assistant-catalog-group>h3 .assistant-catalog-icon{flex:0 0 44px;width:44px;height:44px;font-size:30px}

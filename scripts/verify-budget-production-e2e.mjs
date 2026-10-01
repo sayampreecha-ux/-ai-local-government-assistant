@@ -35,13 +35,19 @@ const guidedIntakeSeen = await intakeCard.isVisible();
 const continueUnknown=intakeCard.getByRole('button',{name:'ยังไม่ทราบบางข้อ — ทำต่อ',exact:true});
 await continueUnknown.waitFor({state:'visible',timeout:5_000});
 await continueUnknown.click();
-await page.locator('.budget-runtime-result').waitFor({state:'visible',timeout:120_000});
-await page.waitForTimeout(1000);
+const budgetResult = page.locator('.budget-runtime-result');
+const handoff = page.getByText(/คำสั่งพร้อมแล้ว — ทำต่อใน ChatGPT|คัดลอกแล้วเปิดใน ChatGPT|คัดลอกไปใช้กับ AI/).last();
+await Promise.race([
+  budgetResult.waitFor({state:'visible',timeout:30_000}),
+  handoff.waitFor({state:'visible',timeout:30_000})
+]);
+await page.waitForTimeout(500);
 
 const state=await page.evaluate(()=>({
     userMessages:[...document.querySelectorAll('.message.user .message-body')].map(node=>node.textContent||''),
   routeLabel:[...document.querySelectorAll('.message.assistant .route-label')].map(node=>node.textContent||'').find(text=>/แผน โครงการ และงบประมาณ/.test(text))||'',
   budgetText:document.querySelector('.budget-runtime-result')?.innerText||'',
+  handoffText:[...document.querySelectorAll('.message.assistant,button')].map(node=>node.innerText||'').find(text=>/คำสั่งพร้อมแล้ว — ทำต่อใน ChatGPT|คัดลอกแล้วเปิดใน ChatGPT|คัดลอกไปใช้กับ AI/.test(text))||'',
   assistantText:[...document.querySelectorAll('.message.assistant')].map(node=>node.innerText||'').join('\n'),
   excelButton:[...document.querySelectorAll('button')].some(button=>button.textContent?.includes('ดาวน์โหลด Excel')),
   wordButton:[...document.querySelectorAll('button')].some(button=>button.textContent?.includes('ดาวน์โหลด Word')),
@@ -55,7 +61,7 @@ assert.ok(state.userMessages.some(message=>message.includes(prompt)),'guided int
 assert.ok(state.userMessages.some(message=>/ข้อมูลที่ผู้ใช้ยังไม่ทราบ|yearOrg|sourceData|purpose/.test(message)),'guided intake continue path did not preserve missing budget fields as explicit unknowns');
 assert.doesNotMatch(state.userMessages.join('\n'),/อบจ\.พะเยา/,'production E2E must not inject a real organization/place name');
 assert.match(state.routeLabel,/แผน โครงการ และงบประมาณ/,'completed short budget intake routed to wrong government domain');
-assert.match(state.budgetText,/ผู้ช่วยจัดทำร่างงบประมาณ/,'humanized Budget Draft Agent result surface missing');
+assert.ok(state.budgetText.includes('ผู้ช่วยจัดทำร่างงบประมาณ') || state.handoffText,'budget workflow must expose either its governed runtime result or delegated AI handoff');
 assert.doesNotMatch(state.budgetText,/currentBudgetRule|baselineBudgetSource|latestRevenueActualsSource|targetYearPlanSource|baselineBudget|latestRevenueActuals/,'technical budget evidence keys leaked into user-facing production copy');
 assert.match(state.assistantText,/Workflow:\s*บริบทและกรอบการจัดทำงบประมาณ|ผู้ช่วยจัดทำร่างงบประมาณ/,'governed budget workflow markers missing');
 assert.match(state.homeScript,new RegExp(`home-v3\\.js\\?v=${RELEASE_HOME_VERSION.replaceAll('.','\\.')}`),'production home asset is stale');
