@@ -1,6 +1,6 @@
 export const GP003_PROMPT = Object.freeze({
   moduleId: "GP003",
-  version: "2.0.0",
+  version: "2.1.0",
   template: "Analyze procurement objective {{objective}} with budget {{budget}} using {{knowledge}}. Produce {{template}} as {{outputFormat}}.",
   metadata: {
     category: "government-procurement-copilot",
