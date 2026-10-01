@@ -174,7 +174,7 @@
       }
       @media(max-width:620px){
         .assistant-catalog-accordion{width:100%!important;grid-template-columns:minmax(0,1fr)!important;gap:10px!important}
-        .assistant-catalog-group{width:100%!important;min-width:0!important;display:block!important}
+        .assistant-catalog-group{width:100%!important;min-width:0!important;display:block!important;grid-column:1/-1!important}
         .assistant-catalog-group>h3{min-height:64px!important;padding:9px 12px!important;display:flex!important;align-items:center!important;gap:10px!important;font-size:17px!important;line-height:1.35!important;text-align:left!important;writing-mode:horizontal-tb!important}
         .assistant-catalog-group>h3 .assistant-catalog-icon{flex:0 0 44px;width:44px;height:44px;font-size:30px}
         .assistant-catalog-group>h3 .assistant-catalog-name{font-size:17px;line-height:1.35}
