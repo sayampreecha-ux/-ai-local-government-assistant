@@ -18,7 +18,7 @@ await catalog.waitFor({ state: 'visible', timeout: 15_000 });
 assert.equal(await catalog.locator('.work-catalog-group:not([data-assistance-route])').count(), 12, 'Home must expose all 12 assistant categories without an extra opener');
 
 const recordsGroup = page.locator('.work-catalog-group').filter({ hasText: /สารบรรณ|หนังสือราชการ/i }).first();
-await recordsGroup.locator('.assistant-catalog-toggle').click();
+await recordsGroup.locator('h3.assistant-catalog-toggle').click();
 await recordsGroup.locator('.work-catalog-task').first().click();
 await page.waitForURL(/[?&]view=result(?:&|$)/, { timeout: 15_000 });
 await page.locator('.result-page-header').waitFor({ state: 'visible', timeout: 15_000 });
@@ -45,7 +45,7 @@ await page.locator('.work-catalog-groups').waitFor({ state: 'visible', timeout: 
 
 const healthGroup = page.locator('.work-catalog-group').filter({ hasText: /สาธารณสุข|รพ\.สต/i }).first();
 await healthGroup.waitFor({ state: 'visible', timeout: 10_000 });
-const healthToggle = healthGroup.locator('.assistant-catalog-toggle');
+const healthToggle = healthGroup.locator('h3.assistant-catalog-toggle');
 await healthToggle.waitFor({ state: 'visible', timeout: 10_000 });
 assert.match(await healthToggle.locator('.assistant-task-count').innerText(), /5\s*เมนูเด่น/);
 assert.doesNotMatch(await healthToggle.locator('.assistant-task-count').innerText(), /5\s*งาน/);
