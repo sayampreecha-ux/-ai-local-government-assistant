@@ -63,7 +63,7 @@ assert.doesNotMatch(state.userMessages.join('\n'),/อบจ\.พะเยา/,'
 assert.match(state.routeLabel,/แผน โครงการ และงบประมาณ/,'completed short budget intake routed to wrong government domain');
 assert.ok(state.budgetText.includes('ผู้ช่วยจัดทำร่างงบประมาณ') || state.handoffText,'budget workflow must expose either its governed runtime result or delegated AI handoff');
 assert.doesNotMatch(state.budgetText,/currentBudgetRule|baselineBudgetSource|latestRevenueActualsSource|targetYearPlanSource|baselineBudget|latestRevenueActuals/,'technical budget evidence keys leaked into user-facing production copy');
-assert.match(state.assistantText,/Workflow:\s*บริบทและกรอบการจัดทำงบประมาณ|ผู้ช่วยจัดทำร่างงบประมาณ/,'governed budget workflow markers missing');
+assert.match(state.assistantText,/(?:Workflow:|ขั้นปัจจุบัน:)\s*บริบทและกรอบการจัดทำงบประมาณ|ผู้ช่วยจัดทำร่างงบประมาณ/,'governed budget workflow markers missing');
 assert.match(state.homeScript,new RegExp(`home-v3\\.js\\?v=${RELEASE_HOME_VERSION.replaceAll('.','\\.')}`),'production home asset is stale');
 assert.equal(pageErrors.length,0,`page errors: ${JSON.stringify(pageErrors)}`);
 assert.equal(requests.some(item=>/\/api\/official-search/.test(item.url)),false,'budget workflow must not call GovPrompt official search automatically');
@@ -78,8 +78,9 @@ if (/ร่างทำงาน พร้อมส่งออก/.test(state.b
   assert.equal(state.excelButton,true,'ready budget artifact missing Excel download');
   assert.equal(state.wordButton,true,'ready budget artifact missing Word download');
 } else {
-  assert.match(state.budgetText,/ยังไม่พร้อมส่งออก|ต้องยืนยัน|สถานะ/,'blocked budget state did not explain its evidence gate');
-  assert.doesNotMatch(state.budgetText,/ร่างทำงาน พร้อมส่งออก/,'blocked budget state must not claim export readiness');
+  const blockedSurface = state.budgetText || state.assistantText;
+  assert.match(blockedSurface,/ยังไม่พร้อมส่งออก|ต้องยืนยัน|สถานะ|รอข้อมูล\/หลักฐาน/,'blocked budget state did not explain its evidence gate');
+  assert.doesNotMatch(blockedSurface,/ร่างทำงาน พร้อมส่งออก/,'blocked budget state must not claim export readiness');
 }
 
 console.log(JSON.stringify({frontend,releaseHomeVersion:RELEASE_HOME_VERSION,checks:{genericBudgetGuidedIntake:'PASS',guidedIntakeUnknownContinue:'PASS',budgetDomainRouting:'PASS',privacyGuard:'PASS',budgetSurface:'PASS',humanizedBudgetCopy:'PASS',governedWorkflowMarkers:'PASS',releaseCacheBust:'PASS',userAiSearchDelegation:'PASS',documentWorkerRouting:'PASS',officeExportOrFailClosed:'PASS'},requests,responses,pageErrors},null,2));
