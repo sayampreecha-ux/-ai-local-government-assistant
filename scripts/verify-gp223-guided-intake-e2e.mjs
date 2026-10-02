@@ -15,6 +15,8 @@ const server = createServer(async (request, response) => {
   catch { response.writeHead(404).end(); }
 });
 await new Promise(resolveServer => server.listen(0, '127.0.0.1', resolveServer));
+const frontend = process.env.GOVPROMPT_FRONTEND_URL || `http://127.0.0.1:${server.address().port}/index.html`;
+const frontendOrigin = new URL(frontend).origin;
 let browser;
 try {
   browser = await chromium.launch({ headless: true });
@@ -25,8 +27,8 @@ try {
   await page.addInitScript(() => {
     Object.defineProperty(navigator, 'clipboard', { value: { writeText: async text => { window.testCopiedPrompt = text; } } });
   });
-  await page.route('**/*', route => new URL(route.request().url()).hostname === '127.0.0.1' ? route.continue() : route.abort());
-  await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
+  await page.route('**/*', route => new URL(route.request().url()).origin === frontendOrigin ? route.continue() : route.abort());
+  await page.goto(frontend);
   await page.waitForFunction(() => window.GovPromptCore?.prepareGP223IntakeTurn && document.getElementById('chatForm')?.dataset.privacySubmitGuard);
   await page.evaluate(() => {
     window.testSearchCalls = 0;
@@ -36,7 +38,7 @@ try {
     } };
   });
   async function resetCase() {
-    await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
+    await page.goto(frontend);
     await page.waitForFunction(() => document.readyState === 'complete' && window.GovPromptCore?.prepareGP223IntakeTurn);
   await page.evaluate(() => {
     window.testSearchCalls = 0;
