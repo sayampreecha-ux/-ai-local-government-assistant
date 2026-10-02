@@ -12,7 +12,7 @@ test('does not reference the removed simple handoff asset', () => {
 
 test('precache contains only assets present in the Pages source', async () => {
   const assets = [...worker.matchAll(/'\.\/(?!['/])([^']+)'/g)].map(match => match[1]);
-  for (const asset of assets) await access(asset);
+  for (const asset of assets) await access(asset.split('?')[0]);
   assert.equal(assets.includes('assets/styles.css'), false);
   assert.equal(assets.includes('assets/app.js'), false);
   assert.equal(assets.some(asset => asset.startsWith('assets/icons/')), false);
@@ -20,6 +20,6 @@ test('precache contains only assets present in the Pages source', async () => {
 
 test('web manifest has no references to absent icon files', () => {
   assert.equal('icons' in manifest, false);
-  assert.match(index, /service-worker\.js\?v=6\.1\.1/);
-  assert.match(worker, /APP_VERSION = '1\.3'/);
+  assert.match(index, /service-worker\.js\?v=\d+\.\d+\.\d+/);
+  assert.match(worker, /APP_VERSION = '\d+\.\d+\.\d+'/);
 });

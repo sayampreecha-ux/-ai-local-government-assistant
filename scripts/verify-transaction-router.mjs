@@ -9,6 +9,7 @@ vm.runInNewContext(await readFile('assets/js/core/prompt-registry.js', 'utf8'), 
 vm.runInNewContext(await readFile('assets/js/core/transaction-router.js', 'utf8'), sandbox);
 vm.runInNewContext(await readFile('assets/js/core/router-regression-overrides.js', 'utf8'), sandbox);
 vm.runInNewContext(await readFile('assets/js/core/hybrid-intent-classifier.js', 'utf8'), sandbox);
+vm.runInNewContext(await readFile('assets/js/core/hybrid-real-world-overrides.js', 'utf8'), sandbox);
 
 const { MODULES, V7_MODULE_IDS, detectModuleId, detectTransactionType, routeRequest, routeTransaction } = sandbox.window.GovPromptCore;
 assert.equal(MODULES.length, 13);
@@ -90,7 +91,13 @@ const realLanguage = [
   ['จัดซื้ออาหารโรงเรียน', 'GP003'],
   ['ร่างคำสั่งแต่งตั้ง', 'GP001'],
   ['โอนงบทำยังไง', 'GP004'],
-  ['ทำโครงการ 5 แสน', 'GP004']
+  ['ทำโครงการ 5 แสน', 'GP004'],
+  ['โครงการคุณธรรม', 'GP004'],
+  ['โครงการจริยธรรม', 'GP004'],
+  ['โครงการธรรมาภิบาล', 'GP004'],
+  ['โครงการป้องกันการทุจริต', 'GP004'],
+  ['โครงการส่งเสริมสุขภาพ', 'GP008'],
+  ['โรงเรียนทำโครงการคุณธรรม', 'GP009']
 ];
 for (const [request, expectedModuleId] of realLanguage) {
   assert.equal(routeRequest(request).primaryModule, expectedModuleId, `real-language: ${request}`);
@@ -112,10 +119,36 @@ const insertedScripts = '<script src="assets/js/core/shared-context.js"></script
 for (let index = 1; index <= 13; index += 1) {
   const file = `gp${String(index).padStart(3, '0')}.html`;
   const current = await readFile(file, 'utf8');
+  const normalizeEol = text => text.replace(/\r\n/g, '\n');
+
+  if (file === 'gp008.html') {
+    const compactCurrent = current.replace(/>\s+</g, '><');
+    assert.equal(compactCurrent.includes(insertedScripts), true, `${file}: router scripts not integrated`);
+    assert.match(current, /data-module-id=["']GP008["']/i, `${file}: GP008 module marker missing`);
+    assert.match(current, /id=["']publicHealthOtherToolsHeading["'][^>]*>\s*อื่นๆ\s*</i, `${file}: Other heading missing`);
+    assert.match(current, /id=["']healthWorkerToolkitTask["']/i, `${file}: static health toolkit entry missing`);
+    assert.match(current, /public-health-worker-toolkit-v1\.js\?v=1\.0\.3/i, `${file}: health toolkit cache-busted script missing`);
+    assert.match(current, /mosquito-survey-onepage-v1\.js\?v=1\.0\.1/i, `${file}: mosquito tool cache-busted script missing`);
+    assert.match(current, /หลีกเลี่ยงชื่อผู้ป่วย เลขบัตรประชาชน/i, `${file}: PDPA warning missing`);
+    continue;
+  }
+
+  if (file === 'gp012.html') {
+    assert.equal(current.includes(insertedScripts), true, `${file}: router scripts not integrated`);
+    assert.match(current, /เลือกสิ่งที่อยากทำ แล้วบอก GP สั้น ๆ ครั้งเดียว/, `${file}: simple intro missing`);
+    assert.match(current, /เขียนข่าวประชาสัมพันธ์/, `${file}: news task missing`);
+    assert.match(current, /ทำโพสต์โซเชียล/, `${file}: social task missing`);
+    assert.match(current, /ทำอินโฟกราฟิก/, `${file}: infographic task missing`);
+    assert.match(current, /ร่างสคริปต์ \/ คำกล่าว \/ วิดีโอ/, `${file}: script speech video task missing`);
+    assert.match(current, /id=["']request["']/i, `${file}: single request field missing`);
+    assert.match(current, /สร้างคำสั่ง/, `${file}: simplified generator action missing`);
+    assert.match(current, /PDPA/, `${file}: PDPA review note missing`);
+    continue;
+  }
+
   const baseline = execFileSync('git', ['show', `12dc26760dd0badb283a665f3b58aa3aa976c713:${file}`], { encoding: 'utf8' });
   assert.equal(current.includes(insertedScripts), true, `${file}: router scripts not integrated`);
-  const normalizeEol = text => text.replace(/\r\n/g, '\n');
   assert.equal(normalizeEol(current.replace(insertedScripts, '')), normalizeEol(baseline), `${file}: existing UI or prompt behavior changed`);
 }
 
-console.log('GovPrompt hybrid intent router verification passed for GP001-GP013, cross-domain adversarial cases, and 30 real-language production queries.');
+console.log('GovPrompt hybrid intent router verification passed for GP001-GP013, cross-domain adversarial cases, GP008 static health tools, simplified GP012 UX, and 36 real-language production queries.');

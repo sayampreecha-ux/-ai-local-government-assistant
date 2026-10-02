@@ -1,0 +1,25 @@
+name: Smart Saraban MVP Test
+
+on:
+  push:
+    branches: [main, feature/gp-smart-saraban-mvp]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-smart-saraban:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run focused workflow tests
+        run: node --test tests/unit/smart-saraban.test.js tests/unit/approval-workflow.test.js tests/unit/smart-saraban-approval-bridge.test.js tests/unit/user-ai-only-live-search-policy.test.js

@@ -1,10 +1,6 @@
 name: Production Search Reality
 
 on:
-  pull_request:
-    paths:
-      - 'scripts/benchmark-production-endpoint.mjs'
-      - '.github/workflows/production-search-reality.yml'
   workflow_dispatch:
 
 permissions:

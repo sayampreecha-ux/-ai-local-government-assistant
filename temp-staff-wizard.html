@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="th" data-module-id="GP008">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b3b75">
+  <title>แผนลูกจ้างเงินบำรุง | GovPrompt Thailand</title>
+  <link rel="stylesheet" href="assets/css/govprompt.css">
+  <style>
+    *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif;background:#f7f9fc;color:#10233f}.top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid #e4eaf2}.bar{max-width:1040px;margin:auto;padding:11px 14px;display:flex;justify-content:space-between;gap:12px}.bar a{text-decoration:none;color:#0b3b75}.wrap{max-width:1040px;margin:auto;padding:16px 14px 60px}.hero{margin-bottom:14px}.hero h1{font-size:25px;margin-bottom:6px}.hero p{margin:0;color:#5d6d82}.tool-shell{background:#fff;border:1px solid #dde6f0;border-radius:16px;padding:14px}.hwt-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px}.hwt-tool{border:1px solid #dbe4ee;border-radius:12px;background:#fff;padding:11px;text-align:left;font:inherit;cursor:pointer}.hwt-tool strong,.hwt-tool small{display:block}.hwt-tool small{color:#66768a;margin-top:3px}.hwt-tool.active{border-color:#0b3b75;background:#f1f6fc}.hwt-work{min-height:340px}.notice{background:#fff8e8;border:1px solid #f2d694;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px}@media(max-width:650px){.hwt-tabs{grid-template-columns:1fr}.wrap{padding-bottom:30px}}
+  </style>
+</head>
+<body>
+<header class="top"><div class="bar"><a href="index.html"><b>GovPrompt Thailand</b></a><a href="gp008.html">← งานสาธารณสุข</a></div></header>
+<main class="wrap">
+  <section class="hero"><h1>👥 แผนลูกจ้างชั่วคราวเงินบำรุง</h1><p>เครื่องมือวิเคราะห์ Workload/FTE ความจำเป็น วงเงิน และเอกสารประกอบแผน รพ.สต.</p></section>
+  <div class="notice">⚠️ ระบบช่วยวิเคราะห์และจัดทำเอกสารประกอบการพิจารณา ไม่ใช่คำสั่งอนุมัติ และไม่กำหนด FTE/อัตราค่าจ้างแทนหลักเกณฑ์ที่หน่วยงานต้องตรวจฉบับล่าสุด</div>
+  <section class="tool-shell" id="healthWorkerToolkitPanel">
+    <div id="hwtTabs" class="hwt-tabs"></div>
+    <div id="hwtWork" class="hwt-work"><p>กำลังเปิดแบบกรอกทีละขั้น…</p></div>
+  </section>
+</main>
+<script src="assets/js/features/temp-staff-maintenance-fund-v1.js?v=1.0.2"></script>
+<script src="assets/js/features/temp-staff-export-fallback-v1.js?v=1.0.1"></script>
+<script src="assets/js/features/temp-staff-guided-wizard-v1.js?v=1.0.0"></script>
+<script>
+(() => {
+  let attempts = 0;
+  const openWizard = () => {
+    const button = document.getElementById('tempStaffGuidedWizardTab');
+    if (button) return button.click();
+    if (attempts++ < 30) setTimeout(openWizard, 50);
+  };
+  openWizard();
+})();
+</script>
+</body>
+</html>

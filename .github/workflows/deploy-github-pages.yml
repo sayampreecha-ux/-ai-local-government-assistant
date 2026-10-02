@@ -1,6 +1,8 @@
 name: Deploy GitHub Pages
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -14,6 +16,10 @@ concurrency:
 
 jobs:
   deploy:
+    # Production Pages may only publish the main branch, including manual fallback runs.
+    # Run on every main push so GitHub's branch-based Pages build can never remain the last deployment
+    # after a scripts/workflow-only change. This workflow always publishes the security-gated dist artifact.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     environment:
       name: github-pages

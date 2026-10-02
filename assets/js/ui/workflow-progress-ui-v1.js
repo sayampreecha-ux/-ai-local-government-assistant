@@ -1,0 +1,333 @@
+export const WORKFLOW_PROGRESS_UI_VERSION = '1.3';
+
+let latestView = null;
+let observerStarted = false;
+
+const STATUS_LABELS = Object.freeze({
+  'blocked-missing-evidence': 'รอข้อมูล/หลักฐาน',
+  'blocked-official-source': 'รอตรวจแหล่งราชการ',
+  'blocked-risk-review': 'รอตรวจความเสี่ยง',
+  'awaiting-human-approval': 'รอผู้มีอำนาจอนุมัติ',
+  ready: 'พร้อมเดินขั้นถัดไป',
+  complete: 'เสร็จสมบูรณ์'
+});
+
+const KEY_LABELS = Object.freeze({
+  hrIntent: 'วัตถุประสงค์และประเภทงานบุคคลที่ต้องการ',
+  facts: 'ข้อเท็จจริงและข้อมูลพื้นฐานที่เกี่ยวข้อง',
+  missionAuthority: 'ภารกิจและอำนาจหน้าที่ของหน่วยงาน',
+  needJustification: 'เหตุผลและความจำเป็นของภารกิจ/ตำแหน่ง',
+  budget: 'วงเงินงบประมาณและแหล่งงบประมาณ',
+  budgetSource: 'แหล่งงบประมาณ',
+  workload: 'ข้อมูลปริมาณงานและภาระงาน',
+  currentStaffing: 'กรอบอัตรากำลังและจำนวนผู้ครองตำแหน่งปัจจุบัน',
+  positionCount: 'จำนวนอัตราและตำแหน่งที่ต้องการ',
+  organization: 'ชื่อและประเภทหน่วยงาน',
+  authority: 'อำนาจหน้าที่/ฐานอำนาจตามกฎหมาย',
+  officialEvidence: 'หลักฐานจากแหล่งราชการที่ยืนยันได้',
+  technicalNeed: 'ความต้องการใช้งานและเหตุผลทางเทคนิค',
+  marketPrice: 'ข้อมูลราคาตลาด/ราคาที่ใช้ประกอบการพิจารณา',
+  procurementMethod: 'วิธีการจัดซื้อจัดจ้างที่เหมาะสม',
+  citizenRequest: 'รายละเอียดคำขอของประชาชน',
+  serviceType: 'ประเภทบริการหรือคำขอที่ต้องการ',
+  officialServiceManual: 'คู่มือประชาชน/หลักเกณฑ์ฉบับปัจจุบัน',
+  serviceAuthority: 'ฐานอำนาจและหน่วยงานผู้รับผิดชอบบริการ',
+  minimumApplicantData: 'ข้อมูลผู้ยื่นคำขอเท่าที่จำเป็น',
+  serviceManual: 'คู่มือประชาชน/หลักเกณฑ์ของบริการ',
+  requiredDocuments: 'เอกสารประกอบคำขอที่กำหนด',
+  feeRule: 'หลักเกณฑ์ค่าธรรมเนียม',
+  serviceTimeRule: 'กรอบระยะเวลาดำเนินการ',
+  fee: 'ค่าธรรมเนียมตามหลักเกณฑ์',
+  timeframe: 'ระยะเวลาดำเนินการตามหลักเกณฑ์',
+  applicationData: 'ข้อมูลคำขอที่จำเป็น',
+  reviewCriteria: 'หลักเกณฑ์ที่เจ้าหน้าที่ใช้พิจารณา',
+  decisionAuthority: 'ผู้มีอำนาจพิจารณา',
+  decisionRecord: 'ผลการพิจารณาที่ได้รับการรับรองแล้ว',
+  hrFactSummary: 'สรุปข้อเท็จจริงสำหรับงานบุคคล',
+  'hr-fact-summary': 'สรุปข้อเท็จจริงสำหรับงานบุคคล',
+  needMemo: 'บันทึกเหตุผลและความจำเป็น',
+  'need-memo': 'บันทึกเหตุผลและความจำเป็น',
+  workforcePlanDraft: 'ร่างแผนอัตรากำลัง',
+  'workforce-plan-draft': 'ร่างแผนอัตรากำลัง',
+  torDraft: 'ร่างขอบเขตของงาน (TOR)',
+  'tor-draft': 'ร่างขอบเขตของงาน (TOR)',
+  procurementMemo: 'ร่างบันทึกเสนอการจัดซื้อจัดจ้าง',
+  'procurement-memo': 'ร่างบันทึกเสนอการจัดซื้อจัดจ้าง',
+  priceComparison: 'ตารางเปรียบเทียบราคา',
+  'price-comparison': 'ตารางเปรียบเทียบราคา',
+  applicationChecklist: 'รายการตรวจสอบเอกสารคำขอ',
+  'application-checklist': 'รายการตรวจสอบเอกสารคำขอ',
+  serviceAdvice: 'คำแนะนำขั้นตอนการรับบริการ',
+  'service-advice': 'คำแนะนำขั้นตอนการรับบริการ',
+  decisionDraft: 'ร่างเอกสารเสนอผู้มีอำนาจพิจารณา',
+  'decision-draft': 'ร่างเอกสารเสนอผู้มีอำนาจพิจารณา',
+  'service-identification': 'สรุปประเภทบริการและหน่วยงานเจ้าของเรื่อง',
+  'official-manual-register': 'ทะเบียนคู่มือประชาชน/หลักเกณฑ์ที่ใช้อ้างอิง',
+  'authority-scope-check': 'ผลตรวจอำนาจและขอบเขตบริการ',
+  'data-minimization-check': 'รายการข้อมูลผู้ยื่นที่จำเป็นตาม PDPA',
+  'requirements-checklist': 'รายการเอกสารและเงื่อนไขที่ต้องใช้',
+  'fee-time-summary': 'สรุปค่าธรรมเนียมและระยะเวลาดำเนินการ',
+  'application-receipt': 'หลักฐานรับคำขอ',
+  'completeness-check': 'ผลตรวจความครบถ้วนของคำขอ',
+  'deficiency-notice-or-clearance': 'รายการแจ้งเอกสารที่ขาดหรือผลยืนยันว่าครบถ้วน',
+  'officer-review-record': 'บันทึกผลการตรวจของเจ้าหน้าที่',
+  'decision-pack': 'ชุดเอกสารเสนอผู้มีอำนาจพิจารณา',
+  'decision-notification': 'หนังสือ/ข้อความแจ้งผลการพิจารณา',
+  'service-status-timeline': 'สถานะและลำดับเวลาการดำเนินงาน',
+  'service-audit-trail': 'บันทึกหลักฐานและประวัติการดำเนินงาน',
+  communicationObjective: 'วัตถุประสงค์ของการสื่อสาร',
+  targetAudience: 'กลุ่มเป้าหมายหลัก',
+  verifiedFacts: 'ข้อเท็จจริงที่ตรวจสอบแล้ว',
+  mediaRights: 'สิทธิการใช้ภาพ/สื่อ',
+  privacyBasis: 'ฐานการใช้ข้อมูลส่วนบุคคล/PDPA',
+  contentBrief: 'สารสำคัญและแนวทางเนื้อหา',
+  channel: 'ช่องทางเผยแพร่',
+  format: 'รูปแบบสื่อ',
+  approvalAuthority: 'ผู้ตรวจ/ผู้อนุมัติก่อนเผยแพร่',
+  publicationEvidence: 'หลักฐานการเผยแพร่',
+  'pr-communication-brief': 'สรุปวัตถุประสงค์และกลุ่มเป้าหมาย',
+  'pr-fact-check': 'ผลตรวจข้อเท็จจริง',
+  'pr-privacy-rights-check': 'ผลตรวจ PDPA/สิทธิภาพ',
+  'pr-content-draft': 'ร่างเนื้อหาประชาสัมพันธ์',
+  'pr-channel-format-check': 'ชุดสื่อและรูปแบบช่องทาง',
+  'pr-approval-check': 'รายการตรวจอนุมัติก่อนเผยแพร่',
+  'pr-publication-record': 'บันทึกการเผยแพร่',
+  'pr-correction-archive': 'ประวัติการแก้ไขและจัดเก็บ'
+});
+
+function isThaiText(value = '') {
+  return /[ก-๙]/.test(String(value || ''));
+}
+
+export function humanizeWorkflowKey(value = '', fallback = 'ข้อมูล/หลักฐานเพิ่มเติมตามขั้นตอนนี้') {
+  const key = String(value || '').trim();
+  if (!key) return '';
+  if (KEY_LABELS[key]) return KEY_LABELS[key];
+  if (isThaiText(key)) return key;
+  return fallback;
+}
+
+function uniq(values = []) {
+  return [...new Set((Array.isArray(values) ? values : []).filter(Boolean).map(String))];
+}
+
+export function buildWorkflowProgressPanelModel(view) {
+  const primary = view?.primary || null;
+  if (!primary) return null;
+  const missing = uniq([...(primary.missingEvidence || []), ...(primary.missingOfficialEvidence || [])]);
+  const deliverables = (primary.deliverables || []).map((item) => ({
+    key: String(item?.artifactKey || ''),
+    status: String(item?.status || 'required')
+  })).filter((item) => item.key);
+  const completedCount = Array.isArray(primary.completedStages) ? primary.completedStages.length : 0;
+  const workflowCount = Array.isArray(view?.workflows) ? view.workflows.length : 1;
+  const status = String(primary.workflowStatus || view?.caseStatus || view?.status || 'unknown');
+  return Object.freeze({
+    workflowId: String(primary.workflowId || ''),
+    stageId: String(primary.currentStage?.id || ''),
+    stageTitle: String(primary.currentStage?.title || (status === 'complete' ? 'เสร็จสมบูรณ์' : 'กำลังเตรียมงาน')),
+    status,
+    statusLabel: STATUS_LABELS[status] || String(primary.actionLabel || 'กำลังดำเนินการ'),
+    actionLabel: String(primary.actionLabel || ''),
+    completedCount,
+    workflowCount,
+    missing,
+    missingOfficial: uniq(primary.missingOfficialEvidence),
+    deliverables,
+    approvalRequired: Boolean(primary.approvalRequired),
+    riskReviewRequired: Boolean(primary.riskReviewRequired),
+    failClosed: Boolean(view?.governance?.failClosed || primary?.qualityGate?.status === 'blocked'),
+    nextActions: uniq((view?.nextActions || []).map((item) => item?.actionLabel)),
+    crossWorkflows: (view?.workflows || []).map((item) => ({
+      workflowId: String(item?.workflowId || ''),
+      stageTitle: String(item?.currentStage?.title || 'เสร็จแล้ว'),
+      status: String(item?.workflowStatus || '')
+    })).filter((item) => item.workflowId)
+  });
+}
+
+const PR_PHASES = Object.freeze([
+  Object.freeze({ id: 1, label: 'วัตถุประสงค์และกลุ่มเป้าหมาย', stages: ['objective-audience'] }),
+  Object.freeze({ id: 2, label: 'ข้อเท็จจริงและสารสำคัญ', stages: ['facts-verification'] }),
+  Object.freeze({ id: 3, label: 'ร่างเนื้อหา / Storyboard / Script', stages: ['privacy-rights', 'content-draft'] }),
+  Object.freeze({ id: 4, label: 'ตรวจรูปแบบและอนุมัติ', stages: ['channel-format', 'approval'] }),
+  Object.freeze({ id: 5, label: 'เผยแพร่และเก็บหลักฐาน', stages: ['publication', 'correction-archive'] })
+]);
+
+function prPhaseFor(stageId = '', status = '') {
+  if (status === 'complete') return 5;
+  const match = PR_PHASES.find(phase => phase.stages.includes(String(stageId || '')));
+  return match?.id || 1;
+}
+
+function renderPrPhaseStrip(model) {
+  const wrap = document.createElement('section');
+  wrap.className = 'pr-phase-strip';
+  const title = textNode('strong', '🎯 ขั้นตอนงานประชาสัมพันธ์');
+  const row = document.createElement('div');
+  row.className = 'pr-phase-row';
+  const current = prPhaseFor(model.stageId, model.status);
+  PR_PHASES.forEach(phase => {
+    const item = document.createElement('div');
+    item.className = 'pr-phase-item';
+    if (phase.id < current || model.status === 'complete') item.classList.add('done');
+    if (phase.id === current && model.status !== 'complete') item.classList.add('current');
+    const num = textNode('span', String(phase.id), 'pr-phase-num');
+    const label = textNode('span', phase.label, 'pr-phase-label');
+    item.append(num, label);
+    row.append(item);
+  });
+  wrap.append(title, row);
+  return wrap;
+}
+
+function installStyles() {
+  if (document.getElementById('workflow-progress-ui-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'workflow-progress-ui-styles';
+  style.textContent = `
+.workflow-progress-panel{margin:12px 0 2px;padding:14px;border:1px solid var(--gdl-line,#d2dcd5);border-radius:16px;background:#f8fbf9;color:var(--gdl-ink,#17231e)}
+.workflow-progress-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.workflow-progress-head strong{font-size:14px;color:var(--gdl-primary,#12372a)}
+.workflow-progress-badge{flex:0 0 auto;padding:4px 8px;border-radius:999px;background:#e8f0eb;color:#174333;font-size:11px;font-weight:700}.workflow-progress-badge.blocked{background:#fff2df;color:#7a4f00}.workflow-progress-badge.approval{background:#eef1ff;color:#354a8c}
+.workflow-progress-meta{margin-top:5px;color:var(--gdl-muted,#4f5e56);font-size:12px;line-height:1.55}.workflow-progress-track{height:7px;margin:11px 0 8px;border-radius:999px;background:#e2e9e4;overflow:hidden}.workflow-progress-track>span{display:block;height:100%;min-width:8%;border-radius:inherit;background:var(--gdl-primary,#12372a)}
+.workflow-progress-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}.workflow-progress-item{padding:9px 10px;border:1px solid #dde5df;border-radius:11px;background:#fff}.workflow-progress-item b{display:block;margin-bottom:3px;font-size:11px;color:#506158}.workflow-progress-item span{display:block;font-size:12px;line-height:1.5;overflow-wrap:anywhere}.workflow-progress-next{margin-top:10px;padding:9px 10px;border-radius:11px;background:#eef5f0;font-size:12px;line-height:1.55}.workflow-progress-next strong{color:var(--gdl-primary,#12372a)}
+.workflow-progress-more{margin-top:9px}.workflow-progress-more summary{cursor:pointer;color:var(--gdl-primary,#12372a);font-size:12px;font-weight:700}.workflow-progress-more ul{margin:7px 0 0;padding-left:20px;color:#46564e;font-size:12px;line-height:1.6}
+.pr-phase-strip{margin-top:12px;padding:12px;border:1px solid #d7e4dc;border-radius:14px;background:#fbfdfb}.pr-phase-strip>strong{display:block;margin-bottom:10px;color:#12372a;font-size:13px}.pr-phase-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.pr-phase-item{display:flex;align-items:center;gap:7px;padding:8px;border-radius:11px;background:#f1f5f2;color:#5a6a61;min-width:0}.pr-phase-item.current{background:#e4f2e9;color:#12372a;font-weight:800}.pr-phase-item.done{background:#edf7f0;color:#1b5a3d}.pr-phase-num{display:inline-flex;align-items:center;justify-content:center;flex:0 0 24px;width:24px;height:24px;border-radius:50%;border:1px solid currentColor;font-size:11px;font-weight:800}.pr-phase-label{font-size:11px;line-height:1.35;overflow-wrap:anywhere}
+@media(max-width:760px){.pr-phase-row{grid-template-columns:1fr}.pr-phase-item{padding:9px 10px}}
+@media(max-width:620px){.workflow-progress-grid{grid-template-columns:1fr}.workflow-progress-head{display:block}.workflow-progress-badge{display:inline-block;margin-top:7px}}
+`;
+  document.head.appendChild(style);
+}
+
+function textNode(tag, text, className = '') {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  node.textContent = text;
+  return node;
+}
+
+function renderInto(card, view) {
+  if (!card || card.querySelector('[data-workflow-progress-panel]')) return;
+  const model = buildWorkflowProgressPanelModel(view);
+  if (!model) return;
+  installStyles();
+  const panel = document.createElement('section');
+  panel.className = 'workflow-progress-panel';
+  panel.dataset.workflowProgressPanel = 'true';
+  panel.setAttribute('aria-label', 'สถานะขั้นตอนงานราชการ');
+
+  const head = document.createElement('div');
+  head.className = 'workflow-progress-head';
+  const headText = document.createElement('div');
+  headText.append(textNode('strong', `ขั้นปัจจุบัน: ${model.stageTitle}`));
+  const isPr = model.workflowId === 'gov.public-relations';
+  headText.append(textNode('div',
+    isPr
+      ? `งานประชาสัมพันธ์ · ขั้นที่ ${prPhaseFor(model.stageId, model.status)} จาก 5`
+      : `${model.workflowId}${model.workflowCount > 1 ? ` · ทำงานร่วม ${model.workflowCount} ขั้นตอนงาน` : ''}`,
+    'workflow-progress-meta'));
+  const badge = textNode('span', model.statusLabel, 'workflow-progress-badge');
+  if (model.failClosed || model.missing.length || model.riskReviewRequired) badge.classList.add('blocked');
+  if (model.approvalRequired) badge.classList.add('approval');
+  head.append(headText, badge);
+
+  const track = document.createElement('div');
+  track.className = 'workflow-progress-track';
+  const bar = document.createElement('span');
+  const roughTotal = Math.max(model.completedCount + 1, model.completedCount + model.missing.length + 2);
+  const pct = model.status === 'complete' ? 100 : Math.max(8, Math.min(92, Math.round((model.completedCount / roughTotal) * 100)));
+  bar.style.width = `${pct}%`;
+  track.append(bar);
+
+  const grid = document.createElement('div');
+  grid.className = 'workflow-progress-grid';
+  const missing = document.createElement('div');
+  missing.className = 'workflow-progress-item';
+  missing.append(
+    textNode('b', 'ข้อมูล/หลักฐานที่ต้องเพิ่มเติม'),
+    textNode('span', model.missing.length
+      ? model.missing.slice(0, 5).map((key) => humanizeWorkflowKey(key)).join(' • ')
+      : 'ข้อมูลและหลักฐานที่จำเป็นครบแล้ว')
+  );
+  const deliverables = document.createElement('div');
+  deliverables.className = 'workflow-progress-item';
+  deliverables.append(
+    textNode('b', 'ชิ้นงานที่จะจัดทำ'),
+    textNode('span', model.deliverables.length
+      ? model.deliverables.slice(0, 5).map((item) => humanizeWorkflowKey(item.key, 'เอกสาร/ชิ้นงานประกอบขั้นตอนนี้')).join(' • ')
+      : 'ยังไม่มีชิ้นงานที่ต้องจัดทำในขั้นนี้')
+  );
+  grid.append(missing, deliverables);
+
+  const next = document.createElement('div');
+  next.className = 'workflow-progress-next';
+  const nextText = model.approvalRequired
+    ? 'หยุดรอผู้มีอำนาจตรวจ/อนุมัติ — AI ไม่อนุมัติแทน'
+    : model.riskReviewRequired
+      ? 'ตรวจจุดเสี่ยงและยืนยันหลักฐานให้ครบก่อนดำเนินการต่อ'
+      : model.actionLabel || model.nextActions[0] || 'ดำเนินการตามขั้นตอนถัดไป';
+  next.append(textNode('strong', 'ทำต่อ: '), document.createTextNode(nextText));
+
+  panel.append(head, track, grid, next);
+  if (model.workflowId === 'gov.public-relations') {
+    panel.append(renderPrPhaseStrip(model));
+  }
+  if ((model.workflowId !== 'gov.public-relations' && model.crossWorkflows.length > 1) || model.missingOfficial.length) {
+    const details = document.createElement('details');
+    details.className = 'workflow-progress-more';
+    const summary = document.createElement('summary');
+    summary.textContent = 'ดูขั้นตอนงานและหลักฐานราชการที่เกี่ยวข้อง';
+    const list = document.createElement('ul');
+    model.crossWorkflows.forEach((item) => {
+      const li = document.createElement('li');
+      li.textContent = `${item.workflowId}: ${item.stageTitle}`;
+      list.append(li);
+    });
+    model.missingOfficial.forEach((key) => {
+      const li = document.createElement('li');
+      li.textContent = `ต้องยืนยันจากแหล่งราชการ: ${humanizeWorkflowKey(key)}`;
+      list.append(li);
+    });
+    details.append(summary, list);
+    panel.append(details);
+  }
+
+  const firstSection = card.querySelector('.answer-section');
+  if (firstSection) firstSection.insertBefore(panel, firstSection.firstChild?.nextSibling || null);
+  else card.prepend(panel);
+}
+
+function tryRenderLatest() {
+  if (!latestView || typeof document === 'undefined') return;
+  const cards = [...document.querySelectorAll('.answer-card')];
+  const target = cards.reverse().find((card) => !card.querySelector('[data-workflow-progress-panel]'));
+  if (target) renderInto(target, latestView);
+}
+
+function ensureObserver() {
+  if (observerStarted || typeof document === 'undefined' || !document.body) return;
+  observerStarted = true;
+  const observer = new MutationObserver(() => tryRenderLatest());
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+export function publishWorkflowProgressView(view) {
+  latestView = view || null;
+  if (typeof document !== 'undefined') {
+    ensureObserver();
+    queueMicrotask(tryRenderLatest);
+  }
+  return buildWorkflowProgressPanelModel(view);
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ensureObserver, { once: true });
+  else ensureObserver();
+}
+
+export default Object.freeze({
+  version: WORKFLOW_PROGRESS_UI_VERSION,
+  buildWorkflowProgressPanelModel,
+  humanizeWorkflowKey,
+  publishWorkflowProgressView
+});

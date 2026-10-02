@@ -11,7 +11,7 @@ const server = createServer(async (request, response) => {
   const path = new URL(request.url, 'http://localhost').pathname;
   const target = resolve(root, `.${path === '/' ? '/index.html' : decodeURIComponent(path)}`);
   if (!target.startsWith(`${root}${sep}`)) return response.writeHead(403).end();
-  try { response.writeHead(200, { 'Content-Type': `${types[extname(target)] || 'application/octet-stream'}; charset=utf-8` }).end(await readFile(target)); }
+  try { const body = await readFile(target); response.writeHead(200, { 'Content-Type': `${types[extname(target)] || 'application/octet-stream'}; charset=utf-8` }).end(body); }
   catch { response.writeHead(404).end(); }
 });
 await new Promise(resolveServer => server.listen(0, '127.0.0.1', resolveServer));
@@ -35,13 +35,24 @@ try {
       return { mode: 'disabled', results: [], evidence: { primaryResults: [] }, warning: 'TEST_SEARCH_SPY' };
     } };
   });
+  async function resetCase() {
+    await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
+    await page.waitForFunction(() => document.readyState === 'complete' && window.GovPromptCore?.prepareGP223IntakeTurn);
+  await page.evaluate(() => {
+    window.testSearchCalls = 0;
+    window.GovPromptCore.officialSearchConnector = { ...window.GovPromptCore.officialSearchConnector, search: async () => {
+      window.testSearchCalls++;
+      return { mode: 'disabled', results: [], evidence: { primaryResults: [] }, warning: 'TEST_SEARCH_SPY' };
+    } };
+  });
+  }
   async function submit(question) {
-    const before = await page.locator('.answer-card').count();
+    const before = await page.locator('.message:not(.guided-intake-message) .answer-card').count();
     await page.locator('#promptInput').fill(question);
     await page.locator('#chatForm .send-button').click();
-    await page.waitForFunction(count => document.querySelectorAll('.answer-card').length > count, before);
-    await page.waitForFunction(() => [...document.querySelectorAll('.answer-card')].at(-1)?.dataset.leanModeReady === 'true');
-    return page.locator('.answer-card').last();
+    await page.waitForFunction(count => document.querySelectorAll('.message:not(.guided-intake-message) .answer-card').length > count, before);
+    await page.waitForFunction(() => [...document.querySelectorAll('.message:not(.guided-intake-message) .answer-card')].at(-1)?.dataset.leanModeReady === 'true');
+    return page.locator('.message:not(.guided-intake-message) .answer-card').last();
   }
   async function checkHandoff(card, expected) {
     const prompt = await card.locator('pre').textContent();
@@ -53,7 +64,8 @@ try {
     });
     assert.equal(privacy.blocked, false, JSON.stringify(privacy));
     await page.evaluate(() => { window.testCopiedPrompt = undefined; });
-    await card.getByRole('button', { name: 'คัดลอกคำสั่งอย่างเดียว' }).click();
+    assert.equal(await card.locator('button.prompt-copy-secondary').count(), 1, JSON.stringify(await card.locator('button').allTextContents()));
+    await card.locator('button.prompt-copy-secondary').click();
     await page.waitForFunction(() => typeof window.testCopiedPrompt === 'string');
     const copied = await page.evaluate(() => window.testCopiedPrompt);
     assert.match(copied, /SPECIALIZED WORKFLOW:.*GP223/);
@@ -67,16 +79,16 @@ try {
     return copied;
   }
   for (const item of requiredCases) {
-    await page.locator('#newChat').click();
+    await resetCase();
     const card = await submit(item.question);
     await checkHandoff(card, item.expect);
     console.log(`GP223 browser case ${item.id}: PASS (no search; complete copied prompt; no form)`);
   }
-  await page.locator('#newChat').click();
+  await resetCase();
   await page.locator('#promptInput').fill('ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา');
   await page.locator('#chatForm .send-button').click();
-  await page.getByText('ต้องการจ้างให้ทำงานอะไรครับ? บอกลักษณะงานจริงที่มีได้เลย', { exact: true }).waitFor();
-  assert.equal(await page.locator('.answer-card').count(), 0);
+  await page.getByText('จะจ้างเหมางานอะไร? บอกลักษณะงานสั้น ๆ ได้เลย', { exact: true }).waitFor();
+  assert.equal(await page.locator('.message:not(.guided-intake-message) .answer-card').count(), 0);
   assert.equal(await page.locator('dialog[open]').count(), 0);
   let card = await submit('บัญชี');
   await checkHandoff(card, /ตาราง TOR งานบัญชี/);
@@ -90,7 +102,7 @@ try {
   card = await submit('ตรวจ TOR โครงการถนนล่าสุด');
   assert.equal(await page.evaluate(() => window.testSearchCalls), 1);
   assert.doesNotMatch(await card.locator('pre').textContent(), /SPECIALIZED WORKFLOW:.*GP223/);
-  await page.locator('#newChat').click();
+  await resetCase();
   // AI-only must also work when the shared connector is unavailable.
   await page.evaluate(() => { window.GovPromptCore.officialSearchConnector = undefined; });
   card = await submit('ร่าง TOR จ้างเหมาบริการงานบัญชี');

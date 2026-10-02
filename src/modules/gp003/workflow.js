@@ -7,7 +7,7 @@ import { assessProcurementRisk } from "./risk-engine.js";
 import { buildComplianceChecklist } from "./compliance-engine.js";
 
 export function runProcurementWorkflow(input, knowledge) {
-  const tor = reviewTOR(input.specifications);
+  const tor = reviewTOR(input.specifications, input);
   const competition = analyzeCompetition({ tor, vendors: input.vendors, submissionDays: input.submissionDays });
   const vendors = analyzeVendors(input.vendors, input.qualificationCriteria);
   const pricing = analyzePricing(input.estimatedBudget, input.marketPrices);

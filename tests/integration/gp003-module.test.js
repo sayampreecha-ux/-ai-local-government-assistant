@@ -47,8 +47,8 @@ const input = (overrides = {}) => ({
 test("registers GP003 prompt, workflow, templates, policies, and knowledge idempotently", () => {
   const current = runtime();
   new GP003Module(current);
-  assert.equal(current.promptRegistry.getPrompt("GP003", "2.0.0").metadata.owner, "government-procurement-team");
-  assert.equal(current.knowledgeRegistry.search("", {}).filter(({ id }) => id.startsWith("gp003-")).length, 7);
+  assert.equal(current.promptRegistry.getPrompt("GP003", "2.1.0").metadata.owner, "government-procurement-team");
+  assert.equal(current.knowledgeRegistry.search("", {}).filter(({ id }) => id.startsWith("gp003-")).length, 9);
 });
 
 test("executes deterministically through all Sprint 1 Core services", async () => {
@@ -74,6 +74,21 @@ test("detects specification lock and raises procurement risk", async () => {
   assert.equal(result.analysis.competition.level, "restricted");
   assert.equal(result.analysis.procurement.recommendedMethod, "revise-tor-before-selection");
   assert.equal(result.analysis.risk.level, "high");
+});
+
+test("locks service-contract decisions when TOR uses employee-like control", async () => {
+  const current = runtime();
+  const result = await current.gp003.execute(input({
+    objective: "จ้างเหมาบริการบุคคลธรรมดา",
+    specifications: [
+      { requirement: "ลงเวลา 08.30 - 16.30 น. และทำงานตามที่ผู้บังคับบัญชามอบหมาย" },
+    ],
+    contractTerms: [],
+    outputFormat: "json",
+  }));
+  assert.equal(result.analysis.tor.serviceContractReview.status, "review-required");
+  assert.equal(result.analysis.tor.serviceContractReview.decisionLock, true);
+  assert.equal(result.analysis.compliance.compliant, false);
 });
 
 test("supports report, audit, and API output formats", async () => {

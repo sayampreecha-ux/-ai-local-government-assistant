@@ -164,4 +164,9 @@
   if (!installIntentFirstSearchPlanner() && typeof window.addEventListener === 'function') {
     window.addEventListener('DOMContentLoaded', installIntentFirstSearchPlanner, { once: true });
   }
+
+  if (typeof document !== 'undefined') {
+    const imageStudioUrl = new URL('assets/js/ui/image-studio-v1.js?v=1.0.0', document.baseURI).href;
+    import(imageStudioUrl).then(module => module.installImageStudio?.(core)).catch(() => {});
+  }
 })();

@@ -1,0 +1,38 @@
+name: GovPrompt v8 Evidence-First verification
+
+on:
+  push:
+    branches:
+      - upgrade/evidence-first-authority-lock-v8
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-first-v8:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run v8 unit tests
+        run: pnpm test:evidence-first-v8
+      - name: Check v8 runtime syntax
+        run: node --check assets/js/core/evidence-first-v8.js
+      - name: Check integrated Home runtime syntax
+        run: node --check assets/js/home-v3.js
+      - name: Build production assets
+        run: pnpm build
+      - name: Verify v8 runtime is injected into production
+        run: |
+          grep -F 'assets/js/core/evidence-first-v8.js?v=8.0.0' dist/index.html
+          test -s dist/assets/js/core/evidence-first-v8.js

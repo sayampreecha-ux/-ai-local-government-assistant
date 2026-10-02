@@ -78,13 +78,19 @@ for (const [question, riskLevel, decisionRequired, multiConditionRequired] of CA
   assert.equal(result.taskPlan.riskLevel, riskLevel, question);
   assert.equal(result.qualityGates.decisionRequired, decisionRequired, `${question} decision`);
   assert.equal(result.qualityGates.multiConditionRequired, multiConditionRequired, `${question} multi`);
-  assert.equal(result.prompt.includes('GovPrompt Prompt Standard v7.1'), true, question);
-  assert.equal(result.prompt.includes('Quality Gates — ต้องผ่านก่อนฟันธง'), true, question);
+  if (result.prMode) {
+    assert.equal(result.prompt.includes('คุณเป็นผู้ช่วยงานประชาสัมพันธ์ของหน่วยงานราชการไทย'), true, question);
+    assert.equal(result.prompt.includes('Quality Gates — ต้องผ่านก่อนฟันธง'), false, question);
+    assert.equal(result.prompt.includes('TOR พัสดุ การเงิน บุคคล หรือกฎหมายมาปน'), true, question);
+  } else {
+    assert.equal(result.prompt.includes('GovPrompt Prompt Standard v7.1'), true, question);
+    assert.equal(result.prompt.includes('Quality Gates — ต้องผ่านก่อนฟันธง'), true, question);
+  }
 
   if (riskLevel === 'HIGH') {
     assert.equal(result.qualityGates.evidenceRequired, true, `${question} evidence`);
     assert.equal(result.qualityGates.legalVersionRequired, true, `${question} version`);
-    assert.equal(result.taskPlan.evidenceMode, 'verify-current-primary-source', `${question} evidenceMode`);
+    assert.equal(result.taskPlan.evidenceMode, 'verify-applicable-primary-source', `${question} evidenceMode`);
     assert.equal(result.prompt.includes('Evidence Gate: ก่อนฟันธงต้องยืนยันแหล่งปฐมภูมิ/ราชการ'), true, question);
     assert.equal(result.prompt.includes('Legal Version Gate: ตรวจวันมีผลใช้บังคับ'), true, question);
   }
@@ -113,5 +119,87 @@ assert.equal(bonus.qualityGates.evidenceRequired, true);
 assert.equal(bonus.prompt.includes('ระบุเงื่อนไขที่มีสาระสำคัญทั้งหมดที่ค้นพบ'), true);
 assert.equal(bonus.prompt.includes('ต้องจับคู่ “วันที่ของข้อเท็จจริง” กับ “กฎที่มีผลในวันนั้น”'), true);
 assert.equal(bonus.prompt.includes('ห้ามใช้คำว่า “ได้แน่นอน/ไม่มีสิทธิแน่นอน”'), true);
+
+
+{
+  const question = 'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนะนำอบจ\nความยาว: ให้ GP แนะนำ';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+  const route = core.routeTransaction(context);
+  const result = core.createGovernmentPrompt({ question, route, context });
+  assert.equal(result.prMode, true, 'Thai PR video request must use compact PR mode');
+  assert.equal(result.prompt.includes('โหมดงาน: PR Media / Video Creation'), true);
+  assert.equal(result.prompt.includes('Storyboard'), true);
+  assert.equal(result.prompt.includes('บทพากย์'), true);
+  assert.equal(result.prompt.includes('Prompt พร้อมคัดลอกไปใช้กับ AI Video ภายนอก'), true);
+  assert.equal(result.prompt.includes('แนวทางเลือกเครื่องมือ'), false);
+  assert.equal(result.prompt.includes('web-search'), false);
+  assert.equal(result.prompt.includes('แหล่งราชการที่ GovPrompt ค้นให้'), false);
+  assert.equal(result.prompt.includes('GovPrompt Prompt Standard v7.1'), false);
+}
+
+
+{
+  const question = 'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนะนำองกอน\nความยาว: 5–7 นาที';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+  const result = core.createGovernmentPrompt({ question, route: core.routeTransaction(context), context });
+  assert.equal(result.prMode, true, 'typo in organization name must not break PR video routing');
+  for (const forbidden of ['แนวทางเลือกเครื่องมือ', 'web-when-needed', 'web-search', 'แหล่งราชการที่ GovPrompt ค้นให้', 'Prompt นี้เป็นผลลัพธ์สำหรับนำไปวิเคราะห์ต่อ']) {
+    assert.equal(result.prompt.includes(forbidden), false, forbidden);
+  }
+}
+
+
+{
+  const question = 'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนะนำองกอน\nความยาว: 5–7 นาที';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+  const result = core.createGovernmentPrompt({ question, route: core.routeTransaction(context), context });
+  assert.equal(result.prMode, true, 'PR video typo regression: องกอน must stay in PR mode');
+  for (const forbidden of ['แนวทางเลือกเครื่องมือ', 'web-when-needed', 'web-search', 'แหล่งราชการที่ GovPrompt ค้นให้', 'แนวทางตอบ', 'Prompt นี้เป็นผลลัพธ์สำหรับนำไปวิเคราะห์ต่อ']) {
+    assert.equal(result.prompt.includes(forbidden), false, 'PR prompt leaked generic boilerplate: ' + forbidden);
+  }
+  for (const required of ['Storyboard', 'บทพากย์', 'ข้อความขึ้นจอ/ซับ', 'รายการภาพหรือคลิปที่ควรใช้', 'Prompt พร้อมคัดลอกไปใช้กับ AI Video ภายนอก']) {
+    assert.equal(result.prompt.includes(required), true, 'PR prompt missing: ' + required);
+  }
+}
+
+{
+  const question = 'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนำนำองหอน\nความยาว: 5–7 นาที';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+  const result = core.createGovernmentPrompt({ question, route: core.routeTransaction(context), context });
+  assert.equal(result.prMode, true, 'noisy Thai title must stay in PR video mode');
+  for (const forbidden of ['แนวทางเลือกเครื่องมือ', 'web-when-needed', 'web-search', 'แนวทางตอบ', 'แหล่งราชการที่ GovPrompt ค้นให้', 'Prompt นี้เป็นผลลัพธ์สำหรับนำไปวิเคราะห์ต่อ']) {
+    assert.equal(result.prompt.includes(forbidden), false, forbidden);
+  }
+}
+
+{
+  const question = 'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนะนำองกรอปท\nความยาว: ให้ GP แนะนำ';
+  const context = core.createSharedContext({ facts: question, desiredOutput: question });
+  const result = core.createGovernmentPrompt({ question, route: core.routeTransaction(context), context });
+  assert.equal(result.prMode, true, 'compact Thai องกรอปท must stay in PR video mode');
+  for (const forbidden of ['แนวทางเลือกเครื่องมือ', 'web-when-needed', 'web-search', 'แนวทางตอบ', 'แหล่งราชการที่ GovPrompt ค้นให้', 'Prompt นี้เป็นผลลัพธ์สำหรับนำไปวิเคราะห์ต่อ']) {
+    assert.equal(result.prompt.includes(forbidden), false, forbidden);
+  }
+}
+
+{
+  const variants = [
+    'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนะนำองค์กร\nความยาว: 5–7 นาที',
+    'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนะนำองกอน\nความยาว: ให้ GP แนะนำ',
+    'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนำนำองหอน\nความยาว: 5–7 นาที',
+    'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: แนะนำองกรอปท\nความยาว: ให้ GP แนะนำ',
+    'ทำวิดีโอประชาสัมพันธ์\nเรื่อง: หัวข้อพิมพ์ผิดอะไรก็ได้\nความยาว: ให้ GP แนะนำ',
+    'สร้างคลิปประชาสัมพันธ์ เรื่อง ผลงานประจำปี',
+    'จัดทำวีดีโอแนะนำหน่วยงาน 5 นาที'
+  ];
+  for (const question of variants) {
+    const context = core.createSharedContext({ facts: question, desiredOutput: question });
+    const result = core.createGovernmentPrompt({ question, route: core.routeTransaction(context), context });
+    assert.equal(result.prMode, true, question);
+    for (const forbidden of ['แนวทางเลือกเครื่องมือ', 'web-when-needed', 'web-search', 'แนวทางตอบ', 'แหล่งราชการที่ GovPrompt ค้นให้', 'Prompt นี้เป็นผลลัพธ์สำหรับนำไปวิเคราะห์ต่อ']) {
+      assert.equal(result.prompt.includes(forbidden), false, question + ' => ' + forbidden);
+    }
+  }
+}
 
 console.log('GovPrompt Prompt Standard v7.1 Golden 50 passed.');

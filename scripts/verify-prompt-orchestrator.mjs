@@ -31,7 +31,7 @@ assert.equal(result.prompt.includes('Universal Task Reasoning'), true);
 assert.equal(result.prompt.includes('GovPrompt Prompt Standard v7.1'), true);
 assert.equal(result.prompt.includes('Quality Gates — ต้องผ่านก่อนฟันธง'), true);
 assert.equal(result.prompt.includes('ตรวจฉบับแก้ไข/ยกเลิก/ฉบับใหม่กว่า'), true);
-assert.equal(result.prompt.includes('ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง'), true);
+assert.equal(result.prompt.includes('ยังยืนยันหลักฐานที่ใช้บังคับกับกรณีไม่ได้ — ยังไม่ควรฟันธง'), true);
 assert.equal(result.prompt.includes('ห้ามสมมติเลขมาตรา เลขหนังสือ วันที่ คำพิพากษา'), true);
 assert.equal(result.prompt.includes('TOR.pdf'), true);
 assert.equal(result.prompt.includes('Router เป็นเพียงคำแนะนำ'), true);
@@ -39,7 +39,7 @@ assert.equal(result.outputPlan.id, 'tor');
 assert.equal(result.prompt.includes('เกณฑ์ตรวจรับวัดได้จริง'), true);
 assert.equal(result.prompt.includes('จำกัดการแข่งขัน'), true);
 assert.equal(result.taskPlan.routeIsAdvisory, true);
-assert.equal(result.taskPlan.evidenceMode, 'verify-current-primary-source');
+assert.equal(result.taskPlan.evidenceMode, 'verify-applicable-primary-source');
 assert.equal(result.taskPlan.riskLevel, 'HIGH');
 assert.equal(result.qualityGates.evidenceRequired, true);
 assert.equal(result.qualityGates.legalVersionRequired, true);
@@ -70,7 +70,7 @@ const legalRoute = Object.freeze({
 });
 const legalPrompt = core.createGovernmentPrompt({ question: legalQuestion, route: legalRoute, context: legalContext });
 assert.equal(legalPrompt.prompt.includes('ทำได้ / ทำไม่ได้ / ยังฟันธงไม่ได้'), true);
-assert.equal(legalPrompt.prompt.includes('สถานะฉบับล่าสุด'), true);
+assert.equal(legalPrompt.prompt.includes('ฉบับที่ใช้กับบุคคลและช่วงเวลาเกิดเหตุ'), true);
 assert.equal(legalPrompt.prompt.includes('Legal Version Gate: ตรวจวันมีผลใช้บังคับ'), true);
 
 const bonusQuestion = 'บรรจุ 1 ม.ค. 2569 ครบ 8 เดือน มีสิทธิโบนัสดไหม';

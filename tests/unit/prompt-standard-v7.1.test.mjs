@@ -38,3 +38,12 @@ test("standard is additive and preserves base prompt", () => {
   assert.ok(output.startsWith(base));
   assert.match(output, /มาตรฐานควบคุมคุณภาพ GovPrompt v7\.1/);
 });
+
+
+test("operational summary mode turns simple summarize requests into actionable guidance", () => {
+  const gate = buildQualityGate({ question: "สรุปหนังสือเวียนนี้" });
+  assert.match(gate, /OPERATIONAL SUMMARY MODE/);
+  assert.match(gate, /ผู้ปฏิบัติต้องทำอะไรต่อ/);
+  assert.match(gate, /เงื่อนไข\/ข้อยกเว้น\/วันมีผล\/บทเฉพาะกาล/);
+  assert.match(gate, /ห้ามเดาเลขหนังสือ วันที่ วงเงิน เส้นตาย/);
+});

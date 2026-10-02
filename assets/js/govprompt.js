@@ -4,7 +4,7 @@
   const app = window.GovPrompt = window.GovPrompt || {};
   const events = app.events || new EventTarget();
 
-  app.version = '2.0.4';
+  app.version = '2.0.7';
   app.events = events;
   app.on = (type, listener, options) => events.addEventListener(type, listener, options);
   app.off = (type, listener, options) => events.removeEventListener(type, listener, options);
@@ -29,7 +29,6 @@
     if (!main) return;
     if (!main.id) main.id = 'main-content';
     if (document.querySelector('.gp-skip')) return;
-
     const skip = document.createElement('a');
     skip.className = 'gp-skip';
     skip.href = `#${main.id}`;
@@ -47,28 +46,37 @@
   }
 
   function initializeAccessibleNames() {
-    document.querySelectorAll('button[title]:not([aria-label])').forEach(button => {
-      button.setAttribute('aria-label', button.title);
-    });
+    document.querySelectorAll('button[title]:not([aria-label])').forEach(button => button.setAttribute('aria-label', button.title));
+  }
+
+  function initializeWorkLabels() {
+    const history = document.querySelector('[data-panel="history"]');
+    if (!history) return;
+    const label = history.querySelector('span');
+    if (label) label.textContent = 'ประวัติแชต';
+    history.setAttribute('aria-label', 'ประวัติแชต คำถามและคำตอบที่เคยสนทนา');
+    history.title = 'ประวัติแชต: ดูคำถามและคำตอบที่เคยสนทนา ส่วนงานที่ยังทำไม่จบให้ใช้เมนูงานค้าง';
   }
 
   function initializeNavigation() {
     document.querySelectorAll('[data-panel]').forEach(button => {
-      button.addEventListener('click', () => {
-        app.emit('shell:panel', { panel: button.dataset.panel, trigger: button });
-      });
+      button.addEventListener('click', () => app.emit('shell:panel', { panel: button.dataset.panel, trigger: button }));
     });
   }
 
   function initializeDialogs() {
-    document.querySelectorAll('[data-dialog-close]').forEach(button => {
-      button.addEventListener('click', () => button.closest('dialog')?.close());
-    });
-    document.querySelectorAll('dialog').forEach(dialog => {
-      dialog.addEventListener('click', event => {
-        if (event.target === dialog) dialog.close();
-      });
-    });
+    document.querySelectorAll('[data-dialog-close]').forEach(button => button.addEventListener('click', () => button.closest('dialog')?.close()));
+    document.querySelectorAll('dialog').forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); }));
+  }
+
+  async function initializeCaseList() {
+    if (!document.querySelector('.bottom-nav') || !document.getElementById('chatForm')) return;
+    try {
+      const module = await import('./ui/case-list-ui-v1.js?v=1.0.0');
+      module.initializeCaseListUI({ app });
+    } catch {
+      // Progressive enhancement: core chat remains usable.
+    }
   }
 
   function initializeShell() {
@@ -78,8 +86,10 @@
     initializeLayout();
     initializeBrand();
     initializeAccessibleNames();
+    initializeWorkLabels();
     initializeNavigation();
     initializeDialogs();
+    initializeCaseList();
   }
 
   app.initializeShell = initializeShell;
@@ -113,8 +123,7 @@
     note.className = 'gp-attachment-notice';
     note.innerHTML = '<summary>📎 เอกสารประกอบ</summary><div class="gp-attachment-help">คัดลอก Prompt ไปวางใน ChatGPT แล้วแนบไฟล์ในแชตเดียวกัน AI จะอ่านเอกสารและถามเฉพาะข้อมูลที่ยังขาด<br><small>โปรดปกปิดข้อมูลส่วนบุคคล ข้อมูลอ่อนไหว หรือข้อมูลลับที่ไม่จำเป็นก่อนแนบ</small></div>';
     const actions = host.querySelector('.actions,button[type="submit"],#make');
-    if (actions) actions.insertAdjacentElement('beforebegin', note);
-    else host.appendChild(note);
+    if (actions) actions.insertAdjacentElement('beforebegin', note); else host.appendChild(note);
   }
 
   function enhanceGeneratedPrompt() {
@@ -130,16 +139,27 @@
   }
 
   addAttachmentNotice();
-  document.addEventListener('click', event => {
-    if (event.target.closest('#make,button[type="submit"]')) setTimeout(enhanceGeneratedPrompt, 0);
-  });
+  document.addEventListener('click', event => { if (event.target.closest('#make,button[type="submit"]')) setTimeout(enhanceGeneratedPrompt, 0); });
   document.addEventListener('submit', () => setTimeout(enhanceGeneratedPrompt, 0));
   document.addEventListener('keydown', event => {
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') document.getElementById('make')?.click();
     if (event.key === 'Escape' && document.querySelector('.workspace:not(.hidden)')) document.querySelector('.close-button')?.click();
   });
+  window.addEventListener('unhandledrejection', () => app.toast('เกิดข้อขัดข้อง กรุณาลองใหม่อีกครั้ง'));
 
-  window.addEventListener('unhandledrejection', () => {
-    app.toast('เกิดข้อขัดข้อง กรุณาลองใหม่อีกครั้ง');
-  });
+  const path = String(window.location?.pathname || '');
+  if (/(?:^|\/)gp012\.html$/i.test(path)) {
+    import('./ui/pr-image-studio-v1.js?v=1.0.0').catch(() => {
+      // Progressive enhancement: legacy GP012 remains fully usable.
+    });
+  }
+
+  // Domain rule pack: เงินสะสม + ค่า K. Loaded at runtime without changing UI/categories.
+  import('./core/cash-reserve-k-rulepack-v1.js?v=1.0.0')
+    .then(() => app.emit('rulepack:ready', { id: 'cash-reserve-k-payment', version: '1.0.0' }))
+    .catch(error => app.emit('rulepack:error', { id: 'cash-reserve-k-payment', error: String(error?.message || error) }));
+
+  import('./core/engineering-k-audit-rulepack-v1.js?v=1.0.0')
+    .then(() => app.emit('rulepack:ready', { id: 'engineering-k-audit', version: '1.0.0' }))
+    .catch(error => app.emit('rulepack:error', { id: 'engineering-k-audit', error: String(error?.message || error) }));
 })();

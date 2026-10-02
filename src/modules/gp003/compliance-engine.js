@@ -4,11 +4,13 @@ export function buildComplianceChecklist({ input, tor, competition, vendors, pri
     ["procurement-plan", input.documents.procurementPlan === true],
     ["tor-complete", tor.completenessScore === 1],
     ["no-specification-lock", !tor.specificationLockDetected],
+    ["service-contract-727-review", tor.serviceContractReview?.status !== "review-required"],
+    ["service-contract-9636-travel-training-review", !tor.travelTrainingReview?.decisionLock],
     ["competition-fair", competition.level === "fair"],
     ["vendor-qualification", vendors.assessments.length === 0 || vendors.qualifiedCount > 0],
     ["reference-price", pricing.sampleSize >= 3],
     ["method-selected", procurement.recommendedMethod !== "revise-tor-before-selection"],
-    ["authoritative-knowledge", knowledgeCount >= 7],
+    ["authoritative-knowledge", knowledgeCount >= 8],
   ].map(([item, passed]) => ({ item, passed }));
   return {
     checklist,

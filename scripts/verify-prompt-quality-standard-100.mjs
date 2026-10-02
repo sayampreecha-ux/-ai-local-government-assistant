@@ -54,7 +54,7 @@ for (const testCase of cases) {
   assert.match(prompt, /GovPrompt Prompt Quality Standard v7\.2/);
   assert.match(prompt, /Answer First/);
   assert.match(prompt, /ห้ามแต่งเลขมาตรา/);
-  assert.match(prompt, /ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง/);
+  assert.match(prompt, /ยังยืนยันหลักฐานที่ใช้บังคับกับกรณีไม่ได้ — ยังไม่ควรฟันธง/);
   assert.match(prompt, /PDPA/);
   assert.match(prompt, /Human Approval/);
   assert.equal(result.qualityStandard.version, '7.2');

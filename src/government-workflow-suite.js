@@ -6,7 +6,7 @@ import { buildGovernmentWorkOrderV4, advanceGovernmentWorkflowV4, driveGovernmen
 const WORKFLOWS = Object.freeze({
   budgetDraft: { id: "gov.budget-draft", keywords: ["ทำร่างงบ", "ร่างงบประมาณ", "ร่างงบ", "ข้อบัญญัติงบประมาณ", "ทำกรอบงบ", "กรอบงบ", "จัดร่างงบ", "สรุปคำของบ"] },
   procurement: { id: "gov.procurement", keywords: ["จัดซื้อ", "จัดจ้าง", "ซื้อ", "เครื่องจักร", "รถขุด", "รถบรรทุก", "tor", "ราคากลาง", "e-bidding", "เฉพาะเจาะจง"] },
-  finance: { id: "gov.finance", keywords: ["เบิก", "เบิกจ่าย", "งบประมาณ", "เงินกู้", "กู้เงิน", "เงินสะสม", "ค่าใช้จ่าย", "การเงิน"] },
+  finance: { id: "gov.finance", keywords: ["เบิก", "เบิกจ่าย", "งบประมาณ", "เงินกู้", "กู้เงิน", "เงินสะสม", "ค่าใช้จ่าย", "การเงิน", "ค่าเช่าซื้อบ้าน", "ค่าซื้อบ้าน", "ผ่อนบ้าน", "ผ่อนชำระบ้าน"] },
   correspondence: { id: "gov.correspondence", keywords: ["หนังสือราชการ", "ร่างหนังสือ", "บันทึกข้อความ", "หนังสือภายนอก", "หนังสือภายใน"] },
   legal: { id: "gov.legal", keywords: ["กฎหมาย", "ระเบียบ", "ข้อกฎหมาย", "อำนาจ", "หารือ", "คำพิพากษา", "วินัย"] },
   project: { id: "gov.project", keywords: ["ทำโครงการ", "โครงการ", "จัดอบรม", "กิจกรรม", "ดำเนินโครงการ"] },
@@ -16,7 +16,7 @@ const WORKFLOWS = Object.freeze({
   education: { id: "gov.education", keywords: ["การศึกษา", "โรงเรียน", "นักเรียน", "ผู้เรียน", "ครู", "ศูนย์พัฒนาเด็ก", "เด็กเล็ก", "ทุนการศึกษา"] },
   internalAudit: { id: "gov.internal-audit", keywords: ["ตรวจสอบภายใน", "แผนตรวจสอบ", "ข้อค้นพบ", "กระดาษทำการ", "หน่วยรับตรวจ", "ควบคุมภายใน"] },
   executive: { id: "gov.executive", keywords: ["ผู้บริหาร", "สรุปผู้บริหาร", "ข้อเสนอผู้บริหาร", "ช่วยตัดสินใจ", "ทางเลือก", "สั่งการ", "มอบหมายงาน"] },
-  publicRelations: { id: "gov.public-relations", keywords: ["ประชาสัมพันธ์", "โพสต์", "ข่าวประชาสัมพันธ์", "อินโฟกราฟิก", "แคปชัน", "โปสเตอร์", "สื่อประชาสัมพันธ์"] },
+  publicRelations: { id: "gov.public-relations", keywords: ["ประชาสัมพันธ์", "โพสต์", "ข่าวประชาสัมพันธ์", "อินโฟกราฟิก", "แคปชัน", "โปสเตอร์", "สื่อประชาสัมพันธ์", "วิดีโอ", "วีดีโอ", "คลิป", "video", "แนะนำองค์กร", "แนะนำหน่วยงาน"] },
   council: { id: "gov.council", keywords: ["สภาท้องถิ่น", "สภา", "ญัตติ", "องค์ประชุม", "มติสภา", "ข้อบัญญัติ", "ระเบียบวาระ", "รายงานการประชุมสภา"] }
 });
 
@@ -29,7 +29,7 @@ const PRIMARY_ACTION_RULES = Object.freeze([
   ['gov.correspondence', /(?:ช่วย)?(?:ร่าง|ทำ|เขียน).{0,16}(?:หนังสือราชการ|บันทึกข้อความ|หนังสือภายนอก|หนังสือภายใน)/i],
   ['gov.procurement', /(?:จัดซื้อ|จัดจ้าง|ร่าง\s*tor|ตรวจ\s*tor|e-?bidding|เฉพาะเจาะจง|ราคากลาง)/i],
   ['gov.finance', /(?:เบิก|เบิกจ่าย|ขอเบิก|จ่ายได้ไหม|จ่ายได้หรือไม่|ใช้งบ.{0,16}(?:ได้ไหม|ได้หรือไม่)|กู้เงิน|เงินกู้)/i],
-  ['gov.public-relations', /(?:(?:ทำ|สร้าง|ออกแบบ|เขียน|ร่าง).{0,24}(?:โพสต์|ข่าวประชาสัมพันธ์|อินโฟกราฟิก|แคปชัน|โปสเตอร์|สื่อประชาสัมพันธ์)|ประชาสัมพันธ์.{0,24}(?:โครงการ|กิจกรรม|ข่าว))/i],
+  ['gov.public-relations', /(?:(?:ทำ|สร้าง|ออกแบบ|เขียน|ร่าง).{0,24}(?:วิดีโอ|วีดีโอ|คลิป|video|โพสต์|ข่าวประชาสัมพันธ์|อินโฟกราฟิก|แคปชัน|โปสเตอร์|สื่อประชาสัมพันธ์)|(?:วิดีโอ|วีดีโอ|คลิป|video).{0,30}(?:ประชาสัมพันธ์|แนะนำองค์กร|แนะนำหน่วยงาน|องค์กร|หน่วยงาน)|ประชาสัมพันธ์.{0,24}(?:โครงการ|กิจกรรม|ข่าว|องค์กร|หน่วยงาน))/i],
   ['gov.budget-draft', /(?:ทำร่างงบ|ร่างงบประมาณ|ร่างงบ|จัดร่างงบ|ทำกรอบงบ)/i],
   ['gov.legal', /(?:(?:วิเคราะห์|ตรวจ|หารือ).{0,24}(?:กฎหมาย|ข้อกฎหมาย|อำนาจ)|(?:มีอำนาจ|ผิดกฎหมาย).{0,30}(?:ไหม|หรือไม่))/i]
 ]);
@@ -41,7 +41,7 @@ const PRIMARY_DOMAIN_RULES = Object.freeze([
   ['gov.internal-audit', /(?:ตรวจสอบภายใน|แผนตรวจสอบ|กระดาษทำการ|หน่วยรับตรวจ|ควบคุมภายใน)/i],
   ['gov.council', /(?:สภาท้องถิ่น|ญัตติ|องค์ประชุม|มติสภา|รายงานการประชุมสภา|ระเบียบวาระ.{0,12}สภา)/i],
   ['gov.hr', /(?:อัตรากำลัง|เลื่อนขั้น|เลื่อนเงินเดือน|บรรจุ|แต่งตั้ง|โอนย้าย|งานบุคคล)/i],
-  ['gov.public-relations', /(?:งานประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์|อินโฟกราฟิก|แคปชัน|โปสเตอร์)/i],
+  ['gov.public-relations', /(?:งานประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์|อินโฟกราฟิก|แคปชัน|โปสเตอร์|วิดีโอ|วีดีโอ|คลิป|video|แนะนำองค์กร|แนะนำหน่วยงาน)/i],
   ['gov.correspondence', /(?:หนังสือราชการ|บันทึกข้อความ|หนังสือภายนอก|หนังสือภายใน)/i],
   ['gov.executive', /(?:สรุปผู้บริหาร|ข้อเสนอผู้บริหาร|ช่วยตัดสินใจ|สั่งการ|มอบหมายงาน)/i],
   ['gov.legal', /(?:ข้อกฎหมาย|กฎหมาย|คำพิพากษา|ข้อหารือ)/i],
@@ -49,6 +49,8 @@ const PRIMARY_DOMAIN_RULES = Object.freeze([
   ['gov.procurement', /(?:เครื่องจักร|รถขุด|รถบรรทุก|พัสดุ)/i],
   ['gov.finance', /(?:เงินสะสม|ค่าใช้จ่าย|การเงิน)/i]
 ]);
+
+const procurementText = text => text.replace(/(?:ค่า(?:เช่าซื้อ|ซื้อ|เช่า)บ้าน(?!พัก)|(?:ผ่อนชำระ|ผ่อน)(?:เงินกู้(?:เพื่อ)?)?(?:ซื้อ)?บ้าน(?!พัก))/g, 'สิทธิที่อยู่อาศัย');
 
 const textOf = (input = {}) => String(input.query || input.question || input.text || input.intent || "").toLowerCase();
 
@@ -65,7 +67,7 @@ function resolvePrimaryWorkflowId(text, directIds, matched) {
 export function detectGovernmentWorkflows(input = {}) {
   const text = textOf(input);
   const all = Object.values(WORKFLOWS);
-  const matched = all.filter((wf) => wf.keywords.some((k) => text.includes(k.toLowerCase())));
+  const matched = all.filter((wf) => wf.keywords.some((k) => (wf.id === "gov.procurement" ? procurementText(text) : text).includes(k.toLowerCase())));
   const directIds = new Set(matched.map((x) => x.id));
   const ids = new Set(directIds);
   if (ids.has("gov.budget-draft")) ids.add("gov.finance");
@@ -73,6 +75,22 @@ export function detectGovernmentWorkflows(input = {}) {
   if (text.includes("เงินกู้") || text.includes("กู้เงิน")) { ids.add("gov.finance"); ids.add("gov.legal"); }
 
   const primaryId = resolvePrimaryWorkflowId(text, directIds, matched);
+
+  // PR/content creation is a self-contained workflow by default.
+  // Generic words inside a PR brief (organization, position, project, budget, etc.)
+  // must not fan out into procurement/HR/finance/project workflows unless the user
+  // explicitly asks for those tasks as separate substantive actions.
+  if (primaryId === 'gov.public-relations') {
+    const explicitCrossDomain = [
+      ['gov.procurement', /(?:พร้อม|และ|รวมทั้ง|จากนั้น).{0,18}(?:ร่าง\s*tor|ตรวจ\s*tor|จัดซื้อ|จัดจ้าง|ราคากลาง)/i],
+      ['gov.finance', /(?:พร้อม|และ|รวมทั้ง|จากนั้น).{0,18}(?:เบิกจ่าย|ขอเบิก|วิเคราะห์การเงิน|ตรวจงบ)/i],
+      ['gov.hr', /(?:พร้อม|และ|รวมทั้ง|จากนั้น).{0,18}(?:งานบุคคล|อัตรากำลัง|บรรจุ|แต่งตั้ง|โอนย้าย)/i],
+      ['gov.project', /(?:พร้อม|และ|รวมทั้ง|จากนั้น).{0,18}(?:ร่างโครงการ|จัดทำโครงการ|วิเคราะห์โครงการ)/i]
+    ].filter(([, pattern]) => pattern.test(text)).map(([id]) => id);
+    const orderedIds = ['gov.public-relations', ...explicitCrossDomain];
+    return orderedIds.map((workflowId) => all.find((workflow) => workflow.id === workflowId)).filter(Boolean);
+  }
+
   const orderedIds = [];
   if (primaryId) orderedIds.push(primaryId);
   for (const workflow of matched) if (!orderedIds.includes(workflow.id)) orderedIds.push(workflow.id);

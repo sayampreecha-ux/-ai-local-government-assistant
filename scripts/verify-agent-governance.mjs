@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 
-const sandbox = { window: {} };
+const sandbox = {
+  window: {},
+  document: { addEventListener() {} }
+};
 vm.runInNewContext(await readFile('assets/js/core/agent-governance-policy.js', 'utf8'), sandbox);
 const core = sandbox.window.GovPromptCore;
 

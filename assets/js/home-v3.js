@@ -7,6 +7,116 @@
   const attachmentInput = document.getElementById('attachmentInput');
   const cameraInput = document.getElementById('cameraInput');
   const attachmentStatus = document.getElementById('attachmentStatus');
+  const outputFormatSelect = document.getElementById('outputFormatSelect');
+  const outputFormatButton = document.getElementById('outputFormatButton');
+  const resultPromptKey = 'govprompt.resultPrompt.v1';
+  const resultForceIntakeKey = 'govprompt.forceGuidedIntake.v1';
+  let resultRoute = new URLSearchParams(window.location.search).get('view') === 'result';
+
+  function enterResultPage() {
+    if (!resultRoute) {
+      const target = new URL(window.location.href);
+      target.searchParams.set('view', 'result');
+      target.hash = '';
+      // Keep File objects and the selected output format in this document.
+      // This runs after an accepted submission, never before the privacy gate.
+      window.history.pushState({ govpromptResult: true }, '', target.toString());
+      resultRoute = true;
+    }
+    document.documentElement.classList.add('result-route');
+    document.querySelector('.chat-main').classList.add('has-messages');
+    conversation.after(document.querySelector('.composer-region'));
+    installResultHeader();
+  }
+
+  // Guided intake handles its own submit event. Move its rendered questions to
+  // the result view too, without intercepting or replaying that submission.
+  new MutationObserver(records => {
+    const addedIntake = records.some(record => [...record.addedNodes].some(node =>
+      node.nodeType === 1 && node.classList.contains('guided-intake-message')));
+    if (!addedIntake) return;
+    enterResultPage();
+    document.documentElement.classList.add('result-intake');
+    input.placeholder = 'พิมพ์ข้อมูลเพิ่มเติมที่จำเป็น...';
+    document.querySelector('.result-page-header strong').textContent = 'ข้อมูลประกอบงาน';
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }).observe(conversation, { childList: true });
+
+  window.addEventListener('popstate', () => {
+    const nextResultRoute = new URLSearchParams(window.location.search).get('view') === 'result';
+    if (nextResultRoute !== resultRoute) window.location.reload();
+  });
+
+  function installResultHeader() {
+    if (!resultRoute || document.querySelector('.result-page-header')) return;
+    const header = document.createElement('div');
+    header.className = 'result-page-header';
+    header.innerHTML = '<a href="index.html" class="result-back">← เลือกงานอื่น</a><div><span>GOVPROMPT</span><strong>ผลลัพธ์พร้อมใช้งาน</strong></div>';
+    conversation.before(header);
+  }
+
+  function ensureOutputFormatDialog() {
+    let dialog = document.getElementById('outputFormatDialog');
+    if (dialog || !outputFormatSelect) return dialog;
+    dialog = document.createElement('dialog');
+    dialog.id = 'outputFormatDialog';
+    dialog.className = 'output-format-picker-dialog';
+    dialog.setAttribute('aria-labelledby', 'outputFormatDialogTitle');
+
+    const head = document.createElement('div');
+    head.className = 'output-format-picker-head';
+    const title = document.createElement('strong');
+    title.id = 'outputFormatDialogTitle';
+    title.textContent = 'รูปแบบผลลัพธ์';
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.setAttribute('aria-label', 'ปิด');
+    close.textContent = '×';
+    close.addEventListener('click', () => dialog.close());
+    head.append(title, close);
+
+    const grid = document.createElement('div');
+    grid.className = 'output-format-picker-grid';
+    [...outputFormatSelect.options].forEach(option => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.value = option.value;
+      button.textContent = option.textContent;
+      button.setAttribute('aria-pressed', option.value === outputFormatSelect.value ? 'true' : 'false');
+      button.addEventListener('click', () => {
+        outputFormatSelect.value = option.value;
+        outputFormatSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        dialog.close();
+      });
+      grid.append(button);
+    });
+
+    dialog.append(head, grid);
+    document.body.append(dialog);
+    dialog.addEventListener('close', () => outputFormatButton?.focus());
+    return dialog;
+  }
+
+  function syncOutputFormatButton() {
+    if (!outputFormatSelect || !outputFormatButton) return;
+    const option = outputFormatSelect.options[outputFormatSelect.selectedIndex];
+    outputFormatButton.textContent = option?.textContent || 'ให้ระบบเลือกอัตโนมัติ';
+    const dialog = document.getElementById('outputFormatDialog');
+    if (dialog) {
+      dialog.querySelectorAll('[data-value]').forEach(button => {
+        button.setAttribute('aria-pressed', button.dataset.value === outputFormatSelect.value ? 'true' : 'false');
+      });
+    }
+  }
+
+  outputFormatButton?.addEventListener('click', () => {
+    const dialog = ensureOutputFormatDialog();
+    syncOutputFormatButton();
+    if (dialog?.showModal) dialog.showModal();
+  });
+  outputFormatSelect?.addEventListener('change', syncOutputFormatButton);
+  syncOutputFormatButton();
+
   const dialog = document.getElementById('appDialog');
   const legacyHistoryKey = 'govprompt-v3-history';
   const history = [];
@@ -66,12 +176,11 @@
     conversation.appendChild(article);
   }
 
-  function addThinking(gp223 = false) {
+  function addThinking() {
     const article = document.createElement('article');
     article.className = 'message assistant';
     article.id = 'thinkingMessage';
-    article.innerHTML = '<span class="assistant-mark" aria-hidden="true">กพ</span><div class="assistant-content"><div class="thinking"><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>กำลังค้น อ่าน และตรวจหลักฐานราชการ</span></div><div class="analysis-steps">จำแนกงาน · ค้นต้นฉบับ · อ่านเอกสาร · ตรวจความใหม่ · คำนวณ/ตรวจสมดุล · เตรียมผลลัพธ์</div></div>';
-    if (gp223) article.innerHTML = '<span class="assistant-mark" aria-hidden="true">กพ</span><div class="assistant-content"><div class="thinking">กำลังวิเคราะห์ข้อมูลและเตรียมร่างงาน</div></div>';
+    article.innerHTML = '<span class="assistant-mark" aria-hidden="true">กพ</span><div class="assistant-content"><div class="thinking"><span class="thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>กำลังจัดโครงสร้างคำถามและเตรียม Prompt</span></div><div class="analysis-steps">จำแนกงาน · ตรวจความเสี่ยง · กำหนดแหล่งที่ AI ควรค้น · เตรียมผลลัพธ์</div></div>';
     conversation.appendChild(article);
   }
 
@@ -80,7 +189,8 @@
     if (!core
       || typeof core.createSharedContext !== 'function'
       || typeof core.routeTransaction !== 'function'
-      || typeof core.createGovernmentPrompt !== 'function') {
+      || typeof core.createGovernmentPrompt !== 'function'
+      || typeof core.resolveOutputFormatPreset !== 'function') {
       throw new Error('GovPrompt Core is unavailable');
     }
     return core;
@@ -108,11 +218,19 @@
       return Object.freeze({ blocked: true, safeText: '', changed: false, reason: 'PRIVACY_GUARD_UNAVAILABLE' });
     }
     const privacy = core.sanitizeExternalContent(prompt);
+    const source = String(prompt ?? '');
+    const explicitSecretValue = /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|(?:password|passwd|api\s*key|secret|token|bearer|รหัสผ่าน|กุญแจ\s*api)\s*[:=：]\s*[A-Za-z0-9_./+\-=]{8,}/i.test(source);
+    const residualIdentifierRisks = (privacy.residualRisks || []).filter(label => label !== 'ข้อมูลรับรองสิทธิ์/รหัสลับ');
+    // Generated prompts may contain security guidance words such as "API key", "token",
+    // "health data" or "government confidential data". Those labels alone are not secrets.
+    // Block only an actual secret value/private key or residual direct identifiers that
+    // remain after automatic redaction.
+    const blocked = explicitSecretValue || residualIdentifierRisks.length > 0;
     return Object.freeze({
-      blocked: privacy.blocked,
+      blocked,
       safeText: privacy.safeText,
       changed: privacy.changed,
-      reason: privacy.blocked ? 'SENSITIVE_EXTERNAL_HANDOFF_BLOCKED' : ''
+      reason: blocked ? 'SENSITIVE_EXTERNAL_HANDOFF_BLOCKED' : ''
     });
   }
 
@@ -120,7 +238,7 @@
     const privacy = prepareExternalPrompt(text);
     if (privacy.blocked || !privacy.safeText) return Object.freeze({ view: null, block: '', status: 'privacy-blocked' });
     try {
-      const runtime = await import('./core/government-workflow-runtime-v5.js?v=5.1.0');
+      const runtime = await import('./core/government-workflow-runtime-v5.js?v=5.6.4');
       const view = runtime.buildWorkflowRuntimeView({ query: privacy.safeText, evidence: Array.isArray(evidence) ? evidence : [] });
       return Object.freeze({ view, block: runtime.buildWorkflowPromptBlock(view), status: 'ready' });
     } catch {
@@ -179,8 +297,7 @@
       searchResult?.provider ? `- Search provider: ${searchResult.provider}` : '',
       searchResult?.warning ? `- คำเตือน: ${searchResult.warning}` : '',
       '- หลักการใช้หลักฐาน: Primary Source First; ห้ามใช้ secondary source ฟันธงเมื่อมี primary source',
-      evidenceLines.length ? evidenceLines.join('\n\n') : '- ยังไม่มีผลค้นต้นฉบับราชการที่นำมาใช้อ้างอิงได้',
-      '',
+      evidenceLines.length ? evidenceLines.join('\n\n') : '- ยังไม่มีผลค้นต้นฉบับราชการที่นำมาใช้อ้างอิงได้',      '',
       'คำสั่งเพิ่มเติมสำหรับการวิเคราะห์',
       '- ตรวจเนื้อหาในต้นฉบับจาก URL ก่อนอ้างข้อกฎหมาย เลขหนังสือ วันที่ หรือข้อสรุปสำคัญ',
       '- ผลค้นเว็บเป็นตัวชี้ไปยังต้นฉบับ ไม่ใช่หลักฐานว่าฉบับนั้นยังมีผลโดยอัตโนมัติ',
@@ -189,6 +306,39 @@
     return Object.freeze({ ...promptBundle, prompt: `${promptBundle.prompt}\n\n${searchBlock}` });
   }
 
+  function enrichNaturalPersonServiceTor(promptBundle, text) {
+    const q = String(text || '');
+    if (!/จ้างเหมาบริการบุคคลธรรมดา|ร่าง TOR จ้างเหมาบริการบุคคลธรรมดา/i.test(q)) return promptBundle;
+    const block = [
+      '',
+      '=== SPECIALIZED WORKFLOW: จ้างเหมาบริการบุคคลธรรมดา / GP223 ===',
+      '1. จำแนกลักษณะงานจากงานจริงและผลสำเร็จ ไม่ตัดสินจากชื่อตำแหน่ง โดยครอบคลุมตำแหน่งที่ทดสอบ: คนขับรถยนต์, ธุรการ, ขับเครื่องจักรขนาดหนัก, ตรวจมาตรวัดน้ำประปา, เจ้าหน้าที่รักษาความปลอดภัย, ด้านจัดเก็บรายได้, ด้านธุรการ, ด้านนิติการและรับเรื่องร้องทุกข์, ด้านป้องกันและบรรเทาสาธารณภัย, ดูแลระบบประปา, นักการภารโรง, ปฏิบัติงานสอนและสนับสนุนการจัดการศึกษา, พนักงานทำความสะอาด, พยาบาล-นักวิชาการสาธารณสุข, งานสนับสนุนการจัดทำทะเบียนและข้อมูลด้านบัญชีและรายงานทางการเงิน',
+      '2. แยก “งานบริการ/ผลส่งมอบ” ออกจากความสัมพันธ์ที่อาจมีลักษณะเป็นการจ้างแรงงาน โดยไม่ถือว่าการกำหนดวันหรือช่วงเวลาปฏิบัติงานเพียงอย่างเดียวเป็นข้อสรุปว่าจ้างแรงงาน ต้องพิจารณาร่วมกับการควบคุมสั่งการ ลักษณะงาน ผลส่งมอบ และเงื่อนไขสัญญา',
+      '3. Employment-like Risk Gate: ตรวจการลาแบบลูกจ้าง การควบคุมวิธีทำงานโดยตรง การจ่ายเงินที่ผูกกับการมาทำงานอย่างเดียว และถ้อยคำที่กว้าง เช่น “งานอื่นตามที่ได้รับมอบหมายทุกประการ”',
+      '4. Scope Integrity Gate: ห้ามกำหนดหน้าที่ผู้รับจ้างนอกขอบเขตงานที่จ้าง และต้องทำให้ขอบเขตงาน ผลส่งมอบ ปริมาณ ระยะเวลา และหลักฐานตรวจรับสอดคล้องกัน',
+      '5. Authority Boundary Gate: ห้ามมอบหมายให้ผู้รับจ้างใช้อำนาจรัฐแทนเจ้าหน้าที่ เช่น อนุมัติ อนุญาต สั่งการ วินิจฉัย รับรอง หรือออกคำสั่งในนามหน่วยงาน เว้นแต่ฐานอำนาจที่เกี่ยวข้องยืนยันเป็นอย่างอื่น',
+      '6. Deliverable Gate: จัด TOR แบบผลลัพธ์เป็นฐาน — ขอบเขตงาน → ผลผลิต/งานส่งมอบ → กำหนดส่ง → หลักฐาน → เกณฑ์ตรวจรับ → การจ่ายเงิน',
+      '7. Five-Document Consistency Gate: ตรวจ TOR ↔ สัญญา/ข้อตกลง ↔ ผลส่งมอบ ↔ ตรวจรับ ↔ การเบิกจ่าย ให้ใช้สาระและเกณฑ์เดียวกัน ไม่สร้างเงื่อนไขที่ขัดกัน',
+      '8. Acceptance Gate: ตรวจว่าการตรวจรับอาศัยผลงาน/หลักฐานตามสัญญา รองรับกรณีงานถูกต้องบางส่วนหรือไม่ครบ และไม่ใช้เพียงการลงเวลาหรือการมาปฏิบัติงานเป็นหลักโดยไม่มีผลส่งมอบที่กำหนด',
+      '9. Contract Terms Gate: ตรวจแบบสัญญาจ้างงานบริการสำหรับบุคคลธรรมดา รวมถึงระยะเวลา การส่งมอบ การตรวจรับ การจ่ายเงิน การบอกเลิก และเงื่อนไขหลักประกัน/ค่าปรับตามฉบับและฐานอำนาจที่ใช้จริง',
+      '10. ว 727 / Authority Gate: ตรวจหนังสือ ว 727 ลงวันที่ 22 กันยายน 2569 และต้นฉบับ/เอกสารทางการที่เกี่ยวข้อง พร้อมตรวจฉบับที่ใช้บังคับ ณ เวลาจัดทำ ห้าม hard-code ตัวเลข อัตรา หรือข้อยกเว้นหากยังไม่ได้ยืนยันจากต้นฉบับ',
+      '10.1 Legacy Citation Gate: หาก TOR/บันทึกอ้าง ว 877 หรือหนังสือฉบับเก่า ให้ระบุว่าเป็นฐานอ้างอิงเดิมที่ต้องตรวจสถานะ และตรวจ ว 727 ลงวันที่ 22 กันยายน 2569 กับต้นฉบับทางการก่อนนำไปใช้ ห้ามคัดลอกฐานเดิมมาใช้ต่อโดยอัตโนมัติ',
+      '10.2 Contract-Term Trigger: หากพบข้อความ “ค่าปรับ 0.10%”, “หลักประกัน: ไม่มี” หรือเงื่อนไขสัญญาเฉพาะใด ๆ ให้ถือเป็นประเด็นที่ต้องตรวจสอบกับแบบสัญญาและฐานอำนาจที่ใช้บังคับ ไม่รับรองตัวเลขหรือข้อยกเว้นจาก TOR เดิมโดยอัตโนมัติ',
+      '10.3 Employment-Signal Trigger: หากพบการกำหนด จันทร์-ศุกร์/เวลาทำงาน/สถานที่ทำงาน การทำงานต่อเนื่อง การบันทึกเวลาหรือบันทึกงาน ค่าตอบแทนรายเดือน อายุ/วุฒิการศึกษา หรือถ้อยคำควบคุมการทำงาน ให้ทำเครื่องหมายเป็น risk signal และวิเคราะห์ร่วมกับการควบคุมสั่งการและผลส่งมอบ ไม่สรุปว่าเป็นการจ้างแรงงานจากปัจจัยใดปัจจัยหนึ่ง',
+      '10.4 Local Government Authority Gate: สำหรับ อปท. ให้ตรวจหนังสือกระทรวงมหาดไทยที่เกี่ยวข้องกับงานจ้างเหมาบริการบุคคลธรรมดาควบคู่กับ ว 727 โดยเฉพาะ มท 0808.2/ว 5418 ลงวันที่ 24 กันยายน 2569 และตรวจหนังสือ มท 0803.3/ว 5389 ลงวันที่ 23 กันยายน 2569 เมื่อเกี่ยวข้อง ห้ามถือเลขหนังสือหรือข้อความสรุปจากแหล่งรองเป็นฐานตัดสินจนกว่าจะตรวจต้นฉบับทางการ',
+      '10.5 Current Authority Baseline: สำหรับ GP223 ณ วันที่ 25 กันยายน 2569 ให้ถือ ว 727 ลงวันที่ 22 กันยายน 2569 เป็นหนังสือกลางด้านจ้างเหมาบริการบุคคลธรรมดาที่ต้องตรวจต้นฉบับ และสำหรับ อปท. ให้ตรวจ มท 0808.2/ว 5418 ลงวันที่ 24 กันยายน 2569 และ มท 0803.3/ว 5389 ลงวันที่ 23 กันยายน 2569 ควบคู่กัน เมื่อเกี่ยวข้อง รวมถึงตรวจหลักเกณฑ์/หนังสือที่ออกใหม่กว่าทุกครั้งก่อนสรุป',
+      '10.6 Supersession Gate: หากพบการอ้าง ว 877 หรือแนวทางเดิม ให้ตรวจสถานะกับ ว 727 ก่อนใช้อ้างอิง เพราะ ว 727 มีแนวทางใหม่และยกเลิกแนวทางเดิมตามต้นฉบับทางการ ห้ามนำข้อความจากฉบับเดิมมาใช้ต่อโดยอัตโนมัติ',
+      '10.7 Travel-and-Training Gate สำหรับ อปท.: แยก “ไปประชุม/ไปปฏิบัติงานตามภารกิจที่จ้าง” ออกจาก “เข้ารับการฝึกอบรม” ทุกครั้ง โดยตรวจระเบียบกระทรวงมหาดไทยว่าด้วยค่าใช้จ่ายในการเดินทางไปราชการของเจ้าหน้าที่ท้องถิ่น พ.ศ. 2555 และที่แก้ไขเพิ่มเติมสำหรับกรณีเดินทาง และตรวจระเบียบกระทรวงมหาดไทยว่าด้วยค่าใช้จ่ายในการฝึกอบรมและการเข้ารับการฝึกอบรมของเจ้าหน้าที่ท้องถิ่น พ.ศ. 2557 รวมทั้งหนังสือ สถ./มท. ที่เกี่ยวข้องล่าสุดสำหรับกรณีฝึกอบรม ห้ามสรุปว่า “ผู้รับจ้างเบิกเบี้ยเลี้ยงได้” เพียงเพราะได้รับมอบหมายให้เดินทาง และห้ามสรุปว่าฝึกอบรมเบิกได้จากหลักเดินทางไปราชการโดยอัตโนมัติ',
+      '10.8 External-Person Training Gate: หากเป็น อปท. และผู้เดินทางเป็นบุคคลภายนอก/ผู้รับจ้างเหมาบริการ ให้ตรวจหลักเกณฑ์การฝึกอบรมโดยตรงก่อน โดย สถ. มีหนังสือทางการที่ระบุว่า อปท. ไม่สามารถส่งบุคคลภายนอกเข้ารับการฝึกอบรมได้ในกรอบระเบียบฝึกอบรมของเจ้าหน้าที่ท้องถิ่น ดังนั้นกรณี “อบรม” ต้อง Decision Lock หากยังไม่ยืนยันฐานอำนาจหรือข้อยกเว้นเฉพาะกรณี',
+      '10.9 Travel Expense Gate: หากเป็นการเดินทางไปประชุมหรือปฏิบัติงาน ให้ตรวจคำสั่ง/การอนุมัติ ลักษณะภารกิจ สถานะผู้เดินทาง TOR/สัญญา ผู้รับผิดชอบค่าใช้จ่าย การเบิกซ้ำ และอัตราตามระเบียบที่ใช้บังคับจริง โดยห้ามใช้ระเบียบกระทรวงการคลังของส่วนราชการเป็นฐานหลักแทนระเบียบ มท. สำหรับ อปท. โดยอัตโนมัติ',
+      '11. ใช้ Applicable Authority Check: AUTHORITY, VERSION, TIME, FACT_MATCH, LATER_CHANGE, CONFLICT_TRANSITION และแยก “ข้อมูลพอค้น” ออกจาก “ข้อมูลพอตัดสิน”',
+      '12. หากหลักฐานหรือเงื่อนไขสำคัญยังไม่พอ ให้เปิด Decision Lock และระบุสิ่งที่ต้องค้น/ตรวจเพิ่ม แทนการฟันธง',
+      '13. ผลลัพธ์ต้องมี: ข้อเท็จจริง · จำแนกลักษณะงาน · ฐานอำนาจ/แหล่งทางการที่ตรวจ · Employment-like Risk · Scope/Deliverable · ความสอดคล้อง 5 เอกสาร · ข้อมูลที่ขาด · ร่าง TOR · checklist ก่อนใช้จริง',
+      'Template Library ใช้เป็นข้อมูลอ้างอิงเท่านั้น หากไม่มีแบบตรงกับงาน ให้สังเคราะห์จากลักษณะงานจริง',
+      '=== END SPECIALIZED WORKFLOW ==='
+    ].join('\\n');
+    return Object.freeze({ ...promptBundle, prompt: promptBundle.prompt + block, serviceContractNaturalPerson: true });
+  }
   async function preparePrompt(text, workflowId, caseFacts = text) {
     const core = requireCore();
     const safeAttachments = sanitizedAttachmentMetadata(core);
@@ -207,43 +357,151 @@
     const workflowRuntimePromise = prepareWorkflowRuntime(text);
     const context = core.createSharedContext({ facts: text, desiredOutput: text, documents: safeAttachments.map(file => file.name).join(', ') });
     const route = core.routeTransaction(context);
-    const promptBundle = core.createGovernmentPrompt({ question: text, route, context, attachments: safeAttachments });
-    const [searchResult, initialWorkflowRuntime] = await Promise.all([
-      core.officialSearchConnector.search(text, { limitSources: 6, count: 10 }),
-      workflowRuntimePromise
-    ]);
-    const budgetRuntime = await prepareBudgetOfficialRuntime(text, initialWorkflowRuntime, core);
-    const workflowRuntime = budgetRuntime.workflowRuntime;
-    const withSearch = enrichPromptWithSearch(promptBundle, searchResult);
+    const promptBundleBase = core.createGovernmentPrompt({
+      question: text,
+      route,
+      context,
+      attachments: safeAttachments,
+      outputFormatId: outputFormatSelect?.value || 'auto'
+    });
+    const toolPlan = typeof core.createToolRoutingPlan === 'function'
+      ? core.createToolRoutingPlan({ question: text, attachments: safeAttachments })
+      : null;
+    const toolRoutingBlock = toolPlan && typeof core.formatToolRoutingInstructions === 'function'
+      ? core.formatToolRoutingInstructions(toolPlan)
+      : '';
+    const routedPromptBundle = toolRoutingBlock
+      ? Object.freeze({
+          ...promptBundleBase,
+          prompt: `${promptBundleBase.prompt}\n\nแนวทางเลือกเครื่องมือ\n${toolRoutingBlock}`,
+          toolRoutingPlan: toolPlan
+        })
+      : promptBundleBase;
+    let promptBundle = enrichNaturalPersonServiceTor(routedPromptBundle, text);
+
+    const assistanceRoute = typeof core.detectAssistanceRoute === 'function'
+      ? core.detectAssistanceRoute(text)
+      : null;
+    if (assistanceRoute && typeof core.buildAssistancePromptBlock === 'function') {
+      promptBundle = Object.freeze({
+        ...promptBundle,
+        prompt: `${promptBundle.prompt}\n\n${core.buildAssistancePromptBlock(assistanceRoute)}`,
+        assistanceRoute
+      });
+    }
+
+    const isPr = Boolean(promptBundle?.prMode);
+
+    if (isPr) {
+      const workflowRuntime = await workflowRuntimePromise;
+      return Object.freeze({
+        route,
+        promptBundle: Object.freeze({ ...promptBundle, workflowRuntime: workflowRuntime.view }),
+        searchResult: Object.freeze({ mode: 'skipped-pr', results: [], evidence: { primaryResults: [], conclusionEligible: false }, warning: '' }),
+        workflowRuntime: workflowRuntime.view,
+        workflowRuntimeStatus: workflowRuntime.status,
+        budgetSourceRuntime: null
+      });
+    }
+
+    const workflowRuntime = await workflowRuntimePromise;
+    let searchResult;
+    const v8 = window.GovPromptCore.EVIDENCE_FIRST_V8;
+    const kAuditTask = route?.moduleId === 'GP007' && /ค่า\\s*K|ค่าชดเชยค่างานก่อสร้าง|สัญญาแบบปรับราคาได้|เงินชดเชยค่างาน|CUCEM[-\\s]?K/i.test(text);
+    const decisionTask = Boolean(assistanceRoute?.decisionTask) || Boolean(v8?.isDecisionQuestion?.(text)) || ['legal','procurement','finance','human-resources','internal-audit'].includes(String(route?.transactionType || '').toLowerCase()) || kAuditTask;
+    if (decisionTask && typeof core.officialSearchConnector?.search === 'function') {
+      try {
+        searchResult = Object.freeze(await core.officialSearchConnector.search(text, { count: 10, requireFreshness: true }));
+      } catch {
+        searchResult = Object.freeze({ mode: 'search-error', results: [], evidence: { primaryResults: [], conclusionEligible: false }, warning: 'การค้นแหล่งราชการสดขัดข้อง — ยังไม่ควรฟันธง' });
+      }
+    } else {
+      searchResult = Object.freeze({
+        mode: 'delegated-user-ai',
+        results: [],
+        evidence: { primaryResults: [], conclusionEligible: false },
+        warning: 'งานนี้ไม่จำเป็นต้องค้นกฎหมายสดโดยอัตโนมัติ — ใช้ Prompt ที่เตรียมไว้ตามประเภทงาน'
+      });
+    }
+    if (decisionTask && v8) {
+      const primaryResults = searchResult?.evidence?.primaryResults || [];
+      const freshnessVerified = Boolean(searchResult?.evidence?.verifiedCurrent && searchResult?.evidence?.strongPrimaryEvidence);
+      const assessment = v8.checkApplicableAuthority({
+        question: text,
+        domain: route?.transactionType,
+        evidence: {
+          documents: primaryResults.map(item => ({
+            title: item.documentTitle || item.title,
+            issuingAgency: item.issuingAgency || item.sourceName,
+            documentDate: item.documentDate,
+            url: item.sourceUrl,
+            primary: item.official === true,
+            contentVerified: item.contentVerified === true
+          })),
+          factsComplete: Boolean(text),
+          authorityConfirmed: primaryResults.some(item => item.official === true),
+          versionConfirmed: freshnessVerified,
+          timeConfirmed: freshnessVerified,
+          factMatchConfirmed: primaryResults.some(item => (item.evidenceFeatures?.relevance || 0) >= 0.45),
+          laterChangeChecked: freshnessVerified,
+          conflictTransitionChecked: false,
+          conflicts: []
+        }
+      });
+      searchResult = Object.freeze({ ...searchResult, v8Assessment: assessment });
+    }
     return Object.freeze({
       route,
-      promptBundle: enrichPromptWithWorkflow(withSearch, workflowRuntime),
+      promptBundle: enrichPromptWithWorkflow(promptBundle, workflowRuntime),
       searchResult,
       workflowRuntime: workflowRuntime.view,
       workflowRuntimeStatus: workflowRuntime.status,
-      budgetSourceRuntime: budgetRuntime.budgetSourceRuntime
+      budgetSourceRuntime: null
     });
   }
 
+  function legacyCopyText(text) {
+    const textarea = document.createElement('textarea');
+    const previousFocus = document.activeElement;
+    textarea.value = String(text || '');
+    textarea.setAttribute('aria-hidden', 'true');
+    textarea.autocomplete = 'off';
+    textarea.spellcheck = false;
+    Object.assign(textarea.style, {
+      position: 'fixed',
+      top: '0',
+      left: '-9999px',
+      width: '1px',
+      height: '1px',
+      padding: '0',
+      border: '0',
+      outline: '0',
+      boxShadow: 'none',
+      background: 'transparent',
+      fontSize: '16px',
+      opacity: '0.01'
+    });
+    document.body.appendChild(textarea);
+    try { textarea.focus({ preventScroll: true }); } catch { textarea.focus(); }
+    textarea.setSelectionRange(0, textarea.value.length);
+    let copied = false;
+    try { copied = document.execCommand('copy'); } catch {}
+    textarea.remove();
+    try { previousFocus?.focus?.({ preventScroll: true }); } catch {}
+    return copied;
+  }
+
   async function copyText(text) {
-    try { await navigator.clipboard.writeText(text); return true; }
-    catch {
-      try {
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.setAttribute('readonly', '');
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        const copied = document.execCommand('copy');
-        textarea.remove();
-        return copied;
-      } catch { return false; }
+    const value = String(text || '');
+    if (!value) return false;
+    if (navigator.clipboard?.writeText) {
+      try { await navigator.clipboard.writeText(value); return true; } catch {}
     }
+    return legacyCopyText(value);
   }
 
   function appendSearchDetails(section, searchResult) {
+    if (searchResult?.mode === 'skipped-pr' || searchResult?.mode === 'delegated-user-ai') return;
     const details = document.createElement('details');
     const summary = document.createElement('summary');
     const results = (searchResult?.results || []).filter(result => result.official);
@@ -338,21 +596,28 @@
     article.className = 'message assistant'; content.className = 'assistant-content'; label.className = 'route-label'; card.className = 'answer-card'; section.className = 'answer-section'; actions.className = 'answer-actions'; mark.className = 'assistant-mark'; mark.setAttribute('aria-hidden', 'true'); mark.textContent = 'กพ';
     if (promptBundle.gp223) window.GovPromptCore.gp223HandoffPrompts.set(card, promptBundle.prompt);
     label.textContent = `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
-    heading.textContent = budgetSourceRuntime ? 'GovPrompt ดำเนินงานร่างงบประมาณให้แล้ว' : 'GovPrompt เตรียมคำสั่งงานและแหล่งค้นให้แล้ว';
+    const isPrResult = Boolean(promptBundle?.prMode);
+    heading.textContent = budgetSourceRuntime
+      ? 'GovPrompt ดำเนินงานร่างงบประมาณให้แล้ว'
+      : isPrResult
+        ? 'คำสั่งประชาสัมพันธ์พร้อมแล้ว — ทำต่อใน AI ได้ทันที'
+        : 'GovPrompt เตรียมคำสั่งพร้อมใช้แล้ว';
     const workflowSummary = workflowRuntime?.primary?.currentStage?.title ? ` · Workflow: ${workflowRuntime.primary.currentStage.title} → ${workflowRuntime.primary.actionLabel}` : '';
+    const presentationSummary = promptBundle.presentationPreset ? ` · การนำเสนอ: ${promptBundle.presentationPreset.label}` : '';
     description.textContent = budgetSourceRuntime
-      ? `ระบบค้นและอ่านต้นฉบับราชการ ตรวจข้อมูล คำนวณ และเตรียม Working Draft พร้อมหลักฐาน${workflowSummary}`
-      : `ระบบจัดคำถามไปที่ ${route.assistant.title} พร้อมค้น Primary Source ตรวจความใหม่ และส่งแหล่งอ้างอิงเข้า Prompt สำหรับวิเคราะห์ต่อ${workflowSummary}`;
+      ? `ระบบค้นและอ่านต้นฉบับราชการ ตรวจข้อมูล คำนวณ และเตรียม Working Draft พร้อมหลักฐาน${workflowSummary}${presentationSummary}`
+      : isPrResult
+        ? `GP จัดคำสั่งเฉพาะงานประชาสัมพันธ์ให้แล้ว พร้อมตรวจข้อเท็จจริง PDPA และรูปแบบสื่อ${workflowSummary}${presentationSummary}`
+        : `ระบบจัดคำถาม ตรวจความเสี่ยง และเตรียม Prompt กำหนดวิธีค้นแหล่งราชการให้แล้ว — กดคัดลอกไปวางใน ChatGPT หรือ AI ที่คุณใช้${workflowSummary}${presentationSummary}`;
 
-    if (budgetSourceRuntime && structuredBudgetArtifact(budgetSourceRuntime)) status.textContent = '✅ ร่างงบประมาณผ่านการตรวจสมดุลและพร้อมส่งออกเป็น Working Draft';
+    const v8Assessment = searchResult?.v8Assessment;
+    if (isPrResult) status.textContent = '✅ พร้อมทำสื่อประชาสัมพันธ์ — ไม่ดึงกฎงานอื่นมาปน';
+    else if (v8Assessment?.decisionLock === 'ON') status.textContent = `🔒 Decision Lock ON — ${v8Assessment.reasons?.[0] || 'ต้องตรวจหลักฐาน/เงื่อนไขเพิ่มก่อนฟันธง'}`;
+    else if (budgetSourceRuntime && structuredBudgetArtifact(budgetSourceRuntime)) status.textContent = '✅ ร่างงบประมาณผ่านการตรวจสมดุลและพร้อมส่งออกเป็น Working Draft';
     else if (searchResult?.mode === 'live' && searchResult?.evidence?.conclusionEligible) status.textContent = '✅ ค้นสดและยืนยันหลักฐานปัจจุบันได้ตาม metadata ที่มี';
     else if (searchResult?.mode === 'live') status.textContent = `⚠️ ค้นสดแล้ว แต่ ${searchResult.warning || 'ยังยืนยันฉบับปัจจุบันล่าสุดไม่ได้'}`;
+    else if (searchResult?.mode === 'delegated-user-ai') status.textContent = '✅ พร้อมส่งต่อ — ให้ AI ของผู้ใช้ค้นเว็บสดและตรวจแหล่งราชการเองตาม Prompt';
     else status.textContent = `ℹ️ ${searchResult?.warning || 'ยังเชื่อมบริการค้นเว็บราชการสดไม่ได้'}`;
-    if (promptBundle.gp223) {
-      heading.textContent = 'คำสั่ง GP223 พร้อมแล้ว';
-      description.textContent = 'วิเคราะห์และเตรียมร่างจากข้อมูลที่มี พร้อมแยกประเด็นที่ยังต้องยืนยัน';
-      status.textContent = 'ใช้ข้อมูลที่มี · ไม่ค้นเว็บอัตโนมัติ · ร่างต่อได้แม้บางประเด็นยัง UNVERIFIED';
-    }
 
     openChatGPT.type = 'button'; openChatGPT.textContent = 'เปิดใน ChatGPT';
     openChatGPT.addEventListener('click', async () => {
@@ -361,15 +626,15 @@
       const copied = await copyText(external.safeText);
       if (!copied) { window.GovPrompt?.toast('ไม่สามารถคัดลอกได้ กรุณาลองใหม่'); return; }
       window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
-      window.GovPrompt?.toast(external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว และคัดลอก Prompt สำหรับ ChatGPT แล้ว' : 'คัดลอก Prompt พร้อมแหล่งค้นแล้ว — วางใน ChatGPT ได้เลย');
+      window.GovPrompt?.toast(external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว และคัดลอก Prompt สำหรับ ChatGPT แล้ว' : 'คัดลอก Prompt แล้ว — ให้ ChatGPT ค้นสดตามคำสั่งได้เลย');
     });
 
-    copyButton.type = 'button'; copyButton.textContent = 'คัดลอก Prompt';
+    copyButton.type = 'button'; copyButton.textContent = promptBundle.gp223 ? 'คัดลอกคำสั่ง' : 'คัดลอกไปใช้กับ AI';
     copyButton.addEventListener('click', async () => {
       const external = prepareExternalPrompt(promptBundle.prompt);
       if (external.blocked) { window.GovPrompt?.toast('🔒 หยุดคัดลอก: Prompt ยังมีข้อมูลเสี่ยง กรุณาปกปิดข้อมูลก่อน'); return; }
       const copied = await copyText(external.safeText);
-      window.GovPrompt?.toast(copied ? (external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงก่อนคัดลอกแล้ว' : 'คัดลอก Prompt พร้อมแหล่งค้นแล้ว') : 'ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
+      window.GovPrompt?.toast(copied ? (external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงก่อนคัดลอกแล้ว' : 'คัดลอก Prompt พร้อมคำสั่งค้นสดแล้ว') : 'ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
     });
 
     specialistLink.href = route.assistant.path; specialistLink.textContent = `เปิดแบบฟอร์ม ${route.moduleId}`;
@@ -377,7 +642,7 @@
     if (!promptBundle.gp223) actions.append(specialistLink);
     appendBudgetResult(section, actions, budgetSourceRuntime);
     if (!promptBundle.gp223) appendSearchDetails(section, searchResult);
-    summary.textContent = 'ดู Prompt ที่ GovPrompt จัดให้'; preview.textContent = promptBundle.prompt; preview.style.whiteSpace = 'pre-wrap'; preview.style.overflowWrap = 'anywhere'; details.append(summary, preview);
+    summary.textContent = 'ดู Prompt ที่ GovPrompt เตรียมไว้'; preview.textContent = promptBundle.prompt; preview.style.whiteSpace = 'pre-wrap'; preview.style.overflowWrap = 'anywhere'; details.append(summary, preview);
     section.prepend(heading, description, status, actions); section.append(details);
     card.append(section); content.append(label, card); article.append(mark, content); conversation.appendChild(article);
   }
@@ -388,40 +653,43 @@
   }
 
   function clearAttachments() {
-    attachments = []; attachmentStatus.textContent = ''; attachmentInput.value = ''; cameraInput.value = '';
+    attachments = []; if (attachmentStatus) attachmentStatus.textContent = ''; if (attachmentInput) attachmentInput.value = ''; if (cameraInput) cameraInput.value = '';
   }
 
   async function submitPrompt(text) {
     const intake = window.GovPromptCore.prepareGP223IntakeTurn({ text, state: gp223IntakeState, attachments });
     gp223IntakeState = intake.state;
+    window.GovPromptCore.gp223IntakeState = intake.state;
+    enterResultPage();
+    document.documentElement.classList.remove('result-intake');
+    document.querySelector('.result-page-header strong').textContent = 'กำลังเตรียมงาน';
     document.querySelector('.chat-main').classList.add('has-messages');
-    addUserMessage(text);
-    if (intake.intakeQuestion) {
-      const article = document.createElement('article');
-      article.className = 'message assistant';
-      const body = document.createElement('div'); body.className = 'message-body'; body.textContent = intake.intakeQuestion;
-      article.append(body); conversation.appendChild(article);
-      input.focus(); article.scrollIntoView({ behavior: 'smooth', block: 'end' }); return;
-    }
-    addThinking(intake.workflowId === 'GP223');
+    addUserMessage(text); addThinking();
     conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
     let prepared;
     try { prepared = await preparePrompt(intake.question, intake.workflowId, intake.caseFacts); }
     catch {
       document.getElementById('thinkingMessage')?.remove();
       window.GovPrompt?.toast('ระบบวิเคราะห์หรือค้นข้อมูลยังไม่พร้อม กรุณาลองใหม่อีกครั้ง');
+      document.documentElement.classList.add('result-intake');
+      document.querySelector('.result-page-header strong').textContent = 'กรุณาลองส่งอีกครั้ง';
       input.value = text; resizeInput(); input.focus(); return;
     }
     await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 250));
     document.getElementById('thinkingMessage')?.remove();
     addRouteResult(prepared); saveHistory(text, prepared.route); clearAttachments();
-    conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    if (prepared.promptBundle.gp223) document.documentElement.classList.add('result-intake');
+    document.querySelector('.result-page-header strong').textContent = 'ผลลัพธ์พร้อมใช้งาน';
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }
 
   form.addEventListener('submit', event => {
     event.preventDefault();
-    const text = input.value.trim();
-    if (!text) return;
+    const text = input.value.trim();    if (!text) return;
+    if (resultRoute) {
+      document.documentElement.classList.remove('result-intake');
+      conversation.querySelectorAll('.guided-intake-message').forEach(message => message.remove());
+    }
     input.value = ''; resizeInput(); submitPrompt(text);
   });
 
@@ -447,16 +715,17 @@
   function collectFiles(fileList) {
     const incoming = Array.from(fileList || []);
     attachments = [...attachments, ...incoming].slice(0, 5);
-    attachmentStatus.textContent = attachments.length ? `แนบแล้ว ${attachments.length} ไฟล์ · งานงบประมาณจะอ่านไฟล์ที่รองรับภายในเบราว์เซอร์โดยไม่ส่งไฟล์ดิบออก` : '';
+    if (attachmentStatus) attachmentStatus.textContent = attachments.length ? `แนบแล้ว ${attachments.length} ไฟล์ · พิมพ์ “สรุป” เพื่อสรุปใช้ปฏิบัติงาน` : '';
     if (incoming.length) window.GovPrompt?.toast('🔐 ไฟล์ยังอยู่ในเบราว์เซอร์ ระบบคำนวณ hash และอ่านเฉพาะข้อมูลโครงสร้างที่จำเป็น');
   }
-  attachmentInput.addEventListener('change', () => collectFiles(attachmentInput.files));
-  cameraInput.addEventListener('change', () => collectFiles(cameraInput.files));
+  if (attachmentInput) attachmentInput.addEventListener('change', () => collectFiles(attachmentInput.files));
+  if (cameraInput) cameraInput.addEventListener('change', () => collectFiles(cameraInput.files));
 
-  document.getElementById('micButton').addEventListener('click', () => {
+  const micButton = document.getElementById('micButton');
+  if (micButton) micButton.addEventListener('click', () => {
     const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!Recognition) { window.GovPrompt?.toast('เบราว์เซอร์นี้ยังไม่รองรับการพิมพ์ด้วยเสียง'); return; }
-    const recognition = new Recognition(); const button = document.getElementById('micButton');
+    const recognition = new Recognition(); const button = micButton;
     recognition.lang = 'th-TH'; recognition.interimResults = false;
     recognition.onstart = () => button.classList.add('listening');
     recognition.onresult = event => { input.value += `${input.value ? ' ' : ''}${event.results[0][0].transcript.trim()}`; resizeInput(); };
@@ -476,7 +745,7 @@
   const panels = {
     history: ['ประวัติ', 'บทสนทนาล่าสุด', historyPanel],
     knowledge: ['คลังความรู้', 'Knowledge Engine', () => '<div class="empty-panel"><strong>คลังความรู้แบบ Metadata + Index</strong><p>GovPrompt จะใช้คลังเบาเป็นตัวชี้ไปยังต้นฉบับราชการ และตรวจความใหม่ก่อนนำข้อมูลมาใช้</p></div>'],
-    profile: ['โปรไฟล์', 'บริบทการทำงาน', () => '<div class="empty-panel"><strong>บริบทส่วนตัวจะมาในรุ่นถัดไป</strong><p>ขณะนี้ระบบไม่ส่งหรือจัดเก็บข้อมูลโปรไฟล์จากหน้านี้</p></div>'],
+    profile: ['โปรไฟล์', 'บริบทการทำงาน', () => '<div class="empty-panel"><strong>พื้นที่องค์กรนำร่อง</strong><p>หน้า Home ไม่ส่งหรือจัดเก็บข้อมูลโปรไฟล์ ส่วนงานองค์กรใช้บัญชีและสิทธิ์แยกตามหน่วยงาน</p></div><div class="tool-list"><a href="https://sayampreecha-ux.github.io/govprompt-thailand-v6/pilot/"><strong>Workspace องค์กร</strong><small>ติดตามโครงการ · ศูนย์สั่งการ · งานย่อย · งานอัตโนมัติ · บัญชีองค์กรเท่านั้น</small></a></div>'],
     tools: ['เครื่องมือ', 'ADVANCED USERS', toolsPanel]
   };
 
@@ -495,6 +764,37 @@
   window.GovPrompt.on('shell:panel', openPanel);
   document.getElementById('newChat').addEventListener('click', () => {
     gp223IntakeState = null;
+    window.GovPromptCore.gp223IntakeState = null;
+    if (resultRoute) { window.location.assign('index.html'); return; }
     conversation.replaceChildren(); clearAttachments(); document.querySelector('.chat-main').classList.remove('has-messages'); input.focus();
   });
+
+  if (resultRoute) {
+    enterResultPage();
+    document.documentElement.classList.add('result-intake');
+    document.querySelector('.chat-main').classList.add('has-messages');
+    installResultHeader();
+    let pendingPrompt = '';
+    let forceGuidedIntake = false;
+    try {
+      pendingPrompt = sessionStorage.getItem(resultPromptKey) || '';
+      forceGuidedIntake = sessionStorage.getItem(resultForceIntakeKey) === 'true';
+      sessionStorage.removeItem(resultPromptKey);
+      sessionStorage.removeItem(resultForceIntakeKey);
+    } catch {}
+    if (pendingPrompt) {
+      if (forceGuidedIntake) form.dataset.forceGuidedIntake = 'true';
+      input.value = pendingPrompt;
+      input.placeholder = 'พิมพ์ข้อมูลเพิ่มเติมที่จำเป็น...';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      form.requestSubmit();
+    }
+    else {
+      document.documentElement.classList.remove('result-intake');
+      const empty = document.createElement('div');
+      empty.className = 'result-empty';
+      empty.innerHTML = '<strong>ยังไม่ได้เลือกงาน</strong><p>กลับไปเลือกผู้ช่วยที่ต้องการ แล้วระบบจะเปิดผลลัพธ์ในหน้านี้</p><a href="index.html">กลับหน้าเลือกงาน</a>';
+      conversation.append(empty);
+    }
+  }
 })();

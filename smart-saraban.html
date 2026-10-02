@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GP Smart Saraban — GP-SB001</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Noto Sans Thai",sans-serif;color:#172033;background:#f4f7fb}body{margin:0}.wrap{max-width:980px;margin:32px auto;padding:0 16px}.hero,.panel{background:#fff;border:1px solid #dce4ef;border-radius:18px;padding:24px;box-shadow:0 8px 24px #1720330d}.hero{margin-bottom:16px}h1{margin:0 0 8px;font-size:clamp(24px,4vw,38px)}.muted{color:#5d6b82}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.field{display:flex;flex-direction:column;gap:6px}.wide{grid-column:1/-1}label{font-weight:700}input,textarea{font:inherit;border:1px solid #c9d5e5;border-radius:10px;padding:11px;background:#fbfdff}textarea{min-height:105px;resize:vertical}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}button{border:0;border-radius:999px;padding:11px 18px;font:inherit;font-weight:700;cursor:pointer;background:#1f5eff;color:#fff}button.secondary{background:#e9eef7;color:#172033}pre{white-space:pre-wrap;word-break:break-word;background:#101827;color:#edf3ff;border-radius:12px;padding:16px;overflow:auto}.result{margin-top:18px}.status{font-weight:800}.status.red{color:#b42318}.status.yellow{color:#9a6700}.checks{display:grid;gap:8px;margin-top:10px}.check{padding:10px 12px;background:#f6f8fc;border-radius:10px}.notice{padding:12px 14px;background:#fff8e6;border:1px solid #f3d58b;border-radius:12px;margin-top:16px}@media(max-width:680px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<section class="hero"><div class="muted">Government AI Copilot · GP Smart Saraban</div><h1>ร่างบันทึกข้อความราชการ</h1><p class="muted">GP-SB001 · แบบร่างช่วยงาน ไม่ใช่การอนุมัติหรือลงนามแทนผู้มีอำนาจ</p></section>
+<section class="panel">
+<div class="grid">
+<div class="field"><label for="unit">หน่วยงานเจ้าของเรื่อง</label><input id="unit" placeholder="เช่น สำนักปลัดฯ"></div>
+<div class="field"><label for="subject">เรื่อง</label><input id="subject" placeholder="ระบุหัวข้อบันทึก"></div>
+<div class="field"><label for="recipient">เรียน</label><input id="recipient" placeholder="ผู้รับ/ผู้มีอำนาจ"></div>
+<div class="field"><label for="purpose">วัตถุประสงค์</label><input id="purpose" placeholder="ต้องการเสนอหรือขออะไร"></div>
+<div class="field wide"><label for="facts">ข้อเท็จจริง</label><textarea id="facts" placeholder="ใคร ทำอะไร เมื่อใด ที่ไหน มีเอกสารหรือหลักฐานใด"></textarea></div>
+<div class="field wide"><label for="proposal">ข้อเสนอ</label><textarea id="proposal" placeholder="ข้อเสนอเพื่อพิจารณา (ถ้ามี)"></textarea></div>
+</div>
+<div class="actions"><button id="inspect">ตรวจข้อมูล</button><button id="prompt" class="secondary">สร้างคำสั่งสำหรับ AI</button><button id="gate" class="secondary">ตรวจ Quality Gate</button><button id="clear" class="secondary">ล้างข้อมูล</button></div>
+<div class="notice">หลักความปลอดภัย: ระบบจะไม่เติมเลขที่หนังสือ วันเดือนปี ชื่อบุคคล หรือฐานอำนาจที่ผู้ใช้ไม่ได้ให้มา และเรื่องที่เกี่ยวกับอนุมัติ งบประมาณ จัดซื้อจัดจ้าง วินัย กฎหมาย หรือสิทธิ จะถูกทำเครื่องหมายให้ตรวจฐานอำนาจเพิ่มเติม</div>
+<div id="output" class="result" aria-live="polite"></div>
+</section></main>
+<script type="module">
+import {createSarabanContext,inspectSarabanInput,classifySarabanRisk,buildSarabanPrompt,runSarabanQualityGate} from './assets/js/features/smart-saraban.js';
+const $=id=>document.getElementById(id);
+const context=()=>createSarabanContext({owningUnit:$('unit').value,subject:$('subject').value,recipient:$('recipient').value,purpose:$('purpose').value,facts:$('facts').value,proposal:$('proposal').value});
+const show=(html)=>$('output').innerHTML=html;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+$('inspect').onclick=()=>{const c=context(),i=inspectSarabanInput(c),r=classifySarabanRisk(c);show(`<h2>ผลตรวจข้อมูล</h2><p class="status">สถานะ: ${esc(i.status)} · ร่างได้เบื้องต้น: ${i.canDraft?'ใช่':'ต้องเติมข้อเท็จจริง/วัตถุประสงค์'}</p><p>ข้อมูลที่ยังขาด: ${i.missingFields.length?esc(i.missingFields.join(', ')):'ไม่มี'}</p><p>ความเสี่ยง: ${esc(r.level)} · ตรวจฐานอำนาจ: ${r.authorityCheckRequired?'จำเป็น':'พิจารณาตามเนื้อหา'}</p>`)};
+$('prompt').onclick=()=>{const c=context();show(`<h2>คำสั่งสำหรับ AI</h2><pre>${esc(buildSarabanPrompt(c))}</pre>`)};
+$('gate').onclick=()=>{const c=context(),g=runSarabanQualityGate(c,'');show(`<h2>Quality Gate</h2><p class="status ${esc(g.status)}">สถานะ: ${esc(g.status)} · Human Review: จำเป็น · Decision Lock: ${g.decisionLock?'เปิด':'ปิด'}</p><div class="checks">${g.checks.map(x=>`<div class="check"><b>${esc(x.id)} ${esc(x.name)}</b>: ${esc(x.status)}</div>`).join('')}</div><p class="muted">${esc(g.note)}</p>`)};
+$('clear').onclick=()=>{['unit','subject','recipient','purpose','facts','proposal'].forEach(id=>$(id).value='');show('');};
+</script>
+</body>
+</html>

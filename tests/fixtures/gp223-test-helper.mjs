@@ -3,12 +3,11 @@ import { readFile } from 'node:fs/promises';
 import vm from 'node:vm';
 
 export async function loadGP223Core() {
-  const sandbox = { window: {}, location: { pathname: '/index.html' } };
+  const sandbox = { window: {}, document: { addEventListener() {}, readyState: 'loading' }, location: { pathname: '/index.html' } };
   for (const name of ['shared-context', 'prompt-registry', 'transaction-router', 'tool-routing-policy',
-    'gp223-natural-person-service', 'output-router', 'agent-governance-policy', 'prompt-orchestrator']) {
+    'output-router', 'agent-governance-policy', 'prompt-orchestrator', 'gp223-natural-person-service']) {
     vm.runInNewContext(await readFile(`assets/js/core/${name}.js`, 'utf8'), sandbox, { filename: name });
   }
-  vm.runInNewContext(await readFile('assets/js/ui/quick-action-guided-bridge-v1.js', 'utf8'), sandbox);
   return sandbox.window.GovPromptCore;
 }
 

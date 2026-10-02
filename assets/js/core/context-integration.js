@@ -48,6 +48,39 @@
     return currentRoute;
   }
 
+  function appendScript(id, src) {
+    if (document.getElementById(id)) return;
+    const script = document.createElement('script');
+    script.id = id;
+    script.src = src;
+    script.defer = true;
+    document.head?.appendChild(script);
+  }
+
+  function isPublicHealthPage(moduleId) {
+    if (moduleId === 'GP008') return true;
+    const path = typeof location === 'object' ? String(location.pathname || '') : '';
+    const explicit = typeof document === 'object' ? String(document.documentElement?.dataset?.moduleId || '') : '';
+    return /(?:^|\/)gp0*8(?:\.html)?(?:$|\/)/i.test(path) || /^GP008$/i.test(explicit);
+  }
+
+  function loadModuleFeature(moduleId) {
+    if (!isPublicHealthPage(moduleId) || typeof document !== 'object' || !document.createElement) return;
+    if (!window.GovPromptMosquitoOnepage) {
+      appendScript('mosquitoOnepageFeatureScript', 'assets/js/features/mosquito-survey-onepage-v1.js?v=1.0.1');
+    }
+    appendScript('mosquitoPublicHealthPlacementScript', 'assets/js/features/mosquito-public-health-placement-v1.js?v=1.0.2');
+    if (!window.GovPromptPublicHealthToolkit) {
+      appendScript('publicHealthWorkerToolkitScript', 'assets/js/features/public-health-worker-toolkit-v1.js?v=1.0.3');
+    }
+  }
+
+  function loadProcurementFeature() {
+    if (typeof document !== 'object' || !document.createElement) return;
+    appendScript('serviceContractRoutingOverridesScript', 'assets/js/core/service-contract-routing-overrides.js?v=1.0.0');
+    appendScript('universalTorEngineScript', 'assets/js/core/universal-tor-engine-v1.js?v=1.0.0');
+  }
+
   window.GovPromptCore.FIELD_MAP = FIELD_MAP;
   window.GovPromptCore.collectAssistantContext = collectAssistantContext;
   window.GovPromptCore.refreshAssistantContext = refreshAssistantContext;
@@ -55,7 +88,16 @@
   window.GovPromptCore.getCurrentRoute = getCurrentRoute;
 
   if (typeof document === 'object') {
-    refreshAssistantContext();
-    document.getElementById('make')?.addEventListener('click', () => refreshAssistantContext(), true);
+    const pageModuleId = window.GovPromptCore.detectModuleId();
+    loadModuleFeature(pageModuleId);
+    loadProcurementFeature();
+    try {
+      refreshAssistantContext();
+    } catch (error) {
+      console.warn('GovPrompt context refresh skipped during page bootstrap:', error);
+    }
+    document.getElementById('make')?.addEventListener('click', () => {
+      try { refreshAssistantContext(); } catch (error) { console.warn('GovPrompt context refresh failed:', error); }
+    }, true);
   }
 })();

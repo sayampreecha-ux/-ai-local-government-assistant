@@ -3,19 +3,8 @@
   "name": "ai-local-government-assistant",
   "main": "src/search-worker-v2.js",
   "compatibility_date": "2026-08-10",
-  "assets": {
-    "directory": "./dist",
-    "binding": "ASSETS",
-    "html_handling": "none",
-    "not_found_handling": "404-page"
-  },
-  "secrets": {
-    "required": [
-      "TAVILY_API_KEY",
-      "ACCESS_CODE_SECRET",
-      "ACCESS_ADMIN_PASSWORD_HASH",
-      "ACCESS_ADMIN_SESSION_SECRET"
-    ]
+  "ai": {
+    "binding": "AI"
   },
   "observability": {
     "enabled": true,

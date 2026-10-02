@@ -111,5 +111,7 @@ assert.match(formatted, /attached-files/);
 assert.match(formatted, /web-search/);
 assert.match(formatted, /Answer First/);
 assert.match(formatted, /ห้ามอ้างว่าได้ค้นหรือเปิดข้อมูลแล้ว/);
+assert.match(formatted, /บัญชีหรือแพลตฟอร์มของผู้ใช้เอง/);
+assert.match(formatted, /เครื่องมือค้นเว็บของ AI ฝั่งผู้ใช้เป็นค่าเริ่มต้น/);
 
 console.log(`GovPrompt v7 Tool Routing Policy verification passed: ${cases.length} routing cases + source-first, natural-language, no-web and Thai primary-source regressions.`);

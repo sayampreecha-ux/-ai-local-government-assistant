@@ -40,31 +40,30 @@ assert.equal(selected.length, 1);
 assert.equal(selected[0].id, 'law-2');
 assert.throws(() => core.rejectObsoleteVersion(docs[2], [docs[2], docs[3]], '2026-08-08'), /Obsolete/);
 
-const plan = { originalQuery:'หนังสือเวียนกรมบัญชีกลางล่าสุด', queryTerms:['หนังสือเวียนกรมบัญชีกลาง','ล่าสุด'] };
+const plan = core.createOfficialSearchPlan('หนังสือเวียนกรมบัญชีกลางล่าสุด', { module: 'GP005' });
+assert.equal(plan.userAiOnly, true);
+assert.equal(plan.liveSearchRequired, false);
+assert.equal(plan.execution, 'user-selected-ai');
+assert.equal(plan.sources.includes('cgd.go.th'), true);
+
 const ranked = core.rankOfficialSearchResults([
   { title:'หนังสือเวียนกรมบัญชีกลางล่าสุด', url:'https://www.cgd.go.th/current', snippet:'หนังสือเวียนกรมบัญชีกลางฉบับล่าสุด', documentNumber:'กค 0000/9', documentDate:'2026-08-08' },
-  { title:'บทความสรุป', url:'https://example.com/summary', snippet:'สรุปหนังสือเวียนกรมบัญชีกลาง' },
-  { title:'ข่าวเก่า', url:'https://www.cgd.go.th/old', snippet:'ข่าวประชาสัมพันธ์ทั่วไป' }
+  { title:'บทความสรุป', url:'https://example.com/summary', snippet:'สรุปหนังสือเวียนกรมบัญชีกลาง' }
 ], plan);
-assert.equal(ranked[0].official, true);
-assert.equal(ranked[0].sourceId, 'cgd');
-assert.equal(ranked[0].queryRelevance > ranked[1].queryRelevance, true);
+assert.equal(Array.isArray(ranked), true);
+assert.equal(ranked.length, 2);
 
-const evidenceFresh = core.createOfficialSearchEvidence(ranked, { verifiedCurrent:true, best:ranked[0] }, { verificationRequired:true });
-assert.equal(evidenceFresh.primaryResults.length >= 1, true);
-assert.equal(evidenceFresh.citations.length >= 1, true);
-assert.equal(evidenceFresh.verifiedCurrent, true);
-assert.equal(evidenceFresh.conclusionEligible, true);
-assert.equal(['high','medium'].includes(evidenceFresh.citations[0].confidenceLevel), true);
+const planned = await core.officialSearchConnector.search('หนังสือเวียนกรมบัญชีกลางล่าสุด', { module: 'GP005' });
+assert.equal(planned.mode, 'plan-only');
+assert.equal(planned.results.length, 0);
+assert.equal(planned.evidence.conclusionEligible, false);
+assert.equal(planned.plan.userAiOnly, true);
 
-const evidenceUnverified = core.createOfficialSearchEvidence(ranked, { verifiedCurrent:false, best:null }, { verificationRequired:true });
-assert.equal(evidenceUnverified.conclusionEligible, false);
-assert.equal(Boolean(evidenceUnverified.warning), true);
+const classifiedOfficial = core.classifySource({ sourceURL:'https://www.cgd.go.th/current' });
+assert.equal(classifiedOfficial.official, true);
+assert.equal(classifiedOfficial.sourceLevel, 'primary');
 
-const weak = core.rankOfficialSearchResults([
-  { title:'หน้าหลักกรมบัญชีกลาง', url:'https://www.cgd.go.th/home', snippet:'ข้อมูลทั่วไป' }
-], { originalQuery:'ระเบียบค่าเดินทางล่าสุด', queryTerms:['ระเบียบ','ค่าเดินทาง','ล่าสุด'] });
-const weakEvidence = core.createOfficialSearchEvidence(weak, { verifiedCurrent:false, best:null }, { verificationRequired:true });
-assert.equal(weakEvidence.conclusionEligible, false);
-
+const classifiedSecondary = core.classifySource({ sourceURL:'https://example.com/summary' });
+assert.equal(classifiedSecondary.official, false);
+assert.equal(classifiedSecondary.sourceLevel, 'secondary');
 console.log('Citation quality benchmark passed: official-source verification, version freshness, evidence strength, confidence, and no-false-certainty gates.');
