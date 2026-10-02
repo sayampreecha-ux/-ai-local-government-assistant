@@ -149,7 +149,7 @@
     });
   }
 
-  function createGovernmentPrompt({ question, route, context, attachments = [] } = {}) {
+  function createGovernmentPrompt({ question, route, context, attachments = [], workflowId } = {}) {
     const userQuestion = normalizeText(question);
     if (!userQuestion) throw new TypeError('question must be a non-empty string');
 
@@ -158,7 +158,11 @@
     const attachmentNames = (Array.isArray(attachments) ? attachments : []).map(item => normalizeText(item?.name || item)).filter(Boolean);
     const riskFlags = detectRiskFlags([userQuestion, ...attachmentNames].join(' '));
     const relatedModules = Array.isArray(activeRoute.modules) && activeRoute.modules.length ? activeRoute.modules.join(', ') : activeRoute.moduleId;
-    const taskPlan = planUniversalTask(userQuestion, normalizedContext);
+    const gp223 = window.GovPromptCore.isGP223Request?.({ question: userQuestion, workflowId, context: normalizedContext })
+      ? window.GovPromptCore.createGP223WorkflowPlan?.({ question: userQuestion, attachments, context: normalizedContext }) : null;
+    const universalPlan = planUniversalTask(userQuestion, normalizedContext);
+    const taskPlan = gp223 ? Object.freeze({ ...universalPlan, riskLevel: 'HIGH', evidenceMode: 'verify-provided-authority-evidence',
+      qualityGates: buildQualityGates(userQuestion, 'HIGH') }) : universalPlan;
     const gates = taskPlan.qualityGates;
     const outputPlan = typeof window.GovPromptCore.routeOutput === 'function'
       ? window.GovPromptCore.routeOutput(userQuestion, activeRoute, normalizedContext)
@@ -236,7 +240,9 @@
       '5. แยกข้อเท็จจริง สิ่งที่ยืนยันแล้ว ข้อวิเคราะห์ ความเสี่ยง และสิ่งที่ยังต้องตรวจให้ชัดเมื่อมีผลต่อการตัดสินใจ',
       '6. ห้ามสมมติเลขมาตรา เลขหนังสือ วันที่ คำพิพากษา ชื่อบุคคล URL อัตราเงิน หรือสถานะกฎหมาย',
       '7. สำหรับกฎ ระเบียบ หนังสือสั่งการ หนังสือหารือ หนังสือซักซ้อม แนววินิจฉัย อัตรา สิทธิ และคำพิพากษา ให้ตรวจฉบับปัจจุบันล่าสุดก่อนฟันธง',
-      '8. ค้นเอกสารที่เกี่ยวข้อง เรียงตามวันที่ ตรวจฉบับแก้ไข/ยกเลิก/ฉบับใหม่กว่า แล้วเลือกต้นฉบับที่ยังมีผลและใหม่ที่สุด',
+      gp223
+        ? '8. ตรวจเอกสารที่มี เรียงตามวันที่ ตรวจฉบับแก้ไข/ยกเลิก/แทนที่จาก evidence ที่มี หากไม่มีต้นฉบับให้ UNVERIFIED เฉพาะประเด็นและทำ Draft ต่อ ไม่บังคับค้นสด'
+        : '8. ค้นเอกสารที่เกี่ยวข้อง เรียงตามวันที่ ตรวจฉบับแก้ไข/ยกเลิก/ฉบับใหม่กว่า แล้วเลือกต้นฉบับที่ยังมีผลและใหม่ที่สุด',
       '9. ยึดแหล่งปฐมภูมิทางราชการก่อน เช่น ราชกิจจานุเบกษา กฤษฎีกา กรมบัญชีกลาง กระทรวงมหาดไทย สถ. สำนักงบประมาณ ศาล ป.ป.ช. ป.ป.ท. และ สตง.',
       '10. บทความ อินโฟกราฟิก Facebook หรือเว็บไซต์สรุป ใช้เป็นเบาะแสในการค้นเท่านั้น ห้ามใช้ฟันธงโดยไม่มีต้นฉบับรองรับ',
       '11. ถ้ายังยืนยันความเป็นฉบับล่าสุดไม่ได้ ให้ระบุชัดว่า “ยังไม่ยืนยันว่าเป็นข้อมูลปัจจุบันล่าสุด — ยังไม่ควรฟันธง”',
@@ -253,10 +259,16 @@
       '- ใช้ภาษาไทยชัดเจน กระชับ และเหมาะกับการปฏิบัติราชการ',
       '- อ้างแหล่งที่มาต่อข้อความสำคัญเมื่อสามารถตรวจสอบต้นฉบับได้',
       '- แยกสิ่งที่ยืนยันแล้วออกจากข้อวิเคราะห์หรือสิ่งที่ยังต้องตรวจสอบ',
-      '- AI ช่วยค้น ช่วยคิด ช่วยร่าง แต่ผู้ใช้เป็นผู้ตรวจสอบและตัดสินใจก่อนนำไปใช้จริง'
+      '- AI ช่วยค้น ช่วยคิด ช่วยร่าง แต่ผู้ใช้เป็นผู้ตรวจสอบและตัดสินใจก่อนนำไปใช้จริง',
+      ...(gp223 ? [
+        '', 'ข้อมูล GP223 จากการสนทนาที่มี', normalizedContext.facts || userQuestion,
+        '', 'แนวทางเลือกเครื่องมือ', window.GovPromptCore.formatToolRoutingInstructions(
+          window.GovPromptCore.createToolRoutingPlan({ question: userQuestion, attachments, workflowId: 'GP223' })),
+        '', window.GovPromptCore.buildGP223PromptBlock(gp223)
+      ] : [])
     ].join('\n');
 
-    return Object.freeze({ prompt, riskFlags, route: activeRoute, taskPlan, outputPlan, governancePlan, qualityGates: gates, context: normalizedContext, attachmentNames: Object.freeze(attachmentNames) });
+    return Object.freeze({ prompt, riskFlags, route: activeRoute, taskPlan, outputPlan, governancePlan, qualityGates: gates, context: normalizedContext, attachmentNames: Object.freeze(attachmentNames), ...(gp223 ? { gp223 } : {}) });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};

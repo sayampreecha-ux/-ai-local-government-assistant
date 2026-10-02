@@ -170,8 +170,47 @@
     return Object.freeze(guidance);
   }
 
-  function createToolRoutingPlan({ question, attachments = [] } = {}) {
+  // Explicit workflow scope wins; shared routing outside GP223 stays unchanged.
+  function isGP223Request({ question, workflowId, context = {} } = {}) {
+    if (workflowId) return String(workflowId).toUpperCase() === 'GP223';
+    if (context.specialFlags?.includes('GP223')) return true;
     const text = normalize(question);
+    if (/\bgp223\b/i.test(text)) return true;
+    if (/(?:บริษัท|นิติบุคคล|จ้างก่อสร้าง|ผู้รับเหมาก่อสร้าง|จ้างเหมาถนน|จ้างเหมาสะพาน)/.test(text)) return false;
+    return /จ้างเหมา(?:บริการ)?|จ้างบริการบุคคลธรรมดา|ผู้รับจ้าง.{0,50}(?:เดินทาง|ไปประชุม|ไปอบรม|ฝึกอบรม)|(?:tor|ทีโออาร์|ขอบเขตของงาน).{0,60}ว\s*877/i.test(text);
+  }
+
+  function requestsGP223DestinationSearch(question) {
+    const text = normalize(question);
+    if (explicitlyDisablesWeb(text) || /(?:ไม่|ห้าม|งด)(?:ต้อง)?\s*(?:ค้น|ตรวจสด)|อย่าค้น/.test(text)) return false;
+    if (/ค้น(?:หา)?\s*(?:ใน|จาก|เฉพาะ|คำใน).{0,15}(?:เอกสาร|ไฟล์|drive|ไดรฟ์)|ค้นคำ/.test(text)) return false;
+    return /ตรวจสด|ค้นล่าสุด|(?:^|\s)(?:ช่วย|ขอ|กรุณา)?\s*ค้น(?:เว็บ|ข้อมูล|หา|\s|$)|(?:แล้ว|พร้อม|และ|ให้)\s*ค้น(?:เว็บ|ข้อมูล|ล่าสุด)/.test(text);
+  }
+
+  function createToolRoutingPlan({ question, attachments = [], workflowId, context } = {}) {
+    const text = normalize(question);
+    if (isGP223Request({ question, workflowId, context })) {
+      const files = Array.isArray(attachments) ? attachments.filter(Boolean) : [];
+      const destinationSearchRequested = requestsGP223DestinationSearch(question);
+      return Object.freeze({
+        mode: 'ai-only', workflowId: 'GP223',
+        tools: Object.freeze(['ai-reasoning']),
+        instructions: Object.freeze([
+          'GP223: ใช้ AI reasoning + ข้อมูลที่ผู้ใช้พิมพ์ + เอกสารที่ผู้ใช้แนบ + context ที่มี อ่านเอกสารก่อนและห้ามถามซ้ำ',
+          'GovPrompt ห้ามเรียก Web Search / crawler / browser retrieval / Tavily / Search API / search backend อัตโนมัติ',
+          'Official Authority Evidence Gate: ตรวจ evidence ที่มี ไม่บังคับค้นสด; หากหลักฐานไม่พอให้ UNVERIFIED หรือ CONDITIONAL เฉพาะประเด็น',
+          'Draft / Analyze / Checklist ทำต่อทันที; Decision Lock เฉพาะข้อสรุปที่ยังยืนยันไม่ได้ ห้าม block งานทั้งหมด',
+          destinationSearchRequested
+            ? 'ผู้ใช้สั่งค้น/ตรวจสด: ให้ AI ปลายทางใช้ความสามารถค้นเว็บของแพลตฟอร์มเองตามคำสั่งนี้ GovPrompt ไม่เรียกค้นแทน; หากค้นไม่ได้ให้ UNVERIFIED และทำส่วนอื่นต่อ'
+            : 'AI ปลายทางไม่ต้องค้นอัตโนมัติ; ความต้องการตรวจความใหม่ไม่ได้เท่ากับคำสั่งค้น ต้องมีคำสั่งค้น/ตรวจสดจากผู้ใช้ก่อน',
+          ...createQualityGuidance(text)
+        ]),
+        reasons: Object.freeze(['AI-only override จำกัดเฉพาะ GP223']),
+        flags: Object.freeze({ hasAttachments: files.length > 0, wantsGmail: false, wantsDriveFiles: false,
+          needsCurrentWeb: false, needsPrimarySource: true, externalVerificationRequested: false,
+          destinationSearchRequested, automaticLiveSearch: false, explicitNoWeb: !destinationSearchRequested })
+      });
+    }
     const files = Array.isArray(attachments) ? attachments.filter(Boolean) : [];
     const hasAttachments = files.length > 0;
     const wantsGmail = isUserDataLookup(text, GMAIL_SOURCE_TERMS);
@@ -268,6 +307,8 @@
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
+  window.GovPromptCore.isGP223Request = isGP223Request;
+  window.GovPromptCore.requestsGP223DestinationSearch = requestsGP223DestinationSearch;
   window.GovPromptCore.createPromptQualityGuidance = createQualityGuidance;
   window.GovPromptCore.createToolRoutingPlan = createToolRoutingPlan;
   window.GovPromptCore.formatToolRoutingInstructions = formatToolRoutingInstructions;
