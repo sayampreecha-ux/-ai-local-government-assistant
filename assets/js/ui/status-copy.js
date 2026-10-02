@@ -178,6 +178,8 @@
   }
 
   function buildHandoffPrompt(card) {
+    const gp223Prompt = window.GovPromptCore?.gp223HandoffPrompts?.get(card);
+    if (gp223Prompt) return gp223Prompt;
     const question = findQuestion(card) || '[คำถามของผู้ใช้]';
     const domain = findDomain(card);
     if (isPrCreationQuestion(question, domain)) return buildPrCreationHandoffPrompt(question);

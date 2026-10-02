@@ -143,6 +143,7 @@
     if (typeof originalCreatePlan === 'function') {
       core.createToolRoutingPlan = function createAuthorityAwareToolRoutingPlan(args = {}) {
         const base = originalCreatePlan(args);
+        if (base?.workflowId === 'GP223') return base;
         const policy = buildAuthorityPolicy(args.question || '');
         const workContract = buildWorkContract(args.question || '', policy);
         if (!policy.authorityDependent) {

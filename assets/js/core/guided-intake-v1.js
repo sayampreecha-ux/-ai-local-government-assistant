@@ -175,6 +175,14 @@
     const value = normalize(text);
     const activeRoute = route || routeFor(value) || {};
     const intent = inferIntent(value, activeRoute);
+    const gp223Turn = window.GovPromptCore?.prepareGP223IntakeTurn?.({ text: value, state: window.GovPromptCore.gp223IntakeState });
+    if (gp223Turn?.workflowId === 'GP223') {
+      const turn = gp223Turn;
+      const needsScope = Boolean(turn.intakeQuestion) || (options.force && !/ข้อมูลเพิ่มเติมจากผู้ใช้/.test(value));
+      return Object.freeze({ ready: !needsScope, intent: 'procurement', route: activeRoute,
+        missingFields: Object.freeze(needsScope ? ['contractWork'] : []),
+        questions: Object.freeze(needsScope ? ['จะจ้างเหมางานอะไร? บอกลักษณะงานสั้น ๆ ได้เลย'] : []) });
+    }
     if (!options.force && !shouldGuide(value)) return Object.freeze({ ready: true, intent, route: activeRoute, missingFields: Object.freeze([]), questions: Object.freeze([]) });
     const unknown = new Set((acknowledgedUnknown || []).map(String));
     const isIndividualContractorTor = intent === 'procurement' && /จ้างเหมาบริการบุคคลธรรมดา|จ้างเหมาบริการ.*บุคคลธรรมดา/i.test(value);

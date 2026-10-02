@@ -121,6 +121,7 @@
   const legacyHistoryKey = 'govprompt-v3-history';
   const history = [];
   let attachments = [];
+  let gp223IntakeState = null;
 
   try { localStorage.removeItem(legacyHistoryKey); } catch {}
 
@@ -338,9 +339,21 @@
     ].join('\\n');
     return Object.freeze({ ...promptBundle, prompt: promptBundle.prompt + block, serviceContractNaturalPerson: true });
   }
-  async function preparePrompt(text) {
+  async function preparePrompt(text, workflowId, caseFacts = text) {
     const core = requireCore();
     const safeAttachments = sanitizedAttachmentMetadata(core);
+    // GP223 must return before ANY shared retrieval or budget/workflow search path.
+    if (core.isGP223Request({ question: text, workflowId })) {
+      if (typeof core.createGP223WorkflowPlan !== 'function') throw new Error('GP223 workflow is unavailable');
+      const context = core.createSharedContext({ facts: caseFacts, desiredOutput: text,
+        documents: safeAttachments.map(file => file.name).join(', '), specialFlags: ['GP223'] });
+      const route = core.routeTransaction(context);
+      const promptBundle = core.createGovernmentPrompt({ question: text, route, context,
+        attachments: safeAttachments, workflowId: 'GP223' });
+      return Object.freeze({ route, promptBundle,
+        searchResult: Object.freeze({ mode: 'disabled-gp223', results: [], warning: 'GP223 ใช้ข้อมูลที่มี ไม่ค้นเว็บอัตโนมัติ' }),
+        workflowRuntime: null, workflowRuntimeStatus: 'gp223-ai-only', budgetSourceRuntime: null });
+    }
     const workflowRuntimePromise = prepareWorkflowRuntime(text);
     const context = core.createSharedContext({ facts: text, desiredOutput: text, documents: safeAttachments.map(file => file.name).join(', ') });
     const route = core.routeTransaction(context);
@@ -581,6 +594,7 @@
     const mark = document.createElement('span');
 
     article.className = 'message assistant'; content.className = 'assistant-content'; label.className = 'route-label'; card.className = 'answer-card'; section.className = 'answer-section'; actions.className = 'answer-actions'; mark.className = 'assistant-mark'; mark.setAttribute('aria-hidden', 'true'); mark.textContent = 'กพ';
+    if (promptBundle.gp223) window.GovPromptCore.gp223HandoffPrompts.set(card, promptBundle.prompt);
     label.textContent = `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
     const isPrResult = Boolean(promptBundle?.prMode);
     heading.textContent = budgetSourceRuntime
@@ -615,7 +629,7 @@
       window.GovPrompt?.toast(external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว และคัดลอก Prompt สำหรับ ChatGPT แล้ว' : 'คัดลอก Prompt แล้ว — ให้ ChatGPT ค้นสดตามคำสั่งได้เลย');
     });
 
-    copyButton.type = 'button'; copyButton.textContent = 'คัดลอกไปใช้กับ AI';
+    copyButton.type = 'button'; copyButton.textContent = promptBundle.gp223 ? 'คัดลอกคำสั่ง' : 'คัดลอกไปใช้กับ AI';
     copyButton.addEventListener('click', async () => {
       const external = prepareExternalPrompt(promptBundle.prompt);
       if (external.blocked) { window.GovPrompt?.toast('🔒 หยุดคัดลอก: Prompt ยังมีข้อมูลเสี่ยง กรุณาปกปิดข้อมูลก่อน'); return; }
@@ -624,9 +638,10 @@
     });
 
     specialistLink.href = route.assistant.path; specialistLink.textContent = `เปิดแบบฟอร์ม ${route.moduleId}`;
-    actions.append(openChatGPT, copyButton, specialistLink);
+    actions.append(openChatGPT, copyButton);
+    if (!promptBundle.gp223) actions.append(specialistLink);
     appendBudgetResult(section, actions, budgetSourceRuntime);
-    appendSearchDetails(section, searchResult);
+    if (!promptBundle.gp223) appendSearchDetails(section, searchResult);
     summary.textContent = 'ดู Prompt ที่ GovPrompt เตรียมไว้'; preview.textContent = promptBundle.prompt; preview.style.whiteSpace = 'pre-wrap'; preview.style.overflowWrap = 'anywhere'; details.append(summary, preview);
     section.prepend(heading, description, status, actions); section.append(details);
     card.append(section); content.append(label, card); article.append(mark, content); conversation.appendChild(article);
@@ -642,6 +657,9 @@
   }
 
   async function submitPrompt(text) {
+    const intake = window.GovPromptCore.prepareGP223IntakeTurn({ text, state: gp223IntakeState, attachments });
+    gp223IntakeState = intake.state;
+    window.GovPromptCore.gp223IntakeState = intake.state;
     enterResultPage();
     document.documentElement.classList.remove('result-intake');
     document.querySelector('.result-page-header strong').textContent = 'กำลังเตรียมงาน';
@@ -649,7 +667,7 @@
     addUserMessage(text); addThinking();
     conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
     let prepared;
-    try { prepared = await preparePrompt(text); }
+    try { prepared = await preparePrompt(intake.question, intake.workflowId, intake.caseFacts); }
     catch {
       document.getElementById('thinkingMessage')?.remove();
       window.GovPrompt?.toast('ระบบวิเคราะห์หรือค้นข้อมูลยังไม่พร้อม กรุณาลองใหม่อีกครั้ง');
@@ -660,6 +678,7 @@
     await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 250));
     document.getElementById('thinkingMessage')?.remove();
     addRouteResult(prepared); saveHistory(text, prepared.route); clearAttachments();
+    if (prepared.promptBundle.gp223) document.documentElement.classList.add('result-intake');
     document.querySelector('.result-page-header strong').textContent = 'ผลลัพธ์พร้อมใช้งาน';
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
@@ -744,6 +763,8 @@
 
   window.GovPrompt.on('shell:panel', openPanel);
   document.getElementById('newChat').addEventListener('click', () => {
+    gp223IntakeState = null;
+    window.GovPromptCore.gp223IntakeState = null;
     if (resultRoute) { window.location.assign('index.html'); return; }
     conversation.replaceChildren(); clearAttachments(); document.querySelector('.chat-main').classList.remove('has-messages'); input.focus();
   });
