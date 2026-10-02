@@ -114,6 +114,19 @@ assert.match(precedentBundle.prompt, /Query 4/);
 assert.match(precedentBundle.prompt, /🔎 หลักฐานยังไม่พอที่จะฟันธง/);
 assert.ok(precedentBundle.prompt.length < 16_500, `authority prompt is too long: ${precedentBundle.prompt.length}`);
 
+// Compact wording must preserve the incorporation checks, not just satisfy the size budget.
+const crossReferenceInstructions = core.buildCrossReferenceAuthorityInstructions().join('\n');
+for (const requirement of [
+  'Authority Chain: เอกสารต้นเรื่อง → ข้อ/วรรคที่อ้าง → กฎปลายทาง → เงื่อนไขและข้อจำกัด',
+  '(ก) กล่าวถึงประกอบความเข้าใจ', '(ข) นำมาใช้โดยตรง/โดยอนุโลม',
+  '(ค) กำหนดสิทธิ/ค่าใช้จ่ายเอง', '(ง) อ้างพร้อมเงื่อนไขเพิ่มเติม',
+  'การอ้างชื่อระเบียบไม่ยืนยันอำนาจหรือสิทธิเบิกจ่าย',
+  'ต้นฉบับของทั้งเอกสารต้นเรื่องและข้อกำหนดปลายทาง',
+  'แก้ไข ยกเลิก แทนที่ และบทเฉพาะกาล', 'Rule-to-Claim Mapping',
+  'ห้ามสร้างเลขข้อหรือถ้อยคำแทนต้นฉบับ',
+  'Decision Lock คง ON เฉพาะประเด็น', 'Human Review'
+]) assert.ok(crossReferenceInstructions.includes(requirement), `missing authority-chain safeguard: ${requirement}`);
+
 const explicitPrecedent = core.buildCasePrecedentGate('ค้นหนังสือหารือกรณีเทียบเคียงเรื่องนี้', { facts: 'ผู้ใช้ขอแนววินิจฉัยจากหน่วยงานเจ้าของเรื่อง' }, 'HIGH');
 assert.equal(explicitPrecedent.interpretation_issue, true);
 assert.equal(explicitPrecedent.decisionLock, 'ON');
