@@ -494,6 +494,21 @@
       return;
     }
 
+    if (normalize(button.dataset.prompt) === normalize('ทำรายงานการประชุม')) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (dialog?.open && dialog.contains(button)) dialog.close();
+      openResultPage([
+        'ทำรายงานการประชุม',
+        'เริ่มในช่องสนทนาหลักทันที ไม่เปิดแบบฟอร์มยาว',
+        'ใช้ข้อมูลที่ผู้ใช้มีแล้วก่อน และถามเพิ่มเฉพาะช่องว่างที่มีผลต่อรายงานจริง',
+        'ผู้ใช้สามารถส่งระเบียบวาระ บันทึกย่อ transcript หรือวางข้อความการประชุมได้',
+        'ไฟล์เสียงให้ใช้เฉพาะเมื่อ environment/AI ปลายทางรองรับการแนบและถอดเสียงจริง; ถ้าไม่รองรับให้บอกข้อจำกัดตามจริง',
+        'Answer First: ถ้ามีข้อมูลพอให้ร่างรายงานก่อน ใช้ [ระบุ...] หรือ [ต้องตรวจสอบ] ในส่วนที่ยังขาด ห้ามแต่งชื่อ มติ หรือคะแนนเสียง'
+      ].join('\n'), { forceIntake: false });
+      return;
+    }
+
     if (button.dataset.localIntake === 'pr-video') {
       event.preventDefault();
       event.stopImmediatePropagation();
