@@ -59,7 +59,7 @@
         Object.freeze({ label: 'ร่างบันทึกข้อความ', prompt: 'ร่างบันทึกข้อความ' }),
         Object.freeze({ label: 'ร่างหนังสือหารือ', prompt: 'ร่างหนังสือหารือ' }),
         Object.freeze({ label: 'ร่างคำสั่ง', prompt: 'ช่วยร่างคำสั่งราชการ โดยถามข้อมูลสำคัญที่ยังขาดก่อน' }),
-        Object.freeze({ label: 'สรุป / ร่างรายงานการประชุม', prompt: 'ช่วยสรุปและจัดทำรายงานการประชุมจากข้อมูลที่ให้' }),
+        Object.freeze({ label: '📝 ทำรายงานการประชุม', description: 'ใช้บันทึกย่อ ระเบียบวาระ หรือข้อความได้ทันที; ไฟล์เสียงใช้เมื่อ AI ปลายทางรองรับการแนบ/ถอดเสียง', prompt: 'ทำรายงานการประชุม' }),
         Object.freeze({ label: 'จัดหน้าเอกสาร', prompt: 'ช่วยจัดหน้าเอกสารที่แนบให้อ่านง่ายและเป็นทางการ โดยรักษาข้อเท็จจริง ชื่อ ตัวเลข วันที่ และสาระเดิมไว้' }),
         Object.freeze({ label: '🗃️ ตรวจสอบการทำลายเอกสาร', prompt: 'ตรวจสอบการทำลายเอกสารราชการ โดยแยกประเภทเอกสาร หน่วยงานเจ้าของเอกสาร ช่วงเวลา/วันที่ เอกสารทางการเงิน คดีหรือการตรวจสอบ ความลับ/ข้อมูลส่วนบุคคล ความจำเป็นในการใช้งาน กฎหรือบัญชีอายุการเก็บรักษาที่ใช้บังคับ และขั้นตอน/ผู้มีอำนาจก่อนสรุป โดยห้ามสรุปว่าสามารถทำลายได้จากอายุเอกสารเพียงอย่างเดียว และห้ามใช้ระยะเวลา 10 ปี 5 ปี 1 ปี หรือค่าคงที่ใดเป็นกฎหมายโดยไม่ตรวจแหล่งทางการ' }),
 
@@ -333,8 +333,18 @@
         if (Array.isArray(task.choices) && task.choices.length) {
           button.dataset.taskChoices = JSON.stringify(task.choices);
         }
-        button.dataset.search = normalize(`${category.title} ${category.keywords} ${task.label} ${task.prompt}`);
-        button.textContent = task.label;
+        button.dataset.search = normalize(`${category.title} ${category.keywords} ${task.label} ${task.description || ''} ${task.prompt}`);
+        if (task.description) {
+          const taskLabel = document.createElement('span');
+          const taskDescription = document.createElement('small');
+          taskLabel.className = 'work-catalog-task-label';
+          taskDescription.className = 'work-catalog-task-description';
+          taskLabel.textContent = task.label;
+          taskDescription.textContent = task.description;
+          button.append(taskLabel, taskDescription);
+        } else {
+          button.textContent = task.label;
+        }
         tasks.append(button);
       });
       heading.setAttribute('role', 'button');
