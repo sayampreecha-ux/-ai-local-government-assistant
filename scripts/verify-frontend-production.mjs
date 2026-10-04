@@ -11,10 +11,10 @@ const sitemapUrl = page('sitemap.xml');
 const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
-const quickActionBridgeUrl = page('assets/js/ui/quick-action-guided-bridge-v1.js?v=1.3.13');
-const RELEASE = Object.freeze({ home:'6.4.18', homeCss:'2.6.17', serviceWorker:'3.6.10', mic:'2.4.2', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
-const WORKFLOW_RUNTIME_VERSION = '5.6.4';
-const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.6.2';
+const quickActionBridgeUrl = page('assets/js/ui/quick-action-guided-bridge-v1.js?v=1.3.14');
+const RELEASE = Object.freeze({ home:'6.4.19', homeCss:'2.6.17', serviceWorker:'3.6.10', mic:'2.4.3', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
+const WORKFLOW_RUNTIME_VERSION = '5.7.0';
+const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.7.0';
 const WORKFLOW_UI_VERSION = '1.3';
 
 const runtimeSourceFiles = Object.freeze([
