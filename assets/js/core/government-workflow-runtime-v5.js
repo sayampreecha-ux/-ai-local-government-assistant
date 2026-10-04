@@ -21,7 +21,7 @@ import {
 } from '../../../src/government-case-memory-v1.js';
 import { publishWorkflowProgressView } from '../ui/workflow-progress-ui-v1.js?v=1.3.0';
 
-export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.7.1';
+export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.7.2';
 
 const ACTION_LABELS = Object.freeze({
   'repair-workflow-classification': 'ยืนยันประเภทงาน',
@@ -40,7 +40,7 @@ const ACTION_LABELS = Object.freeze({
 const uniq = (values = []) => [...new Set((Array.isArray(values) ? values : []).filter(Boolean).map(String))];
 const safeText = (value, max = 160) => String(value || '').trim().slice(0, max);
 
-const MEETING_MINUTES_DRAFT_PATTERN = /(?:ทำ|จัดทำ|ร่าง).{0,18}รายงาน(?:การ)?ประชุม|(?:^|\s)สรุป(?:การ)?ประชุม(?:\s|$)|ถอด(?:เสียง)?ประชุม|จัดรายงาน(?:การ)?ประชุม|ทำรายงานจากไฟล์เสียง|(?:ไฟล์เสียง|เสียง).{0,18}ประชุม.{0,24}(?:ทำรายงาน|สรุป|ถอด)|(?:ทำรายงาน|สรุป|ถอด).{0,24}(?:ไฟล์เสียง|เสียง).{0,18}ประชุม/i;
+const MEETING_MINUTES_DRAFT_PATTERN = /(?:ทำ|จัดทำ|ร่าง).{0,18}รายงาน(?:การ)?ประชุม|(?:^|\s)สรุป(?:การ)?ประชุม(?=\s|$|สภา)|ถอด(?:เสียง)?ประชุม|จัดรายงาน(?:การ)?ประชุม|ทำรายงานจากไฟล์เสียง|(?:ไฟล์เสียง|เสียง).{0,18}ประชุม.{0,24}(?:ทำรายงาน|สรุป|ถอด)|(?:ทำรายงาน|สรุป|ถอด).{0,24}(?:ไฟล์เสียง|เสียง).{0,18}ประชุม/i;
 const COUNCIL_LEGAL_REVIEW_PATTERN = /(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ).{0,35}(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ)|(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ).{0,35}(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ)/i;
 const COUNCIL_MEETING_CONTEXT_PATTERN = /(?:สภาท้องถิ่น|ประชุมสภา|รายงาน(?:การ)?ประชุม\s*สภา|สภา\s*(?:อบจ\.?|เทศบาล|อบต\.?|องค์การบริหารส่วนจังหวัด|องค์การบริหารส่วนตำบล)|มติสภา|ญัตติ|ประธานสภา|สมาชิกสภา|องค์ประชุม|สมัยประชุม)/i;
 
