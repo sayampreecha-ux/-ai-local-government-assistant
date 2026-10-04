@@ -81,7 +81,7 @@ test('trusted internal result prompt bypasses privacy submit guard exactly once'
   });
 
   assert.equal(prevented, true);
-  assert.match(document.getElementById('privacySubmitWarning')?.textContent || '', /พบข้อมูลที่อาจเป็นข้อมูลส่วนบุคคล/);
+  assert.match(document.getElementById('privacySubmitWarning')?.textContent || '', /GovPrompt บล็อกข้อมูลส่วนบุคคล/);
 });
 
 test('catalog handoff marks static prompts trusted but keeps user-authored PR topic untrusted', async () => {
