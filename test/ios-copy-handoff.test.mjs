@@ -26,5 +26,5 @@ test('ChatGPT and Gemini handoff preserves the synchronous user gesture before a
 });
 
 test('production HTML cache-busts the status copy fix', () => {
-  assert.match(index, /assets\/js\/ui\/status-copy\.js\?v=1\.4\.4/);
+  assert.match(index, /assets\/js\/ui\/status-copy\.js\?v=1\.4\.5/);
 });

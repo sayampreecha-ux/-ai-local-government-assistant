@@ -12,7 +12,7 @@
       'Answer First: จัดทำร่างรายงานการประชุมจากข้อมูลที่มีทันที ใช้ [ระบุ...] หรือ [ต้องตรวจสอบ] เฉพาะจุดที่หลักฐานยังไม่พอ',
       'แยก Working Transcript/หลักฐานการพูด ออกจาก Official-style Meeting Minutes; รายงานทางการให้สรุปสาระสำคัญ ไม่คัด verbatim ทั้งหมด',
       'ห้ามเดาชื่อผู้พูด วัน เวลา ญัตติ มติ หรือคะแนนเสียง; ผู้พูดที่ระบุไม่ได้ให้ใช้สถานะ UNIDENTIFIED หรือคำกลางที่ไม่ระบุตัวบุคคล',
-      'มติแต่ละรายการต้องระบุสถานะ VERIFIED, PARTIAL หรือ UNVERIFIED ตามหลักฐาน และห้ามเติมจำนวนคะแนนเสียงถ้าต้นฉบับไม่มี',
+      'มติแต่ละรายการต้องระบุสถานะ VERIFIED, PARTIAL หรือ UNVERIFIED เฉพาะชั้น Working Transcript/Review Evidence; ห้ามแสดง metadata นี้ในรายงานฉบับสะอาด เว้นแต่ผู้ใช้ร้องขอ และห้ามเติมจำนวนคะแนนเสียงถ้าต้นฉบับไม่มี',
       'รักษา trace กลับสู่ transcript/ช่วงเวลา/ข้อความต้นทางเท่าที่ข้อมูลรองรับ และใช้หลัก data minimization'
     ]) }),
     executive_summary: Object.freeze({ label: 'สรุปผู้บริหาร', format: 'executive-summary', instructions: Object.freeze([

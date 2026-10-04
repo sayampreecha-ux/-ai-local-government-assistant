@@ -3,7 +3,7 @@ import { extname, join } from "node:path";
 import { build as bundle } from "esbuild";
 
 const output = "dist";
-const RELEASE_VERSIONS = Object.freeze({ home: "6.4.22", homeCss: "2.6.17", serviceWorker: "3.6.10", quickActionBridge: "1.3.16", guidedIntake: "1.2.2", emergencyProcurementGate: "1.1.0", statusCopy: "1.4.4", mic: "2.4.3", outputFormats: "1.0.1", promptOrchestrator: "7.9.4", automationPilot: "1.0.0", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0", documentStudio: "1.0.0", caseList: "1.0.0", searchTimeoutGuard: "1.1.0", budgetUiWatchdog: "1.2.0", assistanceRoute: "1.1.0" });
+const RELEASE_VERSIONS = Object.freeze({ home: "6.4.23", homeCss: "2.6.17", serviceWorker: "3.6.11", quickActionBridge: "1.3.17", guidedIntake: "1.2.2", emergencyProcurementGate: "1.1.0", statusCopy: "1.4.5", mic: "2.4.3", outputFormats: "1.0.1", promptOrchestrator: "7.9.4", automationPilot: "1.0.0", budgetInputRuntime: "1.6.0", budgetOfficialSourceRuntime: "2.1.0", documentStudio: "1.0.0", caseList: "1.0.0", searchTimeoutGuard: "1.1.0", budgetUiWatchdog: "1.2.0", assistanceRoute: "1.1.0" });
 const publicExtensions = new Set([
   ".html", ".htlm", ".css", ".js", ".json", ".webmanifest", ".txt", ".xml"
 ]);

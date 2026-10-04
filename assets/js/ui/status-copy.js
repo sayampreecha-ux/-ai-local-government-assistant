@@ -178,6 +178,8 @@
   }
 
   function buildHandoffPrompt(card) {
+    const meetingPrompt = window.GovPromptCore?.meetingMinutesHandoffPrompts?.get(card);
+    if (meetingPrompt) return meetingPrompt;
     const gp223Prompt = window.GovPromptCore?.gp223HandoffPrompts?.get(card);
     if (gp223Prompt) return gp223Prompt;
     const question = findQuestion(card) || '[คำถามของผู้ใช้]';
@@ -193,7 +195,14 @@
     const sanitizer = window.GovPromptCore?.sanitizeExternalContent;
     if (typeof sanitizer !== 'function') return { blocked: true, safeText: '' };
     const result = sanitizer(buildHandoffPrompt(card));
-    return { blocked: Boolean(result.blocked), safeText: String(result.safeText || ''), changed: Boolean(result.changed) };
+    const meetingPrompt = window.GovPromptCore?.meetingMinutesHandoffPrompts?.get(card);
+    // Audio safety instructions mention biometrics; inspect the user's source
+    // separately so that prohibition is not mistaken for biometric records.
+    const sourceCheck = meetingPrompt ? sanitizer(findQuestion(card)) : null;
+    const blocked = meetingPrompt
+      ? Boolean(sourceCheck.blocked || result.blockingRisks?.length || result.residualRisks?.length)
+      : Boolean(result.blocked);
+    return { blocked, safeText: String(result.safeText || ''), changed: Boolean(result.changed) };
   }
 
   function legacyCopyText(text) {

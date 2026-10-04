@@ -149,3 +149,82 @@ test('meeting-minutes output router selects official minutes contract', async ()
   assert.equal(output.format, 'meeting-minutes');
   assert.ok(output.instructions.some(line => /VERIFIED, PARTIAL หรือ UNVERIFIED/.test(line)));
 });
+
+test('audio handoff requires an actual accessible attachment and preserves both output layers', () => {
+  for (const query of ['ทำรายงานประชุมสภา มีไฟล์เสียง', 'ทำรายงานประชุมคณะกรรมการ มีไฟล์เสียง']) {
+    const block = buildWorkflowPromptBlock(buildWorkflowRuntimeView({ query }));
+    assert.match(block, /แนบไฟล์เสียงกับ AI ปลายทางโดยตรง/);
+    assert.match(block, /ไม่ส่งไฟล์เสียงไปยัง AI ปลายทางโดยอัตโนมัติ/);
+    assert.match(block, /ตรวจว่ามีไฟล์เสียงแนบจริง/);
+    assert.match(block, /อ่านและถอดเสียงไฟล์นั้นได้จริง/);
+    assert.match(block, /ห้ามอ้างว่าได้ฟังไฟล์หรือได้ถอดเสียง/);
+    assert.match(block, /ห้ามสร้าง transcript จากชื่อไฟล์หรือ metadata/);
+    assert.match(block, /ไม่แสดง metadata VERIFIED \/ PARTIAL \/ UNVERIFIED/);
+    assert.match(block, /เฉพาะในชั้น 1 Review Evidence/);
+    assert.match(block, /ห้ามสร้าง timestamp/);
+    assert.match(block, /transcript จากเครื่องมือของ runtime/);
+    assert.match(block, /ต้องตรวจสอบที่มาข้อมูล/);
+    assert.match(block, /ไม่แยกตามประโยค วาระ หรือบุคคลที่ผู้บรรยายกล่าวถึง/);
+    assert.match(block, /ห้ามสร้างผู้พูดที่ 2\/3 จากเนื้อหาบรรยาย/);
+    assert.match(block, /ลบ VERIFIED \/ PARTIAL \/ UNVERIFIED ทุกตำแหน่งในชั้น 2/);
+    assert.match(block, /ห้ามส่งเฉพาะฉบับสะอาด/);
+    assert.match(block, /การแจ้งเรื่องหรือกล่าวถึงเรื่องหนึ่งไม่เท่ากับเสนอญัตติ/);
+    assert.match(block, /ละหัวข้อนั้นในฉบับสะอาด/);
+    assert.match(block, /แยกคำขอ\/ข้อเสนอของผู้พูดออกจากข้อสรุป\/มติ/);
+    assert.match(block, /ห้ามอนุมานผู้เสนอจากผู้แจ้งเรื่อง/);
+    assert.match(block, /placeholder และคำถามเพิ่มเติม/);
+    assert.match(block, /ก่อนส่งคำตอบ ตรวจทุกชั้นและคำถามเพิ่มเติม/);
+    assert.match(block, /AI ห้ามรับรองแทนที่ประชุม ลงนาม ลงมติ/);
+  }
+});
+
+test('profiles keep original agendas and do not invent motions, votes, owners or deadlines', () => {
+  const council = buildWorkflowPromptBlock(buildWorkflowRuntimeView({ query: 'ทำรายงานประชุมสภา อบจ.' }));
+  assert.match(council, /ระเบียบวาระตามต้นฉบับ/);
+  assert.doesNotMatch(council, /ระเบียบวาระที่ [1-5]/);
+  for (const meeting of ['ผู้บริหาร', 'หัวหน้าส่วน', 'คณะกรรมการ', 'คณะอนุกรรมการ', 'คณะทำงาน', 'โครงการ', 'ประจำเดือน']) {
+    const view = buildWorkflowRuntimeView({ query: `ทำรายงานประชุม${meeting}\nบันทึกย่อ: หารือแผนงาน` });
+    assert.equal(view.meetingMinutes.meetingType, 'general');
+    const block = buildWorkflowPromptBlock(view);
+    assert.match(block, /ไม่เพิ่มญัตติหรือคะแนนเสียงเมื่อไม่มีหลักฐาน/);
+    assert.match(block, /ข้อสั่งการ ผู้รับผิดชอบ deadline/);
+    assert.match(block, /เรื่องติดตาม เท่าที่มีหลักฐาน/);
+  }
+});
+
+test('explicit legal questions alongside minutes never receive the draft-only exemption', async () => {
+  const core = await loadBrowserCore(['assets/js/core/tool-routing-policy.js']);
+  for (const question of [
+    'มตินี้ชอบด้วยกฎหมายหรือไม่',
+    'ญัตตินี้เสนอได้หรือไม่',
+    'คะแนนเสียงเพียงพอหรือไม่',
+    'องค์ประชุมครบหรือไม่',
+    'ประธานดำเนินการถูกต้องหรือไม่',
+    'คณะกรรมการมีอำนาจมีมตินี้หรือไม่'
+  ]) {
+    const query = `ทำรายงานประชุมสภา แล้วตรวจว่า ${question}`;
+    assert.equal(isMeetingMinutesDraftRequest(query), false, query);
+    assert.equal(buildWorkflowRuntimeView({ query }).meetingMinutes, undefined, query);
+    assert.ok(!core.createToolRoutingPlan({ question: query }).workflowId?.endsWith(':meeting-minutes-draft'), query);
+  }
+});
+
+test('actual menu handoff text preserves general versus council profile', async () => {
+  const bridge = await readFile('assets/js/ui/quick-action-guided-bridge-v1.js', 'utf8');
+  const router = await loadRouter();
+  for (const [title, profile, moduleId] of [
+    ['ทำรายงานการประชุมทั่วไป', 'general', 'GP001'],
+    ['ทำรายงานการประชุมสภาท้องถิ่น', 'council', 'GP013']
+  ]) {
+    const start = bridge.indexOf(`if (normalize(button.dataset.prompt) === normalize('${title}'))`);
+    assert.ok(start >= 0);
+    const handler = bridge.slice(start, bridge.indexOf('return;', start));
+    const arrayStart = handler.indexOf('openResultPage([') + 'openResultPage('.length;
+    const arrayEnd = handler.indexOf("].join('\\n')") + 1;
+    const query = vm.runInNewContext(handler.slice(arrayStart, arrayEnd)).join('\n');
+    const view = buildWorkflowRuntimeView({ query });
+    assert.equal(view.meetingMinutes.meetingType, profile);
+    assert.equal(router.routeRequest(query).primaryModule, moduleId);
+    assert.match(handler, /forceIntake: false/);
+  }
+});

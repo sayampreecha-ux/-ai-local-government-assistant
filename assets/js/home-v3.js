@@ -239,7 +239,7 @@
     const privacy = prepareExternalPrompt(text);
     if (privacy.blocked || !privacy.safeText) return Object.freeze({ view: null, block: '', status: 'privacy-blocked' });
     try {
-      const runtime = await import('./core/government-workflow-runtime-v5.js?v=5.7.2');
+      const runtime = await import('./core/government-workflow-runtime-v5.js?v=5.7.3');
       const view = runtime.buildWorkflowRuntimeView({ query: privacy.safeText, evidence: Array.isArray(evidence) ? evidence : [] });
       return Object.freeze({ view, block: runtime.buildWorkflowPromptBlock(view), status: 'ready' });
     } catch {
@@ -277,8 +277,20 @@
     }
   }
 
-  function enrichPromptWithWorkflow(promptBundle, workflowRuntime) {
+  function enrichPromptWithWorkflow(promptBundle, workflowRuntime, sourceText = '') {
     if (!workflowRuntime?.block) return promptBundle;
+    if (workflowRuntime.view?.meetingMinutes?.mode === 'draft-from-recorded-facts') {
+      // Use the existing minutes contract as the handoff authority for factual drafts.
+      // Generic legal boilerplate must not turn catalog guidance into a legal decision.
+      const prompt = [
+        'บทบาท\nคุณเป็น Government AI Copilot สำหรับจัดทำร่างรายงานการประชุมจากหลักฐาน',
+        'คำถามและข้อมูลจากผู้ใช้\n' + sourceText,
+        promptBundle.attachmentNames?.length ? 'ชื่อเอกสารประกอบ (ไม่ได้ส่งไฟล์อัตโนมัติ): ' + promptBundle.attachmentNames.join(', ') : '',
+        promptBundle.presentationPreset ? 'รูปแบบนำเสนอที่ผู้ใช้เลือก: ' + promptBundle.presentationPreset.label : '',
+        workflowRuntime.block
+      ].filter(Boolean).join('\n\n');
+      return Object.freeze({ ...promptBundle, prompt, workflowRuntime: workflowRuntime.view });
+    }
     return Object.freeze({ ...promptBundle, prompt: `${promptBundle.prompt}\n\n${workflowRuntime.block}`, workflowRuntime: workflowRuntime.view });
   }
 
@@ -409,7 +421,8 @@
     let searchResult;
     const v8 = window.GovPromptCore.EVIDENCE_FIRST_V8;
     const kAuditTask = route?.moduleId === 'GP007' && /ค่า\\s*K|ค่าชดเชยค่างานก่อสร้าง|สัญญาแบบปรับราคาได้|เงินชดเชยค่างาน|CUCEM[-\\s]?K/i.test(text);
-    const decisionTask = Boolean(assistanceRoute?.decisionTask) || Boolean(v8?.isDecisionQuestion?.(text)) || ['legal','procurement','finance','human-resources','internal-audit'].includes(String(route?.transactionType || '').toLowerCase()) || kAuditTask;
+    const isMinutesDraft = workflowRuntime?.view?.meetingMinutes?.mode === 'draft-from-recorded-facts';
+    const decisionTask = !isMinutesDraft && (Boolean(assistanceRoute?.decisionTask) || Boolean(v8?.isDecisionQuestion?.(text)) || ['legal','procurement','finance','human-resources','internal-audit'].includes(String(route?.transactionType || '').toLowerCase()) || kAuditTask);
     if (decisionTask && typeof core.officialSearchConnector?.search === 'function') {
       try {
         searchResult = Object.freeze(await core.officialSearchConnector.search(text, { count: 10, requireFreshness: true }));
@@ -453,7 +466,7 @@
     }
     return Object.freeze({
       route,
-      promptBundle: enrichPromptWithWorkflow(promptBundle, workflowRuntime),
+      promptBundle: enrichPromptWithWorkflow(promptBundle, workflowRuntime, text),
       searchResult,
       workflowRuntime: workflowRuntime.view,
       workflowRuntimeStatus: workflowRuntime.status,
@@ -598,6 +611,11 @@
     if (promptBundle.gp223) window.GovPromptCore.gp223HandoffPrompts.set(card, promptBundle.prompt);
     label.textContent = `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
     const isPrResult = Boolean(promptBundle?.prMode);
+    const isMinutesResult = workflowRuntime?.meetingMinutes?.mode === 'draft-from-recorded-facts';
+    if (isMinutesResult) {
+      window.GovPromptCore.meetingMinutesHandoffPrompts ||= new WeakMap();
+      window.GovPromptCore.meetingMinutesHandoffPrompts.set(card, promptBundle.prompt);
+    }
     heading.textContent = budgetSourceRuntime
       ? 'GovPrompt ดำเนินงานร่างงบประมาณให้แล้ว'
       : isPrResult
@@ -607,12 +625,15 @@
     const presentationSummary = promptBundle.presentationPreset ? ` · การนำเสนอ: ${promptBundle.presentationPreset.label}` : '';
     description.textContent = budgetSourceRuntime
       ? `ระบบค้นและอ่านต้นฉบับราชการ ตรวจข้อมูล คำนวณ และเตรียม Working Draft พร้อมหลักฐาน${workflowSummary}${presentationSummary}`
+      : isMinutesResult
+        ? '🎙️ มีไฟล์เสียงการประชุม? คัดลอกคำสั่งไปใช้กับ AI ปลายทางที่อ่านเสียงได้ แล้วแนบไฟล์เสียงที่นั่นโดยตรง หากไม่รองรับให้ใช้ transcript/ข้อความแทน — GovPrompt ไม่ส่งไฟล์เสียงให้อัตโนมัติ'
       : isPrResult
         ? `GP จัดคำสั่งเฉพาะงานประชาสัมพันธ์ให้แล้ว พร้อมตรวจข้อเท็จจริง PDPA และรูปแบบสื่อ${workflowSummary}${presentationSummary}`
         : `ระบบจัดคำถาม ตรวจความเสี่ยง และเตรียม Prompt กำหนดวิธีค้นแหล่งราชการให้แล้ว — กดคัดลอกไปวางใน ChatGPT หรือ AI ที่คุณใช้${workflowSummary}${presentationSummary}`;
 
     const v8Assessment = searchResult?.v8Assessment;
     if (isPrResult) status.textContent = '✅ พร้อมทำสื่อประชาสัมพันธ์ — ไม่ดึงกฎงานอื่นมาปน';
+    else if (isMinutesResult) status.textContent = 'ร่างจากข้อมูลที่มี กรุณาตรวจสอบกับต้นฉบับก่อนรับรองรายงานการประชุม';
     else if (v8Assessment?.decisionLock === 'ON') status.textContent = `🔒 Decision Lock ON — ${v8Assessment.reasons?.[0] || 'ต้องตรวจหลักฐาน/เงื่อนไขเพิ่มก่อนฟันธง'}`;
     else if (budgetSourceRuntime && structuredBudgetArtifact(budgetSourceRuntime)) status.textContent = '✅ ร่างงบประมาณผ่านการตรวจสมดุลและพร้อมส่งออกเป็น Working Draft';
     else if (searchResult?.mode === 'live' && searchResult?.evidence?.conclusionEligible) status.textContent = '✅ ค้นสดและยืนยันหลักฐานปัจจุบันได้ตาม metadata ที่มี';
@@ -627,15 +648,15 @@
       const copied = await copyText(external.safeText);
       if (!copied) { window.GovPrompt?.toast('ไม่สามารถคัดลอกได้ กรุณาลองใหม่'); return; }
       window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer');
-      window.GovPrompt?.toast(external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว และคัดลอก Prompt สำหรับ ChatGPT แล้ว' : 'คัดลอก Prompt แล้ว — ให้ ChatGPT ค้นสดตามคำสั่งได้เลย');
+      window.GovPrompt?.toast(external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงแล้ว และคัดลอก Prompt สำหรับ ChatGPT แล้ว' : isMinutesResult ? 'คัดลอกคำสั่งแล้ว — หากมีเสียง ให้แนบไฟล์กับ AI ปลายทางโดยตรง' : 'คัดลอก Prompt แล้ว — ให้ ChatGPT ค้นสดตามคำสั่งได้เลย');
     });
 
-    copyButton.type = 'button'; copyButton.textContent = promptBundle.gp223 ? 'คัดลอกคำสั่ง' : 'คัดลอกไปใช้กับ AI';
+    copyButton.type = 'button'; copyButton.textContent = (promptBundle.gp223 || isMinutesResult) ? 'คัดลอกคำสั่ง' : 'คัดลอกไปใช้กับ AI';
     copyButton.addEventListener('click', async () => {
       const external = prepareExternalPrompt(promptBundle.prompt);
       if (external.blocked) { window.GovPrompt?.toast('🔒 หยุดคัดลอก: Prompt ยังมีข้อมูลเสี่ยง กรุณาปกปิดข้อมูลก่อน'); return; }
       const copied = await copyText(external.safeText);
-      window.GovPrompt?.toast(copied ? (external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงก่อนคัดลอกแล้ว' : 'คัดลอก Prompt พร้อมคำสั่งค้นสดแล้ว') : 'ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
+      window.GovPrompt?.toast(copied ? (external.changed ? '🔐 ปกปิดข้อมูลเสี่ยงก่อนคัดลอกแล้ว' : isMinutesResult ? 'คัดลอกคำสั่งแล้ว — แนบไฟล์เสียงกับ AI ปลายทางที่รองรับโดยตรง' : 'คัดลอก Prompt พร้อมคำสั่งค้นสดแล้ว') : 'ไม่สามารถคัดลอกได้ กรุณาลองใหม่');
     });
 
     specialistLink.href = route.assistant.path; specialistLink.textContent = `เปิดแบบฟอร์ม ${route.moduleId}`;
