@@ -21,7 +21,7 @@ import {
 } from '../../../src/government-case-memory-v1.js';
 import { publishWorkflowProgressView } from '../ui/workflow-progress-ui-v1.js?v=1.3.0';
 
-export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.7.2';
+export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.7.3';
 
 const ACTION_LABELS = Object.freeze({
   'repair-workflow-classification': 'ยืนยันประเภทงาน',
@@ -668,10 +668,11 @@ export function buildWorkflowPromptBlock(view) {
       '- ถ้ามีข้อมูลพอ ให้สร้าง “ร่างรายงานการประชุม” ทันที แม้บางช่องยังขาด',
       '- ช่องที่ยังไม่ทราบให้ใช้ [ระบุ...] / [ยังไม่พบผลการลงมติ] / [ต้องตรวจสอบจากต้นฉบับ] แทนการเดา แล้วถามเพิ่มเฉพาะช่องว่างที่มีผลจริง',
       '- ถ้ายังไม่มีเนื้อหาประชุมเลย ให้เชิญผู้ใช้ส่งบันทึกย่อ ระเบียบวาระ transcript หรือข้อความที่มี โดยไม่เปิดแบบฟอร์มยาว',
+      '- ถ้าต้นทางเป็นไฟล์เสียงและ GovPrompt ไม่มีช่องรับไฟล์เสียง ให้สั่งผู้ใช้แนบไฟล์เสียงกับ AI ปลายทางที่รองรับโดยตรงพร้อม Prompt นี้; GovPrompt ไม่ต้องรับ อัปโหลด เก็บ หรือถอดเสียงแทน AI ปลายทาง',
       '',
       'Audio capability gate',
       '- ตรวจ capability จริงก่อน: ถ้ามีไฟล์เสียงถูกแนบและ runtime/AI ปลายทางอ่านเสียงได้จริง จึงทำ Audio → Transcript → Speaker Segmentation เท่าที่หลักฐานรองรับ → Agenda Mapping → Discussion Summary → Motion/Proposal Detection → Resolution/Vote Detection → Draft Minutes → Human Review',
-      '- ถ้า runtime ไม่มีไฟล์เสียงหรือไม่มีความสามารถถอดเสียง ให้บอกข้อจำกัดตามจริง และใช้ transcript/text ที่ผู้ใช้นำมาให้ ห้ามอ้างว่าถอดเสียงได้จากชื่อไฟล์หรือ metadata',
+      '- ถ้า runtime ไม่มีไฟล์เสียงหรือไม่มีความสามารถถอดเสียง ให้บอกข้อจำกัดตามจริง; หากผู้ใช้มีไฟล์เสียง ให้แนบไฟล์นั้นกับ AI ปลายทางที่รองรับพร้อม Prompt นี้ หรือใช้ transcript/text ที่ผู้ใช้นำมาให้ ห้ามอ้างว่าถอดเสียงได้จากชื่อไฟล์หรือ metadata',
       councilMinutes
         ? '- ห้ามระบุตัวบุคคลจากเสียงหรือทำ biometric identification; ผู้พูดที่ระบุไม่ได้ให้ใช้ “ผู้พูดที่ 1”, “สมาชิกสภาท่านหนึ่ง”, “ผู้ชี้แจง” หรือ UNIDENTIFIED'
         : '- ห้ามระบุตัวบุคคลจากเสียงหรือทำ biometric identification; ผู้พูดที่ระบุไม่ได้ให้ใช้ “ผู้พูดที่ 1”, “ผู้ร่วมประชุมท่านหนึ่ง”, “ผู้ชี้แจง” หรือ UNIDENTIFIED',
