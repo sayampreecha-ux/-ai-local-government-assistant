@@ -165,6 +165,8 @@
       .assistant-catalog-group .work-catalog-tasks{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;padding:8px!important}
       .assistant-catalog-group .work-catalog-tasks[hidden]{display:none!important}
       .assistant-catalog-group .work-catalog-task{width:100%!important;min-height:44px!important;border-radius:10px!important;padding:8px 10px!important;text-align:left!important;font-weight:700!important;background:rgba(255,255,255,.88)!important}
+      .assistant-catalog-group .work-catalog-task-label{display:block;font-weight:800;line-height:1.3}
+      .assistant-catalog-group .work-catalog-task-description{display:block;margin-top:3px;font-size:.78rem;line-height:1.35;font-weight:500;color:#607068}
       .assistant-direct-tool{border-color:#9bbcaf!important;background:#f5fbf8!important}
       @media(max-width:959px) and (min-width:621px){
         .assistant-catalog-accordion{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
