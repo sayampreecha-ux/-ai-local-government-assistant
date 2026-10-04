@@ -141,6 +141,19 @@
   }
 
   function createQualityGuidance(text) {
+    const isMeetingMinutes = /(?:ทำ|จัดทำ|ร่าง|จัด|ถอด|สรุป).{0,18}(?:รายงาน)?(?:การ)?ประชุม|ทำรายงานจากไฟล์เสียง|จัดรายงานประชุม|ไฟล์เสียงประชุม/i.test(text)
+      && !/(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ).{0,35}(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ)|(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ).{0,35}(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ)/i.test(text);
+    if (isMeetingMinutes) {
+      return Object.freeze([
+        'Answer First: ถ้ามีข้อมูลพอให้สร้างร่างรายงานการประชุมทันที ไม่ต้องรอฐานอำนาจของญัตติ',
+        'แยก Working Transcript ออกจาก Official-style Meeting Minutes และสรุปภาษาราชการเฉพาะสาระสำคัญ',
+        'ห้ามเดาชื่อผู้พูด วัน เวลา ญัตติ มติ หรือคะแนนเสียง; ส่วนไม่ชัดให้ใช้ [ฟังไม่ชัด] หรือ [ต้องตรวจสอบ]',
+        'มติแต่ละรายการต้องเป็น VERIFIED / PARTIAL / UNVERIFIED ตามหลักฐาน และห้ามเติมจำนวนเสียงถ้าต้นฉบับไม่มี',
+        'ตรวจ capability audio จริงก่อนอ้างว่าถอดเสียงได้ และห้ามระบุตัวตนผู้พูดจากเสียง',
+        'ใช้ข้อมูลส่วนบุคคลเท่าที่จำเป็น และให้มนุษย์ตรวจร่างก่อนถือเป็นรายงานรับรอง'
+      ]);
+    }
+
     const isPrCreation = /(?:(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|วางข้อความ).{0,24}(?:ประชาสัมพันธ์|ข่าวประชาสัมพันธ์|โพสต์(?:โซเชียล)?|อินโฟกราฟิก|โปสเตอร์|สคริปต์|คำกล่าว|วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)|(?:วิดีโอ|วีดีโอ|คลิป|video).{0,24}(?:ประชาสัมพันธ์|แนะนำองค์กร|แนะนำหน่วยงาน))/i.test(text);
     if (isPrCreation) {
       return Object.freeze([
@@ -200,6 +213,29 @@
 
   function createToolRoutingPlan({ question, attachments = [], workflowId, context } = {}) {
     const text = normalize(question);
+    const meetingMinutesDraft = /(?:ทำ|จัดทำ|ร่าง|จัด|ถอด|สรุป).{0,18}(?:รายงาน)?(?:การ)?ประชุม|ทำรายงานจากไฟล์เสียง|จัดรายงานประชุม|ไฟล์เสียงประชุม/i.test(text)
+      && !/(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ).{0,35}(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ)|(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ).{0,35}(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ)/i.test(text);
+    if (meetingMinutesDraft) {
+      const files = Array.isArray(attachments) ? attachments.filter(Boolean) : [];
+      return Object.freeze({
+        mode: files.length ? 'attachment-first' : 'ai-only',
+        workflowId: 'gov.council:meeting-minutes-draft',
+        tools: Object.freeze(files.length ? ['attached-files', 'ai-reasoning'] : ['ai-reasoning']),
+        instructions: Object.freeze([
+          files.length ? 'อ่านเอกสาร/ไฟล์ที่ผู้ใช้แนบมาก่อนและห้ามถามซ้ำข้อมูลที่พบแล้ว' : 'ใช้ข้อความ ระเบียบวาระ บันทึกย่อ หรือ transcript ที่ผู้ใช้ให้ก่อน',
+          'งานจัดทำรายงานประชุมไม่เรียก Web Search / Tavily / crawler / search backend อัตโนมัติ',
+          'หากไฟล์เป็นเสียง ต้องตรวจว่า environment/AI ปลายทางรองรับการอ่านเสียงจริงก่อนถอดเสียง; ถ้าไม่รองรับให้บอกข้อจำกัดตรง ๆ และขอ transcript/text แทน',
+          'Draft Minutes ทำต่อได้จากข้อเท็จจริงที่มีโดยไม่ต้องมี councilAuthority; Legal Review แยกไป Authority/Evidence Gate เมื่อผู้ใช้ถามความชอบด้วยกฎหมาย',
+          ...createQualityGuidance(text)
+        ]),
+        reasons: Object.freeze(['meeting minutes draft uses provided source material first']),
+        flags: Object.freeze({
+          hasAttachments: files.length > 0, wantsGmail: false, wantsDriveFiles: false,
+          needsCurrentWeb: false, needsPrimarySource: false, externalVerificationRequested: false,
+          userDataVerificationRequested: false, explicitNoWeb: true, stableCreation: true
+        })
+      });
+    }
     if (isGP223Request({ question, workflowId, context })) {
       const files = Array.isArray(attachments) ? attachments.filter(Boolean) : [];
       const destinationSearchRequested = requestsGP223DestinationSearch(question);
