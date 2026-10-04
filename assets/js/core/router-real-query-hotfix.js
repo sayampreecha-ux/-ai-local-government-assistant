@@ -15,7 +15,8 @@
     GP006: 'human-resources',
     GP008: 'public-health',
     GP010: 'internal-audit',
-    GP012: 'public-relations'
+    GP012: 'public-relations',
+    GP013: 'council'
   });
 
   function normalize(value) {
@@ -25,6 +26,9 @@
   function forcedModule(source) {
     const text = normalize(source);
     if (!text) return '';
+
+    if (/(?:มติ(?:นี้|ที่ประชุม|สภา)?|ญัตติ|การประชุมสภา|ข้อบัญญัติ).{0,35}(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ)/.test(text)
+      || /(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ).{0,35}(?:มติ(?:นี้|ที่ประชุม|สภา)?|ญัตติ|การประชุมสภา|ข้อบัญญัติ)/.test(text)) return 'GP013';
 
     if (/เบี้ยเลี้ยง/.test(text)) return 'GP005';
 
