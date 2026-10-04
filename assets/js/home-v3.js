@@ -11,6 +11,7 @@
   const outputFormatButton = document.getElementById('outputFormatButton');
   const resultPromptKey = 'govprompt.resultPrompt.v1';
   const resultForceIntakeKey = 'govprompt.forceGuidedIntake.v1';
+  const resultTrustedInternalKey = 'govprompt.resultPromptTrustedInternal.v1';
   let resultRoute = new URLSearchParams(window.location.search).get('view') === 'result';
 
   function enterResultPage() {
@@ -776,14 +777,18 @@
     installResultHeader();
     let pendingPrompt = '';
     let forceGuidedIntake = false;
+    let trustedInternalPrompt = false;
     try {
       pendingPrompt = sessionStorage.getItem(resultPromptKey) || '';
       forceGuidedIntake = sessionStorage.getItem(resultForceIntakeKey) === 'true';
+      trustedInternalPrompt = sessionStorage.getItem(resultTrustedInternalKey) === 'true';
       sessionStorage.removeItem(resultPromptKey);
       sessionStorage.removeItem(resultForceIntakeKey);
+      sessionStorage.removeItem(resultTrustedInternalKey);
     } catch {}
     if (pendingPrompt) {
       if (forceGuidedIntake) form.dataset.forceGuidedIntake = 'true';
+      if (trustedInternalPrompt) form.dataset.trustedInternalPrompt = 'true';
       input.value = pendingPrompt;
       input.placeholder = 'พิมพ์ข้อมูลเพิ่มเติมที่จำเป็น...';
       input.dispatchEvent(new Event('input', { bubbles: true }));
