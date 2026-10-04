@@ -21,7 +21,7 @@ import {
 } from '../../../src/government-case-memory-v1.js';
 import { publishWorkflowProgressView } from '../ui/workflow-progress-ui-v1.js?v=1.3.0';
 
-export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.7.0';
+export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.7.1';
 
 const ACTION_LABELS = Object.freeze({
   'repair-workflow-classification': 'ยืนยันประเภทงาน',
@@ -42,15 +42,22 @@ const safeText = (value, max = 160) => String(value || '').trim().slice(0, max);
 
 const MEETING_MINUTES_DRAFT_PATTERN = /(?:ทำ|จัดทำ|ร่าง).{0,18}รายงาน(?:การ)?ประชุม|(?:^|\s)สรุป(?:การ)?ประชุม(?:\s|$)|ถอด(?:เสียง)?ประชุม|จัดรายงาน(?:การ)?ประชุม|ทำรายงานจากไฟล์เสียง|(?:ไฟล์เสียง|เสียง).{0,18}ประชุม.{0,24}(?:ทำรายงาน|สรุป|ถอด)|(?:ทำรายงาน|สรุป|ถอด).{0,24}(?:ไฟล์เสียง|เสียง).{0,18}ประชุม/i;
 const COUNCIL_LEGAL_REVIEW_PATTERN = /(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ).{0,35}(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ)|(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ).{0,35}(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ)/i;
+const COUNCIL_MEETING_CONTEXT_PATTERN = /(?:สภาท้องถิ่น|ประชุมสภา|รายงาน(?:การ)?ประชุม\s*สภา|สภา\s*(?:อบจ\.?|เทศบาล|อบต\.?|องค์การบริหารส่วนจังหวัด|องค์การบริหารส่วนตำบล)|มติสภา|ญัตติ|ประธานสภา|สมาชิกสภา|องค์ประชุม|สมัยประชุม)/i;
 
 export function isMeetingMinutesDraftRequest(query = '') {
   const text = String(query || '').trim();
   return MEETING_MINUTES_DRAFT_PATTERN.test(text) && !COUNCIL_LEGAL_REVIEW_PATTERN.test(text);
 }
 
-function buildMeetingMinutesDraftView(caseContext) {
+export function resolveMeetingMinutesType(query = '') {
+  return COUNCIL_MEETING_CONTEXT_PATTERN.test(String(query || '').trim()) ? 'council' : 'general';
+}
+
+function buildMeetingMinutesDraftView(caseContext, meetingType = resolveMeetingMinutesType(caseContext?.effectiveQuery)) {
+  const workflowId = meetingType === 'council' ? 'gov.council' : 'gov.correspondence';
+  const contractId = meetingType === 'council' ? 'gov.council.minutes-draft.v1' : 'gov.correspondence.minutes-draft.v1';
   const primary = Object.freeze({
-    workflowId: 'gov.council',
+    workflowId,
     workflowStatus: 'draft-available/facts-pending',
     action: 'generate-deliverables',
     actionLabel: 'จัดทำร่างรายงานการประชุมจากข้อเท็จจริงที่มี',
@@ -61,7 +68,7 @@ function buildMeetingMinutesDraftView(caseContext) {
     missingOfficialEvidence: Object.freeze([]),
     deliverables: Object.freeze([Object.freeze({
       artifactKey: 'meeting-minutes-draft',
-      contractId: 'gov.council.minutes-draft.v1',
+      contractId,
       contractVersion: '1.0',
       profile: 'official-style',
       requiredContent: Object.freeze(['working-transcript', 'official-style-minutes', 'resolution-status', 'human-review']),
@@ -101,7 +108,7 @@ function buildMeetingMinutesDraftView(caseContext) {
     bridgeVersion: WORKFLOW_RUNTIME_BRIDGE_VERSION,
     status: 'draft-available',
     orchestration: 'single-workflow',
-    workflowIds: Object.freeze(['gov.council']),
+    workflowIds: Object.freeze([workflowId]),
     caseId: caseContext.caseId,
     resumedCase: caseContext.resumed,
     resumeLabel: caseContext.resumed ? 'ทำต่อจากเรื่องเดิม' : 'เริ่มเรื่องใหม่',
@@ -109,13 +116,14 @@ function buildMeetingMinutesDraftView(caseContext) {
     primary,
     workflows: Object.freeze([primary]),
     nextActions: Object.freeze([Object.freeze({
-      workflowId: 'gov.council',
+      workflowId,
       stageId: 'minutes-draft',
       action: 'generate-deliverables',
       actionLabel: 'จัดทำร่างรายงานการประชุมจากข้อเท็จจริงที่มี'
     })]),
     meetingMinutes: Object.freeze({
       mode: 'draft-from-recorded-facts',
+      meetingType,
       factsPending: true,
       authorityGateRequiredForDraft: false,
       legalReviewSeparate: true,
@@ -477,7 +485,7 @@ export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts 
   // Drafting minutes records facts that already occurred. It must not be blocked
   // by councilAuthority. Legal validity review remains on the normal gov.council gate.
   if (isMeetingMinutesDraftRequest(caseContext.effectiveQuery) && !citizenIntent.matched) {
-    const view = buildMeetingMinutesDraftView(caseContext);
+    const view = buildMeetingMinutesDraftView(caseContext, resolveMeetingMinutesType(caseContext.effectiveQuery));
     persistCaseView(view);
     publishWorkflowProgressView(view);
     return view;
@@ -610,35 +618,8 @@ export function buildWorkflowPromptBlock(view) {
   if (!primary) return '';
 
   if (view?.meetingMinutes?.mode === 'draft-from-recorded-facts') {
-    return [
-      'GovPrompt Meeting Minutes Draft Contract v1',
-      '- สถานะ: draft-available / facts-pending',
-      '- งานนี้คือการบันทึกข้อเท็จจริงที่เกิดขึ้นแล้ว ไม่ใช่การวินิจฉัยความชอบด้วยกฎหมาย',
-      '- ห้าม block การร่างเพียงเพราะยังไม่มี councilAuthority; ถ้าผู้ใช้ถามว่ามติ/ญัตติชอบด้วยกฎหมายหรือไม่ จึงค่อยเข้า Authority/Evidence Gate แยกต่างหาก',
-      '',
-      'Guided Intake / Answer First',
-      '- ใช้ข้อมูลที่มีแล้วก่อน ห้ามถามซ้ำข้อมูลที่ผู้ใช้ให้หรือมีในเอกสาร/ข้อความต้นทาง',
-      '- ถ้ามีข้อมูลพอ ให้สร้าง “ร่างรายงานการประชุม” ทันที แม้บางช่องยังขาด',
-      '- ช่องที่ยังไม่ทราบให้ใช้ [ระบุ...] / [ยังไม่พบผลการลงมติ] / [ต้องตรวจสอบจากต้นฉบับ] แทนการเดา แล้วถามเพิ่มเฉพาะช่องว่างที่มีผลจริง',
-      '- ถ้ายังไม่มีเนื้อหาประชุมเลย ให้เชิญผู้ใช้ส่งบันทึกย่อ ระเบียบวาระ transcript หรือข้อความที่มี โดยไม่เปิดแบบฟอร์มยาว',
-      '',
-      'Audio capability gate',
-      '- ตรวจ capability จริงก่อน: ถ้ามีไฟล์เสียงถูกแนบและ runtime/AI ปลายทางอ่านเสียงได้จริง จึงทำ Audio → Transcript → Speaker Segmentation เท่าที่หลักฐานรองรับ → Agenda Mapping → Discussion Summary → Motion/Proposal Detection → Resolution/Vote Detection → Draft Minutes → Human Review',
-      '- ถ้า runtime ไม่มีไฟล์เสียงหรือไม่มีความสามารถถอดเสียง ให้บอกข้อจำกัดตามจริง และใช้ transcript/text ที่ผู้ใช้นำมาให้ ห้ามอ้างว่าถอดเสียงได้จากชื่อไฟล์หรือ metadata',
-      '- ห้ามระบุตัวบุคคลจากเสียงหรือทำ biometric identification; ผู้พูดที่ระบุไม่ได้ให้ใช้ “ผู้พูดที่ 1”, “สมาชิกสภาท่านหนึ่ง”, “ผู้ชี้แจง” หรือ UNIDENTIFIED',
-      '- ส่วนฟังไม่ชัดใช้ [ฟังไม่ชัด] หรือ [ต้องตรวจสอบ]',
-      '',
-      'Working Transcript vs Official-style Minutes',
-      '- ชั้น 1 Working Transcript: เก็บข้อความ/ช่วงอ้างอิงเพื่อการตรวจสอบเท่าที่ระบบรองรับ',
-      '- ชั้น 2 Official-style Meeting Minutes: สรุปสาระสำคัญเป็นภาษาราชการ ไม่คัด verbatim ทั้งหมด',
-      '- รักษา trace กลับไปยังข้อความหรือช่วงเสียงต้นทางเท่าที่ระบบรองรับ',
-      '',
-      'มติและคะแนนเสียง — No Fabrication',
-      '- มติแต่ละรายการต้องกำกับสถานะ VERIFIED / PARTIAL / UNVERIFIED',
-      '- ถ้าต้นฉบับระบุเพียง “ที่ประชุมเห็นชอบ” ให้บันทึกเฉพาะ “มติที่ประชุม: เห็นชอบตามที่เสนอ” ห้ามเติมจำนวนเสียง',
-      '- ถ้ามติหรือคะแนนไม่ชัด ให้ใช้ “มติที่ประชุม: [ยังต้องตรวจสอบจากต้นฉบับ]” และสถานะ UNVERIFIED',
-      '- ห้ามแต่งชื่อ วัน เวลา ญัตติ มติ คะแนนเสียง หรือเหตุการณ์ที่ไม่มีต้นฉบับรองรับ',
-      '',
+    const councilMinutes = view.meetingMinutes.meetingType === 'council';
+    const structureLines = councilMinutes ? [
       'โครงสร้างกรณีประชุมสภาท้องถิ่น',
       '1. ชื่อรายงานการประชุม',
       '2. สมัยประชุม / ครั้งที่',
@@ -659,8 +640,55 @@ export function buildWorkflowPromptBlock(view) {
       '17. เวลาเลิกประชุม',
       '18. ผู้จดรายงาน',
       '19. ผู้ตรวจรายงาน',
-      '20. ส่วนรับรองรายงานการประชุม',
-      '- ถ้าไม่ใช่สภาท้องถิ่น ให้ปรับโครงสร้างตามชนิดการประชุม ไม่บังคับใช้รูปแบบสภาทั้งหมด',
+      '20. ส่วนรับรองรายงานการประชุม'
+    ] : [
+      'โครงสร้างกรณีประชุมทั่วไป',
+      '1. ชื่อการประชุม / คณะกรรมการ / คณะทำงาน',
+      '2. ครั้งที่ (ถ้ามี)',
+      '3. วัน เวลา สถานที่',
+      '4. ผู้มาประชุม / ผู้ไม่มาประชุม / ผู้เข้าร่วมประชุม เท่าที่มีข้อมูล',
+      '5. ระเบียบวาระหรือหัวข้อประชุมตามต้นฉบับ',
+      '6. สาระสำคัญของการหารือ',
+      '7. มติ / ข้อสรุป / ข้อสั่งการ เท่าที่มีหลักฐาน',
+      '8. ผู้รับผิดชอบและกำหนดเวลา หากที่ประชุมกำหนด',
+      '9. เวลาเลิกประชุม',
+      '10. ผู้จด / ผู้ตรวจรายงาน หากมีข้อมูล',
+      '- ไม่บังคับใช้โครงสร้างสภาท้องถิ่นหรือวาระ 1–5 หากต้นฉบับไม่ได้ใช้รูปแบบนั้น'
+    ];
+    return [
+      'GovPrompt Meeting Minutes Draft Contract v1',
+      '- สถานะ: draft-available / facts-pending',
+      '- งานนี้คือการบันทึกข้อเท็จจริงที่เกิดขึ้นแล้ว ไม่ใช่การวินิจฉัยความชอบด้วยกฎหมาย',
+      councilMinutes
+        ? '- การร่างรายงานสภาไม่ถูก block เพียงเพราะยังไม่มี councilAuthority; ถ้าผู้ใช้ถามว่ามติ/ญัตติชอบด้วยกฎหมายหรือไม่ จึงค่อยเข้า Authority/Evidence Gate แยกต่างหาก'
+        : '- การร่างรายงานประชุมทั่วไปทำจากข้อเท็จจริงที่มีได้เลย; ถ้ามีคำถามด้านกฎหมายหรืออำนาจ ให้แยก Legal Review ออกจากงานบันทึกรายงาน',
+      '',
+      'Guided Intake / Answer First',
+      '- ใช้ข้อมูลที่มีแล้วก่อน ห้ามถามซ้ำข้อมูลที่ผู้ใช้ให้หรือมีในเอกสาร/ข้อความต้นทาง',
+      '- ถ้ามีข้อมูลพอ ให้สร้าง “ร่างรายงานการประชุม” ทันที แม้บางช่องยังขาด',
+      '- ช่องที่ยังไม่ทราบให้ใช้ [ระบุ...] / [ยังไม่พบผลการลงมติ] / [ต้องตรวจสอบจากต้นฉบับ] แทนการเดา แล้วถามเพิ่มเฉพาะช่องว่างที่มีผลจริง',
+      '- ถ้ายังไม่มีเนื้อหาประชุมเลย ให้เชิญผู้ใช้ส่งบันทึกย่อ ระเบียบวาระ transcript หรือข้อความที่มี โดยไม่เปิดแบบฟอร์มยาว',
+      '',
+      'Audio capability gate',
+      '- ตรวจ capability จริงก่อน: ถ้ามีไฟล์เสียงถูกแนบและ runtime/AI ปลายทางอ่านเสียงได้จริง จึงทำ Audio → Transcript → Speaker Segmentation เท่าที่หลักฐานรองรับ → Agenda Mapping → Discussion Summary → Motion/Proposal Detection → Resolution/Vote Detection → Draft Minutes → Human Review',
+      '- ถ้า runtime ไม่มีไฟล์เสียงหรือไม่มีความสามารถถอดเสียง ให้บอกข้อจำกัดตามจริง และใช้ transcript/text ที่ผู้ใช้นำมาให้ ห้ามอ้างว่าถอดเสียงได้จากชื่อไฟล์หรือ metadata',
+      councilMinutes
+        ? '- ห้ามระบุตัวบุคคลจากเสียงหรือทำ biometric identification; ผู้พูดที่ระบุไม่ได้ให้ใช้ “ผู้พูดที่ 1”, “สมาชิกสภาท่านหนึ่ง”, “ผู้ชี้แจง” หรือ UNIDENTIFIED'
+        : '- ห้ามระบุตัวบุคคลจากเสียงหรือทำ biometric identification; ผู้พูดที่ระบุไม่ได้ให้ใช้ “ผู้พูดที่ 1”, “ผู้ร่วมประชุมท่านหนึ่ง”, “ผู้ชี้แจง” หรือ UNIDENTIFIED',
+      '- ส่วนฟังไม่ชัดใช้ [ฟังไม่ชัด] หรือ [ต้องตรวจสอบ]',
+      '',
+      'Working Transcript vs Official-style Minutes',
+      '- ชั้น 1 Working Transcript: เก็บข้อความ/ช่วงอ้างอิงเพื่อการตรวจสอบเท่าที่ระบบรองรับ',
+      '- ชั้น 2 Official-style Meeting Minutes: สรุปสาระสำคัญเป็นภาษาราชการ ไม่คัด verbatim ทั้งหมด',
+      '- รักษา trace กลับไปยังข้อความหรือช่วงเสียงต้นทางเท่าที่ระบบรองรับ',
+      '',
+      'มติและคะแนนเสียง — No Fabrication',
+      '- มติแต่ละรายการต้องกำกับสถานะ VERIFIED / PARTIAL / UNVERIFIED',
+      '- ถ้าต้นฉบับระบุเพียง “ที่ประชุมเห็นชอบ” ให้บันทึกเฉพาะ “มติที่ประชุม: เห็นชอบตามที่เสนอ” ห้ามเติมจำนวนเสียง',
+      '- ถ้ามติหรือคะแนนไม่ชัด ให้ใช้ “มติที่ประชุม: [ยังต้องตรวจสอบจากต้นฉบับ]” และสถานะ UNVERIFIED',
+      '- ห้ามแต่งชื่อ วัน เวลา ญัตติ มติ คะแนนเสียง หรือเหตุการณ์ที่ไม่มีต้นฉบับรองรับ',
+      '',
+      ...structureLines,
       '',
       'Privacy',
       '- ใช้ข้อมูลส่วนบุคคลเท่าที่จำเป็นต่อรายงาน หลีกเลี่ยงข้อมูลอ่อนไหวที่ไม่เกี่ยวข้อง และห้ามเดาตัวตนผู้พูดจากเสียง',
@@ -710,6 +738,7 @@ const api = Object.freeze({
   version: WORKFLOW_RUNTIME_BRIDGE_VERSION,
   buildWorkflowRuntimeView,
   buildWorkflowPromptBlock,
+  resolveMeetingMinutesType,
   listRememberedCases,
   forgetRememberedCase,
   clearRememberedCases
