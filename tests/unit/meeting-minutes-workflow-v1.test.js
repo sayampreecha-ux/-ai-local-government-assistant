@@ -5,7 +5,8 @@ import vm from 'node:vm';
 import {
   buildWorkflowRuntimeView,
   buildWorkflowPromptBlock,
-  isMeetingMinutesDraftRequest
+  isMeetingMinutesDraftRequest,
+  resolveMeetingMinutesType
 } from '../../assets/js/core/government-workflow-runtime-v5.js';
 
 async function loadBrowserCore(files) {
@@ -44,7 +45,7 @@ test('TEST 1: council meeting report drafts immediately without councilAuthority
 test('TEST 2: audio request uses source-first policy and never claims audio support', async () => {
   const core = await loadBrowserCore(['assets/js/core/tool-routing-policy.js']);
   const plan = core.createToolRoutingPlan({ question: 'มีไฟล์เสียงประชุม ทำรายงานให้หน่อย' });
-  assert.equal(plan.workflowId, 'gov.council:meeting-minutes-draft');
+  assert.equal(plan.workflowId, 'gov.correspondence:meeting-minutes-draft');
   assert.equal(plan.flags.needsCurrentWeb, false);
   assert.ok(plan.instructions.some(line => /ตรวจว่า environment\/AI ปลายทางรองรับการอ่านเสียงจริง/.test(line)));
   assert.ok(plan.instructions.some(line => /ไม่เรียก Web Search/.test(line)));
@@ -55,6 +56,9 @@ test('TEST 3: transcript plus agenda remains draft-available and prompt says dra
   const view = buildWorkflowRuntimeView({ query });
   const block = buildWorkflowPromptBlock(view);
   assert.equal(view.status, 'draft-available');
+  assert.equal(view.primary.workflowId, 'gov.correspondence');
+  assert.equal(view.meetingMinutes.meetingType, 'general');
+  assert.match(block, /โครงสร้างกรณีประชุมทั่วไป/);
   assert.match(block, /ถ้ามีข้อมูลพอ ให้สร้าง “ร่างรายงานการประชุม” ทันที/);
   assert.match(block, /Working Transcript/);
   assert.match(block, /Official-style Meeting Minutes/);
@@ -93,10 +97,19 @@ test('TEST 7: legality question exits draft mode and enters council Authority/Ev
   assert.ok(view.primary.missingEvidence.includes('councilAuthority'));
 });
 
-test('TEST 8: legacy summarize-meeting intent is still supported by GP013', async () => {
+test('TEST 8: general meeting intents route to GP001 while council meeting intents route to GP013', async () => {
   const router = await loadRouter();
   for (const query of ['สรุปประชุม', 'ทำรายงานการประชุม', 'จัดรายงานประชุมจากบันทึกนี้', 'ทำรายงานการประชุมคณะกรรมการ']) {
+    assert.equal(router.routeRequest(query).primaryModule, 'GP001', query);
+    assert.equal(resolveMeetingMinutesType(query), 'general', query);
+  }
+  for (const query of ['ทำรายงานประชุมสภา', 'ทำรายงานการประชุมสภาท้องถิ่น', 'สรุปประชุมสภาเทศบาล', 'ถอดเสียงประชุมสภา อบต.']) {
     assert.equal(router.routeRequest(query).primaryModule, 'GP013', query);
+    assert.equal(resolveMeetingMinutesType(query), 'council', query);
+    const view = buildWorkflowRuntimeView({ query });
+    assert.equal(view.primary.workflowId, 'gov.council', query);
+    assert.equal(view.meetingMinutes.meetingType, 'council', query);
+    assert.match(buildWorkflowPromptBlock(view), /โครงสร้างกรณีประชุมสภาท้องถิ่น/);
   }
 });
 
@@ -106,7 +119,9 @@ test('TEST 9: mobile menu shows meeting action and preserves collapsed single-op
     readFile('assets/js/ui/assistant-catalog-accordion-v1.js', 'utf8')
   ]);
   assert.match(bridge, /📝 ทำรายงานการประชุม/);
-  assert.match(bridge, /ใช้บันทึกย่อ ระเบียบวาระ หรือข้อความได้ทันที/);
+  assert.match(bridge, /🏛️ ทำรายงานการประชุมสภาท้องถิ่น/);
+  assert.doesNotMatch(bridge, /label: '📝 ทำรายงานการประชุม', description:/);
+  assert.doesNotMatch(bridge, /label: '🏛️ ทำรายงานการประชุมสภาท้องถิ่น', description:/);
   assert.match(bridge, /forceIntake: false/);
   assert.match(accordion, /collapseOthers/);
   assert.match(accordion, /@media\(max-width:620px\)/);
@@ -120,6 +135,7 @@ test('TEST 10: desktop and iPad share the same meeting capability without duplic
     readFile('assets/js/core/prompt-registry.js', 'utf8')
   ]);
   assert.equal((bridge.match(/label: '📝 ทำรายงานการประชุม'/g) || []).length, 1);
+  assert.equal((bridge.match(/label: '🏛️ ทำรายงานการประชุมสภาท้องถิ่น'/g) || []).length, 1);
   assert.match(accordion, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(accordion, /@media\(max-width:959px\) and \(min-width:621px\)/);
   assert.match(registry, /\['GP012', 'ผู้ช่วยประชาสัมพันธ์', 'public-relations'\]/);

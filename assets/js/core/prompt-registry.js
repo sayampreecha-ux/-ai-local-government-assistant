@@ -78,14 +78,16 @@
   function detectPromptQualityDomains(question = '') {
     const source = String(question).toLocaleLowerCase();
     const domains = [];
+    const meetingMinutes = /(?:ทำ|จัดทำ|ร่าง).{0,18}รายงาน(?:การ)?ประชุม|(?:^|\s)สรุป(?:การ)?ประชุม(?:\s|$)|ถอด(?:เสียง)?ประชุม|จัดรายงาน(?:การ)?ประชุม|ทำรายงานจากไฟล์เสียง/i.test(source);
+    const councilMeeting = /(?:สภาท้องถิ่น|ประชุมสภา|รายงาน(?:การ)?ประชุม\s*สภา|มติสภา|ญัตติ|ประธานสภา|สมาชิกสภา|องค์ประชุม|สมัยประชุม)/i.test(source);
     if (/(?:เบิก|การเงิน|คลัง|ฎีกา|ค่าใช้จ่าย|เงินสะสม|เงินบำรุง|โบนัส|งบประมาณ)/i.test(source)) domains.push('finance');
     if (/(?:พัสดุ|จัดซื้อ|จัดจ้าง|tor|ราคากลาง|สัญญา|ผู้รับจ้าง|ผู้ยื่น|ตรวจรับ|e-bidding)/i.test(source)) domains.push('procurement');
     if (/(?:บุคคล|บรรจุ|แต่งตั้ง|เลื่อนเงินเดือน|เลื่อนระดับ|ทดลองงาน|คุณสมบัติปลัด|วินัย|พนักงาน|ข้าราชการ|อัตรากำลัง)/i.test(source)) domains.push('hr');
-    if (/(?:หนังสือราชการ|หนังสือ|บันทึกข้อความ|บันทึก|สารบรรณ|ร่างหนังสือ|คำสั่ง|ประกาศ)/i.test(source)) domains.push('records');
+    if (/(?:หนังสือราชการ|หนังสือ|บันทึกข้อความ|บันทึก|สารบรรณ|ร่างหนังสือ|คำสั่ง|ประกาศ)/i.test(source) || (meetingMinutes && !councilMeeting)) domains.push('records');
     if (/(?:กฎหมาย|ระเบียบ|อำนาจ|ข้อหารือ|คำพิพากษา|มาตรา|สิทธิ|หนังสือเวียน|บทเฉพาะกาล|หลักเกณฑ์)/i.test(source)) domains.push('legal');
     if (/(?:รพ\.สต|รพสต|สาธารณสุข|สุขภาพ|เงินบำรุง|ผู้ป่วย|อสม\.?|ยา|เวชภัณฑ์|เบาหวาน)/i.test(source)) domains.push('health');
     if (/(?:ถนน|สะพาน|ก่อสร้าง|งานช่าง|วิศวกรรม|แบบ|ประมาณราคา|ผู้รับจ้าง|หน้างาน|ความหนาแน่นดิน)/i.test(source)) domains.push('engineering');
-    if (/(?:สภาท้องถิ่น|ประชุมสภา|รายงาน(?:การ)?ประชุม|สรุปประชุม|ถอดประชุม|มติสภา|ญัตติ)/i.test(source)) domains.push('council');
+    if (councilMeeting) domains.push('council');
     if (/(?:ประชาสัมพันธ์|โพสต์|ข่าว|อินโฟกราฟิก|แคปชัน|โปสเตอร์|เชิญใช้)/i.test(source)) domains.push('pr');
     return Object.freeze([...new Set(domains)]);
   }
