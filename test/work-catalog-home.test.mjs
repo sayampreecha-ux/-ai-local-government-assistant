@@ -29,7 +29,7 @@ test('one-page catalog covers core local-government domains', () => {
 
 test('catalog selections open the dedicated result route without bypassing the Home runner', () => {
   assert.match(source, /button\.dataset\.prompt = task\.prompt/);
-  assert.match(source, /openResultPage\(prompt\)/);
+  assert.match(source, /openResultPage\(prompt, \{ trustedInternal: true \}\)/);
   assert.match(source, /sessionStorage\.setItem\(RESULT_PROMPT_KEY, value\)/);
   assert.match(source, /window\.location\.assign\(target\.toString\(\)\)/);
   assert.doesNotMatch(source, /submitPrompt\s*\(/);

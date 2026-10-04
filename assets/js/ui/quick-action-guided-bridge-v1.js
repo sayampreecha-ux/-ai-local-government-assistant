@@ -263,6 +263,7 @@
 
   const RESULT_PROMPT_KEY = 'govprompt.resultPrompt.v1';
   const RESULT_FORCE_INTAKE_KEY = 'govprompt.forceGuidedIntake.v1';
+  const RESULT_TRUSTED_INTERNAL_KEY = 'govprompt.resultPromptTrustedInternal.v1';
 
   function openResultPage(prompt, options = {}) {
     const value = String(prompt || '').trim();
@@ -270,6 +271,7 @@
     try {
       sessionStorage.setItem(RESULT_PROMPT_KEY, value);
       sessionStorage.setItem(RESULT_FORCE_INTAKE_KEY, options.forceIntake === false ? 'false' : 'true');
+      sessionStorage.setItem(RESULT_TRUSTED_INTERNAL_KEY, options.trustedInternal === true ? 'true' : 'false');
       const target = new URL(window.location.href);
       target.searchParams.set('view', 'result');
       target.searchParams.set('run', String(Date.now()));
@@ -491,7 +493,7 @@
         'AI-only: ตรวจ evidence ที่มี โดยเฉพาะ ว 727 ลงวันที่ 22 กันยายน 2569 เป็น authority candidate; ไม่มีต้นฉบับให้ UNVERIFIED เฉพาะประเด็นและร่างต่อ ไม่ค้นสดอัตโนมัติ',
         'ห้ามแต่งข้อเท็จจริง หากข้อมูลยังไม่พอให้ถามหรือระบุว่าไม่ทราบ และใช้ Applicable Authority Check + Decision Lock เมื่อยังยืนยันไม่ได้',
         'เป้าหมายสุดท้าย: จัดทำ TOR พร้อมฐานอำนาจ หลักฐาน ความเสี่ยง และ checklist ความสอดคล้องเอกสาร'
-      ].join('\\n'), { forceIntake: true });
+      ].join('\\n'), { forceIntake: true, trustedInternal: true });
       return;
     }
 
@@ -507,7 +509,7 @@
         'ผู้ใช้สามารถส่งระเบียบวาระ บันทึกย่อ transcript หรือวางข้อความการประชุมได้',
         'ไฟล์เสียงให้ใช้เฉพาะเมื่อ environment/AI ปลายทางรองรับการแนบและถอดเสียงจริง; ถ้าไม่รองรับให้บอกข้อจำกัดตามจริง',
         'Answer First: ถ้ามีข้อมูลพอให้ร่างรายงานก่อน ใช้ [ระบุ...] หรือ [ต้องตรวจสอบ] ในส่วนที่ยังขาด ห้ามแต่งชื่อ มติ หรือคะแนนเสียง'
-      ].join('\n'), { forceIntake: false });
+      ].join('\n'), { forceIntake: false, trustedInternal: true });
       return;
     }
 
@@ -524,7 +526,7 @@
         'ไฟล์เสียงให้ใช้เฉพาะเมื่อ environment/AI ปลายทางรองรับการแนบและถอดเสียงจริง; ถ้าไม่รองรับให้บอกข้อจำกัดตามจริง',
         'การร่างรายงานเป็นการบันทึกข้อเท็จจริง ไม่ใช่การวินิจฉัยความชอบด้วยกฎหมาย; ถ้าถามความชอบด้วยกฎหมายให้แยกเข้า Authority/Evidence Gate',
         'Answer First: ถ้ามีข้อมูลพอให้ร่างรายงานก่อน ใช้ [ระบุ...] หรือ [ต้องตรวจสอบ] ในส่วนที่ยังขาด ห้ามแต่งชื่อ ญัตติ มติ หรือคะแนนเสียง'
-      ].join('\n'), { forceIntake: false });
+      ].join('\n'), { forceIntake: false, trustedInternal: true });
       return;
     }
 
@@ -548,7 +550,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     if (dialog?.open && dialog.contains(button)) dialog.close();
-    openResultPage(prompt);
+    openResultPage(prompt, { trustedInternal: true });
   }, true);
 
   addCatalogStyles();

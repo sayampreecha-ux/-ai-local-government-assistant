@@ -270,6 +270,14 @@
     form.dataset.privacySubmitGuard = '3';
 
     form.addEventListener('submit', event => {
+      // Static GovPrompt-authored catalog prompts are trusted application instructions,
+      // not user-provided data. Consume the marker once, then restore normal privacy checks
+      // for every subsequent user submission.
+      if (form.dataset.trustedInternalPrompt === 'true') {
+        delete form.dataset.trustedInternalPrompt;
+        return;
+      }
+
       const core = window.GovPromptCore;
       if (!core || typeof core.sanitizeExternalContent !== 'function'
         || typeof core.evaluateProcurementFinanceData !== 'function') {
