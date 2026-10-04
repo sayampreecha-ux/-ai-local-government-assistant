@@ -145,7 +145,7 @@
       && !/(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ).{0,35}(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ)|(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ).{0,35}(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ)/i.test(text);
     if (isMeetingMinutes) {
       return Object.freeze([
-        'Answer First: ถ้ามีข้อมูลพอให้สร้างร่างรายงานการประชุมทันที ไม่ต้องรอฐานอำนาจของญัตติ',
+        'Answer First: ถ้ามีข้อมูลพอให้สร้างร่างรายงานการประชุมทันที โดยแยกงานบันทึกข้อเท็จจริงออกจากการวินิจฉัยกฎหมาย',
         'แยก Working Transcript ออกจาก Official-style Meeting Minutes และสรุปภาษาราชการเฉพาะสาระสำคัญ',
         'ห้ามเดาชื่อผู้พูด วัน เวลา ญัตติ มติ หรือคะแนนเสียง; ส่วนไม่ชัดให้ใช้ [ฟังไม่ชัด] หรือ [ต้องตรวจสอบ]',
         'มติแต่ละรายการต้องเป็น VERIFIED / PARTIAL / UNVERIFIED ตามหลักฐาน และห้ามเติมจำนวนเสียงถ้าต้นฉบับไม่มี',
@@ -215,17 +215,20 @@
     const text = normalize(question);
     const meetingMinutesDraft = /(?:ทำ|จัดทำ|ร่าง).{0,18}รายงาน(?:การ)?ประชุม|(?:^|\s)สรุป(?:การ)?ประชุม(?:\s|$)|ถอด(?:เสียง)?ประชุม|จัดรายงาน(?:การ)?ประชุม|ทำรายงานจากไฟล์เสียง|(?:ไฟล์เสียง|เสียง).{0,18}ประชุม.{0,24}(?:ทำรายงาน|สรุป|ถอด)|(?:ทำรายงาน|สรุป|ถอด).{0,24}(?:ไฟล์เสียง|เสียง).{0,18}ประชุม/i.test(text)
       && !/(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ).{0,35}(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ)|(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ).{0,35}(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ)/i.test(text);
+    const councilMeetingContext = /(?:สภาท้องถิ่น|ประชุมสภา|รายงาน(?:การ)?ประชุม\s*สภา|มติสภา|ญัตติ|ประธานสภา|สมาชิกสภา|องค์ประชุม|สมัยประชุม)/i.test(text);
     if (meetingMinutesDraft) {
       const files = Array.isArray(attachments) ? attachments.filter(Boolean) : [];
       return Object.freeze({
         mode: files.length ? 'attachment-first' : 'ai-only',
-        workflowId: 'gov.council:meeting-minutes-draft',
+        workflowId: councilMeetingContext ? 'gov.council:meeting-minutes-draft' : 'gov.correspondence:meeting-minutes-draft',
         tools: Object.freeze(files.length ? ['attached-files', 'ai-reasoning'] : ['ai-reasoning']),
         instructions: Object.freeze([
           files.length ? 'อ่านเอกสาร/ไฟล์ที่ผู้ใช้แนบมาก่อนและห้ามถามซ้ำข้อมูลที่พบแล้ว' : 'ใช้ข้อความ ระเบียบวาระ บันทึกย่อ หรือ transcript ที่ผู้ใช้ให้ก่อน',
           'งานจัดทำรายงานประชุมไม่เรียก Web Search / Tavily / crawler / search backend อัตโนมัติ',
           'หากไฟล์เป็นเสียง ต้องตรวจว่า environment/AI ปลายทางรองรับการอ่านเสียงจริงก่อนถอดเสียง; ถ้าไม่รองรับให้บอกข้อจำกัดตรง ๆ และขอ transcript/text แทน',
-          'Draft Minutes ทำต่อได้จากข้อเท็จจริงที่มีโดยไม่ต้องมี councilAuthority; Legal Review แยกไป Authority/Evidence Gate เมื่อผู้ใช้ถามความชอบด้วยกฎหมาย',
+          councilMeetingContext
+            ? 'Draft Minutes สภาทำต่อได้จากข้อเท็จจริงที่มีโดยไม่ต้องมี councilAuthority; Legal Review แยกไป Authority/Evidence Gate เมื่อผู้ใช้ถามความชอบด้วยกฎหมาย'
+            : 'Draft Minutes ทั่วไปทำต่อได้จากข้อเท็จจริงที่มี; หากมีประเด็นกฎหมายหรืออำนาจให้แยก Legal Review ออกจากงานบันทึกรายงาน',
           ...createQualityGuidance(text)
         ]),
         reasons: Object.freeze(['meeting minutes draft uses provided source material first']),
