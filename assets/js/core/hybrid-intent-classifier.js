@@ -74,6 +74,7 @@
   // Order matters: specific requested action/process wins over the subject mentioned inside that process.
   const PROCESS_RULES = Object.freeze([
     Object.freeze({ moduleId: 'GP013', confidence: 0.999, patterns: Object.freeze([
+      /(?:สภาท้องถิ่น|สภา).{0,24}(?:ประชุม|เปิดประชุม)|(?:ประชุม|เปิดประชุม).{0,24}(?:สภาท้องถิ่น|สภา)/i,
       /(?:ทำ|จัดทำ|ร่าง|สรุป|ถอด(?:เสียง)?).{0,26}(?:รายงาน(?:การ)?ประชุม|ประชุม).{0,20}(?:สภาท้องถิ่น|สภา)|(?:สภาท้องถิ่น|ประชุมสภา|มติสภา|ญัตติ|ประธานสภา|สมาชิกสภา).{0,35}(?:รายงาน(?:การ)?ประชุม|ทำรายงาน|สรุปประชุม|ถอด(?:เสียง)?ประชุม)/i
     ]) }),
     Object.freeze({ moduleId: 'GP001', confidence: 0.998, patterns: Object.freeze([
