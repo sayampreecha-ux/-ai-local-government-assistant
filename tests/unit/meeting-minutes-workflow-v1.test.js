@@ -51,6 +51,14 @@ test('TEST 2: audio request uses source-first policy and never claims audio supp
   assert.ok(plan.instructions.some(line => /ไม่เรียก Web Search/.test(line)));
 });
 
+test('TEST 2B: GovPrompt hands audio off to a capable downstream AI without adding internal audio storage or transcription', () => {
+  const block = buildWorkflowPromptBlock(buildWorkflowRuntimeView({ query: 'มีไฟล์เสียงประชุม ทำรายงานให้หน่อย' }));
+  assert.match(block, /แนบไฟล์เสียงกับ AI ปลายทางที่รองรับโดยตรงพร้อม Prompt นี้/);
+  assert.match(block, /GovPrompt ไม่ต้องรับ อัปโหลด เก็บ หรือถอดเสียงแทน AI ปลายทาง/);
+  assert.match(block, /Audio → Transcript/);
+  assert.match(block, /Human Review/);
+});
+
 test('TEST 3: transcript plus agenda remains draft-available and prompt says draft first', () => {
   const query = 'ทำรายงานการประชุม จาก transcript และระเบียบวาระที่ให้มาครบแล้ว';
   const view = buildWorkflowRuntimeView({ query });
