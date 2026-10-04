@@ -26,6 +26,7 @@ const HIGH_RISK = [
 ];
 
 const PRIMARY_ACTION_RULES = Object.freeze([
+  ['gov.council', /(?:มติ(?:นี้|ที่ประชุม|สภา)?|ญัตติ|การประชุมสภา|ข้อบัญญัติ).{0,35}(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ)|(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ).{0,35}(?:มติ(?:นี้|ที่ประชุม|สภา)?|ญัตติ|การประชุมสภา|ข้อบัญญัติ)/i],
   ['gov.council', /(?:ทำ|จัดทำ|ร่าง|จัด|ถอด|สรุป).{0,18}(?:รายงาน)?(?:การ)?ประชุม|ทำรายงานจากไฟล์เสียง|จัดรายงานประชุม|ไฟล์เสียงประชุม/i],
   ['gov.correspondence', /(?:ช่วย)?(?:ร่าง|ทำ|เขียน).{0,16}(?:หนังสือราชการ|บันทึกข้อความ|หนังสือภายนอก|หนังสือภายใน)/i],
   ['gov.procurement', /(?:จัดซื้อ|จัดจ้าง|ร่าง\s*tor|ตรวจ\s*tor|e-?bidding|เฉพาะเจาะจง|ราคากลาง)/i],
@@ -68,7 +69,9 @@ function resolvePrimaryWorkflowId(text, directIds, matched) {
 export function detectGovernmentWorkflows(input = {}) {
   const text = textOf(input);
   const all = Object.values(WORKFLOWS);
+  const councilLegalReview = /(?:มติ(?:นี้|ที่ประชุม|สภา)?|ญัตติ|การประชุมสภา|ข้อบัญญัติ).{0,35}(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ)|(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ).{0,35}(?:มติ(?:นี้|ที่ประชุม|สภา)?|ญัตติ|การประชุมสภา|ข้อบัญญัติ)/i.test(text);
   const matched = all.filter((wf) => wf.keywords.some((k) => (wf.id === "gov.procurement" ? procurementText(text) : text).includes(k.toLowerCase())));
+  if (councilLegalReview && !matched.some((wf) => wf.id === 'gov.council')) matched.unshift(WORKFLOWS.council);
   const directIds = new Set(matched.map((x) => x.id));
   const ids = new Set(directIds);
   if (ids.has("gov.budget-draft")) ids.add("gov.finance");
