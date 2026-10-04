@@ -40,6 +40,105 @@ const ACTION_LABELS = Object.freeze({
 const uniq = (values = []) => [...new Set((Array.isArray(values) ? values : []).filter(Boolean).map(String))];
 const safeText = (value, max = 160) => String(value || '').trim().slice(0, max);
 
+const MEETING_MINUTES_DRAFT_PATTERN = /(?:ทำ|จัดทำ|ร่าง|จัด|ถอด|สรุป).{0,18}(?:รายงาน)?(?:การ)?ประชุม|ทำรายงานจากไฟล์เสียง|จัดรายงานประชุม|ไฟล์เสียงประชุม/i;
+const COUNCIL_LEGAL_REVIEW_PATTERN = /(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ).{0,35}(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ)|(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ).{0,35}(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ)/i;
+
+export function isMeetingMinutesDraftRequest(query = '') {
+  const text = String(query || '').trim();
+  return MEETING_MINUTES_DRAFT_PATTERN.test(text) && !COUNCIL_LEGAL_REVIEW_PATTERN.test(text);
+}
+
+function buildMeetingMinutesDraftView(caseContext) {
+  const primary = Object.freeze({
+    workflowId: 'gov.council',
+    workflowStatus: 'draft-available/facts-pending',
+    action: 'generate-deliverables',
+    actionLabel: 'จัดทำร่างรายงานการประชุมจากข้อเท็จจริงที่มี',
+    currentStage: Object.freeze({ id: 'minutes-draft', title: 'จัดทำร่างรายงานการประชุม' }),
+    completedStages: Object.freeze([]),
+    requiredEvidence: Object.freeze([]),
+    missingEvidence: Object.freeze([]),
+    missingOfficialEvidence: Object.freeze([]),
+    deliverables: Object.freeze([Object.freeze({
+      artifactKey: 'meeting-minutes-draft',
+      contractId: 'gov.council.minutes-draft.v1',
+      contractVersion: '1.0',
+      profile: 'official-style',
+      requiredContent: Object.freeze(['working-transcript', 'official-style-minutes', 'resolution-status', 'human-review']),
+      requiredEvidence: Object.freeze([]),
+      requiresSignoff: true,
+      status: 'draft-available'
+    })]),
+    nextInputs: Object.freeze(['meeting-source-material-if-not-already-provided']),
+    approvalRequired: true,
+    autoApprovalAllowed: false,
+    riskReviewRequired: false,
+    unresolvedRiskCodes: Object.freeze([]),
+    qualityGate: Object.freeze({
+      status: 'DRAFT_AVAILABLE',
+      completeness: false,
+      missingInformation: Object.freeze([]),
+      sourceEvidenceReady: true,
+      riskFlags: Object.freeze([]),
+      humanReviewRequired: true,
+      deliverableReady: true,
+      workflowReady: true,
+      substantiveDecisionMade: false,
+      rawEvidenceValuesReturned: false
+    }),
+    deliverablePlan: Object.freeze({
+      status: 'DRAFT_SPEC_READY',
+      stageId: 'minutes-draft',
+      qualityStatus: 'DRAFT_AVAILABLE',
+      humanDraftRequired: false,
+      autoGenerationAllowed: false,
+      artifacts: Object.freeze([]),
+      rawEvidenceValuesReturned: false
+    }),
+    handoffs: Object.freeze([])
+  });
+  return Object.freeze({
+    bridgeVersion: WORKFLOW_RUNTIME_BRIDGE_VERSION,
+    status: 'draft-available',
+    orchestration: 'single-workflow',
+    workflowIds: Object.freeze(['gov.council']),
+    caseId: caseContext.caseId,
+    resumedCase: caseContext.resumed,
+    resumeLabel: caseContext.resumed ? 'ทำต่อจากเรื่องเดิม' : 'เริ่มเรื่องใหม่',
+    caseStatus: 'active',
+    primary,
+    workflows: Object.freeze([primary]),
+    nextActions: Object.freeze([Object.freeze({
+      workflowId: 'gov.council',
+      stageId: 'minutes-draft',
+      action: 'generate-deliverables',
+      actionLabel: 'จัดทำร่างรายงานการประชุมจากข้อเท็จจริงที่มี'
+    })]),
+    meetingMinutes: Object.freeze({
+      mode: 'draft-from-recorded-facts',
+      factsPending: true,
+      authorityGateRequiredForDraft: false,
+      legalReviewSeparate: true,
+      audioCapabilityMustBeVerifiedAtRuntime: true
+    }),
+    caseMemory: Object.freeze({
+      enabled: Boolean(safeStorage()),
+      resumed: caseContext.resumed,
+      storesRawPrompt: false,
+      storesRawEvidence: false,
+      storesPersonalData: false
+    }),
+    governance: Object.freeze({
+      rawEvidenceValuesReturned: false,
+      autoApprovalAllowed: false,
+      failClosed: false,
+      noFabrication: true,
+      humanApprovalRequiredWhenDeclared: true,
+      deliverableContractsRequired: true
+    })
+  });
+}
+
 function safeStorage() {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return null;
@@ -374,6 +473,16 @@ export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts 
     workflowStateV4: caseContext.workflowState
   };
   const citizenIntent = detectCitizenServiceIntent(input);
+
+  // Drafting minutes records facts that already occurred. It must not be blocked
+  // by councilAuthority. Legal validity review remains on the normal gov.council gate.
+  if (isMeetingMinutesDraftRequest(caseContext.effectiveQuery) && !citizenIntent.matched) {
+    const view = buildMeetingMinutesDraftView(caseContext);
+    persistCaseView(view);
+    publishWorkflowProgressView(view);
+    return view;
+  }
+
   const isPrMediaRequest = /(?:วิดีโอ|วีดีโอ|คลิป|video).{0,40}(?:ประชาสัมพันธ์|แนะนำองค์กร|แนะนำหน่วยงาน|องค์กร|หน่วยงาน)|(?:ทำ|สร้าง|ร่าง|เขียน|ออกแบบ).{0,24}(?:วิดีโอ|วีดีโอ|คลิป|video)/i.test(caseContext.effectiveQuery);
 
   // PR media jobs are intentionally isolated from the generic cross-workflow detector.
@@ -499,6 +608,65 @@ function formatList(values, emptyText = 'ไม่มี') {
 export function buildWorkflowPromptBlock(view) {
   const primary = view?.primary;
   if (!primary) return '';
+
+  if (view?.meetingMinutes?.mode === 'draft-from-recorded-facts') {
+    return [
+      'GovPrompt Meeting Minutes Draft Contract v1',
+      '- สถานะ: draft-available / facts-pending',
+      '- งานนี้คือการบันทึกข้อเท็จจริงที่เกิดขึ้นแล้ว ไม่ใช่การวินิจฉัยความชอบด้วยกฎหมาย',
+      '- ห้าม block การร่างเพียงเพราะยังไม่มี councilAuthority; ถ้าผู้ใช้ถามว่ามติ/ญัตติชอบด้วยกฎหมายหรือไม่ จึงค่อยเข้า Authority/Evidence Gate แยกต่างหาก',
+      '',
+      'Guided Intake / Answer First',
+      '- ใช้ข้อมูลที่มีแล้วก่อน ห้ามถามซ้ำข้อมูลที่ผู้ใช้ให้หรือมีในเอกสาร/ข้อความต้นทาง',
+      '- ถ้ามีข้อมูลพอ ให้สร้าง “ร่างรายงานการประชุม” ทันที แม้บางช่องยังขาด',
+      '- ช่องที่ยังไม่ทราบให้ใช้ [ระบุ...] / [ยังไม่พบผลการลงมติ] / [ต้องตรวจสอบจากต้นฉบับ] แทนการเดา แล้วถามเพิ่มเฉพาะช่องว่างที่มีผลจริง',
+      '- ถ้ายังไม่มีเนื้อหาประชุมเลย ให้เชิญผู้ใช้ส่งบันทึกย่อ ระเบียบวาระ transcript หรือข้อความที่มี โดยไม่เปิดแบบฟอร์มยาว',
+      '',
+      'Audio capability gate',
+      '- ตรวจ capability จริงก่อน: ถ้ามีไฟล์เสียงถูกแนบและ runtime/AI ปลายทางอ่านเสียงได้จริง จึงทำ Audio → Transcript → Speaker Segmentation เท่าที่หลักฐานรองรับ → Agenda Mapping → Discussion Summary → Motion/Proposal Detection → Resolution/Vote Detection → Draft Minutes → Human Review',
+      '- ถ้า runtime ไม่มีไฟล์เสียงหรือไม่มีความสามารถถอดเสียง ให้บอกข้อจำกัดตามจริง และใช้ transcript/text ที่ผู้ใช้นำมาให้ ห้ามอ้างว่าถอดเสียงได้จากชื่อไฟล์หรือ metadata',
+      '- ห้ามระบุตัวบุคคลจากเสียงหรือทำ biometric identification; ผู้พูดที่ระบุไม่ได้ให้ใช้ “ผู้พูดที่ 1”, “สมาชิกสภาท่านหนึ่ง”, “ผู้ชี้แจง” หรือ UNIDENTIFIED',
+      '- ส่วนฟังไม่ชัดใช้ [ฟังไม่ชัด] หรือ [ต้องตรวจสอบ]',
+      '',
+      'Working Transcript vs Official-style Minutes',
+      '- ชั้น 1 Working Transcript: เก็บข้อความ/ช่วงอ้างอิงเพื่อการตรวจสอบเท่าที่ระบบรองรับ',
+      '- ชั้น 2 Official-style Meeting Minutes: สรุปสาระสำคัญเป็นภาษาราชการ ไม่คัด verbatim ทั้งหมด',
+      '- รักษา trace กลับไปยังข้อความหรือช่วงเสียงต้นทางเท่าที่ระบบรองรับ',
+      '',
+      'มติและคะแนนเสียง — No Fabrication',
+      '- มติแต่ละรายการต้องกำกับสถานะ VERIFIED / PARTIAL / UNVERIFIED',
+      '- ถ้าต้นฉบับระบุเพียง “ที่ประชุมเห็นชอบ” ให้บันทึกเฉพาะ “มติที่ประชุม: เห็นชอบตามที่เสนอ” ห้ามเติมจำนวนเสียง',
+      '- ถ้ามติหรือคะแนนไม่ชัด ให้ใช้ “มติที่ประชุม: [ยังต้องตรวจสอบจากต้นฉบับ]” และสถานะ UNVERIFIED',
+      '- ห้ามแต่งชื่อ วัน เวลา ญัตติ มติ คะแนนเสียง หรือเหตุการณ์ที่ไม่มีต้นฉบับรองรับ',
+      '',
+      'โครงสร้างกรณีประชุมสภาท้องถิ่น',
+      '1. ชื่อรายงานการประชุม',
+      '2. สมัยประชุม / ครั้งที่',
+      '3. วัน เวลา สถานที่',
+      '4. ผู้มาประชุม',
+      '5. ผู้ไม่มาประชุม',
+      '6. ผู้เข้าร่วมประชุม',
+      '7. เวลาเริ่มประชุม',
+      '8. ระเบียบวาระที่ 1 เรื่องประธานแจ้งให้ทราบ',
+      '9. ระเบียบวาระที่ 2 รับรองรายงานการประชุมครั้งที่ผ่านมา',
+      '10. ระเบียบวาระที่ 3 เรื่องเพื่อทราบ',
+      '11. ระเบียบวาระที่ 4 เรื่องเพื่อพิจารณา',
+      '12. ระเบียบวาระที่ 5 เรื่องอื่น ๆ',
+      '13. สาระการอภิปราย',
+      '14. คำชี้แจง',
+      '15. มติที่ประชุม + สถานะหลักฐาน',
+      '16. ผลคะแนนเสียง หากมีหลักฐาน',
+      '17. เวลาเลิกประชุม',
+      '18. ผู้จดรายงาน',
+      '19. ผู้ตรวจรายงาน',
+      '20. ส่วนรับรองรายงานการประชุม',
+      '- ถ้าไม่ใช่สภาท้องถิ่น ให้ปรับโครงสร้างตามชนิดการประชุม ไม่บังคับใช้รูปแบบสภาทั้งหมด',
+      '',
+      'Privacy',
+      '- ใช้ข้อมูลส่วนบุคคลเท่าที่จำเป็นต่อรายงาน หลีกเลี่ยงข้อมูลอ่อนไหวที่ไม่เกี่ยวข้อง และห้ามเดาตัวตนผู้พูดจากเสียง',
+      '- ร่างทุกฉบับต้องผ่าน Human Review ก่อนถือเป็นรายงานที่รับรองแล้ว'
+    ].join('\n');
+  }
 
   const deliverableLines = (primary.deliverables || []).map((item) => [
     `- ${item.artifactKey} [${item.profile || 'structured'}]`,
