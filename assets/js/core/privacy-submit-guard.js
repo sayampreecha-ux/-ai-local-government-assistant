@@ -242,7 +242,7 @@
     input.value = '';
     input.dispatchEvent(new Event('input', { bubbles: true }));
     const labels = reasons.length ? `\nตรวจพบ: ${[...new Set(reasons)].join(', ')}` : '';
-    notify(`🔒 GovPrompt บล็อกข้อมูลส่วนบุคคล/ข้อมูลอ่อนไหวก่อนประมวลผล หรือข้อมูลราชการ/จัดซื้อที่ไม่อนุญาต${labels}\n\nข้อมูลนี้จะไม่ถูกแสดงบน UI ไม่เข้า history/router/search และไม่ถูกส่งไป Worker/API ภายนอก กรุณาลบข้อมูลลับ ข้อมูลส่วนบุคคลระดับสูง หรือข้อมูลการแข่งขันจัดซื้อจัดจ้างที่ยังไม่ควรเปิดเผย`);
+    notify(`🔒 พบข้อมูลที่อาจเป็นข้อมูลส่วนบุคคล ข้อมูลอ่อนไหว หรือข้อมูลที่ไม่ควรส่งต่อ${labels}\n\nระบบหยุดการส่งเพื่อความปลอดภัย กรุณาลบหรือปกปิดข้อมูลดังกล่าวแล้วลองอีกครั้ง`);
     input.focus();
   }
 
@@ -270,6 +270,14 @@
     form.dataset.privacySubmitGuard = '3';
 
     form.addEventListener('submit', event => {
+      // Static GovPrompt-authored catalog prompts are trusted application instructions,
+      // not user-provided data. Consume the marker once, then restore normal privacy checks
+      // for every subsequent user submission.
+      if (form.dataset.trustedInternalPrompt === 'true') {
+        delete form.dataset.trustedInternalPrompt;
+        return;
+      }
+
       const core = window.GovPromptCore;
       if (!core || typeof core.sanitizeExternalContent !== 'function'
         || typeof core.evaluateProcurementFinanceData !== 'function') {
