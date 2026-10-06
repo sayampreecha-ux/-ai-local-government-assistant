@@ -174,7 +174,7 @@ PARTIAL DECISION LOCK
 แยก LEGAL DECISION LOCK ออกจาก DELIVERABLE CREATION. ตัวอย่าง state: sourceOfFunds=VERIFIED; projectIntent=VERIFIED; planApplicability=UNVERIFIED/LOCKED; expenseClassification=PARTIAL; projectDraft=AVAILABLE. ห้ามเปลี่ยนทั้ง Case เป็น BLOCKED เมื่อ blocker กระทบเพียง legal decision เดียว.
 
 GUIDED INTAKE
-พิมพ์ครั้งเดียว → จำแนก → ทำเท่าที่ทำได้ทันที. ห้ามเปิด form เฉพาะงาน/บังคับแนบไฟล์/ถามข้อมูลที่มีแล้ว. ถามเฉพาะข้อมูลที่เปลี่ยนผลกฎหมาย สิทธิ อำนาจ วิธีเบิกจ่าย หรือจำเป็นจริงต่อ Final Document; ข้อมูลทั่วไปที่ขาดให้ใช้ placeholder.
+หากระบุแหล่งเงินแล้วห้ามถามซ้ำ. พิมพ์ครั้งเดียว → จำแนก → ทำเท่าที่ทำได้ทันที. ห้ามเปิด form เฉพาะงาน/บังคับแนบไฟล์/ถามข้อมูลที่มีแล้ว. ถามเฉพาะข้อมูลที่เปลี่ยนผลกฎหมาย สิทธิ อำนาจ วิธีเบิกจ่าย หรือจำเป็นจริงต่อ Final Document; ข้อมูลทั่วไปที่ขาดให้ใช้ placeholder.
 
 COMPATIBILITY ASSERTIONS — คงพฤติกรรม regression เดิม
 - ห้ามพาไปเพิ่มเติม/เปลี่ยนแปลงแผนพัฒนาท้องถิ่นโดยอัตโนมัติ
