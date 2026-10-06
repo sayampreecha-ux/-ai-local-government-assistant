@@ -274,7 +274,8 @@ function isHealthProjectDraftRequest(query = '') {
 function applyHealthProjectDraftPriority(view, query = '') {
   if (!view?.primary || !isHealthProjectDraftRequest(query)) return view;
   const primary = view.primary;
-  if (!String(primary.workflowStatus || '').startsWith('blocked-')) return view;
+  const hasPendingLegalEvidence = (primary.missingEvidence || []).length > 0 || (primary.missingOfficialEvidence || []).length > 0;
+  if (!hasPendingLegalEvidence) return view;
   const projectDraft = Object.freeze({
     artifactKey: 'project-draft', contractId: 'gov.project.working-draft.v1', contractVersion: '1.0', profile: 'official-style',
     requiredContent: Object.freeze(['principle-and-rationale','objectives','target-group','activities','timeline','budget-outline','indicators','expected-results','responsible-unit']),
