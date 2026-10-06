@@ -50,3 +50,47 @@ test('actual copy/handoff builder preserves health funding policy across all 24 
     assert.match(prompt, rule);
   }
 });
+
+
+test('health funding intake gate keeps unresolved health projects in GP008 until funding source is known', () => {
+  for (const agency of ['อบจ.', 'เทศบาล', 'อบต.']) {
+    const unresolved = core.createSharedContext({ facts: `${agency} หน่วยบริการจะทำโครงการอาหารปลอดภัย` });
+    const unresolvedRoute = core.routeTransaction(unresolved);
+    assert.equal(unresolvedRoute.moduleId, 'GP008');
+    assert.equal(unresolvedRoute.transactionType, 'public-health');
+    assert.equal(unresolvedRoute.reason, 'health-funding-intake');
+    assert.equal(unresolvedRoute.healthFundingIntake?.moduleId, 'GP008');
+
+    const budgetVariants = [
+      `${agency} โครงการอาหารปลอดภัย ใช้งบประมาณ อปท.`,
+      `${agency} โครงการอาหารปลอดภัย ใช้งบของเทศบาล`,
+      `${agency} โครงการอาหารปลอดภัย ใช้งบ อบต.`
+    ];
+    for (const facts of budgetVariants) {
+      const budgetVariantRoute = core.routeTransaction(core.createSharedContext({ facts }));
+      assert.equal(budgetVariantRoute.moduleId, 'GP004');
+      assert.equal(budgetVariantRoute.transactionType, 'planning-budget');
+      assert.notEqual(budgetVariantRoute.reason, 'health-funding-intake');
+    }
+
+    const budget = core.createSharedContext({ facts: `${agency} โครงการอาหารปลอดภัย ใช้งบประมาณ อปท.` });
+    const budgetRoute = core.routeTransaction(budget);
+    assert.equal(budgetRoute.moduleId, 'GP004');
+    assert.equal(budgetRoute.transactionType, 'planning-budget');
+    assert.notEqual(budgetRoute.reason, 'health-funding-intake');
+
+    const maintenanceFund = core.createSharedContext({ facts: `${agency} โครงการอาหารปลอดภัย ใช้เงินบำรุง` });
+    const maintenanceRoute = core.routeTransaction(maintenanceFund);
+    assert.equal(maintenanceRoute.moduleId, 'GP008');
+    assert.equal(maintenanceRoute.transactionType, 'public-health');
+  }
+});
+
+test('health funding intake gate also outranks procurement intent when funding is still unknown', () => {
+  const route = core.routeTransaction(core.createSharedContext({
+    facts: 'รพ.สต.จะซื้อเครื่องตรวจคลื่นไฟฟ้าหัวใจ ต้องทำอย่างไร'
+  }));
+  assert.equal(route.moduleId, 'GP008');
+  assert.equal(route.reason, 'health-funding-intake');
+  assert.equal(route.actionIntent?.moduleId, 'GP003');
+});
