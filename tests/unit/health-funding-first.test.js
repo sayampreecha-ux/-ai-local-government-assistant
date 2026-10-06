@@ -34,3 +34,19 @@ test('unrelated tasks do not get health policy; health page and fund-specific wo
   assert.match(core.buildHealthFundingInstructions('สอน. ใช้เงินกองทุน'), /ตรวจเงื่อนไขและกฎของแหล่งเงินนั้นก่อน/);
   assert.match(readFileSync('gp008.html','utf8'), /buildHealthFundingInstructions/);
 });
+
+test('actual copy/handoff builder preserves health funding policy across all 24 cases', () => {
+  const source = readFileSync('assets/js/ui/status-copy.js', 'utf8');
+  const start = source.indexOf('  function buildHandoffPrompt(card) {');
+  const end = source.indexOf('\n  function ', start + 1);
+  const scope = { window: sandbox.window, findQuestion: card => card.question,
+    findDomain: () => 'สาธารณสุข', isPrCreationQuestion: () => false,
+    collectOfficialSources: () => [], buildDocumentFormattingBlock: () => '',
+    buildToolRoutingBlock: () => '' };
+  vm.runInNewContext(source.slice(start, end) + '\nthis.build = buildHandoffPrompt;', scope);
+  for (const agency of ['อบจ.', 'เทศบาล', 'อบต.']) for (const [question, rule] of cases) {
+    const prompt = scope.build({ question: agency + ' ' + question });
+    assert.match(prompt, /SOURCE OF FUNDS FIRST/);
+    assert.match(prompt, rule);
+  }
+});
