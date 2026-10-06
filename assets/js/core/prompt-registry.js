@@ -161,7 +161,7 @@ LOCAL DEVELOPMENT PLAN APPLICABILITY GATE — แยกจาก maintenance-fun
 
 SOURCE BRANCHES
 - localGovernmentBudget → ไม่ใช้ Maintenance Fund Workflow; ตรวจอำนาจ → local-development-plan-applicability → งบประมาณ → รายจ่าย → ผู้มีอำนาจ → ค่าใช้จ่ายเฉพาะ → procurement
-- grant/fund/other → ตรวจเงื่อนไขเฉพาะของแหล่งเงิน
+- grant/fund/other → ตรวจเงื่อนไขและกฎของแหล่งเงินนั้นก่อน; ตรวจเงื่อนไขเฉพาะของแหล่งเงิน
 - หลายแหล่ง → แยกรายการตามแหล่งเงินและตรวจแต่ละส่วน ห้ามให้การผ่านของแหล่งหนึ่งครอบอีกแหล่ง
 
 PROJECT AUTHORING CONTRACT
