@@ -11,6 +11,21 @@
     ['GP009', 'education'], ['GP010', 'internal-audit'], ['GP011', 'executive'], ['GP012', 'public-relations'], ['GP013', 'council']
   ]);
 
+  const HEALTH_FUNDING_CONTEXT_PATTERN = /(?:โรงพยาบาล|รพ\\.?สต\\.?|โรงพยาบาลส่งเสริมสุขภาพตำบล|สอน\\.|หน่วยบริการ(?:สาธารณสุข)?|สาธารณสุข|ส่งเสริมสุขภาพ|อาหารปลอดภัย)/i;
+  const EXPLICIT_FUNDING_SOURCE_PATTERN = /(?:เงินบำรุง|งบประมาณ(?:รายจ่าย)?(?:ของ)?\\s*(?:อปท\\.?|อบจ\\.?|อบต\\.?|เทศบาล)|เงินอุดหนุน|กองทุน|เงินเฉพาะ(?:กิจ)?|แหล่งเงินอื่น)/i;
+
+  function detectHealthFundingIntake(request) {
+    const source = normalize(request);
+    const healthContext = HEALTH_FUNDING_CONTEXT_PATTERN.test(source);
+    const hasExplicitFundingSource = EXPLICIT_FUNDING_SOURCE_PATTERN.test(source);
+    if (!healthContext || hasExplicitFundingSource) return null;
+    return Object.freeze({
+      moduleId: 'GP008',
+      weight: 9.6,
+      matched: Object.freeze(['health-context-without-explicit-funding-source'])
+    });
+  }
+
   const DOMAIN_OVERRIDE_RULES = Object.freeze([
     Object.freeze({ moduleId: 'GP013', weight: 9.4, patterns: Object.freeze([
       /(?:ทำ|จัดทำ|ร่าง|สรุป|ถอด(?:เสียง)?).{0,26}(?:รายงาน(?:การ)?ประชุม|ประชุม).{0,20}(?:สภาท้องถิ่น|สภา)/i,
@@ -221,6 +236,7 @@
     if (typeof request !== 'string' || !request.trim()) throw new TypeError('request must be a non-empty string');
     const settings = { ...DEFAULT_OPTIONS, ...options };
     const ranking = scoreRequest(request);
+    const healthFundingIntake = detectHealthFundingIntake(request);
     const domainOverride = detectDomainOverride(request);
     const action = detectActionIntent(request);
     const activeModule = V7_MODULE_IDS.includes(options.activeModule) ? options.activeModule : '';
@@ -228,19 +244,20 @@
     const second = ranking[1];
     const hasEvidence = top.rawScore > 0;
     const ambiguous = hasEvidence && second.rawScore > 0 && (top.confidence - second.confidence) < settings.ambiguityGap;
-    const primaryModule = domainOverride?.moduleId || action?.moduleId || (hasEvidence ? top.moduleId : (activeModule || settings.fallbackModule));
+    const primaryModule = healthFundingIntake?.moduleId || domainOverride?.moduleId || action?.moduleId || (hasEvidence ? top.moduleId : (activeModule || settings.fallbackModule));
     const domainModules = ranking.filter(item => item.rawScore > 0 && item.moduleId !== primaryModule).slice(0, 2).map(item => item.moduleId);
     const modules = options.multiModule === false ? [primaryModule] : [...new Set([primaryModule, action?.moduleId, ...domainModules].filter(Boolean))].slice(0, 3);
+    const intakeConfidence = healthFundingIntake ? Math.min(0.99, 0.62 + healthFundingIntake.weight / 20) : 0;
     const overrideConfidence = domainOverride ? Math.min(0.99, 0.58 + domainOverride.weight / 20) : 0;
     const actionConfidence = action ? Math.min(0.99, 0.55 + action.weight / 20) : 0;
     return Object.freeze({
       primaryModule,
       modules: Object.freeze(modules),
-      confidence: domainOverride ? overrideConfidence : (action ? actionConfidence : (hasEvidence ? top.confidence : 0)),
-      fallback: !domainOverride && !action && !hasEvidence,
-      ambiguous: !domainOverride && !action && ambiguous,
-      ranking: Object.freeze(ranking), domainOverride, actionIntent: action,
-      reason: domainOverride ? 'strong-domain-override' : (action ? 'action-intent-primary' : (hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence'))
+      confidence: healthFundingIntake ? intakeConfidence : (domainOverride ? overrideConfidence : (action ? actionConfidence : (hasEvidence ? top.confidence : 0))),
+      fallback: !healthFundingIntake && !domainOverride && !action && !hasEvidence,
+      ambiguous: !healthFundingIntake && !domainOverride && !action && ambiguous,
+      ranking: Object.freeze(ranking), healthFundingIntake, domainOverride, actionIntent: action,
+      reason: healthFundingIntake ? 'health-funding-intake' : (domainOverride ? 'strong-domain-override' : (action ? 'action-intent-primary' : (hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence')))
     });
   }
 
@@ -264,13 +281,14 @@
       assistant: MODULES.find(module => module.moduleId === moduleId),
       shouldRedirect: Boolean(currentModuleId && currentModuleId !== moduleId), preservePrompt: true,
       confidence: route.confidence, modules: route.modules, fallback: route.fallback, ambiguous: route.ambiguous,
-      reason: route.reason, domainOverride: route.domainOverride, actionIntent: route.actionIntent, ranking: route.ranking
+      reason: route.reason, healthFundingIntake: route.healthFundingIntake, domainOverride: route.domainOverride, actionIntent: route.actionIntent, ranking: route.ranking
     });
   }
 
   window.GovPromptCore = window.GovPromptCore || {};
   Object.assign(window.GovPromptCore, {
     MODULES, V7_MODULE_IDS, TRANSACTION_RULES, DOMAIN_OVERRIDE_RULES, ACTION_INTENT_RULES, INTENT_RULES, ROUTER_DEFAULTS: DEFAULT_OPTIONS,
-    detectModuleId, detectTransactionType, detectDomainOverride, detectActionIntent, scoreRequest, routeRequest, routeTransaction
+    HEALTH_FUNDING_CONTEXT_PATTERN, EXPLICIT_FUNDING_SOURCE_PATTERN,
+    detectModuleId, detectTransactionType, detectHealthFundingIntake, detectDomainOverride, detectActionIntent, scoreRequest, routeRequest, routeTransaction
   });
 })();
