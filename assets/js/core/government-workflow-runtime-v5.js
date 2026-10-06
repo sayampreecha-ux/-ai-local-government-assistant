@@ -263,6 +263,35 @@ function safeWorkOrder(workOrder) {
   });
 }
 
+const PROJECT_DRAFT_REQUEST_PATTERN = /(?:ทำ|ร่าง|เขียน|จัดทำ)\\s*โครงการ/i;
+const HEALTH_PROJECT_CONTEXT_PATTERN = /(?:รพ\\.?สต\\.?|รพสต|หน่วยบริการ(?:สาธารณสุข)?|สาธารณสุข|สุขภาพ|อาหารปลอดภัย)/i;
+
+function isHealthProjectDraftRequest(query = '') {
+  const text = String(query || '').trim();
+  return PROJECT_DRAFT_REQUEST_PATTERN.test(text) && HEALTH_PROJECT_CONTEXT_PATTERN.test(text);
+}
+
+function applyHealthProjectDraftPriority(view, query = '') {
+  if (!view?.primary || !isHealthProjectDraftRequest(query)) return view;
+  const primary = view.primary;
+  if (!String(primary.workflowStatus || '').startsWith('blocked-')) return view;
+  const projectDraft = Object.freeze({
+    artifactKey: 'project-draft', contractId: 'gov.project.working-draft.v1', contractVersion: '1.0', profile: 'official-style',
+    requiredContent: Object.freeze(['principle-and-rationale','objectives','target-group','activities','timeline','budget-outline','indicators','expected-results','responsible-unit']),
+    requiredEvidence: Object.freeze([]), requiresSignoff: true, status: 'draft-available'
+  });
+  const patchedPrimary = Object.freeze({ ...primary,
+    action: 'generate-deliverables', actionLabel: 'จัดทำร่างโครงการจากข้อมูลที่มี พร้อมล็อกเฉพาะข้อกฎหมายที่ยังไม่ยืนยัน',
+    deliverables: Object.freeze([projectDraft, ...(primary.deliverables || [])]),
+    qualityGate: Object.freeze({ ...primary.qualityGate, deliverableReady: true, workflowReady: false }),
+    deliverablePlan: Object.freeze({ ...primary.deliverablePlan, status: 'DRAFT_SPEC_READY', qualityStatus: 'DRAFT_AVAILABLE', artifacts: Object.freeze([projectDraft, ...(primary.deliverablePlan?.artifacts || [])]) }),
+    partialDecisionLock: Object.freeze({ enabled: true, projectDraft: 'AVAILABLE', legalApprovalReadiness: 'BLOCKED', lockedEvidence: Object.freeze(uniq([...(primary.missingEvidence || []), ...(primary.missingOfficialEvidence || [])])) })
+  });
+  return Object.freeze({ ...view, status: 'draft-available/legal-decision-locked', primary: patchedPrimary,
+    workflows: Object.freeze((view.workflows || []).map(item => item.workflowId === primary.workflowId ? patchedPrimary : item)),
+    governance: Object.freeze({ ...view.governance, failClosed: false }) });
+}
+
 function citizenAction(status) {
   if (status === 'blocked-missing-evidence') return 'acquire-evidence';
   if (status === 'blocked-official-source') return 'verify-official-evidence';
@@ -604,9 +633,10 @@ export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts 
       deliverableContractsRequired: true
     })
   });
-  persistCaseView(view);
-  publishWorkflowProgressView(view);
-  return view;
+  const prioritizedView = applyHealthProjectDraftPriority(view, caseContext.effectiveQuery);
+  persistCaseView(prioritizedView);
+  publishWorkflowProgressView(prioritizedView);
+  return prioritizedView;
 }
 
 function formatList(values, emptyText = 'ไม่มี') {
