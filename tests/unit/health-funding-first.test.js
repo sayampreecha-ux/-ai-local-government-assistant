@@ -162,3 +162,18 @@ test('health project typo still resolves explicit project deliverable', () => {
   assert.match(result.prompt, /DELIVERABLE OVERRIDE: intent=create_project; deliverable=project/);
   assert.match(result.prompt, /projectDraft=AVAILABLE/);
 });
+
+test('health service aliases route project requests through health context without matching ordinary teaching', () => {
+  for (const question of ['ทำโครงการสอน.', 'ทำโครงการรพ.สต.', 'ทำโครงการรพสต', 'ทำโครงการสอน.เฉลิมพระเกียรติฯ']) {
+    const funding = core.extractHealthFundingContext(question);
+    assert.equal(funding.healthContext, true, question);
+    assert.equal(funding.facilityType, 'healthServiceUnit', question);
+    assert.equal(funding.projectIntent, true, question);
+    const context = core.createSharedContext({ facts: question });
+    const route = core.routeTransaction(context);
+    const result = core.createGovernmentPrompt({ question, context, route });
+    assert.equal(result.taskPlan.deliverable, 'project', question);
+    assert.match(result.prompt, /SOURCE OF FUNDS FIRST/, question);
+  }
+  assert.equal(core.extractHealthFundingContext('ทำโครงการสอนนักเรียนเรื่องการอ่าน').healthContext, false);
+});
