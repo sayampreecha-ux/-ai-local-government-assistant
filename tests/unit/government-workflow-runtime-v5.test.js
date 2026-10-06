@@ -71,4 +71,6 @@ test('health project drafting remains available while legal evidence is partiall
   assert.ok(view.primary.missingEvidence.includes('serviceScope'));
   const block = buildWorkflowPromptBlock(view);
   assert.match(block,/จัดทำร่างโครงการจากข้อมูลที่มี/);
+  assert.match(block,/สถานะ: draft-available\/legal-decision-locked/);
+  assert.match(block,/Partial Decision Lock: projectDraft=AVAILABLE; legalApprovalReadiness=BLOCKED/);
 });
