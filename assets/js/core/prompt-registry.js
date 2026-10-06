@@ -85,7 +85,7 @@
     if (/(?:บุคคล|บรรจุ|แต่งตั้ง|เลื่อนเงินเดือน|เลื่อนระดับ|ทดลองงาน|คุณสมบัติปลัด|วินัย|พนักงาน|ข้าราชการ|อัตรากำลัง)/i.test(source)) domains.push('hr');
     if (/(?:หนังสือราชการ|หนังสือ|บันทึกข้อความ|บันทึก|สารบรรณ|ร่างหนังสือ|คำสั่ง|ประกาศ)/i.test(source) || (meetingMinutes && !councilMeeting)) domains.push('records');
     if (/(?:กฎหมาย|ระเบียบ|อำนาจ|ข้อหารือ|คำพิพากษา|มาตรา|สิทธิ|หนังสือเวียน|บทเฉพาะกาล|หลักเกณฑ์)/i.test(source)) domains.push('legal');
-    if (/(?:รพ\.สต|รพสต|สาธารณสุข|สุขภาพ|เงินบำรุง|ผู้ป่วย|อสม\.?|ยา|เวชภัณฑ์|เบาหวาน)/i.test(source)) domains.push('health');
+    if (/(?:รพ\.สต|รพสต|สอน\.(?:เฉลิมพระเกียรติ(?:ฯ)?)?|สาธารณสุข|สุขภาพ|เงินบำรุง|ผู้ป่วย|อสม\.?|ยา|เวชภัณฑ์|เบาหวาน)/i.test(source)) domains.push('health');
     if (/(?:ถนน|สะพาน|ก่อสร้าง|งานช่าง|วิศวกรรม|แบบ|ประมาณราคา|ผู้รับจ้าง|หน้างาน|ความหนาแน่นดิน)/i.test(source)) domains.push('engineering');
     if (councilMeeting) domains.push('council');
     if (/(?:ประชาสัมพันธ์|โพสต์|ข่าว|อินโฟกราฟิก|แคปชัน|โปสเตอร์|เชิญใช้)/i.test(source)) domains.push('pr');
@@ -95,7 +95,7 @@
   // Instruction policy, not a verified legal ruling or an authorization to spend.
   function extractHealthFundingContext(question = '', { healthContext = false } = {}) {
     const text = String(question).normalize('NFC');
-    const isHealth = healthContext || /(?:เงินบำรุง|โรงพยาบาล|รพ\.?สต\.?|รพสต|โรงพยาบาลส่งเสริมสุขภาพตำบล|สอน\.|หน่วยบริการ(?:สาธารณสุข)?|สาธารณสุข|ส่งเสริมสุขภาพ|อาหารปลอดภัย)/i.test(text);
+    const isHealth = healthContext || /(?:เงินบำรุง|โรงพยาบาล|รพ\.?สต\.?|รพสต|โรงพยาบาลส่งเสริมสุขภาพตำบล|สอน\.(?:เฉลิมพระเกียรติ(?:ฯ)?)?|หน่วยบริการ(?:สาธารณสุข)?|สาธารณสุข|ส่งเสริมสุขภาพ|อาหารปลอดภัย)/i.test(text);
     if (!isHealth) return Object.freeze({ healthContext: false, sourceOfFunds: 'not-applicable', facilityType: 'unknown', projectIntent: false });
     let sourceOfFunds = 'unknown';
     if (/เงินบำรุง/i.test(text)) sourceOfFunds = 'maintenanceFund';
@@ -103,7 +103,7 @@
     else if (/เงินอุดหนุน/i.test(text)) sourceOfFunds = 'grant';
     else if (/กองทุน/i.test(text)) sourceOfFunds = 'fund';
     else if (/เงินเฉพาะ(?:กิจ)?|เงินอื่น|แหล่งเงินอื่น/i.test(text)) sourceOfFunds = 'other';
-    const facilityType = /รพ\.?สต\.?|รพสต|โรงพยาบาลส่งเสริมสุขภาพตำบล|สอน\.|หน่วยบริการ(?:สาธารณสุข)?/i.test(text)
+    const facilityType = /รพ\.?สต\.?|รพสต|โรงพยาบาลส่งเสริมสุขภาพตำบล|สอน\.(?:เฉลิมพระเกียรติ(?:ฯ)?)?|หน่วยบริการ(?:สาธารณสุข)?/i.test(text)
       ? 'healthServiceUnit'
       : /โรงพยาบาล/i.test(text) ? 'hospital' : 'unknown';
     const projectIntent = /(?:ทำ|ร่าง|เขียน|จัดทำ|ขอแบบ|ขอร่าง)\s*โค(?:รงการ|รการ)/i.test(text);
