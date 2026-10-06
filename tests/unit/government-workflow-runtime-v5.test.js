@@ -58,3 +58,17 @@ test('budget runtime worker and production verifier modules are syntactically va
     'src/government-workflow-engine.js','src/government-workflow-state-machine-v2.js','scripts/build-static.mjs','scripts/verify-frontend-production.mjs'
   ]) assert.doesNotThrow(() => execFileSync(process.execPath,['--check',file],{stdio:'pipe'}),file);
 });
+
+
+test('health project drafting remains available while legal evidence is partially locked', () => {
+  const view = buildWorkflowRuntimeView({ query:'ทำโครงการอาหารปลอดภัย กินดีชีวีมีสุข รพสต' });
+  assert.equal(view.status,'draft-available/legal-decision-locked');
+  assert.equal(view.primary.action,'generate-deliverables');
+  assert.equal(view.primary.partialDecisionLock?.projectDraft,'AVAILABLE');
+  assert.equal(view.primary.partialDecisionLock?.legalApprovalReadiness,'BLOCKED');
+  assert.ok(view.primary.deliverables.some(item => item.artifactKey === 'project-draft' && item.status === 'draft-available'));
+  assert.ok(view.primary.missingEvidence.includes('healthAuthority'));
+  assert.ok(view.primary.missingEvidence.includes('serviceScope'));
+  const block = buildWorkflowPromptBlock(view);
+  assert.match(block,/จัดทำร่างโครงการจากข้อมูลที่มี/);
+});
