@@ -106,7 +106,7 @@
     const facilityType = /รพ\.?สต\.?|รพสต|โรงพยาบาลส่งเสริมสุขภาพตำบล|สอน\.|หน่วยบริการ(?:สาธารณสุข)?/i.test(text)
       ? 'healthServiceUnit'
       : /โรงพยาบาล/i.test(text) ? 'hospital' : 'unknown';
-    const projectIntent = /(?:ทำ|ร่าง|เขียน|จัดทำ|ขอแบบ|ขอร่าง)\s*โครงการ/i.test(text);
+    const projectIntent = /(?:ทำ|ร่าง|เขียน|จัดทำ|ขอแบบ|ขอร่าง)\s*โค(?:รงการ|รการ)/i.test(text);
     return Object.freeze({ healthContext: true, sourceOfFunds, facilityType, projectIntent });
   }
 
