@@ -74,3 +74,13 @@ test('health project drafting remains available while legal evidence is partiall
   assert.match(block,/สถานะ: draft-available\/legal-decision-locked/);
   assert.match(block,/Partial Decision Lock: projectDraft=AVAILABLE; legalApprovalReadiness=BLOCKED/);
 });
+
+
+test('health project typo keeps project draft available under legal evidence lock', () => {
+  const view = buildWorkflowRuntimeView({ query:'ทำโครการรพสต' });
+  assert.equal(view.status,'draft-available/legal-decision-locked');
+  assert.equal(view.primary.partialDecisionLock?.projectDraft,'AVAILABLE');
+  assert.ok(view.primary.deliverables.some(item => item.artifactKey === 'project-draft'));
+  const block = buildWorkflowPromptBlock(view);
+  assert.match(block,/สถานะ: draft-available\/legal-decision-locked/);
+});
