@@ -264,7 +264,7 @@ function safeWorkOrder(workOrder) {
 }
 
 const PROJECT_DRAFT_REQUEST_PATTERN = /(?:ทำ|ร่าง|เขียน|จัดทำ)\s*โค(?:รงการ|รการ)/i;
-const HEALTH_PROJECT_CONTEXT_PATTERN = /(?:รพ\.?สต\.?|รพสต|หน่วยบริการ(?:สาธารณสุข)?|สาธารณสุข|สุขภาพ|อาหารปลอดภัย)/i;
+const HEALTH_PROJECT_CONTEXT_PATTERN = /(?:รพ\.?สต\.?|รพสต|สอน\.(?:เฉลิมพระเกียรติ(?:ฯ)?)?|หน่วยบริการ(?:สาธารณสุข)?|สาธารณสุข|สุขภาพ|อาหารปลอดภัย)/i;
 
 function isHealthProjectDraftRequest(query = '') {
   const text = String(query || '').trim();
