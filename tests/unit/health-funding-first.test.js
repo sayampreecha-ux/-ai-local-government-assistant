@@ -61,6 +61,18 @@ test('health funding intake gate keeps unresolved health projects in GP008 until
     assert.equal(unresolvedRoute.reason, 'health-funding-intake');
     assert.equal(unresolvedRoute.healthFundingIntake?.moduleId, 'GP008');
 
+    const budgetVariants = [
+      `${agency} โครงการอาหารปลอดภัย ใช้งบประมาณ อปท.`,
+      `${agency} โครงการอาหารปลอดภัย ใช้งบของเทศบาล`,
+      `${agency} โครงการอาหารปลอดภัย ใช้งบ อบต.`
+    ];
+    for (const facts of budgetVariants) {
+      const budgetVariantRoute = core.routeTransaction(core.createSharedContext({ facts }));
+      assert.equal(budgetVariantRoute.moduleId, 'GP004');
+      assert.equal(budgetVariantRoute.transactionType, 'planning-budget');
+      assert.notEqual(budgetVariantRoute.reason, 'health-funding-intake');
+    }
+
     const budget = core.createSharedContext({ facts: `${agency} โครงการอาหารปลอดภัย ใช้งบประมาณ อปท.` });
     const budgetRoute = core.routeTransaction(budget);
     assert.equal(budgetRoute.moduleId, 'GP004');
