@@ -118,7 +118,7 @@
   function inferExplicitPrefix(source) {
     const compact = source.replace(/\s+/g, '');
     if (EXPLICIT_DOCUMENT_PREFIXES.some(prefix => compact.startsWith(prefix))) return 'official_document';
-    if (EXPLICIT_PROJECT_PREFIXES.some(prefix => compact.startsWith(prefix))) return 'project';
+    if (EXPLICIT_PROJECT_PREFIXES.some(prefix => compact.startsWith(prefix))) return 'project';\n    if (/^โครงการ(?:สถานีอนามัย|รพ\\.?สต\\.?|รพสต|สอน\\.)/i.test(compact)) return 'project';
     return '';
   }
 
