@@ -94,3 +94,53 @@ test('health funding intake gate also outranks procurement intent when funding i
   assert.equal(route.reason, 'health-funding-intake');
   assert.equal(route.actionIntent?.moduleId, 'GP003');
 });
+
+
+test('golden health project extracts maintenance fund and preserves project deliverable', () => {
+  const question = 'ทำโครงการอาหารปลอดภัย กินดีชีวีมีสุข ใช้เงินบำรุง รพ.สต.';
+  const funding = core.extractHealthFundingContext(question);
+  assert.equal(funding.sourceOfFunds, 'maintenanceFund');
+  assert.equal(funding.facilityType, 'healthServiceUnit');
+  assert.equal(funding.projectIntent, true);
+  const context = core.createSharedContext({ facts: question });
+  const route = core.routeTransaction(context);
+  const result = core.createGovernmentPrompt({ question, context, route });
+  assert.equal(result.taskPlan.action, 'create_project');
+  assert.equal(result.taskPlan.deliverable, 'project');
+  assert.equal(result.outputPlan.id, 'project');
+  assert.match(result.prompt, /sourceOfFunds=maintenanceFund \(VERIFIED FROM USER TEXT\)/);
+  assert.match(result.prompt, /ห้ามถามแหล่งเงินซ้ำ/);
+  assert.match(result.prompt, /DELIVERABLE OVERRIDE: intent=create_project; deliverable=project/);
+  assert.match(result.prompt, /LOCAL DEVELOPMENT PLAN APPLICABILITY GATE/);
+  assert.match(result.prompt, /PLAN_REQUIRED_EXISTING \/ PLAN_REQUIRED_ADD \/ PLAN_REQUIRED_MODIFY \/ PLAN_NOT_REQUIRED \/ PLAN_UNVERIFIED/);
+  assert.match(result.prompt, /projectDraft=AVAILABLE/);
+  assert.match(result.prompt, /ห้ามหยุดที่บทวิเคราะห์/);
+});
+
+test('maintenance fund expense gates classify before council routing', () => {
+  const material = core.buildHealthFundingInstructions('รพ.สต.ซื้อวัสดุทำแผลจากเงินบำรุง');
+  assert.match(material, /EXPENSE CLASSIFICATION GATE/);
+  assert.match(material, /SPECIAL GATE — เปิดเฉพาะเมื่อจำแนก/);
+  const equipment = core.buildHealthFundingInstructions('ซื้อเครื่องมือแพทย์ด้วยเงินบำรุง');
+  assert.match(equipment, /เครื่องมือแพทย์ → จำแนกวัสดุ\/ครุภัณฑ์ก่อน/);
+  const roof = core.buildHealthFundingInstructions('ซ่อมหลังคาหน่วยบริการด้วยเงินบำรุง');
+  assert.match(roof, /ซ่อมหลังคา\/ปรับปรุงอาคาร → ตรวจ scope/);
+});
+
+test('local budget branch exits maintenance workflow and unknown funding asks once without blocking draft', () => {
+  const budget = core.extractHealthFundingContext('โครงการอาหารปลอดภัยของหน่วยบริการ ใช้งบประมาณเทศบาล');
+  assert.equal(budget.sourceOfFunds, 'localGovernmentBudget');
+  const budgetPrompt = core.buildHealthFundingInstructions('โครงการอาหารปลอดภัยของหน่วยบริการ ใช้งบประมาณเทศบาล');
+  assert.match(budgetPrompt, /หยุด Maintenance Fund Workflow/);
+  const unknown = core.extractHealthFundingContext('ทำโครงการอาหารปลอดภัยของ รพ.สต.');
+  assert.equal(unknown.sourceOfFunds, 'unknown');
+  const unknownPrompt = core.buildHealthFundingInstructions('ทำโครงการอาหารปลอดภัยของ รพ.สต.');
+  assert.match(unknownPrompt, /ถามเพียงครั้งเดียว/);
+  assert.match(unknownPrompt, /ยังร่างส่วนที่ไม่ขึ้นกับแหล่งเงินได้/);
+});
+
+test('health funding core remains LGO-neutral', () => {
+  const prompt = core.buildHealthFundingInstructions('ทำโครงการอาหารปลอดภัย ใช้เงินบำรุง รพ.สต.');
+  assert.match(prompt, /localGovernmentOrganization \/ localExecutive \/ localCouncil/);
+  assert.doesNotMatch(prompt, /นายก อบจ\. \/ สภา อบจ\./);
+});
