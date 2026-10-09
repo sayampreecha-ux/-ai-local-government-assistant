@@ -167,16 +167,7 @@
         Object.freeze({ label: 'ค้นและวิเคราะห์กฎหมาย / ระเบียบ', prompt: 'ช่วยค้นและวิเคราะห์กฎหมาย ระเบียบ หรือหนังสือสั่งการที่เกี่ยวข้อง พร้อมฐานอำนาจ เงื่อนไข ความเสี่ยง และข้อเสนอแนะ โดยใช้แหล่งทางการที่เป็นปัจจุบัน' }),
         Object.freeze({ label: 'ตรวจความเสี่ยงทุจริต', prompt: 'ช่วยวิเคราะห์ความเสี่ยงทุจริต จุดควบคุม หลักฐาน และแนวทางป้องกันสำหรับงานนี้' }),
         Object.freeze({ label: 'ตรวจความครบถ้วนเอกสาร', prompt: 'ช่วยทำ checklist ตรวจความครบถ้วนของเอกสารและหลักฐานก่อนเสนอหรืออนุมัติ' }),
-        Object.freeze({ label: 'ประเมินความเสี่ยง / ควบคุมภายใน', prompt: 'เลือกแบบรายงานควบคุมภายในที่ต้องการ', choices: Object.freeze([
-          Object.freeze({"label":"ประเมินความเสี่ยง / มาตรการควบคุม","prompt":"ช่วยประเมินความเสี่ยงและออกแบบมาตรการควบคุมภายในสำหรับกระบวนงานนี้"}),
-          Object.freeze({"label":"ปค.1 หนังสือรับรอง","prompt":"ช่วยจัดทำร่าง ปค.1 หนังสือรับรองการประเมินผลการควบคุมภายใน โดยถามข้อมูลจำเป็นทีละประเด็น ตรวจสอบแบบทางการและหลักฐานก่อนสรุป ห้ามสร้างข้อเท็จจริง","skipGenericIntake":true}),
-          Object.freeze({"label":"ปค.2 แบบประเมินองค์ประกอบ","prompt":"ช่วยจัดทำร่าง ปค.2 ตามแบบที่ใช้บังคับ ตรวจสอบองค์ประกอบ หลักฐานและผู้รับผิดชอบ ถามข้อมูลที่ขาดทีละประเด็น","skipGenericIntake":true}),
-          Object.freeze({"label":"ปค.3 แบบประเมินที่เกี่ยวข้อง","prompt":"ช่วยตรวจสอบว่าหน่วยงานต้องใช้ ปค.3 ฉบับใดตามแบบทางการที่มีผลใช้บังคับ แล้วช่วยร่างจากหลักฐานจริง โดยไม่เดาข้อเท็จจริง","skipGenericIntake":true}),
-          Object.freeze({"label":"ปค.4 รายงานการประเมินองค์ประกอบ","prompt":"ช่วยจัดทำร่าง ปค.4 รายงานการประเมินองค์ประกอบของการควบคุมภายใน ตรวจสอบแบบและหลักฐานก่อนสรุป","skipGenericIntake":true}),
-          Object.freeze({"label":"ปค.5 รายงานการประเมินผล","prompt":"ช่วยจัดทำ ปค.5 รายงานการประเมินผลการควบคุมภายใน เริ่มจากถามชื่อหน่วยงาน ปีงบประมาณ ภารกิจ ความเสี่ยง การควบคุมที่มีอยู่ ผลประเมิน ความเสี่ยงคงเหลือ การปรับปรุง กำหนดเสร็จและผู้รับผิดชอบ ทีละประเด็น หากข้อมูลไม่ครบให้ระบุรอตรวจสอบ ห้ามแต่งข้อมูลจริง","skipGenericIntake":true}),
-          Object.freeze({"label":"ปค.6 รายงานสอบทาน","prompt":"ช่วยจัดทำร่าง ปค.6 รายงานการสอบทานการประเมินผลการควบคุมภายใน ตรวจสอบอำนาจหน้าที่ผู้สอบทาน แบบทางการและหลักฐาน","skipGenericIntake":true}),
-          Object.freeze({"label":"วค.1 / วค.2","prompt":"ช่วยตรวจสอบประเภทหน่วยงานและความจำเป็นในการใช้แบบ วค.1 หรือ วค.2 ตามข้อกำหนดที่ใช้บังคับ แล้วช่วยจัดทำร่างโดยไม่เดาข้อมูล","skipGenericIntake":true})
-        ]) }),
+        Object.freeze({ label: 'ประเมินความเสี่ยง / ควบคุมภายใน', prompt: 'ช่วยประเมินความเสี่ยงและออกแบบมาตรการควบคุมภายในสำหรับกระบวนงานนี้' }),
         Object.freeze({ label: 'ตรวจ PDPA / ข้อมูลส่วนบุคคล', prompt: 'ช่วยตรวจว่าเรื่องนี้มีข้อมูลส่วนบุคคลอะไรที่ไม่จำเป็น ความเสี่ยง PDPA และควรปกปิดหรือจัดการอย่างไร' })
       ])
     })
@@ -418,27 +409,11 @@
       item.className = 'work-catalog-task';
       item.dataset.prompt = String(choice.prompt || '').trim();
       if (choice.intake) item.dataset.localIntake = String(choice.intake);
-      if (choice.skipGenericIntake) item.dataset.skipGenericIntake = 'true';
       item.textContent = String(choice.label || choice.prompt || 'เลือก');
       root.append(item);
     });
-    const isInternalControlChoices = choices.some(choice => /(?:ปค\\.?\\s*[1-6]|วค\\.?\\s*[12])/.test(String(choice.prompt || '')));
-    dialog.classList.toggle('gp-internal-control-choices', isInternalControlChoices);
-    dialogTitle.textContent = isInternalControlChoices ? 'เลือกแบบรายงานควบคุมภายใน' : 'ต้องการให้ช่วยแบบไหน?';
-    dialogEyebrow.textContent = isInternalControlChoices ? 'เลือกแบบ แล้วไปให้ข้อมูลกับ AI ที่ต้องการได้เลย' : 'เลือกอย่างเดียว แล้วบอกเรื่องหรือแนบข้อมูลได้เลย';
-    if (isInternalControlChoices) {
-      const label = document.createElement('label');
-      label.htmlFor = 'gpControlDetails';
-      label.textContent = 'รายละเอียดงาน (พิมพ์ได้อิสระ)';
-      label.style.cssText = 'display:block;margin:12px 0 6px;font-weight:700';
-      const details = document.createElement('textarea');
-      details.id = 'gpControlDetails';
-      details.rows = 4;
-      details.maxLength = 6000;
-      details.placeholder = 'เช่น จัดทำ ปค.5 กองช่าง อบจ.พะเยา ปี 2569 งานก่อสร้างล่าช้า';
-      details.style.cssText = 'display:block;box-sizing:border-box;width:100%;min-height:100px;padding:12px;border:1px solid #a8bbb1;border-radius:10px;font:inherit;resize:vertical';
-      root.prepend(label, details);
-    }
+    dialogTitle.textContent = 'ต้องการให้ช่วยแบบไหน?';
+    dialogEyebrow.textContent = 'เลือกอย่างเดียว แล้วบอกเรื่องหรือแนบข้อมูลได้เลย';
     dialogContent.replaceChildren(root);
     if (!dialog.open) dialog.showModal();
     return true;
@@ -573,47 +548,14 @@
       return;
     }
 
-    const basePrompt = String(button.dataset.prompt || '').trim();
-    const controlDetails = dialog?.classList.contains('gp-internal-control-choices')
-      ? String(dialog.querySelector('#gpControlDetails')?.value || '').trim() : '';
-    const prompt = controlDetails
-      ? basePrompt + '\nรายละเอียดที่ผู้ใช้ระบุ: ' + controlDetails
-      : basePrompt;
+    const prompt = String(button.dataset.prompt || '').trim();
     if (!prompt) return;
 
     event.preventDefault();
     event.stopImmediatePropagation();
     if (dialog?.open && dialog.contains(button)) dialog.close();
-    if (button.dataset.skipGenericIntake === 'true' && /(?:ปค\\.?\\s*[1-6]|วค\\.?\\s*[12])/.test(prompt)) {
-      const handoffPrompt = [
-        prompt,
-        'รูปแบบการทำงาน: GovPrompt สร้างคำสั่งเท่านั้น ให้ AI ปลายทางสนทนากับผู้ใช้และจัดทำเอกสาร ไม่ให้ผู้ใช้กรอกฟอร์มใน GovPrompt',
-        'เริ่มถามข้อมูลที่จำเป็นเพียงหนึ่งประเด็นต่อครั้ง และไม่ถามซ้ำข้อมูลที่ผู้ใช้ให้ไว้แล้ว; เมื่อมีข้อมูลพอให้ร่างรายงานตามแบบทางการทันที',
-        'รับไฟล์หลักฐานที่ AI ปลายทางโดยตรงเมื่อผู้ใช้พร้อมแนบ ไม่อ้างว่า GovPrompt ได้รับหรือตรวจไฟล์แล้ว',
-        'แยกข้อมูลที่ยืนยันแล้วจาก [รอตรวจสอบข้อมูลจริง] ห้ามถือว่าข้อมูลที่ไม่ทราบเป็นความเสี่ยงที่พบจริงหรือเป็นหลักฐานว่าการควบคุมผ่านแล้ว',
-        'ตรวจแบบรายงานและหลักเกณฑ์ทางการฉบับที่ใช้บังคับผ่านเครื่องมือของ AI ปลายทางเมื่อจำเป็น; หากยังไม่ตรวจให้แจ้งข้อจำกัด ไม่แต่งกฎหมายหรือผลประเมิน',
-        'ทำตารางรายงานฉบับร่างและส่งออก Word/PDF เมื่อ AI ปลายทางรองรับ; หากไม่รองรับให้จัดข้อความพร้อมคัดลอก ไม่กล่าวว่าได้สร้างไฟล์แล้ว',
-        'การตรวจรับรอง ลงนาม และการใช้อำนาจจริงต้องผ่านเจ้าหน้าที่หรือผู้มีอำนาจ ไม่ให้ AI รับรองแทน'
-      ].join('\\n');
-      openResultPage(handoffPrompt, { trustedInternal: true, forceIntake: false });
-    } else if (button.dataset.skipGenericIntake === 'true') {
-      openResultPage(prompt, { trustedInternal: true, forceIntake: false });
-    } else {
-      openResultPage(prompt, { trustedInternal: true });
-    }
+    openResultPage(prompt, { trustedInternal: true });
   }, true);
-
-  // Keep the internal-control chooser compact and legible on mobile without changing other dialogs.
-  const internalControlStyle = document.createElement('style');
-  internalControlStyle.id = 'gp-internal-control-dialog-style';
-  internalControlStyle.textContent = `
-    #appDialog.gp-internal-control-choices{box-sizing:border-box;max-width:min(94vw,540px);width:min(94vw,540px);max-height:85dvh;overflow-y:auto;border:1px solid #cbd9d1;border-radius:18px;padding:16px;background:#fff;box-shadow:0 12px 36px #132b2230}
-    #appDialog.gp-internal-control-choices #dialogContent .work-catalog-tasks{display:grid;grid-template-columns:1fr;gap:8px}
-    #appDialog.gp-internal-control-choices #dialogContent .work-catalog-task{width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left}
-    @media(max-width:620px){#appDialog.gp-internal-control-choices{width:calc(100vw - 24px);max-width:calc(100vw - 24px);max-height:80dvh;padding:12px;border-width:1px}}
-  `;
-  document.head.append(internalControlStyle);
-  dialog?.addEventListener('close', () => dialog.classList.remove('gp-internal-control-choices'));
 
   addCatalogStyles();
   const mobileFinalStyle = document.createElement('style');
