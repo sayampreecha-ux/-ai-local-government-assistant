@@ -212,6 +212,8 @@ function renderInto(card, view) {
   if (!card || card.querySelector('[data-workflow-progress-panel]')) return;
   const model = buildWorkflowProgressPanelModel(view);
   if (!model) return;
+  // Internal-control reports are drafted by the selected downstream AI; no GP evidence intake panel.
+  if (model.isInternalControlDraft) return;
   installStyles();
   const panel = document.createElement('section');
   panel.className = 'workflow-progress-panel';
