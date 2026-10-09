@@ -1,4 +1,4 @@
-export const WORKFLOW_PROGRESS_UI_VERSION = '1.3.1';
+export const WORKFLOW_PROGRESS_UI_VERSION = '1.3';
 
 let latestView = null;
 let observerStarted = false;
