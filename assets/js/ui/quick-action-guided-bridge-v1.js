@@ -426,6 +426,19 @@
     dialog.classList.toggle('gp-internal-control-choices', isInternalControlChoices);
     dialogTitle.textContent = isInternalControlChoices ? 'เลือกแบบรายงานควบคุมภายใน' : 'ต้องการให้ช่วยแบบไหน?';
     dialogEyebrow.textContent = isInternalControlChoices ? 'เลือกแบบ แล้วไปให้ข้อมูลกับ AI ที่ต้องการได้เลย' : 'เลือกอย่างเดียว แล้วบอกเรื่องหรือแนบข้อมูลได้เลย';
+    if (isInternalControlChoices) {
+      const label = document.createElement('label');
+      label.htmlFor = 'gpControlDetails';
+      label.textContent = 'รายละเอียดงาน (พิมพ์ได้อิสระ)';
+      label.style.cssText = 'display:block;margin:12px 0 6px;font-weight:700';
+      const details = document.createElement('textarea');
+      details.id = 'gpControlDetails';
+      details.rows = 4;
+      details.maxLength = 6000;
+      details.placeholder = 'เช่น จัดทำ ปค.5 กองช่าง อบจ.พะเยา ปี 2569 งานก่อสร้างล่าช้า';
+      details.style.cssText = 'display:block;box-sizing:border-box;width:100%;min-height:100px;padding:12px;border:1px solid #a8bbb1;border-radius:10px;font:inherit;resize:vertical';
+      root.prepend(label, details);
+    }
     dialogContent.replaceChildren(root);
     if (!dialog.open) dialog.showModal();
     return true;
@@ -560,7 +573,12 @@
       return;
     }
 
-    const prompt = String(button.dataset.prompt || '').trim();
+    const basePrompt = String(button.dataset.prompt || '').trim();
+    const controlDetails = dialog?.classList.contains('gp-internal-control-choices')
+      ? String(dialog.querySelector('#gpControlDetails')?.value || '').trim() : '';
+    const prompt = controlDetails
+      ? basePrompt + '\nรายละเอียดที่ผู้ใช้ระบุ: ' + controlDetails
+      : basePrompt;
     if (!prompt) return;
 
     event.preventDefault();
