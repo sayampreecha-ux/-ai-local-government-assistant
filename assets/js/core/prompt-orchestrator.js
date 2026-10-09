@@ -703,9 +703,9 @@
     // Compact document-specific downstream prompt: no legal-decision boilerplate for routine PK drafting.
     if (taskPlan.action === 'draft' && taskPlan.deliverable === 'official-document'
         && taskPlan.disciplines.includes('audit')
-        && /(?:ป\\s*\\.?\\s*ค\\s*\\.?\\s*[1-6]|ควบคุมภายใน)/iu.test(userQuestion)
+        && /(?:ป\s*\.?\s*ค\s*\.?\s*[1-6]|ควบคุมภายใน)/iu.test(userQuestion)
         && taskPlan.applicableAuthorityCheck.mode === 'NONE') {
-      const formMatches = [...userQuestion.matchAll(/ป\\s*\\.?\\s*ค\\s*\\.?\\s*([1-6])(?!\\d)/giu)].map(match => match[1]);
+      const formMatches = [...userQuestion.matchAll(/ป\s*\.?\s*ค\s*\.?\s*([1-6])(?!\d)/giu)].map(match => match[1]);
       const forms = [...new Set(formMatches)];
       const allForms = /(?:ครบชุด|ทั้งชุด|ทั้งหมด)/.test(userQuestion);
       const selected = allForms ? 'ชุดเอกสารควบคุมภายในที่จำเป็นตามแบบราชการ' : forms.length ? forms.map(n => 'ปค.' + n).join(', ') : 'เอกสารควบคุมภายในตามคำขอ';
