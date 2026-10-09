@@ -700,6 +700,40 @@
       });
     }
 
+    // Compact document-specific downstream prompt: no legal-decision boilerplate for routine PK drafting.
+    if (taskPlan.action === 'draft' && taskPlan.deliverable === 'official-document'
+        && taskPlan.disciplines.includes('audit')
+        && /(?:ป\\s*\\.?\\s*ค\\s*\\.?\\s*[1-6]|ควบคุมภายใน)/iu.test(userQuestion)
+        && taskPlan.applicableAuthorityCheck.mode === 'NONE') {
+      const formMatches = [...userQuestion.matchAll(/ป\\s*\\.?\\s*ค\\s*\\.?\\s*([1-6])(?!\\d)/giu)].map(match => match[1]);
+      const forms = [...new Set(formMatches)];
+      const allForms = /(?:ครบชุด|ทั้งชุด|ทั้งหมด)/.test(userQuestion);
+      const selected = allForms ? 'ชุดเอกสารควบคุมภายในที่จำเป็นตามแบบราชการ' : forms.length ? forms.map(n => 'ปค.' + n).join(', ') : 'เอกสารควบคุมภายในตามคำขอ';
+      const compactPrompt = [
+        'บทบาท: ผู้ช่วยจัดทำเอกสารการควบคุมภายในของหน่วยงานภาครัฐไทย',
+        'งาน: ' + userQuestion,
+        'เอกสารเป้าหมาย: ' + selected,
+        attachmentNames.length ? 'ไฟล์ประกอบ: ' + attachmentNames.join(', ') : '',
+        'วิธีทำงาน',
+        '1. ตรวจแบบราชการต้นฉบับและหลักเกณฑ์ที่ใช้กับประเภทหน่วยงานและปีงบประมาณด้วยเครื่องมือค้นของ AI ปลายทางเอง; หากตรวจไม่ได้ ให้ระบุยังไม่ยืนยันแบบและร่างอย่างมีเงื่อนไข ห้ามอ้างว่าตรวจแล้ว',
+        '2. ใช้ข้อมูลที่ผู้ใช้ให้และเอกสารหลักฐานจริงเท่านั้น ไม่แต่งผลประเมิน ความเสี่ยง การควบคุม การสอบทาน วันที่ ชื่อผู้รับผิดชอบ หรือข้อความรับรอง',
+        '3. เริ่มร่างส่วนที่มีข้อมูลได้ทันทีตามโครงสร้างแบบที่ตรวจยืนยันแล้ว ส่วนที่ยังขาดให้ใส่ [รอตรวจสอบ] พร้อมระบุหลักฐานที่ควรขอ',
+        '4. ถามข้อมูลที่จำเป็นทีละประเด็นในแชตเดียว ไม่สร้างฟอร์ม ไม่บังคับแนบไฟล์ และไม่ถามซ้ำข้อมูลที่ผู้ใช้ให้แล้ว',
+        '5. ถ้าทำหลายแบบ ให้นำข้อมูลที่ยืนยันแล้วมาใช้ร่วมกันโดยตรวจความสอดคล้อง ปค.4 และ ปค.5 ก่อนร่างคำรับรอง ปค.1; ปค.6 ต้องมีหลักฐานการสอบทานของผู้ตรวจสอบภายในจริง',
+        '6. ใช้เฉพาะแบบที่เกี่ยวข้องกับคำขอ ไม่แทรกตัวอย่าง ปค.5 ในคำสั่ง ปค.1 และไม่สมมติว่า ปค.2/ปค.3 ต้องมี',
+        '7. ตรวจความครบถ้วนและความสอดคล้องก่อนส่งร่าง แยกข้อเท็จจริงที่ยืนยันแล้วกับรายการรอตรวจสอบ และให้เจ้าหน้าที่/ผู้มีอำนาจตรวจรับรองก่อนใช้ราชการ',
+        '8. หากผู้ใช้ถามประเด็นตีความกฎหมาย สิทธิ การอนุมัติ หรือเบิกจ่ายแยกต่างหาก ให้ตรวจฐานอำนาจเฉพาะประเด็นนั้น ไม่เปิดกระบวนการวินิจฉัยกฎหมายสำหรับการร่างเอกสารทั่วไป',
+        'ตอบด้วยร่างเอกสารหรือคำถามจำเป็นข้อแรกทันที ไม่อธิบาย Router หรือกติกาภายใน'
+      ].filter(Boolean).join('\\n');
+      return Object.freeze({
+        prompt: compactPrompt, riskFlags, route: activeRoute, taskPlan,
+        outputPlan: Object.freeze({ id: 'internal-control-document', label: 'เอกสารราชการ', format: 'official-document', instructions: Object.freeze([]), confidence: 1, reason: 'internal-control-document' }),
+        outputFormatId: 'auto', presentationPreset: null, governancePlan,
+        qualityGates: gates, casePrecedentGate: null, context: normalizedContext,
+        attachmentNames: Object.freeze(attachmentNames)
+      });
+    }
+
     const prompt = [
       'บทบาท',
       'คุณเป็น Government AI Copilot สำหรับงานราชการไทยแบบครอบคลุม เป้าหมายคือทำงานที่ผู้ใช้ต้องการให้สำเร็จอย่างถูกต้อง ตรวจสอบได้ และพร้อมใช้ โดย Router เป็นเพียงคำแนะนำ ไม่ใช่ข้อจำกัดของความสามารถ',
