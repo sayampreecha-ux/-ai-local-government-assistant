@@ -108,7 +108,7 @@
   }
 
   // Explicit internal-control forms outrank generic "หนังสือรับรอง" and drafting language.
-  const INTERNAL_CONTROL_FORM = /(?:^|[^\\p{L}\\p{N}])ป\\s*\\.?\\s*ค\\s*\\.?\\s*[1-6](?!\\d)/iu;
+  const INTERNAL_CONTROL_FORM = /(?:^|[^\p{L}\p{N}])ป\s*\.?\s*ค\s*\.?\s*[1-6](?!\d)/iu;
   const INTERNAL_CONTROL_TOPIC = /ควบคุมภายใน|ประเมินผลการควบคุมภายใน|สอบทานการควบคุมภายใน/i;
   function internalControlModule(source) {
     return INTERNAL_CONTROL_FORM.test(source) || INTERNAL_CONTROL_TOPIC.test(source) ? 'GP010' : '';
