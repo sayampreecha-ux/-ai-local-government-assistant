@@ -507,8 +507,7 @@
   function planUniversalTask(question, context = {}) {
     const source = normalizeForReasoning([question, context?.facts, context?.desiredOutput].filter(Boolean).join(' '));
     if (!source) throw new TypeError('question must be a non-empty string');
-    const internalControlDraft = /(?:^|[^\p{L}\p{N}])ป\s*\.?\s*ค\s*\.?\s*[1-6](?!\d)/iu.test(question) && /(?:ร่าง|จัดทำ|ทำ|เขียน|เตรียม)/.test(question);
-    const internalControlWorkflow = /(?:^|[^\\p{L}\\p{N}])ป\\s*\\.?\\s*ค\\s*\\.?\\s*[1-6](?!\\d)/iu.test(question) || /(?:ควบคุมภายใน|ประเมินองค์ประกอบของการควบคุมภายใน)/.test(question);
+    const internalControlWorkflow = /(?:^|[^\p{L}\p{N}])ป\s*\.?\s*ค\s*\.?\s*[1-6](?!\d)/iu.test(question) || /(?:ควบคุมภายใน|ประเมินองค์ประกอบของการควบคุมภายใน)/.test(question);
     const explicitLegalDecision = /(?:วินิจฉัย|ตีความกฎหมาย|ชอบด้วยกฎหมาย|ผิดกฎหมาย|เบิกได้|อนุมัติได้|มีอำนาจ|คำพิพากษา|ข้อหารือ)/.test(question);
     const internalControlDocument = internalControlWorkflow && !explicitLegalDecision && /(?:ร่าง|จัดทำ|ทำ|เขียน|เตรียม|ตรวจทาน|รายงาน)/.test(question);
     const riskLevel = internalControlDocument ? 'MEDIUM' : classifyRiskLevel(source);
