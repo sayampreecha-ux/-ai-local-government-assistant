@@ -422,7 +422,7 @@
       item.textContent = String(choice.label || choice.prompt || 'เลือก');
       root.append(item);
     });
-    const isInternalControlChoices = choices.some(choice => /(?:ปค\\.?\\s*[1-6]|วค\\.?\\s*[12])/.test(String(choice.prompt || '')));
+    const isInternalControlChoices = choices.some(choice => /(?:ปค\.?\s*[1-6]|วค\.?\s*[12])/.test(String(choice.prompt || '')));
     dialog.classList.toggle('gp-internal-control-choices', isInternalControlChoices);
     dialogTitle.textContent = isInternalControlChoices ? 'เลือกแบบรายงานควบคุมภายใน' : 'ต้องการให้ช่วยแบบไหน?';
     dialogEyebrow.textContent = isInternalControlChoices ? 'เลือกแบบ แล้วไปให้ข้อมูลกับ AI ที่ต้องการได้เลย' : 'เลือกอย่างเดียว แล้วบอกเรื่องหรือแนบข้อมูลได้เลย';
@@ -584,7 +584,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     if (dialog?.open && dialog.contains(button)) dialog.close();
-    if (button.dataset.skipGenericIntake === 'true' && /(?:ปค\\.?\\s*[1-6]|วค\\.?\\s*[12])/.test(prompt)) {
+    if (button.dataset.skipGenericIntake === 'true' && /(?:ปค\.?\s*[1-6]|วค\.?\s*[12])/.test(prompt)) {
       const handoffPrompt = [
         prompt,
         'รูปแบบการทำงาน: GovPrompt สร้างคำสั่งเท่านั้น ให้ AI ปลายทางสนทนากับผู้ใช้และจัดทำเอกสาร ไม่ให้ผู้ใช้กรอกฟอร์มใน GovPrompt',
