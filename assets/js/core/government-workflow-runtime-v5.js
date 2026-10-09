@@ -19,9 +19,9 @@ import {
   sanitizeCaseRecord,
   upsertCaseMemory
 } from '../../../src/government-case-memory-v1.js';
-import { publishWorkflowProgressView } from '../ui/workflow-progress-ui-v1.js?v=1.3.0';
+import { publishWorkflowProgressView } from '../ui/workflow-progress-ui-v1.js?v=1.3.1';
 
-export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.7.4';
+export const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.7.5';
 
 const ACTION_LABELS = Object.freeze({
   'repair-workflow-classification': 'ยืนยันประเภทงาน',
@@ -688,7 +688,7 @@ export function buildWorkflowPromptBlock(view) {
       '- ปค.5 ต้องจัดทำตามหัวข้อและตารางในแบบราชการต้นฉบับที่ใช้บังคับ; ตรวจสอบชื่อแบบและความเหมาะสมของ ปค./วค. ตามประเภทหน่วยงานและปีงบประมาณก่อนใช้จริง',
       '- การตรวจฐานอำนาจหรือความถูกต้องตามกฎหมายให้ทำแยกเมื่อมีประเด็นวินิจฉัย ไม่ให้บล็อกการร่างเอกสารจากข้อเท็จจริง',
       '- ห้ามใช้ข้อมูลตัวอย่างจำลองเป็นข้อเท็จจริงจริง; ร่างต้องผ่านการตรวจหลักฐานและรับรองโดยผู้รับผิดชอบก่อนใช้ราชการ'
-    ].join('\\n');
+    ].join('\n');
   }
 
   if (view?.meetingMinutes?.mode === 'draft-from-recorded-facts') {
