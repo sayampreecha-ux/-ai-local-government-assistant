@@ -45,14 +45,14 @@ const COUNCIL_LEGAL_REVIEW_PATTERN = /(?:มติ|ญัตติ|การป�
 const COUNCIL_MEETING_CONTEXT_PATTERN = /(?:สภาท้องถิ่น|ประชุมสภา|รายงาน(?:การ)?ประชุม\s*สภา|สภา\s*(?:อบจ\.?|เทศบาล|อบต\.?|องค์การบริหารส่วนจังหวัด|องค์การบริหารส่วนตำบล)|มติสภา|ญัตติ|ประธานสภา|สมาชิกสภา|องค์ประชุม|สมัยประชุม)/i;
 
 
-const INTERNAL_CONTROL_DRAFT_PATTERN = /(?:จัดทำ|ร่าง|ช่วยทำ|ทำ|เขียน|เตรียม).{0,30}(?:ปค\\.?\\s*[1-6]|วค\\.?\\s*[12]|รายงานการประเมินผลการควบคุมภายใน)|(?:ปค\\.?\\s*[1-6]|วค\\.?\\s*[12]).{0,35}(?:รายงาน|จัดทำ|ร่าง)/i;
+const INTERNAL_CONTROL_DRAFT_PATTERN = /(?:จัดทำ|ร่าง|ช่วยทำ|ทำ|เขียน|เตรียม).{0,30}(?:ปค\.?\s*[1-6]|วค\.?\s*[12]|รายงานการประเมินผลการควบคุมภายใน)|(?:ปค\.?\s*[1-6]|วค\.?\s*[12]).{0,35}(?:รายงาน|จัดทำ|ร่าง)/i;
 export function isInternalControlDraftRequest(query = '') {
   const text = String(query || '');
   return INTERNAL_CONTROL_DRAFT_PATTERN.test(text) && !/(?:ชอบด้วยกฎหมาย|ผิดกฎหมาย|ถูกกฎหมาย|มีอำนาจ|เบิกได้|ทุจริต|วินิจฉัย)/i.test(text.slice(0, 160));
 }
 function buildInternalControlDraftView(caseContext) {
-  const match = String(caseContext.effectiveQuery || '').match(/(?:ปค|วค)\\.?\\s*[1-6]/i);
-  const form = match ? match[0].replace(/\\s/g, '') : 'ปค.5';
+  const match = String(caseContext.effectiveQuery || '').match(/(?:ปค|วค)\.?\s*[1-6]/i);
+  const form = match ? match[0].replace(/\s/g, '') : 'ปค.5';
   const primary = Object.freeze({
     workflowId: 'gov.internal-control-draft', workflowStatus: 'draft-available/facts-pending',
     action: 'generate-deliverables', actionLabel: 'จัดทำร่าง ' + form + ' จากข้อมูลจริง',
