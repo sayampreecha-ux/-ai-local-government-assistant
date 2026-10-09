@@ -1,4 +1,4 @@
-export const WORKFLOW_PROGRESS_UI_VERSION = '1.3';
+export const WORKFLOW_PROGRESS_UI_VERSION = '1.3.1';
 
 let latestView = null;
 let observerStarted = false;
@@ -114,7 +114,8 @@ function uniq(values = []) {
 export function buildWorkflowProgressPanelModel(view) {
   const primary = view?.primary || null;
   if (!primary) return null;
-  const missing = uniq([...(primary.missingEvidence || []), ...(primary.missingOfficialEvidence || [])]);
+  const isInternalControlDraft = primary.workflowId === 'gov.internal-control-draft';
+  const missing = uniq([...(primary.missingEvidence || []), ...(primary.missingOfficialEvidence || []), ...(isInternalControlDraft ? (primary.qualityGate?.missingInformation || []) : [])]);
   const deliverables = (primary.deliverables || []).map((item) => ({
     key: String(item?.artifactKey || ''),
     status: String(item?.status || 'required')
@@ -124,6 +125,7 @@ export function buildWorkflowProgressPanelModel(view) {
   const status = String(primary.workflowStatus || view?.caseStatus || view?.status || 'unknown');
   return Object.freeze({
     workflowId: String(primary.workflowId || ''),
+    isInternalControlDraft,
     stageId: String(primary.currentStage?.id || ''),
     stageTitle: String(primary.currentStage?.title || (status === 'complete' ? 'เสร็จสมบูรณ์' : 'กำลังเตรียมงาน')),
     status,
@@ -247,7 +249,7 @@ function renderInto(card, view) {
     textNode('b', 'ข้อมูล/หลักฐานที่ต้องเพิ่มเติม'),
     textNode('span', model.missing.length
       ? model.missing.slice(0, 5).map((key) => humanizeWorkflowKey(key)).join(' • ')
-      : 'ข้อมูลและหลักฐานที่จำเป็นครบแล้ว')
+      : (model.isInternalControlDraft ? 'รอข้อมูลจริงเพื่อจัดทำรายงาน' : 'ข้อมูลและหลักฐานที่จำเป็นครบแล้ว'))
   );
   const deliverables = document.createElement('div');
   deliverables.className = 'workflow-progress-item';
@@ -261,7 +263,9 @@ function renderInto(card, view) {
 
   const next = document.createElement('div');
   next.className = 'workflow-progress-next';
-  const nextText = model.approvalRequired
+  const nextText = model.isInternalControlDraft
+    ? 'รวบรวมข้อมูลจริงทีละประเด็น → จัดทำร่างรายงาน → ตรวจหลักฐานและส่งออกเอกสาร → เสนอผู้มีอำนาจตรวจลงนาม'
+    : model.approvalRequired
     ? 'หยุดรอผู้มีอำนาจตรวจ/อนุมัติ — AI ไม่อนุมัติแทน'
     : model.riskReviewRequired
       ? 'ตรวจจุดเสี่ยงและยืนยันหลักฐานให้ครบก่อนดำเนินการต่อ'
