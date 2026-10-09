@@ -507,18 +507,22 @@
   function planUniversalTask(question, context = {}) {
     const source = normalizeForReasoning([question, context?.facts, context?.desiredOutput].filter(Boolean).join(' '));
     if (!source) throw new TypeError('question must be a non-empty string');
-    const internalControlDraft = /(?:^|[^\p{L}\p{N}])ป\s*\.?\s*ค\s*\.?\s*[1-6](?!\d)/iu.test(question) && /(?:ร่าง|จัดทำ|ทำ|เขียน|เตรียม)/.test(question);
-    const riskLevel = internalControlDraft ? 'MEDIUM' : classifyRiskLevel(source);
-    const qualityGates = internalControlDraft
-      ? Object.freeze({ ...buildQualityGates(source, riskLevel), evidenceRequired: true })
+    const internalControlWorkflow = /(?:^|[^\p{L}\p{N}])ป\s*\.?\s*ค\s*\.?\s*[1-6](?!\d)/iu.test(question) || /(?:ควบคุมภายใน|ประเมินองค์ประกอบของการควบคุมภายใน)/.test(question);
+    const explicitLegalDecision = /(?:วินิจฉัย|ตีความกฎหมาย|ชอบด้วยกฎหมาย|ผิดกฎหมาย|เบิกได้|อนุมัติได้|มีอำนาจ|คำพิพากษา|ข้อหารือ)/.test(question);
+    const internalControlDocument = internalControlWorkflow && !explicitLegalDecision && /(?:ร่าง|จัดทำ|ทำ|เขียน|เตรียม|ตรวจทาน|รายงาน)/.test(question);
+    const riskLevel = internalControlDocument ? 'MEDIUM' : classifyRiskLevel(source);
+    const qualityGates = internalControlDocument
+      ? Object.freeze({ ...buildQualityGates(source, riskLevel), decisionRequired: false, multiConditionRequired: false, legalVersionRequired: false, evidenceRequired: true })
       : buildQualityGates(source, riskLevel);
-    const applicableAuthorityCheck = buildApplicableAuthorityCheck(question, context);
+    const applicableAuthorityCheck = internalControlDocument
+      ? Object.freeze({ mode: 'NONE', required: false, qualityStatus: null, decisionLock: 'OFF', requiredChecks: Object.freeze([]) })
+      : buildApplicableAuthorityCheck(question, context);
     return Object.freeze({
       version: '7.1',
       standard: 'GovPrompt Prompt Standard v7.1',
-      action: internalControlDraft ? 'draft' : firstMatch(source, ACTIONS, 'answer'),
-      deliverable: internalControlDraft ? 'official-document' : firstMatch(source, DELIVERABLES, 'general-answer'),
-      disciplines: internalControlDraft ? ['audit'] : allMatches(source, DISCIPLINES),
+      action: internalControlDocument ? 'draft' : firstMatch(source, ACTIONS, 'answer'),
+      deliverable: internalControlDocument ? 'official-document' : firstMatch(source, DELIVERABLES, 'general-answer'),
+      disciplines: internalControlDocument ? ['audit'] : allMatches(source, DISCIPLINES),
       riskLevel,
       qualityGates,
       applicableAuthorityCheck,
