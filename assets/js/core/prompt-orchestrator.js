@@ -507,15 +507,18 @@
   function planUniversalTask(question, context = {}) {
     const source = normalizeForReasoning([question, context?.facts, context?.desiredOutput].filter(Boolean).join(' '));
     if (!source) throw new TypeError('question must be a non-empty string');
-    const riskLevel = classifyRiskLevel(source);
-    const qualityGates = buildQualityGates(source, riskLevel);
+    const internalControlDraft = /(?:^|[^\p{L}\p{N}])ป\s*\.?\s*ค\s*\.?\s*[1-6](?!\d)/iu.test(question) && /(?:ร่าง|จัดทำ|ทำ|เขียน|เตรียม)/.test(question);
+    const riskLevel = internalControlDraft ? 'MEDIUM' : classifyRiskLevel(source);
+    const qualityGates = internalControlDraft
+      ? Object.freeze({ ...buildQualityGates(source, riskLevel), evidenceRequired: true })
+      : buildQualityGates(source, riskLevel);
     const applicableAuthorityCheck = buildApplicableAuthorityCheck(question, context);
     return Object.freeze({
       version: '7.1',
       standard: 'GovPrompt Prompt Standard v7.1',
-      action: firstMatch(source, ACTIONS, 'answer'),
-      deliverable: firstMatch(source, DELIVERABLES, 'general-answer'),
-      disciplines: allMatches(source, DISCIPLINES),
+      action: internalControlDraft ? 'draft' : firstMatch(source, ACTIONS, 'answer'),
+      deliverable: internalControlDraft ? 'official-document' : firstMatch(source, DELIVERABLES, 'general-answer'),
+      disciplines: internalControlDraft ? ['audit'] : allMatches(source, DISCIPLINES),
       riskLevel,
       qualityGates,
       applicableAuthorityCheck,
