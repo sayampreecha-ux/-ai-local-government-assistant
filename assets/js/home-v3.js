@@ -239,7 +239,7 @@
     const privacy = prepareExternalPrompt(text);
     if (privacy.blocked || !privacy.safeText) return Object.freeze({ view: null, block: '', status: 'privacy-blocked' });
     try {
-      const runtime = await import('./core/government-workflow-runtime-v5.js?v=5.7.4');
+      const runtime = await import('./core/government-workflow-runtime-v5.js?v=5.7.5');
       const view = runtime.buildWorkflowRuntimeView({ query: privacy.safeText, evidence: Array.isArray(evidence) ? evidence : [] });
       return Object.freeze({ view, block: runtime.buildWorkflowPromptBlock(view), status: 'ready' });
     } catch {
