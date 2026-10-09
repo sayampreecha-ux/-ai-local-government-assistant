@@ -724,7 +724,7 @@
         '7. ตรวจความครบถ้วนและความสอดคล้องก่อนส่งร่าง แยกข้อเท็จจริงที่ยืนยันแล้วกับรายการรอตรวจสอบ และให้เจ้าหน้าที่/ผู้มีอำนาจตรวจรับรองก่อนใช้ราชการ',
         '8. หากผู้ใช้ถามประเด็นตีความกฎหมาย สิทธิ การอนุมัติ หรือเบิกจ่ายแยกต่างหาก ให้ตรวจฐานอำนาจเฉพาะประเด็นนั้น ไม่เปิดกระบวนการวินิจฉัยกฎหมายสำหรับการร่างเอกสารทั่วไป',
         'ตอบด้วยร่างเอกสารหรือคำถามจำเป็นข้อแรกทันที ไม่อธิบาย Router หรือกติกาภายใน'
-      ].filter(Boolean).join('\\n');
+      ].filter(Boolean).join('\n');
       return Object.freeze({
         prompt: compactPrompt, riskFlags, route: activeRoute, taskPlan,
         outputPlan: Object.freeze({ id: 'internal-control-document', label: 'เอกสารราชการ', format: 'official-document', instructions: Object.freeze([]), confidence: 1, reason: 'internal-control-document' }),
