@@ -565,7 +565,11 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     if (dialog?.open && dialog.contains(button)) dialog.close();
-    openResultPage(prompt, { trustedInternal: true, forceIntake: button.dataset.skipGenericIntake === 'true' ? false : undefined });
+    if (button.dataset.skipGenericIntake === 'true') {
+      openResultPage(prompt, { trustedInternal: true, forceIntake: false });
+    } else {
+      openResultPage(prompt, { trustedInternal: true });
+    }
   }, true);
 
   addCatalogStyles();
