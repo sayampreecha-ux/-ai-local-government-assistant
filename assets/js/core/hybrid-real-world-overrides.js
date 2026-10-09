@@ -107,6 +107,13 @@
     return String(value ?? '').normalize('NFC').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
   }
 
+  // Explicit internal-control forms outrank generic "หนังสือรับรอง" and drafting language.
+  const INTERNAL_CONTROL_FORM = /(?:^|[^\p{L}\p{N}])ป\s*\.?\s*ค\s*\.?\s*[1-6](?!\d)/iu;
+  const INTERNAL_CONTROL_TOPIC = /ควบคุมภายใน|ประเมินผลการควบคุมภายใน|สอบทานการควบคุมภายใน/i;
+  function internalControlModule(source) {
+    return INTERNAL_CONTROL_FORM.test(source) || INTERNAL_CONTROL_TOPIC.test(source) ? 'GP010' : '';
+  }
+
   function matchModule(source) {
     for (const rule of RULES) {
       if (rule.patterns.some(pattern => pattern.test(source))) return rule.moduleId;
@@ -134,7 +141,7 @@
 
   core.routeRequest = function routeRequestWithRealWorldGuardrails(request, options = {}) {
     const base = baseRouteRequest(request, options);
-    return correct(base, matchModule(normalize(request)));
+    return correct(base, internalControlModule(normalize(request)) || matchModule(normalize(request)));
   };
 
   if (baseRouteTransaction) {
@@ -146,7 +153,7 @@
         context.documents, context.desiredOutput,
         ...(Array.isArray(context.specialFlags) ? context.specialFlags : [])
       ].filter(Boolean).join(' '));
-      return correct(base, matchModule(source));
+      return correct(base, internalControlModule(source) || matchModule(source));
     };
   }
 
