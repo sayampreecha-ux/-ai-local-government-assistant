@@ -595,9 +595,9 @@
         'ทำตารางรายงานฉบับร่างและส่งออก Word/PDF เมื่อ AI ปลายทางรองรับ; หากไม่รองรับให้จัดข้อความพร้อมคัดลอก ไม่กล่าวว่าได้สร้างไฟล์แล้ว',
         'การตรวจรับรอง ลงนาม และการใช้อำนาจจริงต้องผ่านเจ้าหน้าที่หรือผู้มีอำนาจ ไม่ให้ AI รับรองแทน'
       ].join('\\n');
-      openResultPage(handoffPrompt, { trustedInternal: true, forceIntake: false });
+      openResultPage(handoffPrompt, { trustedInternal: !controlDetails, forceIntake: false });
     } else if (button.dataset.skipGenericIntake === 'true') {
-      openResultPage(prompt, { trustedInternal: true, forceIntake: false });
+      openResultPage(prompt, { trustedInternal: !controlDetails, forceIntake: false });
     } else {
       openResultPage(prompt, { trustedInternal: true });
     }
