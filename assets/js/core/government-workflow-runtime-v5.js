@@ -44,6 +44,30 @@ const MEETING_MINUTES_DRAFT_PATTERN = /(?:ทำ|จัดทำ|ร่าง).{
 const COUNCIL_LEGAL_REVIEW_PATTERN = /(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ).{0,35}(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ)|(?:ชอบด้วยกฎหมาย|ถูกกฎหมาย|ผิดกฎหมาย|มีอำนาจ|ฐานอำนาจ).{0,35}(?:มติ|ญัตติ|การประชุม|ข้อบัญญัติ)|(?:องค์ประชุม|คะแนนเสียง).{0,24}(?:ครบ|พอ|เพียงพอ|ถูกต้อง).{0,12}(?:ไหม|หรือไม่|รึ)|ญัตติ.{0,24}เสนอได้.{0,12}(?:ไหม|หรือไม่)|ประธาน.{0,24}ดำเนินการ.{0,12}ถูกต้อง.{0,12}(?:ไหม|หรือไม่)|คณะกรรมการ.{0,24}มีอำนาจ.{0,24}(?:ไหม|หรือไม่)/i;
 const COUNCIL_MEETING_CONTEXT_PATTERN = /(?:สภาท้องถิ่น|ประชุมสภา|รายงาน(?:การ)?ประชุม\s*สภา|สภา\s*(?:อบจ\.?|เทศบาล|อบต\.?|องค์การบริหารส่วนจังหวัด|องค์การบริหารส่วนตำบล)|มติสภา|ญัตติ|ประธานสภา|สมาชิกสภา|องค์ประชุม|สมัยประชุม)/i;
 
+
+const INTERNAL_CONTROL_DRAFT_PATTERN = /(?:จัดทำ|ร่าง|ช่วยทำ|ทำ|เขียน|เตรียม).{0,30}(?:ปค\\.?\\s*[1-6]|วค\\.?\\s*[12]|รายงานการประเมินผลการควบคุมภายใน)|(?:ปค\\.?\\s*[1-6]|วค\\.?\\s*[12]).{0,35}(?:รายงาน|จัดทำ|ร่าง)/i;
+export function isInternalControlDraftRequest(query = '') {
+  const text = String(query || '');
+  return INTERNAL_CONTROL_DRAFT_PATTERN.test(text) && !/(?:ชอบด้วยกฎหมาย|ผิดกฎหมาย|ถูกกฎหมาย|มีอำนาจ|เบิกได้|ทุจริต|วินิจฉัย)/i.test(text.slice(0, 160));
+}
+function buildInternalControlDraftView(caseContext) {
+  const match = String(caseContext.effectiveQuery || '').match(/(?:ปค|วค)\\.?\\s*[1-6]/i);
+  const form = match ? match[0].replace(/\\s/g, '') : 'ปค.5';
+  const primary = Object.freeze({
+    workflowId: 'gov.internal-control-draft', workflowStatus: 'draft-available/facts-pending',
+    action: 'generate-deliverables', actionLabel: 'จัดทำร่าง ' + form + ' จากข้อมูลจริง',
+    currentStage: Object.freeze({ id: 'internal-control-draft', title: 'จัดทำร่างรายงานควบคุมภายใน' }),
+    completedStages: Object.freeze([]), requiredEvidence: Object.freeze([]),
+    missingEvidence: Object.freeze([]), missingOfficialEvidence: Object.freeze([]),
+    deliverables: Object.freeze([Object.freeze({ artifactKey: 'internal-control-report-draft', contractId: 'gov.internal-control.draft.v1', contractVersion: '1.0', profile: 'official-style', requiredContent: Object.freeze(['form-identification','verified-facts','risk-control-assessment','responsible-person','human-review']), requiredEvidence: Object.freeze([]), requiresSignoff: true, status: 'draft-available' })]),
+    nextInputs: Object.freeze(['organization-and-fiscal-year']), approvalRequired: true,
+    autoApprovalAllowed: false, riskReviewRequired: false, unresolvedRiskCodes: Object.freeze([]),
+    qualityGate: Object.freeze({ status: 'DRAFT_AVAILABLE', completeness: false, missingInformation: Object.freeze(['organization-and-fiscal-year']), sourceEvidenceReady: false, riskFlags: Object.freeze([]), humanReviewRequired: true, deliverableReady: true, workflowReady: true, substantiveDecisionMade: false, rawEvidenceValuesReturned: false }),
+    handoffs: Object.freeze([])
+  });
+  return Object.freeze({ bridgeVersion: WORKFLOW_RUNTIME_BRIDGE_VERSION, status: 'draft-available', orchestration: 'single-workflow', workflowIds: Object.freeze(['gov.internal-control-draft']), caseId: caseContext.caseId, resumedCase: caseContext.resumed, primary, workflows: Object.freeze([primary]), nextActions: Object.freeze([]), internalControlDraft: Object.freeze({ mode: 'draft-from-evidence', form }), governance: Object.freeze({ rawEvidenceValuesReturned: false, autoApprovalAllowed: false, failClosed: false, noFabrication: true, humanApprovalRequiredWhenDeclared: true, deliverableContractsRequired: true }) });
+}
+
 export function isMeetingMinutesDraftRequest(query = '') {
   const text = String(query || '').trim();
   return MEETING_MINUTES_DRAFT_PATTERN.test(text) && !COUNCIL_LEGAL_REVIEW_PATTERN.test(text);
@@ -512,6 +536,13 @@ export function buildWorkflowRuntimeView({ query = '', evidence = [], artifacts 
   };
   const citizenIntent = detectCitizenServiceIntent(input);
 
+  if (isInternalControlDraftRequest(caseContext.effectiveQuery) && !citizenIntent.matched) {
+    const view = buildInternalControlDraftView(caseContext);
+    persistCaseView(view);
+    publishWorkflowProgressView(view);
+    return view;
+  }
+
   // Drafting minutes records facts that already occurred. It must not be blocked
   // by councilAuthority. Legal validity review remains on the normal gov.council gate.
   if (isMeetingMinutesDraftRequest(caseContext.effectiveQuery) && !citizenIntent.matched) {
@@ -647,6 +678,18 @@ function formatList(values, emptyText = 'ไม่มี') {
 export function buildWorkflowPromptBlock(view) {
   const primary = view?.primary;
   if (!primary) return '';
+
+  if (view?.internalControlDraft?.mode === 'draft-from-evidence') {
+    return [
+      'GovPrompt Internal Control Report Draft Contract v1',
+      '- งานที่เลือก: ' + view.internalControlDraft.form + ' จัดทำร่างรายงานควบคุมภายใน ไม่ใช่การวินิจฉัยกฎหมายหรือการตรวจสอบอำนาจทางการเงิน',
+      '- Answer First: หากมีข้อเท็จจริงพอให้สร้างร่างรายงานทันที; ช่องที่ไม่มีหลักฐานใช้ [รอข้อมูล/ตรวจสอบ] ห้ามแต่งข้อเท็จจริง',
+      '- ถ้าไม่มีข้อมูลหน่วยงานและปีงบประมาณ ให้ถามสองข้อมูลนี้เป็นคำถามแรกสั้น ๆ ไม่ถามประเภทงานซ้ำ และถามเรื่องภารกิจ/ความเสี่ยง/การควบคุม/ผลประเมิน/ความเสี่ยงคงเหลือ/แผนปรับปรุง/กำหนดเสร็จ/ผู้รับผิดชอบต่อทีละประเด็น',
+      '- ปค.5 ต้องจัดทำตามหัวข้อและตารางในแบบราชการต้นฉบับที่ใช้บังคับ; ตรวจสอบชื่อแบบและความเหมาะสมของ ปค./วค. ตามประเภทหน่วยงานและปีงบประมาณก่อนใช้จริง',
+      '- การตรวจฐานอำนาจหรือความถูกต้องตามกฎหมายให้ทำแยกเมื่อมีประเด็นวินิจฉัย ไม่ให้บล็อกการร่างเอกสารจากข้อเท็จจริง',
+      '- ห้ามใช้ข้อมูลตัวอย่างจำลองเป็นข้อเท็จจริงจริง; ร่างต้องผ่านการตรวจหลักฐานและรับรองโดยผู้รับผิดชอบก่อนใช้ราชการ'
+    ].join('\\n');
+  }
 
   if (view?.meetingMinutes?.mode === 'draft-from-recorded-facts') {
     const councilMinutes = view.meetingMinutes.meetingType === 'council';
