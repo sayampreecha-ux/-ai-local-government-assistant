@@ -565,7 +565,19 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     if (dialog?.open && dialog.contains(button)) dialog.close();
-    if (button.dataset.skipGenericIntake === 'true') {
+    if (button.dataset.skipGenericIntake === 'true' && /(?:ปค\\.?\\s*[1-6]|วค\\.?\\s*[12])/.test(prompt)) {
+      const handoffPrompt = [
+        prompt,
+        'รูปแบบการทำงาน: GovPrompt สร้างคำสั่งเท่านั้น ให้ AI ปลายทางสนทนากับผู้ใช้และจัดทำเอกสาร ไม่ให้ผู้ใช้กรอกฟอร์มใน GovPrompt',
+        'เริ่มถามข้อมูลที่จำเป็นเพียงหนึ่งประเด็นต่อครั้ง และไม่ถามซ้ำข้อมูลที่ผู้ใช้ให้ไว้แล้ว; เมื่อมีข้อมูลพอให้ร่างรายงานตามแบบทางการทันที',
+        'รับไฟล์หลักฐานที่ AI ปลายทางโดยตรงเมื่อผู้ใช้พร้อมแนบ ไม่อ้างว่า GovPrompt ได้รับหรือตรวจไฟล์แล้ว',
+        'แยกข้อมูลที่ยืนยันแล้วจาก [รอตรวจสอบข้อมูลจริง] ห้ามถือว่าข้อมูลที่ไม่ทราบเป็นความเสี่ยงที่พบจริงหรือเป็นหลักฐานว่าการควบคุมผ่านแล้ว',
+        'ตรวจแบบรายงานและหลักเกณฑ์ทางการฉบับที่ใช้บังคับผ่านเครื่องมือของ AI ปลายทางเมื่อจำเป็น; หากยังไม่ตรวจให้แจ้งข้อจำกัด ไม่แต่งกฎหมายหรือผลประเมิน',
+        'ทำตารางรายงานฉบับร่างและส่งออก Word/PDF เมื่อ AI ปลายทางรองรับ; หากไม่รองรับให้จัดข้อความพร้อมคัดลอก ไม่กล่าวว่าได้สร้างไฟล์แล้ว',
+        'การตรวจรับรอง ลงนาม และการใช้อำนาจจริงต้องผ่านเจ้าหน้าที่หรือผู้มีอำนาจ ไม่ให้ AI รับรองแทน'
+      ].join('\\n');
+      openResultPage(handoffPrompt, { trustedInternal: true, forceIntake: false });
+    } else if (button.dataset.skipGenericIntake === 'true') {
       openResultPage(prompt, { trustedInternal: true, forceIntake: false });
     } else {
       openResultPage(prompt, { trustedInternal: true });
