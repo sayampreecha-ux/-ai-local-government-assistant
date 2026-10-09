@@ -423,8 +423,10 @@
       item.textContent = String(choice.label || choice.prompt || 'เลือก');
       root.append(item);
     });
-    dialogTitle.textContent = 'ต้องการให้ช่วยแบบไหน?';
-    dialogEyebrow.textContent = 'เลือกอย่างเดียว แล้วบอกเรื่องหรือแนบข้อมูลได้เลย';
+    const isInternalControlChoices = choices.some(choice => /(?:ปค\\.?\\s*[1-6]|วค\\.?\\s*[12])/.test(String(choice.prompt || '')));
+    dialog.classList.toggle('gp-internal-control-choices', isInternalControlChoices);
+    dialogTitle.textContent = isInternalControlChoices ? 'เลือกแบบรายงานควบคุมภายใน' : 'ต้องการให้ช่วยแบบไหน?';
+    dialogEyebrow.textContent = isInternalControlChoices ? 'เลือกแบบ แล้วไปให้ข้อมูลกับ AI ที่ต้องการได้เลย' : 'เลือกอย่างเดียว แล้วบอกเรื่องหรือแนบข้อมูลได้เลย';
     dialogContent.replaceChildren(root);
     if (!dialog.open) dialog.showModal();
     return true;
@@ -583,6 +585,18 @@
       openResultPage(prompt, { trustedInternal: true });
     }
   }, true);
+
+  // Keep the internal-control chooser compact and legible on mobile without changing other dialogs.
+  const internalControlStyle = document.createElement('style');
+  internalControlStyle.id = 'gp-internal-control-dialog-style';
+  internalControlStyle.textContent = `
+    #appDialog.gp-internal-control-choices{box-sizing:border-box;max-width:min(94vw,540px);width:min(94vw,540px);max-height:85dvh;overflow-y:auto;border:1px solid #cbd9d1;border-radius:18px;padding:16px;background:#fff;box-shadow:0 12px 36px #132b2230}
+    #appDialog.gp-internal-control-choices #dialogContent .work-catalog-tasks{display:grid;grid-template-columns:1fr;gap:8px}
+    #appDialog.gp-internal-control-choices #dialogContent .work-catalog-task{width:100%;white-space:normal;overflow-wrap:anywhere;text-align:left}
+    @media(max-width:620px){#appDialog.gp-internal-control-choices{width:calc(100vw - 24px);max-width:calc(100vw - 24px);max-height:80dvh;padding:12px;border-width:1px}}
+  `;
+  document.head.append(internalControlStyle);
+  dialog?.addEventListener('close', () => dialog.classList.remove('gp-internal-control-choices'));
 
   addCatalogStyles();
   const mobileFinalStyle = document.createElement('style');
