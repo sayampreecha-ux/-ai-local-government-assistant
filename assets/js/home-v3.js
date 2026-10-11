@@ -349,7 +349,7 @@
       '13. ผลลัพธ์ต้องมี: ข้อเท็จจริง · จำแนกลักษณะงาน · ฐานอำนาจ/แหล่งทางการที่ตรวจ · Employment-like Risk · Scope/Deliverable · ความสอดคล้อง 5 เอกสาร · ข้อมูลที่ขาด · ร่าง TOR · checklist ก่อนใช้จริง',
       'Template Library ใช้เป็นข้อมูลอ้างอิงเท่านั้น หากไม่มีแบบตรงกับงาน ให้สังเคราะห์จากลักษณะงานจริง',
       '=== END SPECIALIZED WORKFLOW ==='
-    ].join('\\n');
+    ].join('\n');
     return Object.freeze({ ...promptBundle, prompt: promptBundle.prompt + block, serviceContractNaturalPerson: true });
   }
   async function preparePrompt(text, workflowId, caseFacts = text) {
@@ -403,6 +403,28 @@
       });
     }
 
+    // Vehicle regulation 2569: scoped enhancement to the existing procurement workflow.
+    // Keep all legal verification in the user's destination AI, not GP's live search.
+    const vehicleRequest = /(?:รถ(?:ราชการ|ส่วนกลาง|ประจำตำแหน่ง|ยนต์ไฟฟ้า|ไฟฟ้า|ของ\s*(?:อบจ|เทศบาล|อบต)|เสียกลางทาง)|ยานพาหนะ(?:ขององค์กรปกครองส่วนท้องถิ่น|\s*อปท)?|(?:ซ่อม|เช่า|ซื้อ|ขอใช้|เบิก|เติมน้ำมัน|ชาร์จ|อัดประจุ).{0,24}รถ|บัตรอัดประจุไฟฟ้า|(?:สก|ปต)\.1)/i.test(text)
+      && /(?:อปท|อบจ|อบต|เทศบาล|ท้องถิ่น|ราชการ|ส่วนกลาง|ประจำตำแหน่ง|ยานพาหนะ|รถไฟฟ้า|รถเสียกลางทาง|บัตรอัดประจุไฟฟ้า|ระเบียบ|ซ่อมรถ)/i.test(text);
+    if (vehicleRequest && !promptBundle.gp223) {
+      const vehicleInstructions = [
+        'งานยานพาหนะองค์กรปกครองส่วนท้องถิ่น พ.ศ. 2569 — วิเคราะห์ในหมวดพัสดุและทรัพย์สินเดิม',
+        'ให้ AI ปลายทางค้นต้นฉบับทางการเอง: ระเบียบกระทรวงมหาดไทยว่าด้วยการใช้และรักษายานพาหนะขององค์กรปกครองส่วนท้องถิ่น พ.ศ. 2569 และหนังสือสั่งการฉบับปัจจุบัน รวมทั้งกฎหมายจัดซื้อจัดจ้างที่ใช้กับเรื่องนั้น ตรวจราชกิจจานุเบกษา/ต้นฉบับพร้อมภาคผนวกและการแก้ไขเพิ่มเติม',
+        'ตรวจ Authority → Version/วันเริ่มใช้บังคับ → Evidence → Reasoning → Human Review; อย่าถือข้อมูลจากอินโฟกราฟิกเป็นข้อกฎหมาย',
+        'จำแนกประเภท: ขอใช้/อนุมัติ/บันทึกการใช้/รถประจำตำแหน่ง/EV/ซื้อหรือเช่า/ซ่อมปกติหรือฉุกเฉิน/เชื้อเพลิงหรืออัดประจุ/แบบฟอร์ม แล้วตอบเฉพาะเรื่องที่ถาม',
+        'กรณีซ่อมเร่งด่วน ต้องตรวจหลักฐานความเร่งด่วน งบประมาณ อำนาจอนุมัติ ข้อกำหนดพัสดุ หลักฐานการซ่อม และประวัติรถจากต้นฉบับก่อน ไม่อนุมัติย้อนหลังหรือฟันธงตามภาพสรุป',
+        'แบบ 1–6 สก.1 ปต.1 รวมถึงเลขข้อ ผู้มีอำนาจลงนาม สิทธิ อัตรา และขั้นตอน ต้องยืนยันจากภาคผนวก/ข้อกฎหมายจริง ห้ามเดา',
+        'ตอบสั้นก่อน แล้วแสดงฐานกฎหมายที่ตรวจได้จริง ขั้นตอน เอกสาร ผู้รับผิดชอบ และความเสี่ยง; หากยังตรวจไม่ครบให้ระบุ Decision Lock/ยังไม่ยืนยัน ห้ามรับรองว่าถูกกฎหมาย',
+        'หากจำเป็นต้องถาม ให้ถามทีละประเด็นในแชตหลัก ไม่สร้างฟอร์มและไม่บังคับแนบไฟล์; ปกปิดข้อมูลส่วนบุคคล และต้องให้เจ้าหน้าที่ผู้มีอำนาจตรวจทานก่อนดำเนินการ'
+      ].join('\n');
+      promptBundle = Object.freeze({
+        ...promptBundle,
+        prompt: `${promptBundle.prompt}\n\n${vehicleInstructions}`,
+        vehicleRegulation2569: true
+      });
+    }
+
     const isPr = Boolean(promptBundle?.prMode);
 
     if (isPr) {
@@ -423,7 +445,7 @@
     const kAuditTask = route?.moduleId === 'GP007' && /ค่า\\s*K|ค่าชดเชยค่างานก่อสร้าง|สัญญาแบบปรับราคาได้|เงินชดเชยค่างาน|CUCEM[-\\s]?K/i.test(text);
     const isMinutesDraft = workflowRuntime?.view?.meetingMinutes?.mode === 'draft-from-recorded-facts';
     const decisionTask = !isMinutesDraft && (Boolean(assistanceRoute?.decisionTask) || Boolean(v8?.isDecisionQuestion?.(text)) || ['legal','procurement','finance','human-resources','internal-audit'].includes(String(route?.transactionType || '').toLowerCase()) || kAuditTask);
-    if (decisionTask && typeof core.officialSearchConnector?.search === 'function') {
+    if (!promptBundle.vehicleRegulation2569 && decisionTask && typeof core.officialSearchConnector?.search === 'function') {
       try {
         searchResult = Object.freeze(await core.officialSearchConnector.search(text, { count: 10, requireFreshness: true }));
       } catch {
@@ -437,7 +459,7 @@
         warning: 'งานนี้ไม่จำเป็นต้องค้นกฎหมายสดโดยอัตโนมัติ — ใช้ Prompt ที่เตรียมไว้ตามประเภทงาน'
       });
     }
-    if (decisionTask && v8) {
+    if (decisionTask && v8 && !promptBundle.vehicleRegulation2569) {
       const primaryResults = searchResult?.evidence?.primaryResults || [];
       const freshnessVerified = Boolean(searchResult?.evidence?.verifiedCurrent && searchResult?.evidence?.strongPrimaryEvidence);
       const assessment = v8.checkApplicableAuthority({
@@ -638,6 +660,7 @@
     else if (budgetSourceRuntime && structuredBudgetArtifact(budgetSourceRuntime)) status.textContent = '✅ ร่างงบประมาณผ่านการตรวจสมดุลและพร้อมส่งออกเป็น Working Draft';
     else if (searchResult?.mode === 'live' && searchResult?.evidence?.conclusionEligible) status.textContent = '✅ ค้นสดและยืนยันหลักฐานปัจจุบันได้ตาม metadata ที่มี';
     else if (searchResult?.mode === 'live') status.textContent = `⚠️ ค้นสดแล้ว แต่ ${searchResult.warning || 'ยังยืนยันฉบับปัจจุบันล่าสุดไม่ได้'}`;
+    else if (promptBundle.vehicleRegulation2569) status.textContent = '🔒 ระเบียบยานพาหนะ 2569: ต้องให้ AI ปลายทางตรวจต้นฉบับ ก่อนใช้วินิจฉัยหรืออนุมัติ';
     else if (searchResult?.mode === 'delegated-user-ai') status.textContent = '✅ พร้อมส่งต่อ — ให้ AI ของผู้ใช้ค้นเว็บสดและตรวจแหล่งราชการเองตาม Prompt';
     else status.textContent = `ℹ️ ${searchResult?.warning || 'ยังเชื่อมบริการค้นเว็บราชการสดไม่ได้'}`;
 
