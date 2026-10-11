@@ -367,6 +367,9 @@
         searchResult: Object.freeze({ mode: 'disabled-gp223', results: [], warning: 'GP223 ใช้ข้อมูลที่มี ไม่ค้นเว็บอัตโนมัติ' }),
         workflowRuntime: null, workflowRuntimeStatus: 'gp223-ai-only', budgetSourceRuntime: null });
     }
+    // Install the scoped vehicle guardrail before routing or building quality gates.
+    // This import does not access the network for legal research.
+    await import('./core/vehicle-regulation-routing-guardrail-v1.js?v=1.0.0');
     const workflowRuntimePromise = prepareWorkflowRuntime(text);
     const context = core.createSharedContext({ facts: text, desiredOutput: text, documents: safeAttachments.map(file => file.name).join(', ') });
     const route = core.routeTransaction(context);
@@ -405,8 +408,7 @@
 
     // Vehicle regulation 2569: scoped enhancement to the existing procurement workflow.
     // Keep all legal verification in the user's destination AI, not GP's live search.
-    const vehicleRequest = /(?:รถ\s*(?:ราชการ|ส่วนกลาง|ประจำตำแหน่ง|ยนต์ไฟฟ้า|ไฟฟ้า|EV|อีวี|ของ\s*(?:อบจ|เทศบาล|อบต)|(?:อบจ|เทศบาล|อบต)\.?|เสียกลางทาง)|ยานพาหนะ(?:ขององค์กรปกครองส่วนท้องถิ่น|\s*อปท)?|(?:ซ่อม|เช่า|ซื้อ|ขอใช้|เบิก|เติมน้ำมัน|ชาร์จ|อัดประจุ).{0,24}รถ|บัตรอัดประจุไฟฟ้า|(?:สก|ปต)\.1)/i.test(text)
-      && /(?:อปท|อบจ|อบต|เทศบาล|ท้องถิ่น|ราชการ|ส่วนกลาง|ประจำตำแหน่ง|ยานพาหนะ|รถไฟฟ้า|รถเสียกลางทาง|บัตรอัดประจุไฟฟ้า|ระเบียบ|ซ่อมรถ)/i.test(text);
+    const vehicleRequest = Boolean(core.isVehicleRegulationRequest?.(text));
     if (vehicleRequest && !promptBundle.gp223) {
       const vehicleInstructions = [
         'งานยานพาหนะองค์กรปกครองส่วนท้องถิ่น พ.ศ. 2569 — วิเคราะห์ในหมวดพัสดุและทรัพย์สินเดิม',
