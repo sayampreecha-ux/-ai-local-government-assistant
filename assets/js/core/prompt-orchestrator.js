@@ -108,14 +108,18 @@
   }
 
   function classifyRiskLevel(source) {
+    // Actionable government-vehicle decisions need legal/procurement review,
+    // even when phrased without the words "law", "budget" or "procurement".
+    if (window.GovPromptCore.isVehicleRegulationDecision?.(source)) return 'HIGH';
     if (HIGH_RISK_TERMS.some(term => source.includes(term))) return 'HIGH';
     if (MEDIUM_RISK_TERMS.some(term => source.includes(term))) return 'MEDIUM';
     return 'LOW';
   }
 
   function buildQualityGates(source, riskLevel) {
-    const decisionRequired = DECISION_TERMS.test(source);
-    const multiConditionRequired = decisionRequired && MULTI_CONDITION_TERMS.test(source);
+    const vehicleDecision = Boolean(window.GovPromptCore.isVehicleRegulationDecision?.(source));
+    const decisionRequired = vehicleDecision || DECISION_TERMS.test(source);
+    const multiConditionRequired = decisionRequired && (vehicleDecision || MULTI_CONDITION_TERMS.test(source));
     const legalVersionRequired = riskLevel === 'HIGH' || LEGAL_VERSION_TERMS.test(source);
     const evidenceRequired = riskLevel === 'HIGH' || legalVersionRequired;
     return Object.freeze({
