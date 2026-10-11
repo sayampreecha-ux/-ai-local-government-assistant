@@ -349,7 +349,7 @@
       '13. ผลลัพธ์ต้องมี: ข้อเท็จจริง · จำแนกลักษณะงาน · ฐานอำนาจ/แหล่งทางการที่ตรวจ · Employment-like Risk · Scope/Deliverable · ความสอดคล้อง 5 เอกสาร · ข้อมูลที่ขาด · ร่าง TOR · checklist ก่อนใช้จริง',
       'Template Library ใช้เป็นข้อมูลอ้างอิงเท่านั้น หากไม่มีแบบตรงกับงาน ให้สังเคราะห์จากลักษณะงานจริง',
       '=== END SPECIALIZED WORKFLOW ==='
-    ].join('\\n');
+    ].join('\n');
     return Object.freeze({ ...promptBundle, prompt: promptBundle.prompt + block, serviceContractNaturalPerson: true });
   }
   async function preparePrompt(text, workflowId, caseFacts = text) {
@@ -405,7 +405,7 @@
 
     // Vehicle regulation 2569: scoped enhancement to the existing procurement workflow.
     // Keep all legal verification in the user's destination AI, not GP's live search.
-    const vehicleRequest = /(?:รถ(?:ราชการ|ส่วนกลาง|ประจำตำแหน่ง|ยนต์ไฟฟ้า|ไฟฟ้า|ของ\s*(?:อบจ|เทศบาล|อบต)|เสียกลางทาง)|ยานพาหนะ(?:ขององค์กรปกครองส่วนท้องถิ่น|\s*อปท)?|(?:ซ่อม|เช่า|ซื้อ|ขอใช้|เบิก|เติมน้ำมัน|ชาร์จ|อัดประจุ).{0,24}รถ|บัตรอัดประจุไฟฟ้า|(?:สก|ปต)\\.1)/i.test(text)
+    const vehicleRequest = /(?:รถ(?:ราชการ|ส่วนกลาง|ประจำตำแหน่ง|ยนต์ไฟฟ้า|ไฟฟ้า|ของ\s*(?:อบจ|เทศบาล|อบต)|เสียกลางทาง)|ยานพาหนะ(?:ขององค์กรปกครองส่วนท้องถิ่น|\s*อปท)?|(?:ซ่อม|เช่า|ซื้อ|ขอใช้|เบิก|เติมน้ำมัน|ชาร์จ|อัดประจุ).{0,24}รถ|บัตรอัดประจุไฟฟ้า|(?:สก|ปต)\.1)/i.test(text)
       && /(?:อปท|อบจ|อบต|เทศบาล|ท้องถิ่น|ราชการ|ส่วนกลาง|ประจำตำแหน่ง|ยานพาหนะ|รถไฟฟ้า|รถเสียกลางทาง|บัตรอัดประจุไฟฟ้า|ระเบียบ|ซ่อมรถ)/i.test(text);
     if (vehicleRequest && !promptBundle.gp223) {
       const vehicleInstructions = [
@@ -420,7 +420,7 @@
       ].join('\\n');
       promptBundle = Object.freeze({
         ...promptBundle,
-        prompt: `${promptBundle.prompt}\\n\\n${vehicleInstructions}`,
+        prompt: `${promptBundle.prompt}\n\n${vehicleInstructions}`,
         vehicleRegulation2569: true
       });
     }
