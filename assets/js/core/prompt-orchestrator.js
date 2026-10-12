@@ -48,6 +48,24 @@
 
   const GENERAL_ASSISTANT = Object.freeze({ moduleId: 'GENERAL', title: 'ผู้ช่วยงานราชการไทยแบบครอบคลุม' });
 
+  // Reuse the existing authority gates for disciplinary questions, including
+  // missing-date requests that do not repeat the agency's name.
+  const DISCIPLINARY_CASE = /(?:ไต่สวน|ชี้มูล|พ้น(?:จาก)?ราชการ|สอบสวน(?:ทาง)?วินัย|ลงโทษ(?:ทาง)?วินัย|(?:ป\s*\.?\s*ป\s*\.?\s*ช\.?|ปปช).{0,80}วินัย)/i;
+
+  function disciplinaryInstructions(source) {
+    if (!DISCIPLINARY_CASE.test(source)) return [];
+    return [
+      'ข้อกำหนดตรวจคดีวินัยและการชี้มูล ป.ป.ช.',
+      '- ให้ AI ปลายทางค้นและเปิดต้นฉบับราชกิจจานุเบกษา/กฎหมายบุคคลที่ใช้กับกรณีเอง; หากกล่าวถึงคำวินิจฉัยที่ 14/2569 ให้ตรวจต้นฉบับ https://ratchakitcha.soc.go.th/documents/134156.pdf และสถานะที่ใช้กับเหตุ ห้ามอ้างว่าเปิดตรวจแล้วก่อนเปิดจริง',
+      '- แยกข้อเท็จจริง คำชี้แจงคู่กรณี ตัวบท เหตุผลของศาล และผลคำวินิจฉัย; อ้างเลขหน้าและข้อความสนับสนุน ห้ามนำคำโต้แย้งของคู่กรณีมาเป็นข้อยุติของศาล',
+      '- ตรวจวันเริ่มไต่สวน มติและเหตุจำเป็นในการขยายเวลา วันชี้มูล วันรับสำนวน วันและเหตุพ้นราชการ; หากขาดให้ระบุหลักฐานที่ขาดและคง Decision Lock เฉพาะผลรายกรณี โดยค้นตัวบทต่อได้',
+      '- ตรวจกรอบเวลา ข้อยกเว้นการไต่สวนหรือขอเอกสารจากต่างประเทศ บทเฉพาะกาล และฉบับที่ใช้กับเหตุจากตัวบทจริงก่อนนับ 2 ปี/3 ปี ห้ามสมมติมติขยายเวลา',
+      '- แยกผลผูกพันสำนวนทางวินัย อำนาจดำเนินวินัยตามกฎหมายบุคคล และคดีอาญา/อายุความ; ห้ามสรุปว่าเกิน 3 ปีแล้วพ้นผิดโดยอัตโนมัติ หรือดำเนินวินัยได้เสมอ',
+      '- กรณี อบจ. ให้ตรวจกฎหมายบริหารงานบุคคลท้องถิ่น หลักเกณฑ์ ก.จ./ก.จ.จ. ที่ใช้กับเหตุ ผู้มีอำนาจ ความเห็นชอบและการมอบอำนาจ; ห้ามยกอำนาจในคดีหน่วยงานอื่นมาใช้โดยไม่ตรวจความตรงกัน',
+      '- สถานะ Gate เป็นข้อกำหนดสำหรับ AI ปลายทาง ไม่ใช่หลักฐานว่า GovPrompt ได้ตรวจคำตอบกฎหมายแล้ว; คง Human Review ก่อนดำเนินการจริง'
+    ];
+  }
+
   const ACTIONS = Object.freeze([
     ['create_project', /(?:^\s*โครงการ\s*(?:สถานีอนามัย|รพ\.?สต\.?|รพสต|สอน\.)|(?:ทำ|ร่าง|เขียน|จัดทำ|ขอแบบ|ขอร่าง)\s*โค(?:รงการ|รการ).{0,100}(?:เงินบำรุง|รพ\.?สต\.?|รพสต|สอน\.(?:เฉลิมพระเกียรติ(?:ฯ)?)?|สถานีอนามัย|หน่วยบริการ|สาธารณสุข|อาหารปลอดภัย)|(?:เงินบำรุง|รพ\.?สต\.?|รพสต|สอน\.(?:เฉลิมพระเกียรติ(?:ฯ)?)?|สถานีอนามัย|หน่วยบริการ|สาธารณสุข|อาหารปลอดภัย).{0,100}(?:ทำ|ร่าง|เขียน|จัดทำ|ขอแบบ|ขอร่าง)\s*โค(?:รงการ|รการ))/i],
     ['draft', /(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ|บันทึก|โครงการ|โครการ|tor|คำกล่าว|ข่าว|โพสต์|แผน|รายงาน|คำสั่ง|ประกาศ|mou|วิสัยทัศน์)/i],
@@ -73,13 +91,13 @@
 
   const DISCIPLINES = Object.freeze([
     ['records', /(?:หนังสือราชการ|บันทึกข้อความ|สารบรรณ|รับส่งหนังสือ|(?:ร่าง|ทำ|เขียน|จัดทำ)\s*(?:หนังสือ|บันทึก))/i],
-    ['legal', /(?:กฎหมาย|ระเบียบ|อำนาจ|ข้อหารือ|คำพิพากษา|หนังสือเวียน|หนังสือสั่งการ|มีสิทธิ)/i],
+    ['legal', /(?:กฎหมาย|ระเบียบ|อำนาจ|ข้อหารือ|คำพิพากษา|คำวินิจฉัย|หนังสือเวียน|หนังสือสั่งการ|มีสิทธิ|ไต่สวน|ชี้มูล|พ้น(?:จาก)?ราชการ)/i],
     ['procurement', /(?:พัสดุ|จัดซื้อ|จัดจ้าง|tor|ราคากลาง|สัญญา|ผู้รับจ้าง)/i],
     ['planning-budget', /(?:โครงการ|โครการ|แผน|งบประมาณ|เงินสะสม|เงินสำรองจ่าย)/i],
     ['finance', /(?:เบิก|เบิกจ่าย|ฎีกา|ค่าเดินทาง|ค่าใช้จ่าย|ใบเสร็จ|โบนัส|ประโยชน์ตอบแทน)/i],
-    ['human-resources', /(?:บุคคล|บุคลากร|ข้าราชการ|พนักงาน|ตำแหน่ง|วินัย|ลาป่วย|สอบ|อัตรากำลัง|กำลังคน|บรรจุ|แต่งตั้ง|เลื่อนเงินเดือน|เงินเดือน|โบนัส)/i],
+    ['human-resources', /(?:บุคคล|บุคลากร|ข้าราชการ|พนักงาน|ตำแหน่ง|วินัย|ลาป่วย|สอบ|อัตรากำลัง|กำลังคน|บรรจุ|แต่งตั้ง|เลื่อนเงินเดือน|เงินเดือน|โบนัส|ไต่สวน|ชี้มูล|พ้น(?:จาก)?ราชการ)/i],
     ['engineering', /(?:ถนน|สะพาน|ก่อสร้าง|ช่าง|แบบ|ประมาณราคา|หน้างาน)/i],
-    ['public-health', /(?:สาธารณสุข|รพ\.สต|รพสต|สอน\.(?:เฉลิมพระเกียรติ(?:ฯ)?)?|สถานีอนามัย|สุขภาพ|อสม|ยา|เวชภัณฑ์|โรค)/i],
+    ['public-health', /(?:สาธารณสุข|รพ\.สต|รพสต|สอน\.(?:เฉลิมพระเกียรติ(?:ฯ)?)?|สถานีอนามัย|สุขภาพ|อสม|(?:^|[\s,;])ยา(?:$|[\s,;])|ค่ายา|เบิกยา|ซื้อยา|จ่ายยา|จัดหายา|ยารักษา|ยาสามัญ|ยาและเวชภัณฑ์|เวชภัณฑ์|โรค)/i],
     ['education', /(?:การศึกษา|โรงเรียน|เด็ก|เยาวชน|นักเรียน|กีฬา|วิทยาศาสตร์|สามเณร|บรรพชา|คุณธรรม)/i],
     ['audit', /(?:ตรวจสอบภายใน|สตง|ป\.ป\.ช|ความเสี่ยง|ควบคุมภายใน)/i],
     ['executive', /(?:ผู้บริหาร|สรุปผู้บริหาร|executive summary|briefing|คำกล่าว|วิสัยทัศน์)/i],
@@ -108,6 +126,7 @@
   }
 
   function classifyRiskLevel(source) {
+    if (DISCIPLINARY_CASE.test(source)) return 'HIGH';
     // Actionable government-vehicle decisions need legal/procurement review,
     // even when phrased without the words "law", "budget" or "procurement".
     if (window.GovPromptCore.isVehicleRegulationDecision?.(source)) return 'HIGH';
@@ -118,8 +137,9 @@
 
   function buildQualityGates(source, riskLevel) {
     const vehicleDecision = Boolean(window.GovPromptCore.isVehicleRegulationDecision?.(source));
-    const decisionRequired = vehicleDecision || DECISION_TERMS.test(source);
-    const multiConditionRequired = decisionRequired && (vehicleDecision || MULTI_CONDITION_TERMS.test(source));
+    const disciplinaryCase = DISCIPLINARY_CASE.test(source);
+    const decisionRequired = disciplinaryCase || vehicleDecision || DECISION_TERMS.test(source);
+    const multiConditionRequired = decisionRequired && (disciplinaryCase || vehicleDecision || MULTI_CONDITION_TERMS.test(source));
     const legalVersionRequired = riskLevel === 'HIGH' || LEGAL_VERSION_TERMS.test(source);
     const evidenceRequired = riskLevel === 'HIGH' || legalVersionRequired;
     return Object.freeze({
@@ -133,8 +153,10 @@
 
   function extractCaseFingerprint(question, context = {}) {
     const source = normalizeText(question);
-    const facts = normalizeText(context?.facts || source);
-    const pick = (pattern, fallback = '[ให้ AI สกัดจากข้อเท็จจริง]') => facts.match(pattern)?.[0] || fallback;
+    // Protect thousands separators from sentence-delimiter matching, then
+    // restore them in every extracted value before it enters the prompt.
+    const facts = normalizeText(context?.facts || source).replace(/(?<=\d),(?=\d{3}(?:\D|$))/g, '\u2060');
+    const pick = (pattern, fallback = '[ให้ AI สกัดจากข้อเท็จจริง]') => (facts.match(pattern)?.[0] || fallback).replace(/\u2060/g, ',');
     const status = pick(/(?:ผู้ผ่านการสรรหา|ผู้ผ่านการคัดเลือก|ผู้สมัคร|ผู้มีสิทธิ|ผู้ได้รับแต่งตั้ง)[^,.\n]{0,80}/i);
     const priorEvent = pick(/(?:ผ่านการสรรหา|ผ่านการคัดเลือก|ประกาศผล|ได้รับคำสั่ง|ได้รับแต่งตั้ง)[^,.\n]{0,80}/i);
     return Object.freeze({
@@ -299,7 +321,7 @@
   function buildApplicableAuthorityCheck(question, context = {}, evidence = {}) {
     const source = normalizeForReasoning([question, context.facts, context.currentStage].filter(Boolean).join(' '));
     const precedentUsed = EXPLICIT_PRECEDENT_TERMS.test(source) || evidence.officialPrecedent === 'VERIFIED' || evidence.reliesOnPrecedent === true;
-    const full = precedentUsed || detectInterpretationIssue(source) || OFFICIAL_DOCUMENT_DECISION_TERMS.test(source)
+    const full = DISCIPLINARY_CASE.test(source) || precedentUsed || detectInterpretationIssue(source) || OFFICIAL_DOCUMENT_DECISION_TERMS.test(source)
       || MULTI_CONDITION_TERMS.test(source)
       || /(?:การเงิน|การคลัง|สวัสดิการ|สิทธิประโยชน์|บุคคล|บุคลากร|ข้าราชการ|งบประมาณ)/i.test(source);
     const mode = full ? 'FULL' : LEGAL_VERSION_TERMS.test(source) ? 'RULE_VERSION' : 'NONE';
@@ -784,6 +806,7 @@
         '- หากแหล่งสรุปขัดกับต้นฉบับ ให้ยึดต้นฉบับ และหากต้นฉบับหลายฉบับขัดกันให้ตรวจลำดับศักดิ์ วันมีผล และฉบับแก้ไข'
       ] : []),
       ...applicableAuthorityInstructions(taskPlan.applicableAuthorityCheck),
+      ...disciplinaryInstructions(userQuestion),
       ...(taskPlan.applicableAuthorityCheck.required || gates.evidenceRequired ? crossReferenceAuthorityInstructions() : []),
       ...(casePrecedentGate.required ? [
         '', 'GOVPROMPT — OFFICIAL AUTHORITY RETRIEVAL GATE',
@@ -899,6 +922,7 @@
 
   window.GovPromptCore = window.GovPromptCore || {};
   window.GovPromptCore.detectPromptRiskFlags = detectRiskFlags;
+  window.GovPromptCore.isDisciplinaryCase = source => DISCIPLINARY_CASE.test(normalizeText(source));
   window.GovPromptCore.classifyPromptRiskLevel = classifyRiskLevel;
   window.GovPromptCore.buildPromptQualityGates = buildQualityGates;
   window.GovPromptCore.buildApplicableAuthorityCheck = buildApplicableAuthorityCheck;

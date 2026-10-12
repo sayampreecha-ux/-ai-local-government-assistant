@@ -82,7 +82,8 @@
     const numericAuthority = OFFICIAL_NUMERIC.test(text);
     const rightsQualification = RIGHTS_QUALIFICATION.test(text);
     const draftOnly = DRAFTING.test(text) && !rightsQualification && !numericAuthority;
-    const authorityDependent = !draftOnly && (AUTHORITY_DEPENDENCY.test(text) || numericAuthority);
+    const authorityDependent = Boolean(window.GovPromptCore?.isDisciplinaryCase?.(text))
+      || (!draftOnly && (AUTHORITY_DEPENDENCY.test(text) || numericAuthority));
     return Object.freeze({
       personnel,
       subtype: personnel ? (draftOnly ? 'drafting-communication' : authorityDependent ? 'qualification-rights-authority' : 'general-personnel') : '',
