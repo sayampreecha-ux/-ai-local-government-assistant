@@ -4,7 +4,7 @@ import {createServer} from 'node:http';
 import {readFile, mkdir, writeFile} from 'node:fs/promises';
 import {extname, resolve, sep} from 'node:path';
 import {chromium} from 'playwright';
-const root = resolve('.');
+const root = resolve(process.env.FAT_UI_ROOT || '.');
 const directory = resolve('artifacts/fat-ui');
 await mkdir(directory, {recursive: true});
 const cases = JSON.parse(await readFile('tests/fixtures/final-acceptance-20261012.json', 'utf8'));
