@@ -26,6 +26,9 @@ for (const entry of cases.filter(entry => entry.id.startsWith('TC'))) {
       assert.ok(result.prompt.includes(part), part);
     }
     assert.ok(result.prompt.includes(entry.question));
+    assert.ok(result.prompt.includes('ห้ามรวมปริมาณต่างหน่วย'));
+    assert.ok(result.prompt.includes('ตาราง C ต้องมีตัวเลขสองคอลัมน์แยก'));
+    assert.ok(result.prompt.includes('ยอดรวม ปร.4 คำนวณตรงเดิมจึงต่าง 0 บาทไม่ได้ทำให้ผลต่างมูลค่าปริมาณเป็น 0 บาท'));
   });
 }
 
