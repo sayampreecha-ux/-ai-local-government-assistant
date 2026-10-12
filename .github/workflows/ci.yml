@@ -41,3 +41,12 @@ jobs:
           pnpm exec playwright install --with-deps chromium
       - name: Verify mobile workflow runtime and privacy boundary
         run: node scripts/verify-workflow-mobile-e2e.mjs
+      - name: Verify FAT discipline and regression cases in real desktop and mobile UI
+        run: FAT_UI_ROOT=dist node scripts/verify-fat-ui.mjs
+      - name: Preserve FAT UI evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fat-ui-evidence
+          path: artifacts/fat-ui/
+          if-no-files-found: warn

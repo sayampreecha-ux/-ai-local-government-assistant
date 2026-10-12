@@ -50,6 +50,7 @@
     const textNodes = [];
     while (walker.nextNode()) textNodes.push(walker.currentNode);
     textNodes.forEach(node => {
+      if (node.parentElement?.closest?.('pre')) return;
       let value = String(node.nodeValue || '');
       TECHNICAL_KEYS.forEach(key => { if (value.includes(key)) value = value.split(key).join(TECHNICAL_LABELS[key]); });
       const repeatedGeneric = new RegExp(`(?:${GENERIC_EVIDENCE_TEXT.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*·\\s*)+${GENERIC_EVIDENCE_TEXT.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g');
@@ -69,7 +70,7 @@
     while (walker.nextNode()) {
       if (walker.currentNode.nodeValue?.includes(CURRENT_TEXT)) matches.push(walker.currentNode);
     }
-    matches.forEach(node => { node.nodeValue = node.nodeValue.replace(CURRENT_TEXT, SAFER_TEXT); });
+    matches.forEach(node => { if (!node.parentElement?.closest?.('pre')) node.nodeValue = node.nodeValue.replace(CURRENT_TEXT, SAFER_TEXT); });
   }
 
   function findQuestion(card) {
@@ -102,7 +103,9 @@
   }
 
   function isDocumentFormattingQuestion(question) {
-    return /จัดหน้า|จัดรูปแบบ|จัดเอกสาร|เรียบเรียงเอกสาร|สรุปเอกสาร|สรุปรายงาน|สรุปประชุม|รายงานประชุม|ทำสไลด์|แปลง.*สไลด์|presentation|powerpoint|pptx|word|pdf/i.test(String(question || ''));
+    // A reference URL ending in .pdf is evidence, not a formatting request.
+    const intent = String(question || '').replace(/https?:\/\/\S+/gi, '');
+    return /จัดหน้า|จัดรูปแบบ|จัดเอกสาร|เรียบเรียงเอกสาร|สรุปเอกสาร|สรุปรายงาน|สรุปประชุม|รายงานประชุม|ทำสไลด์|แปลง.*สไลด์|presentation|powerpoint|pptx|word|pdf/i.test(intent);
   }
 
   function buildDocumentFormattingBlock(question) {
@@ -182,6 +185,8 @@
     if (meetingPrompt) return meetingPrompt;
     const gp223Prompt = window.GovPromptCore?.gp223HandoffPrompts?.get(card);
     if (gp223Prompt) return gp223Prompt;
+    const canonicalPrompt = window.GovPromptCore?.canonicalHandoffPrompts?.get(card);
+    if (canonicalPrompt) return canonicalPrompt;
     const question = findQuestion(card) || '[คำถามของผู้ใช้]';
     const domain = findDomain(card);
     if (isPrCreationQuestion(question, domain)) return buildPrCreationHandoffPrompt(question);
@@ -349,7 +354,7 @@
     hideTechnicalSearchStatus(card);
     const detailsBlocks = [...card.querySelectorAll('.answer-section > details')];
     const promptDetails = detailsBlocks.find(details => details.querySelector('pre'));
-    if (promptDetails) { promptDetails.open = false; const summary = promptDetails.querySelector('summary'); const preview = promptDetails.querySelector('pre'); if (summary) summary.textContent = 'ดูคำสั่งที่ GovPrompt เตรียมไว้'; if (preview) preview.textContent = buildHandoffPrompt(card); }
+    if (promptDetails) { promptDetails.open = false; const summary = promptDetails.querySelector('summary'); const preview = promptDetails.querySelector('pre'); if (summary) summary.textContent = 'ดูคำสั่งที่ GovPrompt เตรียมไว้'; if (preview) preview.textContent = safeHandoff(card).safeText; }
     humanizeTechnicalCopy(card);
     card.dataset.leanModeReady = 'true';
   }
@@ -362,6 +367,8 @@
   }
 
   window.GovPromptStatusCopy = Object.freeze({
+    isDocumentFormattingQuestion,
+    buildHandoffPrompt,
     isPrCreationQuestion,
     buildPrCreationHandoffPrompt
   });

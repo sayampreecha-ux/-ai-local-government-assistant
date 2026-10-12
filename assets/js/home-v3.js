@@ -689,6 +689,9 @@
     if (!promptBundle.gp223) actions.append(specialistLink);
     appendBudgetResult(section, actions, budgetSourceRuntime);
     if (!promptBundle.gp223) appendSearchDetails(section, searchResult);
+    // The preview and every handoff must use the same assembled prompt.
+    window.GovPromptCore.canonicalHandoffPrompts ||= new WeakMap();
+    window.GovPromptCore.canonicalHandoffPrompts.set(card, promptBundle.prompt);
     summary.textContent = 'ดู Prompt ที่ GovPrompt เตรียมไว้'; preview.textContent = promptBundle.prompt; preview.style.whiteSpace = 'pre-wrap'; preview.style.overflowWrap = 'anywhere'; details.append(summary, preview);
     section.prepend(heading, description, status, actions); section.append(details);
     card.append(section); content.append(label, card); article.append(mark, content); conversation.appendChild(article);
