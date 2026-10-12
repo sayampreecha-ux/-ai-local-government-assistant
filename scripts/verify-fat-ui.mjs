@@ -16,7 +16,10 @@ const server = createServer(async (req,res) => {
   catch {res.writeHead(404).end();}
 });
 await new Promise(r => server.listen(0, '127.0.0.1', r));
-const origin = `http://127.0.0.1:${server.address().port}`;
+const productionUrl = process.env.FAT_UI_URL;
+if (productionUrl && productionUrl !== 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/') throw new Error('Unexpected production origin');
+const origin = productionUrl ? productionUrl.replace(/\/$/, '') : `http://127.0.0.1:${server.address().port}`;
+const scope = productionUrl ? 'production-ui' : 'isolated-checkout-ui';
 const results = [];
 let browser;
 try {
@@ -25,7 +28,7 @@ try {
     const context = await browser.newContext({viewport,isMobile:mode==='mobile',hasTouch:mode==='mobile',permissions:['clipboard-read','clipboard-write'],serviceWorkers:'block'});
     const page = await context.newPage();
     for (const {id,question} of cases) {
-      const record = {id,mode,question,status:'BLOCKED',scope:'isolated-checkout-ui',downstreamAnswer:'NOT TESTED'};
+      const record = {id,mode,question,status:'BLOCKED',scope,downstreamAnswer:'NOT TESTED'};
       try {
         await page.goto(origin + '/index.html', {waitUntil:'networkidle'});
         const input = page.getByRole('textbox', {name:'ข้อความถึง GovPrompt'});
@@ -74,8 +77,8 @@ try {
 } finally {
   await browser?.close();
   await new Promise(r=>server.close(r));
-  await writeFile(resolve(directory,'results.json'),JSON.stringify({scope:'isolated-checkout UI; production unchanged',results},null,2));
+  await writeFile(resolve(directory,'results.json'),JSON.stringify({scope,results},null,2));
 }
-console.log(JSON.stringify({tests:results.length,pass:results.filter(r=>r.status==='PASS').length,fail:results.filter(r=>r.status==='FAIL').length,scope:'isolated-checkout UI'},null,2));
+console.log(JSON.stringify({tests:results.length,pass:results.filter(r=>r.status==='PASS').length,fail:results.filter(r=>r.status==='FAIL').length,scope},null,2));
 assert.equal(results.length,cases.length*2);
 assert.equal(results.filter(r=>r.status!=='PASS').length,0,'FAT browser cases must all pass');

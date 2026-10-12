@@ -164,3 +164,34 @@ jobs:
             } else {
               await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body });
             }
+
+  fat-production:
+    name: FAT production desktop and mobile
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Wait for corrected production release
+        run: |
+          for attempt in {1..16}; do
+            if node scripts/verify-frontend-production.mjs; then exit 0; fi
+            if [ "$attempt" -lt 16 ]; then sleep 15; fi
+          done
+          exit 1
+      - name: Install browser test dependency
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run complete FAT through production UI
+        run: FAT_UI_URL=https://sayampreecha-ux.github.io/-ai-local-government-assistant/ node scripts/verify-fat-ui.mjs
+      - name: Preserve production FAT evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fat-production-ui-evidence
+          path: artifacts/fat-ui/
+          if-no-files-found: warn
