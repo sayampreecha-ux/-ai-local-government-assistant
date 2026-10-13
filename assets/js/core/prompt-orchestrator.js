@@ -626,7 +626,10 @@
   }
 
   function normalizeRoute(route) {
-    if (route?.primaryModule && route?.assistant) return Object.freeze({ ...route, moduleId: route.primaryModule });
+    if (route?.primaryModule) {
+      const assistant = route.assistant || window.GovPromptCore.PROMPT_REGISTRY?.find(item => item.moduleId === route.primaryModule);
+      if (assistant) return Object.freeze({ ...route, moduleId: route.primaryModule, assistant });
+    }
     if (route?.moduleId && route?.assistant) return route;
     return Object.freeze({
       moduleId: GENERAL_ASSISTANT.moduleId,
