@@ -30,3 +30,14 @@ Validate TOR, procurement acceptance, payment, accumulated funds, authority, leg
 
 ## Release decision
 CI green is necessary but insufficient. Require all TC01–TC12 and negative/regression cases evidenced, review approval, then explicit human merge/deploy approval. Current state: NOT READY.
+
+## Verified CI snapshot (2026-10-13)
+- Head: `738cc2e4d0ef6c8eb9fa64fdc154563becd9ab8d`
+- P0: https://github.com/sayampreecha-ux/-ai-local-government-assistant/actions/runs/38347167871 — SUCCESS
+- Security: run 38347167859 — SUCCESS
+- Evidence-First: run 38347167857 — SUCCESS
+- Smart Saraban: run 38347167860 — SUCCESS
+- P0 log artifact: 11789552101; FAT UI evidence artifact: 11789507244
+- These are generic workflow results; they do **not** prove TC01–TC12 construction browser acceptance.
+- PR #317 has no submitted reviews or review threads at this snapshot.
+- Decision: **NOT READY**; do not merge or deploy without TC01–TC12 evidence and human approval.
