@@ -35,3 +35,41 @@ for (const input of ['จัดทำ TOR งานก่อสร้าง', '�
   assert.equal(result.primaryModule, 'GP001');
   assert.equal(result.evidenceStatus, undefined);
 }
+
+// Construction issue #316: keyword variants must not upgrade evidence or confidence.
+// These are executable unit gates, not substitutes for PDF/BOQ browser acceptance.
+for (const phrase of [
+  'ค่า K งานหินคลุกปรับเกลี่ยไม่มีบดอัด',
+  'ค่าK สัญญางานก่อสร้าง',
+  'ค่าชดเชยค่างานก่อสร้าง',
+  'สัญญาแบบปรับราคาได้',
+  'เงินชดเชยค่างาน',
+  'CUCEM-K'
+]) {
+  const result = core.routeRequest(phrase);
+  assert.equal(result.primaryModule, 'GP007', phrase);
+  assert.equal(result.confidence, base.confidence, phrase);
+  assert.equal(result.ambiguous, base.ambiguous, phrase);
+  assert.equal(result.fallback, base.fallback, phrase);
+  assert.equal(result.evidenceStatus, 'UNVERIFIED', phrase);
+  assert.equal(result.evidenceVerified, false, phrase);
+  assert.ok(Object.isFrozen(result), phrase);
+  assert.ok(Object.isFrozen(result.modules), phrase);
+}
+for (const phrase of [
+  'ตรวจแบบถนนคอนกรีต',
+  'เปรียบเทียบ ปร.4 กับ ปร.5',
+  'ตรวจ Factor F',
+  'ราคาวัสดุค่าแรงปี 2569',
+  'เทียบ BOQ กับแบบ',
+  'ถอดปริมาณงานจาก PDF',
+  'ถนนกว้าง 6.00 เมตร เหลือ 5.90 เมตร',
+  'ผลทดสอบคอนกรีตออกหลังหมดสัญญา',
+  'ตรวจราคากลางอาคารห้องน้ำ',
+  'ไม่มีหลักฐานราคาวัสดุ',
+  'เอกสารเบิกจ่ายไม่ครบ'
+]) {
+  const result = core.routeRequest(phrase);
+  assert.equal(result.primaryModule, 'GP001', phrase);
+  assert.equal(result.evidenceStatus, undefined, phrase);
+}
