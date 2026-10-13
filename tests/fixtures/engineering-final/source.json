@@ -1,0 +1,12 @@
+{
+ "project":"ปรับปรุงห้องสมุด คณะสถาปัตยกรรมศาสตร์ มหาวิทยาลัยเชียงใหม่",
+ "announcementDate":"2026-03-24",
+ "sourceStatus":"ร่าง TOR และเอกสารประกวดราคา ไม่ได้ยืนยันเป็นสัญญาฉบับลงนามหรือราคาปัจจุบัน",
+ "source":"https://www.cmu.ac.th/th/Procurement/2fdb99ce-6f94-4c32-b544-15256dafddd8",
+ "documents":{
+  "estimate":"https://www.cmu.ac.th/Procurement/Procurement_download.aspx?id=2068e73b-d67f-43fd-9542-8f72328519ec",
+  "tor":"https://www.cmu.ac.th/Procurement/Procurement_download.aspx?id=0ab49fb0-5a3b-446f-bcd3-1354e9693ff6",
+  "drawings":"https://www.cmu.ac.th/Procurement/Procurement_download.aspx?id=291c6d8c-b538-46d8-96e6-dcaa3a63e9a0"
+ },
+ "scope":"Real-project source links for GovPrompt handoff tests. Missing/conflicting/structural scenarios are explicitly test variations, not allegations about this project. No uploaded files or downstream reading/calculation is claimed."
+}
