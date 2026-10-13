@@ -14,7 +14,7 @@ const cases=[
  ['engineering-factor','ตรวจสอบราคาวัสดุ ค่าแรง และ Factor F','GP007'],
  ['engineering-compare','ตรวจสอบปริมาณงานจากแบบเทียบกับ ปร.4','GP007'],
  ['procurement-tor','จัดทำ TOR งานก่อสร้างเพื่อจัดซื้อจัดจ้าง','GP003'],
- ['legal','วิเคราะห์ข้อกฎหมายการจัดซื้อจัดจ้างภาครัฐ','GP002']
+ ['legal','วิเคราะห์ข้อกฎหมายปกครองเกี่ยวกับอำนาจขององค์กรปกครองส่วนท้องถิ่น','GP002']
 ];
 const browser=await chromium.launch({headless:true});
 const results=[];
@@ -55,7 +55,7 @@ try {
     assert.ok((await page.locator('#conversation').innerText()).length>30,'empty conversation');
     assert.equal(errors.length,0,'page errors: '+errors.join('; '));
     await page.screenshot({path:`${out}/${device.name}-${id}.png`,fullPage:true});
-   }catch(e){status='FAIL';reason=String(e?.stack||e);try{await page.screenshot({path:`${out}/${device.name}-${id}-FAIL.png`,fullPage:true})}catch{}}
+   }catch(e){status='FAIL';reason=String(e?.stack||e);try{reason+=' | UI='+JSON.stringify({conversation:(await page.locator('#conversation').innerText()).slice(0,900),input:await page.locator('#promptInput').inputValue(),url:page.url()})}catch{}try{await page.screenshot({path:`${out}/${device.name}-${id}-FAIL.png`,fullPage:true})}catch{}}
    results.push({device:device.name,id,question,expected,status,reason,pageErrors:[...errors],networkErrors:[...network],scope:'full-site-local-http-pr',downstreamAI:'NOT TESTED',officialRateEvidence:'NOT VERIFIED'});
    console.log(device.name,id,status,reason.split('\n')[0]);
    errors.length=0;network.length=0;
