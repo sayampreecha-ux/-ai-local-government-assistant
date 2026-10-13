@@ -582,7 +582,7 @@
     return Object.freeze({
       ...basePlan,
       action: 'verify',
-      deliverable: 'procurement',
+      deliverable: 'engineering-estimate',
       disciplines: Object.freeze(['engineering', 'procurement']),
       riskLevel: ratesOrConclusion || basePlan.riskLevel === 'HIGH' ? 'HIGH' : 'MEDIUM',
       evidenceMode: 'verify-applicable-primary-source',
@@ -652,6 +652,16 @@
     const outputPlan = typeof window.GovPromptCore.routeOutput === 'function'
       ? window.GovPromptCore.routeOutput(userQuestion, activeRoute, normalizedContext)
       : Object.freeze({ id: 'default', label: 'คำตอบพร้อมใช้', format: 'answer-first', instructions: Object.freeze([]), confidence: 0.5, reason: 'fallback' });
+    const effectiveOutputPlan = taskPlan.constructionReview ? Object.freeze({
+      id: 'construction-estimate',
+      label: 'ตารางประมาณราคา ปร.4/ปร.5 และรายงานตรวจสอบ',
+      format: 'engineering-estimate',
+      reason: 'construction-estimate-evidence-first',
+      instructions: Object.freeze([
+        'แสดงตาราง C Factor F ก่อนตาราง A ตรวจปริมาณและผลต่าง ตาราง B สูตรคำนวณ ปร.4 รายการต่อรายการ และตาราง D ข้อจำกัดและ Human Review',
+        'แยกค่าในเอกสารกับอัตราราชการที่ยืนยันได้ พร้อมหน่วย สูตร แหล่งข้อมูล และ UNVERIFIED'
+      ])
+    }) : outputPlan;
     const presentationPreset = typeof window.GovPromptCore.resolveOutputFormatPreset === 'function'
       ? window.GovPromptCore.resolveOutputFormatPreset(outputFormatId)
       : null;
@@ -758,7 +768,7 @@
         riskFlags,
         route: activeRoute,
         taskPlan,
-        outputPlan,
+        effectiveOutputPlan,
         outputFormatId: presentationPreset?.id || 'auto',
         presentationPreset,
         governancePlan,
@@ -796,7 +806,7 @@
       ].filter(Boolean).join('\n');
       return Object.freeze({
         prompt: compactPrompt, riskFlags, route: activeRoute, taskPlan,
-        outputPlan: Object.freeze({ id: 'internal-control-document', label: 'เอกสารราชการ', format: 'official-document', instructions: Object.freeze([]), confidence: 1, reason: 'internal-control-document' }),
+        effectiveOutputPlan: Object.freeze({ id: 'internal-control-document', label: 'เอกสารราชการ', format: 'official-document', instructions: Object.freeze([]), confidence: 1, reason: 'internal-control-document' }),
         outputFormatId: 'auto', presentationPreset: null, governancePlan,
         qualityGates: gates, casePrecedentGate: null, context: normalizedContext,
         attachmentNames: Object.freeze(attachmentNames)
@@ -909,8 +919,8 @@
       `- เอกสารแนบ: ${attachmentNames.length ? attachmentNames.join(', ') : '[ไม่มี/ยังไม่ได้แนบ]'}`,
       `- ผลลัพธ์ที่ต้องการ: ${normalizedContext.desiredOutput || userQuestion}`,
       '', presentationPreset ? 'ชิ้นงานหลักที่ Output Router เลือก' : 'รูปแบบผลลัพธ์ที่ GovPrompt เลือกให้อัตโนมัติ',
-      `- ประเภท: ${outputPlan.label}`, `- รูปแบบ: ${outputPlan.format}`, `- เหตุผลการเลือก: ${outputPlan.reason}`,
-      ...(outputPlan.instructions || []).map((item, index) => `${index + 1}. ${item}`),
+      `- ประเภท: ${effectiveOutputPlan.label}`, `- รูปแบบ: ${effectiveOutputPlan.format}`, `- เหตุผลการเลือก: ${effectiveOutputPlan.reason}`,
+      ...(effectiveOutputPlan.instructions || []).map((item, index) => `${index + 1}. ${item}`),
       ...(presentationBlock ? ['', 'รูปแบบการนำเสนอที่ผู้ใช้เลือก', ...presentationBlock.split('\n')] : []),
       '', 'ขอบเขต AI Agent Governance',
       `- ระดับที่ผู้ใช้ร้องขอโดยพฤติกรรม: ${governancePlan.requestedLevel}`,
@@ -940,7 +950,7 @@
       '', 'สถานะความเสี่ยงเบื้องต้นจาก GovPrompt',
       riskFlags.length ? riskFlags.map(flag => `- ${flag}`).join('\n') : (taskPlan.riskLevel === 'HIGH' ? '- งานความเสี่ยงสูง: ต้องตรวจฐานอำนาจ หลักฐาน และเงื่อนไขก่อนฟันธง' : taskPlan.riskLevel === 'MEDIUM' ? '- งานความเสี่ยงปานกลาง: ต้องตรวจข้อเท็จจริงและเอกสารประกอบ' : '- ไม่พบสัญญาณความเสี่ยงจากข้อความเบื้องต้น แต่ยังต้องตรวจทานก่อนใช้จริง'),
       '', 'ข้อกำหนดผลลัพธ์',
-      `- ส่งผลลัพธ์หลักในรูปแบบ “${outputPlan.label}” ตามที่ Output Router เลือก เว้นแต่ผู้ใช้สั่งรูปแบบอื่นชัดเจน`,
+      `- ส่งผลลัพธ์หลักในรูปแบบ “${effectiveOutputPlan.label}” ตามที่ Output Router เลือก เว้นแต่ผู้ใช้สั่งรูปแบบอื่นชัดเจน`,
       ...(presentationPreset ? [`- จัดการนำเสนอชิ้นงานด้วย “${presentationPreset.label}” ตามที่ผู้ใช้เลือก โดยไม่ลดทอนโครงสร้างบังคับของชิ้นงานหลัก`] : []),
       '- ใช้ภาษาไทยชัดเจน กระชับ และเหมาะกับการปฏิบัติราชการ',
       '- อ้างแหล่งที่มาต่อข้อความสำคัญเมื่อสามารถตรวจสอบต้นฉบับได้',
@@ -962,7 +972,7 @@
       riskFlags,
       route: activeRoute,
       taskPlan,
-      outputPlan,
+      effectiveOutputPlan,
       outputFormatId: presentationPreset?.id || 'auto',
       presentationPreset,
       governancePlan,
