@@ -806,7 +806,7 @@
       ].filter(Boolean).join('\n');
       return Object.freeze({
         prompt: compactPrompt, riskFlags, route: activeRoute, taskPlan,
-        effectiveOutputPlan: Object.freeze({ id: 'internal-control-document', label: 'เอกสารราชการ', format: 'official-document', instructions: Object.freeze([]), confidence: 1, reason: 'internal-control-document' }),
+        outputPlan: Object.freeze({ id: 'internal-control-document', label: 'เอกสารราชการ', format: 'official-document', instructions: Object.freeze([]), confidence: 1, reason: 'internal-control-document' }),
         outputFormatId: 'auto', presentationPreset: null, governancePlan,
         qualityGates: gates, casePrecedentGate: null, context: normalizedContext,
         attachmentNames: Object.freeze(attachmentNames)
