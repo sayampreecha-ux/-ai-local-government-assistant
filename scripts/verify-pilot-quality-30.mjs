@@ -95,6 +95,7 @@ for (const query of hrCareerRegression) {
 
 const engineeringRouteCases = [
   ['ถอดแบบก่อสร้างอาคารและจัดทำ BOQ', 'GP007'],
+  ['ถอดแบบและถอดปริมาณเพื่อทำ BOQ', 'GP007'],
   ['จัดทำราคากลางงานก่อสร้างถนนคอนกรีต', 'GP007'],
   ['ประมาณราคางานก่อสร้างอาคารและ ปร.4 ปร.5', 'GP007'],
   ['ร่าง TOR จ้างก่อสร้างถนน', 'GP003'],
@@ -108,13 +109,16 @@ for (const [query, expected] of engineeringRouteCases) {
     assert.equal(tx.moduleId, 'GP007', `transaction workflow must route GP007: ${query}`);
     const prompt = core.createGovernmentPrompt({ question: query, route: actual, context: core.createSharedContext({ facts: query, desiredOutput: query }) });
     assert.equal(prompt.route.moduleId, 'GP007', `prompt must preserve actual engineering route: ${query}`);
+    if (/งานก่อสร้าง|แบบก่อสร้าง|ปร\.4|ปร\.5/.test(query)) {
+      assert.match(prompt.prompt, /Primary Workflow[^\n]*gov\.engineering/, `downstream prompt must name engineering primary: ${query}`);
+    }
   } else if (expected === 'GP003') {
     assert.equal(actual.primaryModule, 'GP003', 'procurement TOR must remain procurement');
   } else {
     assert.notEqual(actual.primaryModule, 'GP007', 'legal work must not be overridden by engineering');
   }
 }
-console.log('Engineering primary workflow scoped routing regression passed: 5/5.');
+console.log('Engineering primary workflow scoped routing regression passed: 6/6.');
 
 const passed = cases.length - failures.length;
 const score = Math.round((passed / cases.length) * 100);
