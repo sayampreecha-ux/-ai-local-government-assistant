@@ -1,0 +1,18 @@
+const fs = require('node:fs');
+const vm = require('node:vm');
+const assert = require('node:assert/strict');
+const source = fs.readFileSync('assets/js/core/engineering-k-routing-overrides-v1.js', 'utf8');
+const base = { primaryModule: 'GP001', modules: ['GP001'], confidence: 0.42, ambiguous: true, fallback: true };
+const core = { routeRequest: () => base, PROMPT_REGISTRY: [{ moduleId: 'GP007' }] };
+vm.runInNewContext(source, { window: { GovPromptCore: core } });
+const routed = core.routeRequest('ตรวจสอบค่า K งานหินคลุก');
+assert.equal(routed.primaryModule, 'GP007');
+assert.equal(routed.confidence, 0.42);
+assert.equal(routed.ambiguous, true);
+assert.equal(routed.fallback, true);
+assert.equal(routed.evidenceStatus, 'UNVERIFIED');
+assert.equal(routed.evidenceVerified, false);
+const ordinary = core.routeRequest('ร่างหนังสือราชการ');
+assert.equal(ordinary.primaryModule, 'GP001');
+assert.equal(ordinary.evidenceStatus, undefined);
+console.log('Engineering K routing guardrail tests passed');
