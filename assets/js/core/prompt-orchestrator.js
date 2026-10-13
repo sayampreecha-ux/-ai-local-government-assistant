@@ -577,7 +577,8 @@
     const review = /(?:ตรวจ|ตรวจสอบ|ตรวจทาน|เทียบ|ถอดปริมาณ|ประมาณราคา|คำนวณ|คิดราคาเกิน)/.test(source);
     const construction = /(?:ป\s*ร\s*\.?\s*[45]|factor\s*f|แบบก่อสร้าง|งานก่อสร้าง|ราคากลางก่อสร้าง)/i.test(source)
       || /(?:ถนน|คอนกรีต|หลังคา|ประปา|รางระบายน้ำ|ลานกีฬา|ทางลาด|อาคาร)/.test(source) && /(?:ปริมาณ|ราคากลาง|ประมาณราคา)/.test(source);
-    if (!review || !construction || /(?:ทำ|สร้าง|ร่าง|เขียน).*(?:ประชาสัมพันธ์|วิดีโอ|วีดีโอ|คลิป|โปสเตอร์|อินโฟกราฟิก)/.test(source)) return basePlan;
+    if (!(review && construction) && !engineeringEstimateIntent(question)) return basePlan;
+    if (/(?:ทำ|สร้าง|ร่าง|เขียน).*(?:ประชาสัมพันธ์|วิดีโอ|วีดีโอ|คลิป|โปสเตอร์|อินโฟกราฟิก)/.test(source)) return basePlan;
     const ratesOrConclusion = /(?:ราคา|ค่าแรง|วัสดุ|factor\s*f|มาตรฐาน|ผิด|เกิน|รับรอง|วินิจฉัย)/i.test(source);
     return Object.freeze({
       ...basePlan,
