@@ -53,6 +53,12 @@ try {
     await page.locator('#thinkingMessage').waitFor({state:'detached',timeout:25000});
     assert.ok((await page.locator('#conversation .message.assistant').count())>0,'assistant response absent');
     assert.ok((await page.locator('#conversation').innerText()).length>30,'empty conversation');
+    const copy=page.locator('#conversation button').filter({hasText:/คัดลอก(?:\\s*คำสั่ง|\\s*Prompt|ไปใช้กับ AI)/i}).first();
+    await copy.waitFor({state:'visible',timeout:10000});
+    await copy.click();
+    const clipboard=await page.evaluate(()=>navigator.clipboard.readText());
+    assert.ok(clipboard.length>100,'clipboard missing generated prompt');
+    if(expected==='GP007')assert.match(clipboard,/gov\\.engineering|Construction QA|Factor F/i,'engineering instructions absent from clipboard');
     assert.equal(errors.length,0,'page errors: '+errors.join('; '));
     await page.screenshot({path:`${out}/${device.name}-${id}.png`,fullPage:true});
    }catch(e){status='FAIL';reason=String(e?.stack||e);try{reason+=' | UI='+JSON.stringify({conversation:(await page.locator('#conversation').innerText()).slice(0,900),input:await page.locator('#promptInput').inputValue(),url:page.url()})}catch{}try{await page.screenshot({path:`${out}/${device.name}-${id}-FAIL.png`,fullPage:true})}catch{}}
