@@ -626,6 +626,7 @@
   }
 
   function normalizeRoute(route) {
+    if (route?.primaryModule && route?.assistant) return Object.freeze({ ...route, moduleId: route.primaryModule });
     if (route?.moduleId && route?.assistant) return route;
     return Object.freeze({
       moduleId: GENERAL_ASSISTANT.moduleId,
