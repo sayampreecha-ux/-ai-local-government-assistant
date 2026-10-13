@@ -16,6 +16,8 @@ assert.ok(!/answer_key|sealed|qa_gates/i.test([pdf,xlsx].filter(Boolean).join(' 
 const cases=[
  ['engineering-road-blind','ช่วยถอดปริมาณงานก่อสร้างจากแบบรูปรายการและจัดทำ BOQ/ปร.4 ถนน ค.ส.ล. โดยแยกข้อมูลไม่พอและให้วิศวกรตรวจรับรอง','GP007'],
  ['engineering-short','ถอดแบบถนน ค.ส.ล.','GP007'],
+ ['engineering-drawing','ถอดปริมาณงานก่อสร้างจากแบบรูปรายการเพื่อจัดทำ BOQ','GP007'],
+ ['media-explicit','สร้างภาพประชาสัมพันธ์โครงการก่อสร้างถนนให้สวย','GP012'],
  ['legal-control','ตรวจสอบฐานอำนาจตามกฎหมายขององค์กรปกครองส่วนท้องถิ่น','GP002'],
  ['procurement-control','จัดทำ TOR งานก่อสร้างเพื่อจัดซื้อจัดจ้าง','GP003'],
  ['media-control','ออกแบบปกนำเสนอผลงานผู้บริหาร','GP012']
