@@ -31,6 +31,8 @@ jobs:
         run: node tests/e2e/construction-browser-contract.mjs
       - name: Pr4 Pr5 evidence-first arithmetic unit tests
         run: node --test tests/construction-qa/official-rate-validator.test.mjs
+      - name: Synthetic road acceptance (5 scenarios, not official rates)
+        run: node --test tests/construction-qa/synthetic-road-acceptance.test.mjs
       - name: Production website real-browser smoke and screenshots
         run: node tests/e2e/construction-production-smoke.mjs
       - name: Submit construction and regression questions through real production UI
