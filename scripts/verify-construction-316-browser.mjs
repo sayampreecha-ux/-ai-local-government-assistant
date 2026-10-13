@@ -21,7 +21,7 @@ const cases=[
 ['TC12','ตรวจเอกสารเบิกจ่ายค่าก่อสร้างไม่ครบ ไม่มีรายงานตรวจรับลงนาม']
 ];
 const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml'};
-const server=createServer(async(req,res)=>{const p=resolve(root,'.'+(new URL(req.url,'http://localhost').pathname==='/'?'/index.html':decodeURIComponent(new URL(req.url,'http://localhost').pathname)));if(!p.startsWith(root+sep)){res.writeHead(403).end();return;}try{res.writeHead(200,{'content-type':types[extname(p)]||'application/octet-stream'}).end(await readFile(p));}catch{res.writeHead(404).end();}});
+const server=createServer(async(req,res)=>{const p=resolve(root,'.'+(new URL(req.url,'http://localhost').pathname==='/'?'/index.html':decodeURIComponent(new URL(req.url,'http://localhost').pathname)));if(!p.startsWith(root+sep)){res.writeHead(403).end();return;}try{const body=await readFile(p);res.writeHead(200,{'content-type':types[extname(p)]||'application/octet-stream'}).end(body);}catch{res.writeHead(404).end();}});
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const origin='http://127.0.0.1:'+server.address().port,results=[];let browser;
 try{browser=await chromium.launch({headless:true});
