@@ -50,7 +50,16 @@ try {
      assert.equal(actual.gates?.evidenceRequired,true);
      assert.equal(actual.gates?.decisionRequired,true);
      if(id==='engineering-road-blind'){
-      for(const marker of ['ปร.4','Factor F','ตาราง A','ตาราง B','ตาราง C','ตาราง D']) assert.ok(actual.prompt.includes(marker),'Missing '+marker);
+      for(const marker of ['ปร.4','ปร.5','Factor F','ตาราง A','ตาราง B','ตาราง C','ตาราง D']) assert.ok(actual.prompt.includes(marker),'Missing '+marker);
+      // Inspect the actual prompt contract, not just a generic table heading.
+      for(const [table,requirements] of Object.entries({
+       'A':['หน่วยนับ','ผลต่าง'],
+       'B':['สูตร','คำนวณใหม่'],
+       'C':['F ที่ใช้','F อ้างอิง','ผลต่าง F'],
+       'D':['ข้อจำกัด','Human Review']
+      })) for(const requirement of requirements) assert.ok(actual.prompt.includes(requirement),'Missing table '+table+' requirement: '+requirement);
+      assert.match(actual.prompt,/ไฟล์.{0,40}หน้า|ชื่อไฟล์.{0,40}หน้า/,'Missing drawing source reference');
+      assert.match(actual.prompt,/ห้ามเดา|ไม่พบ\\/อ่านไม่ได้/,'Missing evidence uncertainty rule');
      }
     }
     await page.locator('#promptInput').fill(question);
