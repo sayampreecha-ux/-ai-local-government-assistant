@@ -59,7 +59,7 @@ try {
        'D':['ข้อจำกัด','Human Review']
       })) for(const requirement of requirements) assert.ok(actual.prompt.includes(requirement),'Missing table '+table+' requirement: '+requirement);
       assert.match(actual.prompt,/ไฟล์.{0,40}หน้า|ชื่อไฟล์.{0,40}หน้า/,'Missing drawing source reference');
-      assert.match(actual.prompt,/ห้ามเดา|ไม่พบ\\/อ่านไม่ได้/,'Missing evidence uncertainty rule');
+      assert.ok(actual.prompt.includes('ห้ามเดา') || actual.prompt.includes('ไม่พบ/อ่านไม่ได้'),'Missing evidence uncertainty rule');
      }
     }
     await page.locator('#promptInput').fill(question);
