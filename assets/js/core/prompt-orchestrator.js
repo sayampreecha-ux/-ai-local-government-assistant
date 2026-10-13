@@ -1014,7 +1014,7 @@
   // Preserve all other routing decisions, especially procurement TOR and legal work.
   const engineeringEstimateIntent = value => {
     const source = String(value || '').trim();
-    const construction = /(?:งานก่อสร้าง|แบบก่อสร้าง|ถนน|อาคาร|คอนกรีต|รางระบายน้ำ|ประปา|ปร\.?4|ปร\.?5|ป\s*ร\s*\.?[45])/i.test(source);
+    const construction = /(?:งานก่อสร้าง|แบบก่อสร้าง|ถนน|อาคาร|คอนกรีต|รางระบายน้ำ|ประปา|ปร\.?4|ปร\.?5|ป\s*ร\s*\.?[45]|ถอดแบบ|ถอดปริมาณ)/i.test(source);
     const estimate = /(?:ถอดแบบ|ถอดปริมาณ|จัดทำราคากลาง|คำนวณราคากลาง|ประมาณราคา|จัดทำ\s*boq)/i.test(source);
     const excluded = /(?:\bTOR\b|ทีโออาร์|ขอบเขตของงาน|จัดซื้อ|ประกวดราคา|ร่างสัญญา|จัดทำประกาศ|คำวินิจฉัย|วิเคราะห์ข้อกฎหมาย|ประชาสัมพันธ์|อินโฟกราฟิก|โปสเตอร์|วิดีโอ|วีดีโอ)/i.test(source);
     return construction && estimate && !excluded;
