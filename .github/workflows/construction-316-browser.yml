@@ -1,0 +1,35 @@
+name: Construction 316 Browser E2E
+on:
+  push:
+    branches: [fix/issue-316-k-routing-evidence]
+  pull_request:
+    paths:
+      - 'scripts/verify-construction-316-browser.mjs'
+      - 'assets/js/**'
+      - 'index.html'
+      - '.github/workflows/construction-316-browser.yml'
+  workflow_dispatch:
+jobs:
+  construction-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Test 12 construction cases on desktop and mobile
+        run: node scripts/verify-construction-316-browser.mjs
+      - name: Preserve actual results and screenshots even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: construction-316-browser-evidence
+          path: artifacts/construction-316/
+          if-no-files-found: warn
