@@ -1,0 +1,44 @@
+name: Construction Blind Prompt Acceptance
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/e2e/construction-blind-acceptance.mjs'
+      - '.github/workflows/construction-blind-acceptance.yml'
+permissions:
+  contents: read
+jobs:
+  blind-prompt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Start local HTTP
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/govprompt-blind-http.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8765/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/govprompt-blind-http.log
+          exit 1
+      - name: Run blind prompt routing, clipboard and UI acceptance
+        run: node tests/e2e/construction-blind-acceptance.mjs
+      - name: Upload actual prompt and browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: construction-blind-prompt-acceptance
+          path: |
+            artifacts/construction-blind-acceptance/
+            /tmp/govprompt-blind-http.log
+          retention-days: 30
