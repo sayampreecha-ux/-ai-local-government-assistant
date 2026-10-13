@@ -1006,4 +1006,46 @@
   window.GovPromptCore.OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION = OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION;
   window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.9.1';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
+  // Scope the actual transaction route to engineering estimate requests only.
+  // Preserve all other routing decisions, especially procurement TOR and legal work.
+  const engineeringEstimateIntent = value => {
+    const source = String(value || '').trim();
+    const construction = /(?:งานก่อสร้าง|แบบก่อสร้าง|ถนน|อาคาร|คอนกรีต|รางระบายน้ำ|ประปา|ปร\\.?4|ปร\\.?5|ป\\s*ร\\s*\\.?[45])/i.test(source);
+    const estimate = /(?:ถอดแบบ|ถอดปริมาณ|จัดทำราคากลาง|คำนวณราคากลาง|ประมาณราคา|จัดทำ\\s*boq)/i.test(source);
+    const excluded = /(?:\\bTOR\\b|ทีโออาร์|ขอบเขตของงาน|จัดซื้อ|ประกวดราคา|ร่างสัญญา|จัดทำประกาศ|คำวินิจฉัย|วิเคราะห์ข้อกฎหมาย|ประชาสัมพันธ์|อินโฟกราฟิก|โปสเตอร์|วิดีโอ|วีดีโอ)/i.test(source);
+    return construction && estimate && !excluded;
+  };
+  const engineeringRoute = result => {
+    if (!result || result.primaryModule === 'GP007') return result;
+    const assistant = window.GovPromptCore.PROMPT_REGISTRY?.find(item => item.moduleId === 'GP007');
+    return Object.freeze({
+      ...result,
+      primaryModule: 'GP007',
+      moduleId: 'GP007',
+      transactionType: 'engineering',
+      assistant: assistant || result.assistant,
+      modules: Object.freeze(['GP007', ...(result.modules || []).filter(id => id !== 'GP007')].slice(0, 3)),
+      confidence: 0.995,
+      fallback: false,
+      ambiguous: false,
+      reason: 'engineering-estimate-primary-workflow'
+    });
+  };
+  const priorEngineeringRouteRequest = window.GovPromptCore.routeRequest;
+  window.GovPromptCore.routeRequest = function routeEngineeringEstimate(request, options = {}) {
+    const base = priorEngineeringRouteRequest(request, options);
+    return engineeringEstimateIntent(request) ? engineeringRoute(base) : base;
+  };
+  const priorEngineeringRouteTransaction = window.GovPromptCore.routeTransaction;
+  if (typeof priorEngineeringRouteTransaction === 'function') {
+    window.GovPromptCore.routeTransaction = function transactionEngineeringEstimate(context, options = {}) {
+      const base = priorEngineeringRouteTransaction(context, options);
+      const facts = base?.context || context || {};
+      const source = [facts.facts, facts.desiredOutput, facts.documents, facts.currentStage].filter(Boolean).join(' ');
+      if (!engineeringEstimateIntent(source)) return base;
+      const routed = engineeringRoute({ ...base, primaryModule: base.moduleId });
+      return Object.freeze({ ...routed, shouldRedirect: Boolean(routed.currentModuleId && routed.currentModuleId !== 'GP007') });
+    };
+  }
+  window.GovPromptCore.isEngineeringEstimateIntent = engineeringEstimateIntent;
 })();
