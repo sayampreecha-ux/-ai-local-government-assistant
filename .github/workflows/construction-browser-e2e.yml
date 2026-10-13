@@ -5,6 +5,7 @@ on:
       - 'assets/js/core/**'
       - 'tests/fixtures/construction-qa/**'
       - 'tests/e2e/construction-browser-contract.mjs'
+      - 'tests/e2e/construction-production-smoke.mjs'
       - '.github/workflows/construction-browser-e2e.yml'
   workflow_dispatch:
 jobs:
@@ -26,9 +27,13 @@ jobs:
         run: node --test tests/unit/construction-review-contract.test.mjs
       - name: Real Chromium desktop/mobile contract E2E (12 TC + 5 RG)
         run: node tests/e2e/construction-browser-contract.mjs
+      - name: Production website real-browser smoke and screenshots
+        run: node tests/e2e/construction-production-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: construction-browser-e2e-results
-          path: artifacts/construction-browser-e2e/
+          path: |
+            artifacts/construction-browser-e2e/
+            artifacts/construction-production-ui/
           retention-days: 30
