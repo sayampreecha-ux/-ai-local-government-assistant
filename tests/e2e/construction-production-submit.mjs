@@ -17,17 +17,21 @@ try {
         const response=await page.goto(base,{waitUntil:'domcontentloaded',timeout:45000});
         if(response?.status()!==200)throw Error('production HTTP '+response?.status());
         await page.locator('#promptInput').waitFor({state:'visible',timeout:15000});
+        await page.waitForFunction(() => document.readyState === 'complete' && typeof window.GovPromptCore?.prepareGP223IntakeTurn === 'function' && typeof window.GovPromptCore?.createGovernmentPrompt === 'function', null, {timeout:20000});
         await page.locator('#promptInput').fill(fixture.question);
         await page.locator('#chatForm button[type="submit"]').click();
-        await page.waitForFunction(()=>document.querySelector('#conversation')?.innerText.trim().length>20,{timeout:20000}).catch(()=>{});
-        await page.waitForTimeout(700);
+        await page.locator('#conversation .message.user').first().waitFor({state:'visible',timeout:20000});
+        await page.locator('#thinkingMessage').waitFor({state:'detached',timeout:20000});
         const visible=await page.locator('#conversation').innerText();
-        if(visible.length<20)throw Error('no visible conversation output after submit');
-        if(!visible.includes(fixture.question.slice(0,12)))throw Error('question not visible in conversation');
+        const userText=await page.locator('#conversation .message.user').first().innerText();
+        if(!userText.includes(fixture.question.slice(0,12)))throw Error('question not preserved in user message');
+        if(!(await page.locator('#conversation .message.assistant').count()))throw Error('assistant output missing');
+        if(visible.length<30)throw Error('insufficient visible conversation output');
         if(fixture.id==='TC01'||fixture.id==='TC09'||fixture.id==='TC12') await page.screenshot({path:`${output}/${device.name}-${fixture.id}.png`,fullPage:true});
         results.push({id:fixture.id,device:device.name,status,visibleExcerpt:visible.slice(0,500),scope:'production-ui-submit',engineeringEvidence:'NOT VERIFIED'});
       }catch(e){
         status='FAIL';reason=String(e);
+        try {await page.screenshot({path:`${output}/${device.name}-${fixture.id}-FAIL.png`,fullPage:true});}catch{}
         results.push({id:fixture.id,device:device.name,status,reason,scope:'production-ui-submit'});
       }
       console.log(device.name,fixture.id,status,reason);
