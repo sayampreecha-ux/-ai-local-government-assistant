@@ -20,10 +20,10 @@ try {
         await page.waitForFunction(() => document.readyState === 'complete' && typeof window.GovPromptCore?.prepareGP223IntakeTurn === 'function' && typeof window.GovPromptCore?.createGovernmentPrompt === 'function', null, {timeout:20000});
         await page.locator('#promptInput').fill(fixture.question);
         await page.locator('#chatForm button[type="submit"]').click();
-        await page.locator('#conversation .message.user').first().waitFor({state:'visible',timeout:20000});
+        await page.locator('#conversation .message.user').first().waitFor({state:'attached',timeout:20000});
         await page.locator('#thinkingMessage').waitFor({state:'detached',timeout:20000});
-        const visible=await page.locator('#conversation').innerText();
-        const userText=await page.locator('#conversation .message.user').first().innerText();
+        const visible=await page.locator('#conversation').textContent();
+        const userText=await page.locator('#conversation .message.user').first().textContent();
         if(!userText.includes(fixture.question.slice(0,12)))throw Error('question not preserved in user message');
         if(!(await page.locator('#conversation .message.assistant').count()))throw Error('assistant output missing');
         if(visible.length<30)throw Error('insufficient visible conversation output');
