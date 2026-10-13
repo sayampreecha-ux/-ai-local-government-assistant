@@ -31,6 +31,7 @@ try {
   const page=await context.newPage();
   const errors=[];const network=[];const httpErrors=[];let navigating=false;const unexpectedFailures=[];
   page.on('pageerror',e=>errors.push(String(e)));
+  page.on('console',message=>{if(message.type()==='error')errors.push('console.error: '+message.text());});
   page.on('response',r=>{if(r.status()>=400&&r.url().startsWith(base))httpErrors.push({url:r.url(),status:r.status()});});
   page.on('requestfailed',r=>{const failure={url:r.url(),error:r.failure()?.errorText,duringNavigation:navigating};network.push(failure);if(!(navigating&&failure.error==='net::ERR_ABORTED'))unexpectedFailures.push(failure);});
   for(const [id,question,expected] of cases) {
@@ -78,6 +79,10 @@ try {
      assert.match(clipboard,/หมวดที่ระบบคาดการณ์: GP007/,'copied prompt must retain engineering route');
      for(const marker of ['A ตาราง','B สูตร','C ตาราง','D ข้อจำกัด'])assert.ok(clipboard.includes(marker),marker);
     }
+    if(id==='engineering-road-blind-input'){
+     assert.ok(clipboard.includes(JSON.stringify(roadInputs)),'blind source quantities, prices and factors must survive clipboard unchanged');
+    }
+    await writeFile(`${out}/${device.name}-${id}-prompt.txt`,clipboard);
     assert.equal(errors.length,0,'page errors: '+errors.join('; '));
     assert.equal(unexpectedFailures.length,0,'unexpected network failures: '+JSON.stringify(unexpectedFailures));
     assert.equal(httpErrors.length,0,'HTTP errors: '+JSON.stringify(httpErrors));
