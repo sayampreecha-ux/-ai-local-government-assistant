@@ -7,6 +7,8 @@ if (!/^http:\/\/127\.0\.0\.1:8765\/$/.test(base)) throw Error('Local PR server o
 const out='artifacts/construction-full-site-pr';
 await mkdir(out,{recursive:true});
 const cases=[
+ ['engineering-road-csl-full','ช่วยถอดปริมาณงานก่อสร้างจากแบบรูปรายการและจัดทำ BOQ/ปร.4 เป็นรายการ พร้อมหน่วย สูตรคำนวณ ตำแหน่งอ้างอิงแบบ และหลักฐานแต่ละปริมาณ แยกรายการที่คำนวณได้จริงกับรายการที่ข้อมูลไม่พอ ห้ามเดาขนาด ปริมาณ หรือรายละเอียดที่ไม่มีในแบบ และให้วิศวกรตรวจรับรองผล ก่อสร้างถนนคสล','GP007'],
+ ['engineering-road-csl-short','ถอดแบบถนน ค.ส.ล. จัดทำรูปแบบ BOQ และ ปร.4/ปร.5','GP007'],
  ['engineering-building','ถอดแบบก่อสร้างอาคารและจัดทำ BOQ','GP007'],
  ['engineering-generic','ถอดแบบและถอดปริมาณเพื่อทำ BOQ','GP007'],
  ['engineering-pr4','ประมาณราคางานก่อสร้างอาคาร จัดทำ ปร.4 และ ปร.5','GP007'],
@@ -68,6 +70,11 @@ try {
     const clipboard=await page.evaluate(()=>navigator.clipboard.readText());
     assert.ok(clipboard.length>100,'clipboard missing generated prompt');
     if(expected==='GP007')assert.match(clipboard,/gov\\.engineering|Construction QA|Factor F/i,'engineering instructions absent from clipboard');
+    if(expected==='GP007'){
+     assert.doesNotMatch(clipboard,/IMAGE CREATIVE MODE|หมวดที่ระบบคาดการณ์: GP012/,'late image route contaminated construction prompt');
+     assert.match(clipboard,/หมวดที่ระบบคาดการณ์: GP007/,'copied prompt must retain engineering route');
+     for(const marker of ['A ตาราง','B สูตร','C ตาราง','D ข้อจำกัด'])assert.ok(clipboard.includes(marker),marker);
+    }
     assert.equal(errors.length,0,'page errors: '+errors.join('; '));
     assert.equal(unexpectedFailures.length,0,'unexpected network failures: '+JSON.stringify(unexpectedFailures));
     assert.equal(httpErrors.length,0,'HTTP errors: '+JSON.stringify(httpErrors));
