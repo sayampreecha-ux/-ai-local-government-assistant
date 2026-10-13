@@ -1,12 +1,15 @@
 import { chromium } from 'playwright';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
 const base = process.env.GOVPROMPT_TEST_URL || 'http://127.0.0.1:8765/';
 if (!/^http:\/\/127\.0\.0\.1:8765\/$/.test(base)) throw Error('Local PR server only');
 const out='artifacts/construction-full-site-pr';
 await mkdir(out,{recursive:true});
+// Only source cells: no QA_Gates, calculated quantities, differences or answer key.
+const roadInputs=JSON.parse(await readFile('tests/fixtures/road-csl/blind-input.json','utf8'));
 const cases=[
+ ['engineering-road-blind-input','ถอดปริมาณงานก่อสร้างจากแบบรูปรายการถนน ค.ส.ล. ตรวจ BOQ/ปร.4/ปร.5 แสดงตาราง A B C D จากข้อมูลจำลองต้นทางต่อไปนี้ ห้ามเดาข้อมูลที่ขาด: '+JSON.stringify(roadInputs),'GP007'],
  ['engineering-road-csl-full','ช่วยถอดปริมาณงานก่อสร้างจากแบบรูปรายการและจัดทำ BOQ/ปร.4 เป็นรายการ พร้อมหน่วย สูตรคำนวณ ตำแหน่งอ้างอิงแบบ และหลักฐานแต่ละปริมาณ แยกรายการที่คำนวณได้จริงกับรายการที่ข้อมูลไม่พอ ห้ามเดาขนาด ปริมาณ หรือรายละเอียดที่ไม่มีในแบบ และให้วิศวกรตรวจรับรองผล ก่อสร้างถนนคสล','GP007'],
  ['engineering-road-csl-short','ถอดแบบถนน ค.ส.ล. จัดทำรูปแบบ BOQ และ ปร.4/ปร.5','GP007'],
  ['engineering-building','ถอดแบบก่อสร้างอาคารและจัดทำ BOQ','GP007'],

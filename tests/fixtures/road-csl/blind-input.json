@@ -1,0 +1,83 @@
+{
+  "source": "Road_CSL_PR4_PR5_QA_Simulation.xlsx",
+  "simulation": true,
+  "dimensions": [
+    {
+      "ref": "DWG_Inputs!B2:D2",
+      "name": "ความยาว",
+      "value": 500,
+      "unit": "ม."
+    },
+    {
+      "ref": "DWG_Inputs!B3:D3",
+      "name": "ความกว้าง",
+      "value": 6,
+      "unit": "ม."
+    },
+    {
+      "ref": "DWG_Inputs!B4:D4",
+      "name": "หนาคอนกรีต",
+      "value": 0.15,
+      "unit": "ม."
+    },
+    {
+      "ref": "DWG_Inputs!B5:D5",
+      "name": "หนารองพื้น",
+      "value": 0.15,
+      "unit": "ม."
+    },
+    {
+      "ref": "DWG_Inputs!B6:D6",
+      "name": "ข้างที่ใช้แบบหล่อ",
+      "value": 2,
+      "unit": "ด้าน"
+    }
+  ],
+  "pr4": [
+    {
+      "name": "คอนกรีต",
+      "unit": "ลบ.ม.",
+      "quantity": 465,
+      "unitPrice": 2500,
+      "drawingRef": "DWG-01/A",
+      "sourceCells": "PR4_Check!A2:B2,D2,F2,J2"
+    },
+    {
+      "name": "รองพื้น",
+      "unit": "ลบ.ม.",
+      "quantity": 450,
+      "unitPrice": 500,
+      "drawingRef": "DWG-01/B",
+      "sourceCells": "PR4_Check!A3:B3,D3,F3,J3"
+    },
+    {
+      "name": "งานผิว",
+      "unit": "ตร.ม.",
+      "quantity": 3000,
+      "unitPrice": 40,
+      "drawingRef": "DWG-01/C",
+      "sourceCells": "PR4_Check!A4:B4,D4,F4,J4"
+    },
+    {
+      "name": "แบบหล่อ",
+      "unit": "ตร.ม.",
+      "quantity": 165,
+      "unitPrice": 300,
+      "drawingRef": "DWG-01/D",
+      "sourceCells": "PR4_Check!A5:B5,D5,F5,J5"
+    }
+  ],
+  "printedPR4": 1557000,
+  "factorUsed": 1.2,
+  "factorReference": 1.15,
+  "printedPR5": 1868400,
+  "sourceFactor": "PR5_FactorF!B3:B4,B6",
+  "missing": [
+    "เหล็กเสริม",
+    "เหล็กเดือย",
+    "รอยต่อ",
+    "การบดอัด",
+    "งานดิน",
+    "หลักเกณฑ์อัตราราชการ"
+  ]
+}
