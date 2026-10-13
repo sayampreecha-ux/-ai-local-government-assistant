@@ -28,3 +28,10 @@ assert.equal(transaction.ambiguous, true);
 assert.equal(transaction.fallback, true);
 assert.equal(transaction.evidenceStatus, 'UNVERIFIED');
 assert.equal(transaction.evidenceVerified, false);
+
+// Negative cases: K keyword must not affect unrelated requests.
+for (const input of ['จัดทำ TOR งานก่อสร้าง', 'ตรวจราคากลาง Factor F', 'ร่างหนังสือราชการ', 'คำนวณ ปร.4 ปร.5']) {
+  const result = core.routeRequest(input);
+  assert.equal(result.primaryModule, 'GP001');
+  assert.equal(result.evidenceStatus, undefined);
+}
