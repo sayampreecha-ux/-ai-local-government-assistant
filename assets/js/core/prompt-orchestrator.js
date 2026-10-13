@@ -980,7 +980,7 @@
       riskFlags,
       route: activeRoute,
       taskPlan,
-      effectiveOutputPlan,
+      outputPlan: effectiveOutputPlan,
       outputFormatId: presentationPreset?.id || 'auto',
       presentationPreset,
       governancePlan,
