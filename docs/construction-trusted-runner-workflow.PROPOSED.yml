@@ -1,0 +1,46 @@
+# PROPOSED ONLY — do not enable until approved and audited.
+# Store as a protected-default-branch workflow, NOT as a PR-run workflow.
+# Requires a dedicated ephemeral self-hosted runner pre-staged by an operator.
+name: Construction Trusted Blind Numeric Capture
+on:
+  workflow_dispatch:
+    inputs:
+      reviewed_sha:
+        description: "Approved immutable commit SHA (audit reference only)"
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  capture:
+    if: github.ref == 'refs/heads/main'
+    environment: construction-blind-operator-approval
+    runs-on: [self-hosted, linux, construction-blind-isolated]
+    timeout-minutes: 20
+    steps:
+      # IMPORTANT: checkout only the trusted default branch; never checkout a PR SHA.
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: main
+      - name: Verify blind inputs pre-staged outside workspace
+        env:
+          BLIND_PDF: /opt/construction-blind/input/blind_input.pdf
+          BLIND_XLSX: /opt/construction-blind/input/blind_input_no_answer_key.xlsx
+          BLIND_PDF_SHA256: ${{ secrets.CONSTRUCTION_BLIND_PDF_SHA256 }}
+          BLIND_XLSX_SHA256: ${{ secrets.CONSTRUCTION_BLIND_XLSX_SHA256 }}
+        run: node tests/e2e/construction-blind-input-gate.mjs
+      - name: Capture downstream numeric output without sealed materials
+        env:
+          BLIND_PDF: /opt/construction-blind/input/blind_input.pdf
+          BLIND_XLSX: /opt/construction-blind/input/blind_input_no_answer_key.xlsx
+          BLIND_PDF_SHA256: ${{ secrets.CONSTRUCTION_BLIND_PDF_SHA256 }}
+          BLIND_XLSX_SHA256: ${{ secrets.CONSTRUCTION_BLIND_XLSX_SHA256 }}
+          ACTUAL_PROMPT_FILE: /opt/construction-blind/input/actual-prompt.txt
+          TRUSTED_NUMERIC_EXECUTOR: /opt/construction-blind/bin/approved-ai-executor
+          EVIDENCE_OUT: /opt/construction-blind/output
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        run: node tests/e2e/construction-trusted-numeric-executor.mjs
+      # Do NOT upload evidence to a public/PR-visible GitHub artifact.
+      # Operator must write-once lock /opt/construction-blind/output in trusted storage
+      # before separately authorized verifier accesses sealed answer key.
