@@ -1,0 +1,48 @@
+name: Construction Browser Contract E2E
+on:
+  pull_request:
+    paths:
+      - 'assets/js/core/**'
+      - 'tests/fixtures/construction-qa/**'
+      - 'tests/e2e/construction-browser-contract.mjs'
+      - 'tests/e2e/construction-production-smoke.mjs'
+      - 'tests/e2e/construction-production-submit.mjs'
+      - 'tests/construction-qa/**'
+      - '.github/workflows/construction-browser-e2e.yml'
+  workflow_dispatch:
+jobs:
+  construction-browser-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Construction contract unit test (12 TC + 5 RG)
+        run: node --test tests/unit/construction-review-contract.test.mjs
+      - name: Real Chromium desktop/mobile contract E2E (12 TC + 5 RG)
+        run: node tests/e2e/construction-browser-contract.mjs
+      - name: Pr4 Pr5 evidence-first arithmetic unit tests
+        run: node --test tests/construction-qa/official-rate-validator.test.mjs
+      - name: Synthetic road acceptance (5 scenarios, not official rates)
+        run: node --test tests/construction-qa/synthetic-road-acceptance.test.mjs
+      - name: Production website real-browser smoke and screenshots
+        run: node tests/e2e/construction-production-smoke.mjs
+      - name: Submit construction and regression questions through real production UI
+        run: node tests/e2e/construction-production-submit.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: construction-browser-e2e-results
+          path: |
+            artifacts/construction-browser-e2e/
+            artifacts/construction-production-ui/
+            artifacts/construction-production-submit/
+          retention-days: 30
