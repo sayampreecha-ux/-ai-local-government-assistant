@@ -829,6 +829,7 @@
       `1. เจตนาหลักของงาน: ${taskPlan.action}`,
       `2. ชิ้นงานที่ควรส่งมอบ: ${taskPlan.deliverable}`,
       `3. สาขางานที่เกี่ยวข้องจากเนื้อหา: ${taskPlan.disciplines.length ? taskPlan.disciplines.join(', ') : 'general-government'}`,
+      ...(taskPlan.constructionReview ? ['- Primary Workflow สำหรับงานนี้: gov.engineering; Supporting Workflow: gov.procurement (เฉพาะการจัดซื้อจัดจ้างและการรับรองราคากลาง)'] : []),
       `4. ระดับความเสี่ยง: ${taskPlan.riskLevel}`,
       `5. วิธีใช้หลักฐาน: ${taskPlan.evidenceMode}`,
       '6. แยกให้ได้ว่าอะไรคือ “คำตอบ/ชิ้นงานที่ผู้ใช้ต้องการ” กับอะไรคือ “ข้อมูลสนับสนุนที่ระบบควรตรวจ”',
@@ -862,7 +863,14 @@
       ...applicableAuthorityInstructions(taskPlan.applicableAuthorityCheck),
       ...disciplinaryInstructions(userQuestion),
       ...(taskPlan.applicableAuthorityCheck.required || gates.evidenceRequired ? crossReferenceAuthorityInstructions() : []),
-      ...(casePrecedentGate.required ? [
+      ...(taskPlan.constructionReview ? [
+        '', 'Construction Official Authority Retrieval — ใช้ Evidence/Version/Decision Lock เดิม',
+        '- ให้ AI ปลายทางค้นต้นฉบับกรมบัญชีกลางและหน่วยงานเจ้าของหลักเกณฑ์เกี่ยวกับราคาวัสดุ ค่าแรง Factor F และราคากลางงานก่อสร้าง ตรวจเลขหนังสือ วันมีผล ฉบับแก้ไข/ยกเลิก เงื่อนไขจังหวัดและประเภทงาน',
+        '- ค้นหนังสือหารือ/แนววินิจฉัยเฉพาะเมื่อเกิดข้อพิพาทหรือประเด็นตีความกฎหมายจริง ห้ามใช้คำค้นสิทธิบุคคล การเดินทาง หรือการแต่งตั้งกับงานประมาณราคาปกติ',
+        '- เก็บ Source/Authority/Version/Evidence, contrary evidence และ Audit Trace; หากยังยืนยันไม่ได้ให้ UNVERIFIED และ Decision Lock เฉพาะการรับรองอัตรา/ข้อกฎหมาย โดยยังคำนวณเลขจากเอกสารที่อ่านได้',
+        '- การคำนวณถูกต้องไม่เท่ากับอนุมัติราคากลาง ผู้มีอำนาจต้องตรวจรับรอง'
+      ] : []),
+      ...(casePrecedentGate.required && !taskPlan.constructionReview ? [
         '', 'GOVPROMPT — OFFICIAL AUTHORITY RETRIEVAL GATE',
         `- retrievalGateVersion=${casePrecedentGate.retrievalGateVersion}; stateModel=Official Precedent Gate v${casePrecedentGate.gateVersion}; interpretation_issue=true`,
         `- currentRule=${casePrecedentGate.currentRule}; officialPrecedent=${casePrecedentGate.officialPrecedent}; searchStatus=${casePrecedentGate.searchStatus}; caseMatch=${casePrecedentGate.caseMatch}; legalVersion=${casePrecedentGate.legalVersion}`,
