@@ -577,12 +577,13 @@
     const review = /(?:ตรวจ|ตรวจสอบ|ตรวจทาน|เทียบ|ถอดปริมาณ|ประมาณราคา|คำนวณ|คิดราคาเกิน)/.test(source);
     const construction = /(?:ป\s*ร\s*\.?\s*[45]|factor\s*f|แบบก่อสร้าง|งานก่อสร้าง|ราคากลางก่อสร้าง)/i.test(source)
       || /(?:ถนน|คอนกรีต|หลังคา|ประปา|รางระบายน้ำ|ลานกีฬา|ทางลาด|อาคาร)/.test(source) && /(?:ปริมาณ|ราคากลาง|ประมาณราคา)/.test(source);
-    if (!review || !construction || /(?:ทำ|สร้าง|ร่าง|เขียน).*(?:ประชาสัมพันธ์|วิดีโอ|วีดีโอ|คลิป|โปสเตอร์|อินโฟกราฟิก)/.test(source)) return basePlan;
+    if (!(review && construction) && !engineeringEstimateIntent(question)) return basePlan;
+    if (/(?:ทำ|สร้าง|ร่าง|เขียน).*(?:ประชาสัมพันธ์|วิดีโอ|วีดีโอ|คลิป|โปสเตอร์|อินโฟกราฟิก)/.test(source)) return basePlan;
     const ratesOrConclusion = /(?:ราคา|ค่าแรง|วัสดุ|factor\s*f|มาตรฐาน|ผิด|เกิน|รับรอง|วินิจฉัย)/i.test(source);
     return Object.freeze({
       ...basePlan,
       action: 'verify',
-      deliverable: 'procurement',
+      deliverable: 'engineering-estimate',
       disciplines: Object.freeze(['engineering', 'procurement']),
       riskLevel: ratesOrConclusion || basePlan.riskLevel === 'HIGH' ? 'HIGH' : 'MEDIUM',
       evidenceMode: 'verify-applicable-primary-source',
@@ -626,6 +627,10 @@
   }
 
   function normalizeRoute(route) {
+    if (route?.primaryModule) {
+      const assistant = route.assistant || window.GovPromptCore.PROMPT_REGISTRY?.find(item => item.moduleId === route.primaryModule);
+      if (assistant) return Object.freeze({ ...route, moduleId: route.primaryModule, assistant });
+    }
     if (route?.moduleId && route?.assistant) return route;
     return Object.freeze({
       moduleId: GENERAL_ASSISTANT.moduleId,
@@ -652,6 +657,16 @@
     const outputPlan = typeof window.GovPromptCore.routeOutput === 'function'
       ? window.GovPromptCore.routeOutput(userQuestion, activeRoute, normalizedContext)
       : Object.freeze({ id: 'default', label: 'คำตอบพร้อมใช้', format: 'answer-first', instructions: Object.freeze([]), confidence: 0.5, reason: 'fallback' });
+    const effectiveOutputPlan = taskPlan.constructionReview ? Object.freeze({
+      id: 'construction-estimate',
+      label: 'ตารางประมาณราคา ปร.4/ปร.5 และรายงานตรวจสอบ',
+      format: 'engineering-estimate',
+      reason: 'construction-estimate-evidence-first',
+      instructions: Object.freeze([
+        'แสดงตาราง C Factor F ก่อนตาราง A ตรวจปริมาณและผลต่าง ตาราง B สูตรคำนวณ ปร.4 รายการต่อรายการ และตาราง D ข้อจำกัดและ Human Review',
+        'แยกค่าในเอกสารกับอัตราราชการที่ยืนยันได้ พร้อมหน่วย สูตร แหล่งข้อมูล และ UNVERIFIED'
+      ])
+    }) : outputPlan;
     const presentationPreset = typeof window.GovPromptCore.resolveOutputFormatPreset === 'function'
       ? window.GovPromptCore.resolveOutputFormatPreset(outputFormatId)
       : null;
@@ -758,7 +773,7 @@
         riskFlags,
         route: activeRoute,
         taskPlan,
-        outputPlan,
+        outputPlan: effectiveOutputPlan,
         outputFormatId: presentationPreset?.id || 'auto',
         presentationPreset,
         governancePlan,
@@ -819,6 +834,7 @@
       `1. เจตนาหลักของงาน: ${taskPlan.action}`,
       `2. ชิ้นงานที่ควรส่งมอบ: ${taskPlan.deliverable}`,
       `3. สาขางานที่เกี่ยวข้องจากเนื้อหา: ${taskPlan.disciplines.length ? taskPlan.disciplines.join(', ') : 'general-government'}`,
+      ...(taskPlan.constructionReview ? ['- Primary Workflow สำหรับงานนี้: gov.engineering; Supporting Workflow: gov.procurement (เฉพาะการจัดซื้อจัดจ้างและการรับรองราคากลาง)'] : []),
       `4. ระดับความเสี่ยง: ${taskPlan.riskLevel}`,
       `5. วิธีใช้หลักฐาน: ${taskPlan.evidenceMode}`,
       '6. แยกให้ได้ว่าอะไรคือ “คำตอบ/ชิ้นงานที่ผู้ใช้ต้องการ” กับอะไรคือ “ข้อมูลสนับสนุนที่ระบบควรตรวจ”',
@@ -852,7 +868,14 @@
       ...applicableAuthorityInstructions(taskPlan.applicableAuthorityCheck),
       ...disciplinaryInstructions(userQuestion),
       ...(taskPlan.applicableAuthorityCheck.required || gates.evidenceRequired ? crossReferenceAuthorityInstructions() : []),
-      ...(casePrecedentGate.required ? [
+      ...(taskPlan.constructionReview ? [
+        '', 'Construction Official Authority Retrieval — ใช้ Evidence/Version/Decision Lock เดิม',
+        '- ให้ AI ปลายทางค้นต้นฉบับกรมบัญชีกลางและหน่วยงานเจ้าของหลักเกณฑ์เกี่ยวกับราคาวัสดุ ค่าแรง Factor F และราคากลางงานก่อสร้าง ตรวจเลขหนังสือ วันมีผล ฉบับแก้ไข/ยกเลิก เงื่อนไขจังหวัดและประเภทงาน',
+        '- ค้นหนังสือหารือ/แนววินิจฉัยเฉพาะเมื่อเกิดข้อพิพาทหรือประเด็นตีความกฎหมายจริง ห้ามใช้คำค้นสิทธิบุคคล การเดินทาง หรือการแต่งตั้งกับงานประมาณราคาปกติ',
+        '- เก็บ Source/Authority/Version/Evidence, contrary evidence และ Audit Trace; หากยังยืนยันไม่ได้ให้ UNVERIFIED และ Decision Lock เฉพาะการรับรองอัตรา/ข้อกฎหมาย โดยยังคำนวณเลขจากเอกสารที่อ่านได้',
+        '- การคำนวณถูกต้องไม่เท่ากับอนุมัติราคากลาง ผู้มีอำนาจต้องตรวจรับรอง'
+      ] : []),
+      ...(casePrecedentGate.required && !taskPlan.constructionReview ? [
         '', 'GOVPROMPT — OFFICIAL AUTHORITY RETRIEVAL GATE',
         `- retrievalGateVersion=${casePrecedentGate.retrievalGateVersion}; stateModel=Official Precedent Gate v${casePrecedentGate.gateVersion}; interpretation_issue=true`,
         `- currentRule=${casePrecedentGate.currentRule}; officialPrecedent=${casePrecedentGate.officialPrecedent}; searchStatus=${casePrecedentGate.searchStatus}; caseMatch=${casePrecedentGate.caseMatch}; legalVersion=${casePrecedentGate.legalVersion}`,
@@ -909,8 +932,8 @@
       `- เอกสารแนบ: ${attachmentNames.length ? attachmentNames.join(', ') : '[ไม่มี/ยังไม่ได้แนบ]'}`,
       `- ผลลัพธ์ที่ต้องการ: ${normalizedContext.desiredOutput || userQuestion}`,
       '', presentationPreset ? 'ชิ้นงานหลักที่ Output Router เลือก' : 'รูปแบบผลลัพธ์ที่ GovPrompt เลือกให้อัตโนมัติ',
-      `- ประเภท: ${outputPlan.label}`, `- รูปแบบ: ${outputPlan.format}`, `- เหตุผลการเลือก: ${outputPlan.reason}`,
-      ...(outputPlan.instructions || []).map((item, index) => `${index + 1}. ${item}`),
+      `- ประเภท: ${effectiveOutputPlan.label}`, `- รูปแบบ: ${effectiveOutputPlan.format}`, `- เหตุผลการเลือก: ${effectiveOutputPlan.reason}`,
+      ...(effectiveOutputPlan.instructions || []).map((item, index) => `${index + 1}. ${item}`),
       ...(presentationBlock ? ['', 'รูปแบบการนำเสนอที่ผู้ใช้เลือก', ...presentationBlock.split('\n')] : []),
       '', 'ขอบเขต AI Agent Governance',
       `- ระดับที่ผู้ใช้ร้องขอโดยพฤติกรรม: ${governancePlan.requestedLevel}`,
@@ -940,7 +963,7 @@
       '', 'สถานะความเสี่ยงเบื้องต้นจาก GovPrompt',
       riskFlags.length ? riskFlags.map(flag => `- ${flag}`).join('\n') : (taskPlan.riskLevel === 'HIGH' ? '- งานความเสี่ยงสูง: ต้องตรวจฐานอำนาจ หลักฐาน และเงื่อนไขก่อนฟันธง' : taskPlan.riskLevel === 'MEDIUM' ? '- งานความเสี่ยงปานกลาง: ต้องตรวจข้อเท็จจริงและเอกสารประกอบ' : '- ไม่พบสัญญาณความเสี่ยงจากข้อความเบื้องต้น แต่ยังต้องตรวจทานก่อนใช้จริง'),
       '', 'ข้อกำหนดผลลัพธ์',
-      `- ส่งผลลัพธ์หลักในรูปแบบ “${outputPlan.label}” ตามที่ Output Router เลือก เว้นแต่ผู้ใช้สั่งรูปแบบอื่นชัดเจน`,
+      `- ส่งผลลัพธ์หลักในรูปแบบ “${effectiveOutputPlan.label}” ตามที่ Output Router เลือก เว้นแต่ผู้ใช้สั่งรูปแบบอื่นชัดเจน`,
       ...(presentationPreset ? [`- จัดการนำเสนอชิ้นงานด้วย “${presentationPreset.label}” ตามที่ผู้ใช้เลือก โดยไม่ลดทอนโครงสร้างบังคับของชิ้นงานหลัก`] : []),
       '- ใช้ภาษาไทยชัดเจน กระชับ และเหมาะกับการปฏิบัติราชการ',
       '- อ้างแหล่งที่มาต่อข้อความสำคัญเมื่อสามารถตรวจสอบต้นฉบับได้',
@@ -962,7 +985,7 @@
       riskFlags,
       route: activeRoute,
       taskPlan,
-      outputPlan,
+      outputPlan: effectiveOutputPlan,
       outputFormatId: presentationPreset?.id || 'auto',
       presentationPreset,
       governancePlan,
@@ -988,4 +1011,46 @@
   window.GovPromptCore.OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION = OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION;
   window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.9.1';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
+  // Scope the actual transaction route to engineering estimate requests only.
+  // Preserve all other routing decisions, especially procurement TOR and legal work.
+  const engineeringEstimateIntent = value => {
+    const source = String(value || '').trim();
+    const construction = /(?:งานก่อสร้าง|แบบก่อสร้าง|ถนน|อาคาร|คอนกรีต|รางระบายน้ำ|ประปา|ปร\.?4|ปร\.?5|ป\s*ร\s*\.?[45]|ถอดแบบ|ถอดปริมาณ|factor\s*f|ตรวจสอบปริมาณงาน)/i.test(source);
+    const estimate = /(?:ถอดแบบ|ถอดปริมาณ|จัดทำราคากลาง|คำนวณราคากลาง|ประมาณราคา|จัดทำ\s*boq|ตรวจสอบปริมาณงาน|ตรวจสอบราคาวัสดุ|factor\s*f)/i.test(source);
+    const excluded = /(?:\bTOR\b|ทีโออาร์|ขอบเขตของงาน|จัดซื้อ|ประกวดราคา|ร่างสัญญา|จัดทำประกาศ|คำวินิจฉัย|วิเคราะห์ข้อกฎหมาย|ประชาสัมพันธ์|อินโฟกราฟิก|โปสเตอร์|วิดีโอ|วีดีโอ)/i.test(source);
+    return construction && estimate && !excluded;
+  };
+  const engineeringRoute = result => {
+    if (!result || result.primaryModule === 'GP007') return result;
+    const assistant = window.GovPromptCore.PROMPT_REGISTRY?.find(item => item.moduleId === 'GP007');
+    return Object.freeze({
+      ...result,
+      primaryModule: 'GP007',
+      moduleId: 'GP007',
+      transactionType: 'engineering',
+      assistant: assistant || result.assistant,
+      modules: Object.freeze(['GP007', ...(result.modules || []).filter(id => id !== 'GP007')].slice(0, 3)),
+      confidence: 0.995,
+      fallback: false,
+      ambiguous: false,
+      reason: 'engineering-estimate-primary-workflow'
+    });
+  };
+  const priorEngineeringRouteRequest = window.GovPromptCore.routeRequest;
+  window.GovPromptCore.routeRequest = function routeEngineeringEstimate(request, options = {}) {
+    const base = priorEngineeringRouteRequest(request, options);
+    return engineeringEstimateIntent(request) ? engineeringRoute(base) : base;
+  };
+  const priorEngineeringRouteTransaction = window.GovPromptCore.routeTransaction;
+  if (typeof priorEngineeringRouteTransaction === 'function') {
+    window.GovPromptCore.routeTransaction = function transactionEngineeringEstimate(context, options = {}) {
+      const base = priorEngineeringRouteTransaction(context, options);
+      const facts = base?.context || context || {};
+      const source = [facts.facts, facts.desiredOutput, facts.documents, facts.currentStage].filter(Boolean).join(' ');
+      if (!engineeringEstimateIntent(source)) return base;
+      const routed = engineeringRoute({ ...base, primaryModule: base.moduleId });
+      return Object.freeze({ ...routed, shouldRedirect: Boolean(routed.currentModuleId && routed.currentModuleId !== 'GP007') });
+    };
+  }
+  window.GovPromptCore.isEngineeringEstimateIntent = engineeringEstimateIntent;
 })();
