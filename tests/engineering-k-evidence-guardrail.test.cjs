@@ -16,3 +16,15 @@ const ordinary = core.routeRequest('ร่างหนังสือราช�
 assert.equal(ordinary.primaryModule, 'GP001');
 assert.equal(ordinary.evidenceStatus, undefined);
 console.log('Engineering K routing guardrail tests passed');
+
+// Transaction routing must preserve the base assessment as well.
+const txBase = { context: { facts: 'ตรวจค่า K งานหินคลุก' }, confidence: 0.35, ambiguous: true, fallback: true, modules: ['GP001'] };
+const txCore = { routeRequest: () => base, routeTransaction: () => txBase, PROMPT_REGISTRY: [{ moduleId: 'GP007' }] };
+vm.runInNewContext(source, { window: { GovPromptCore: txCore } });
+const transaction = txCore.routeTransaction({ facts: 'ตรวจค่า K งานหินคลุก' });
+assert.equal(transaction.primaryModule, 'GP007');
+assert.equal(transaction.confidence, 0.35);
+assert.equal(transaction.ambiguous, true);
+assert.equal(transaction.fallback, true);
+assert.equal(transaction.evidenceStatus, 'UNVERIFIED');
+assert.equal(transaction.evidenceVerified, false);
