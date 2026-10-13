@@ -39,6 +39,15 @@ jobs:
       - name: Install Chromium for mobile browser verification
         run: |
           pnpm exec playwright install --with-deps chromium
+      - name: Engineering six-action real browser handoff (18 cases, desktop/mobile)
+        run: node tests/e2e/engineering-final.mjs
+      - name: Preserve engineering final browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engineering-final-evidence
+          path: artifacts/engineering-final/
+          if-no-files-found: warn
       - name: Verify mobile workflow runtime and privacy boundary
         run: node scripts/verify-workflow-mobile-e2e.mjs
       - name: Verify FAT discipline and regression cases in real desktop and mobile UI
