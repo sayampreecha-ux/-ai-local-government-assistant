@@ -24,13 +24,15 @@ try {
  for(const device of [{name:'desktop',viewport:{width:1440,height:900}},{name:'mobile',viewport:{width:390,height:844},isMobile:true,hasTouch:true}]) {
   const context=await browser.newContext({viewport:device.viewport,isMobile:device.isMobile,hasTouch:device.hasTouch,locale:'th-TH',permissions:['clipboard-read','clipboard-write']});
   const page=await context.newPage();
-  const errors=[];const network=[];
+  const errors=[];const network=[];let navigating=false;const unexpectedFailures=[];
   page.on('pageerror',e=>errors.push(String(e)));
-  page.on('requestfailed',r=>network.push({url:r.url(),error:r.failure()?.errorText}));
+  page.on('requestfailed',r=>{const failure={url:r.url(),error:r.failure()?.errorText,duringNavigation:navigating};network.push(failure);if(!(navigating&&failure.error==='net::ERR_ABORTED'))unexpectedFailures.push(failure);});
   for(const [id,question,expected] of cases) {
    let status='PASS',reason='';
    try {
-    const response=await page.goto(base,{waitUntil:'domcontentloaded',timeout:30000});
+    navigating=true;
+    const response=await page.goto(base,{waitUntil:'load',timeout:30000});
+    navigating=false;
     assert.equal(response?.status(),200);
     await page.locator('#promptInput').waitFor({state:'visible',timeout:15000});
     await page.waitForFunction(()=>typeof window.GovPromptCore?.createGovernmentPrompt==='function' && typeof window.GovPromptCore?.routeRequest==='function',{},{timeout:15000});
@@ -66,11 +68,12 @@ try {
     assert.ok(clipboard.length>100,'clipboard missing generated prompt');
     if(expected==='GP007')assert.match(clipboard,/gov\\.engineering|Construction QA|Factor F/i,'engineering instructions absent from clipboard');
     assert.equal(errors.length,0,'page errors: '+errors.join('; '));
+    assert.equal(unexpectedFailures.length,0,'unexpected network failures: '+JSON.stringify(unexpectedFailures));
     await page.screenshot({path:`${out}/${device.name}-${id}.png`,fullPage:true});
    }catch(e){status='FAIL';reason=String(e?.stack||e);try{reason+=' | UI='+JSON.stringify({conversation:(await page.locator('#conversation').innerText()).slice(0,900),input:await page.locator('#promptInput').inputValue(),url:page.url()})}catch{}try{await page.screenshot({path:`${out}/${device.name}-${id}-FAIL.png`,fullPage:true})}catch{}}
    results.push({device:device.name,id,question,expected,status,reason,pageErrors:[...errors],networkErrors:[...network],scope:'full-site-local-http-pr',downstreamAI:'NOT TESTED',officialRateEvidence:'NOT VERIFIED'});
    console.log(device.name,id,status,reason.split('\n')[0]);
-   errors.length=0;network.length=0;
+   errors.length=0;network.length=0;unexpectedFailures.length=0;navigating=false;
   }
   await context.close();
  }
