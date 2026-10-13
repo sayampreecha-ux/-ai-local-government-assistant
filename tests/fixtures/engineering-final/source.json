@@ -1,12 +1,32 @@
 {
- "project":"ปรับปรุงห้องสมุด คณะสถาปัตยกรรมศาสตร์ มหาวิทยาลัยเชียงใหม่",
- "announcementDate":"2026-03-24",
- "sourceStatus":"ร่าง TOR และเอกสารประกวดราคา ไม่ได้ยืนยันเป็นสัญญาฉบับลงนามหรือราคาปัจจุบัน",
- "source":"https://www.cmu.ac.th/th/Procurement/2fdb99ce-6f94-4c32-b544-15256dafddd8",
- "documents":{
-  "estimate":"https://www.cmu.ac.th/Procurement/Procurement_download.aspx?id=2068e73b-d67f-43fd-9542-8f72328519ec",
-  "tor":"https://www.cmu.ac.th/Procurement/Procurement_download.aspx?id=0ab49fb0-5a3b-446f-bcd3-1354e9693ff6",
-  "drawings":"https://www.cmu.ac.th/Procurement/Procurement_download.aspx?id=291c6d8c-b538-46d8-96e6-dcaa3a63e9a0"
- },
- "scope":"Real-project source links for GovPrompt handoff tests. Missing/conflicting/structural scenarios are explicitly test variations, not allegations about this project. No uploaded files or downstream reading/calculation is claimed."
+  "project": "ปรับปรุงห้องสมุด คณะสถาปัตยกรรมศาสตร์ มหาวิทยาลัยเชียงใหม่",
+  "announcementDate": "2026-03-24",
+  "sourceStatus": "ร่าง TOR และเอกสารประกวดราคา ไม่ได้ยืนยันเป็นสัญญาฉบับลงนามหรือราคาปัจจุบัน",
+  "source": "https://www.cmu.ac.th/th/Procurement/2fdb99ce-6f94-4c32-b544-15256dafddd8",
+  "documents": {
+    "estimate": "https://www.cmu.ac.th/Procurement/Procurement_download.aspx?id=2068e73b-d67f-43fd-9542-8f72328519ec",
+    "tor": "https://www.cmu.ac.th/Procurement/Procurement_download.aspx?id=0ab49fb0-5a3b-446f-bcd3-1354e9693ff6",
+    "drawings": "https://www.cmu.ac.th/Procurement/Procurement_download.aspx?id=291c6d8c-b538-46d8-96e6-dcaa3a63e9a0"
+  },
+  "scope": "Real-project source links for GovPrompt handoff tests. Missing/conflicting/structural scenarios are explicitly test variations, not allegations about this project. No uploaded files or downstream reading/calculation is claimed.",
+  "downloadEvidence": {
+    "estimate": {
+      "sha256": "ebc6c4f7172cefde2d5fdac0b879c4a0fda3f2e093f021de56510a4addd1fbb1",
+      "bytes": 403641
+    },
+    "tor": {
+      "sha256": "dcc8a30bc291a70dda6fd3db707c08115a6ec0de5f11f8bff895ea96e2dd55d1",
+      "bytes": 401386
+    },
+    "drawings": {
+      "sha256": "af1168187f91a991769e818ceb0d2bea15fddd3ff99873fd1990c2aa6cfdf689",
+      "bytes": 1669612
+    }
+  },
+  "visualInspection": {
+    "estimate": "PDF page 1: ปร.6 project summary and supporting rate-source notes; 14 PDF pages",
+    "tor": "PDF page 1: draft TOR for the named library project; 10 PDF pages",
+    "drawings": "PDF page 2: sheet A01 index, general construction notes and specifications; 35 PDF pages"
+  },
+  "inspectedAt": "2026-10-13"
 }

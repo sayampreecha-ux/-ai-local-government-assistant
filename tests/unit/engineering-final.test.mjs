@@ -20,5 +20,6 @@ for(const c of cases)test(`${c.id}: generated handoff preserves task and evidenc
  assert.ok(result.prompt.includes(question),'full question preserved');
  for(const text of c.expect)assert.ok(result.prompt.includes(text),text);
  assert.match(result.prompt,/Human Review/);
+ if(c.button<3){assert.equal(result.qualityGates.evidenceRequired,true);assert.equal(result.qualityGates.decisionRequired,true);assert.equal(result.qualityGates.legalVersionRequired,true);}
  if(c.button<3)for(const text of ['VERIFIED','PENDING','BLOCKED','Partial Decision Lock','ไม่ใช่การรับรองเอกสารทางราชการ'])assert.ok(result.prompt.includes(text),text);
 });
