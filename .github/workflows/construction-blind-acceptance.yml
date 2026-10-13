@@ -33,6 +33,15 @@ jobs:
           exit 1
       - name: Run blind prompt routing, clipboard and UI acceptance
         run: node tests/e2e/construction-blind-acceptance.mjs
+      - name: Run 500-case regression
+        if: always()
+        run: node scripts/verify-real-case-quality-500.mjs
+      - name: Run scoped engineering regression
+        if: always()
+        run: node scripts/verify-pilot-quality-30.mjs
+      - name: Run full-site desktop/mobile regression without PR number gate
+        if: always()
+        run: node tests/e2e/construction-full-site-pr.mjs
       - name: Upload actual prompt and browser evidence
         if: always()
         uses: actions/upload-artifact@v4
