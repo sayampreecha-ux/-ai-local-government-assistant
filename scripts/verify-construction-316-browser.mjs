@@ -33,6 +33,11 @@ const details=page.locator('.answer-card .answer-section details').filter({has:p
 await page.getByRole('button',{name:/^คัดลอก(?:ไปใช้กับ AI|คำสั่งอย่างเดียว|คำสั่ง)$/}).click();await page.waitForFunction(async expected=>(await navigator.clipboard.readText())===expected,record.preview);record.copied=await page.evaluate(()=>navigator.clipboard.readText());assert.equal(record.copied,record.preview);
 record.route=await page.locator('.route-label').last().innerText();record.layout=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth}));assert.ok(record.layout.scrollWidth<=viewport.width+2);
 if(id==='TC07'){assert.match(record.preview,/ค่า\s*K|ค่าเค|ค่าชดเชยค่างาน/);}
+assert.match(record.preview,/constructionEvidenceStatus=UNVERIFIED; decisionLock=ON/,'construction certification remains locked until evidence is verified');
+assert.doesNotMatch(record.preview,/Evidence Gate: OFF|Legal Version Gate: OFF/,'construction evidence gates must not contradict the lock');
+assert.match(record.preview,/ตัวเลขและราคาจำลองไม่ใช่ราคามาตรฐานราชการ/);
+assert.match(record.preview,/ห้ามอ้างว่าเปิดอ่านหรือถอดปริมาณแล้ว/);
+assert.match(record.preview,/ส่วนต่างเชิงคณิตศาสตร์ไม่ใช่ยอดหักตามสัญญาอัตโนมัติ/);
 record.status='PASS';}catch(e){record.error=String(e.stack||e);}await page.screenshot({path:resolve(dir,mode+'-'+id+'.png')});results.push(record);await writeFile(resolve(dir,mode+'-'+id+'.json'),JSON.stringify(record,null,2));}await context.close();}
 }finally{await browser?.close();await new Promise(ok=>server.close(ok));await writeFile(resolve(dir,'results.json'),JSON.stringify({scope:'isolated-checkout-ui',results},null,2));}
 console.log(JSON.stringify({cases:results.length,pass:results.filter(x=>x.status==='PASS').length,fail:results.filter(x=>x.status==='FAIL').length}));assert.equal(results.length,24);assert.equal(results.filter(x=>x.status==='FAIL').length,0);
