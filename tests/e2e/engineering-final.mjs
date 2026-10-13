@@ -13,7 +13,7 @@ const labels=['ถอดแบบและจัดทำ BOQ','แบบรู�
 const server=createServer(async(req,res)=>{
  const path=resolve(root,'.'+(new URL(req.url,'http://localhost').pathname==='/'?'/index.html':decodeURIComponent(new URL(req.url,'http://localhost').pathname)));
  if(!path.startsWith(root+sep)){res.writeHead(403).end();return;}
- try{res.writeHead(200,{'content-type':({'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml'})[extname(path)]||'application/octet-stream'}).end(await readFile(path));}catch{res.writeHead(404).end();}
+ try{const body=await readFile(path);res.writeHead(200,{'content-type':({'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml'})[extname(path)]||'application/octet-stream'}).end(body);}catch{res.writeHead(404).end();}
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const base=process.env.ENGINEERING_PRODUCTION==='1'?'https://sayampreecha-ux.github.io/-ai-local-government-assistant/':`http://127.0.0.1:${server.address().port}/`;
