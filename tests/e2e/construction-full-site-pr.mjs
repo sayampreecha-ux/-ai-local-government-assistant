@@ -49,7 +49,11 @@ try {
     }
     await page.locator('#promptInput').fill(question);
     await page.locator('#chatForm button[type="submit"]').click();
-    await page.locator('#conversation .message.user').first().waitFor({state:'attached',timeout:20000});
+    const intakeChoice=page.locator('#conversation button').filter({hasText:/ยังไม่ทราบ|ทำต่อ|ช่วยตั้งต้น/}).first();
+    if(await intakeChoice.isVisible().catch(()=>false)){
+      await intakeChoice.click();
+    }
+    await page.locator('#conversation .message.user, #conversation .message.assistant .answer-card').first().waitFor({state:'attached',timeout:20000});
     await page.locator('#thinkingMessage').waitFor({state:'detached',timeout:25000});
     assert.ok((await page.locator('#conversation .message.assistant').count())>0,'assistant response absent');
     assert.ok((await page.locator('#conversation').innerText()).length>30,'empty conversation');
