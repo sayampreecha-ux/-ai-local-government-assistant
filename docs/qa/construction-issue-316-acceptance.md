@@ -41,3 +41,14 @@ CI green is necessary but insufficient. Require all TC01–TC12 and negative/reg
 - These are generic workflow results; they do **not** prove TC01–TC12 construction browser acceptance.
 - PR #317 has no submitted reviews or review threads at this snapshot.
 - Decision: **NOT READY**; do not merge or deploy without TC01–TC12 evidence and human approval.
+
+## Latest automated acceptance evidence (2026-10-13)
+
+- Tested head: `17939067a09d4ecbb2043e904d22a5ae176b3b74`.
+- P0 verification including Node routing tests and Desktop/Mobile FAT: https://github.com/sayampreecha-ux/-ai-local-government-assistant/actions/runs/38347866400 — SUCCESS.
+- Security Release Gate: https://github.com/sayampreecha-ux/-ai-local-government-assistant/actions/runs/38347866408 — SUCCESS.
+- Evidence-First: https://github.com/sayampreecha-ux/-ai-local-government-assistant/actions/runs/38347866430 — SUCCESS.
+- Smart Saraban: https://github.com/sayampreecha-ux/-ai-local-government-assistant/actions/runs/38347866398 — SUCCESS.
+- The Node suite covers K synonyms, preservation of routing uncertainty, and negative construction requests. These checks do not prove real-world quantities, provincial prices, contract powers, or official legal authority.
+- **Automated regression gate: PASS. Construction-specific document-based TC01–TC12 acceptance: UNVERIFIED. Human reviewer approval: PENDING.**
+- Release remains blocked until original BOQ/drawings/PDF, official dated price sources, applicable contract/legal documents, and case-by-case browser evidence are checked and signed off. Never convert UNVERIFIED to PASS based solely on CI.
