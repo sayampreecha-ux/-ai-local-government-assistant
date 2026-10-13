@@ -39,7 +39,7 @@ try{
     record.seed=await buttons.nth(c.button).getAttribute('data-prompt');
     await buttons.nth(c.button).click();
     const summary=page.getByText('ดูคำสั่งที่ GovPrompt เตรียมไว้',{exact:true});
-    const skip=page.getByRole('button',{name:'ยังไม่ทราบบางข้อ — ทำต่อ',exact:true});
+    const skip=page.locator('.guided-intake-message .answer-actions button').last();
     await summary.or(skip).first().waitFor({state:'visible',timeout:30000});
     if(await skip.isVisible()){
      const answer=`โครงการ ${source.project} จังหวัดเชียงใหม่ วงเงินยังไม่ยืนยัน ต้องการ ${labels[c.button]} ${c.scenario} แหล่งโครงการจริง ${source.source} เอกสาร ${Object.values(source.documents).join(' ')} ยังไม่ได้แนบไฟล์ใน GovPrompt ให้ AI ปลายทางอ่านต้นฉบับก่อนวิเคราะห์`;
