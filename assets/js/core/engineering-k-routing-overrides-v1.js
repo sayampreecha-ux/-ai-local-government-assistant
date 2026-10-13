@@ -17,10 +17,12 @@
       transactionType: 'engineering',
       assistant: assistant || route?.assistant,
       modules: Object.freeze(['GP007', ...((route?.modules || []).filter(id => id !== 'GP007'))].slice(0, 3)),
-      confidence: 0.995,
-      fallback: false,
-      ambiguous: false,
-      reason: 'engineering-k-audit-override'
+      confidence: route?.confidence ?? 0,
+      fallback: route?.fallback ?? false,
+      ambiguous: route?.ambiguous ?? true,
+      reason: 'engineering-k-audit-override',
+      evidenceStatus: 'UNVERIFIED',
+      evidenceVerified: false
     });
   }
 
