@@ -7,6 +7,7 @@ on:
       - 'tests/e2e/construction-browser-contract.mjs'
       - 'tests/e2e/construction-production-smoke.mjs'
       - 'tests/e2e/construction-production-submit.mjs'
+      - 'tests/construction-qa/**'
       - '.github/workflows/construction-browser-e2e.yml'
   workflow_dispatch:
 jobs:
@@ -28,6 +29,8 @@ jobs:
         run: node --test tests/unit/construction-review-contract.test.mjs
       - name: Real Chromium desktop/mobile contract E2E (12 TC + 5 RG)
         run: node tests/e2e/construction-browser-contract.mjs
+      - name: Pr4 Pr5 evidence-first arithmetic unit tests
+        run: node --test tests/construction-qa/official-rate-validator.test.mjs
       - name: Production website real-browser smoke and screenshots
         run: node tests/e2e/construction-production-smoke.mjs
       - name: Submit construction and regression questions through real production UI
