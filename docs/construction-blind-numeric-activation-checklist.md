@@ -1,6 +1,6 @@
 # Construction Blind Numeric Acceptance — Activation Checklist
 
-PR #323 baseline: 335638a937daa8ba8fb64a29a05a574d123be5bb. **NO-GO until all mandatory gates have evidence.**
+PR #323 checklist baseline: b83247833d586eebfdf1759e1aac316cff034aab (previous passing CI on this SHA: run 38489487180). **NO-GO until all mandatory gates have evidence.**
 
 | Gate | Acceptance criterion | Required evidence | Current status |
 |---|---|---|---|
@@ -29,3 +29,39 @@ Trusted operator provisions T1–T6 -> generate/capture actual prompt T7 -> exec
 
 ## Scope caveat
 The proposed trusted workflow is a documentation template, not an enabled protected workflow. Its source alone cannot prove branch restrictions, environment approval, runner isolation, or immutable storage. The existing numeric wrapper produces a hash manifest but does not implement WORM storage or independent sealed comparison. Any operator-configured executable must be pinned and reviewed before activation.
+
+## Activation responsibility and permission matrix (roles; individuals not assigned)
+
+| Gate | Accountable role | Minimum permission / approval | Evidence owner and acceptance |
+|---|---|---|---|
+| T1 | Infrastructure administrator | Provision single-use isolated runner; runner registration restricted; no persistent credentials | Infra owner signs inventory, isolation test, teardown log |
+| T2 | GitHub repository administrator | Configure protected environment, required reviewers, restricted branch and no self-approval | Repo admin exports protection rules and audit log; security reviewer verifies |
+| T3 | Security / secrets custodian | Environment-scoped secrets only; no PR or fork access; no credential print | Security owner supplies access matrix and denied-access test |
+| T4 | Blind input custodian | Upload only two allowlisted files into private staging, read-only to runner; no sealed evidence | Custodian signs file inventory, transfer and access logs |
+| T5 | Independent evidence auditor | Receive SHA256 out of band; read-only verification; fail closed on mismatch | Auditor signs actual runner hash verification report |
+| T6 | AI executor owner and security reviewer | Approve immutable executor binary/config digest; restrict network and execution rights | Dual approval of executable digest and invocation trace |
+| T7 | QA operator | Run approved prompt generator, no sealed evidence access | QA owner seals prompt, provenance and hash |
+| T8 | QA operator | Execute approved AI only against blind inputs | QA owner captures unmodified numeric JSON, A-D and Decision Lock |
+| T9 | Independent evidence storage administrator | WORM/object-lock write-once policy; no delete/overwrite for QA operator | Storage admin provides object ID, retention, readback hash and lock proof |
+| T10 | Independent sealed-key verifier | Read sealed key only after T9 signed receipt; cannot change actual output | Verifier signs per-cell comparison and exception report |
+| T11 | CI/QA reviewer | Read-only CI/log/artifact access | QA reviewer validates all required checks at exact HEAD |
+| T12 | Authorized release approver | Separate explicit approval for merge/deploy, outside numeric-test authorization | Signed decision; absent approval means NO-GO |
+
+## Activation sequence and hold points
+
+**HP0 — Operator authorization:** nominate real owners for T1–T10, approve private staging and WORM service, and record approved executor hash. No credentials or sealed keys in PR comments or CI artifacts.
+
+**HP1 — Infrastructure evidence:** security reviewer checks runner isolation, environment protection and secret-denial tests. A proposed YAML file is not proof of configured GitHub controls.
+
+**HP2 — Blind input integrity:** verify the two actual files against independently supplied SHA256 values and assert no sealed material in staging. Abort on any missing or mismatched evidence.
+
+**HP3 — Output sealing:** capture Actual Prompt and Actual Numeric Output, hash both, write to independently administered immutable storage, verify readback and retention lock. Abort if lock cannot be proven.
+
+**HP4 — Sealed grading:** only after HP3 signed receipt, authorize a different verifier to access sealed key and QA Gates, grade A-D per cell, concrete, formwork 42,000 THB, Factor F and Decision Lock. Missing evidence is BLOCKED, not PASS.
+
+**HP5 — Decision:** issue numeric PASS/FAIL with per-cell evidence and separate human review. Merge/deploy require distinct explicit authorization and unchanged production URL.
+
+## Evidence limits at checklist review
+- Run 38489487180: syntax/negative 9/9, prompt E2E 14/14, regression 500/500, engineering 6/6, pilot 30/30, full-site 20/20, Security SUCCESS on baseline b83247833d586eebfdf1759e1aac316cff034aab.
+- The standalone Full-Site workflow is SKIPPED by its own PR-number guard; 20/20 passed inside the Blind Prompt workflow.
+- T1–T10 lack independently verified production-runner and numeric evidence; T12 approval absent. Therefore activation NO-GO.
