@@ -29,9 +29,9 @@
 
 ## HP1-D — Secrets denial test (safe, no real secrets)
 1. Security admin prepares a **dummy canary environment secret**, not a production credential; agree on an opaque expected result recorded privately.
-2. Run only a separately reviewed **unprivileged test workflow without the protected environment**, in PR context, whose logic asserts the canary is absent. Do not attempt to echo, dump or exfiltrate any secret; capture only PASS/FAIL of absence.
-3. Review workflow permissions and environment gate: confirm unapproved or PR-triggered jobs cannot enter protected job, and the canary cannot be consumed outside it. Verify GitHub audit trail and screenshots. Do not trigger the actual numeric workflow.
-4. Remove the dummy canary after test; archive only redacted evidence and reviewer signoff. If any secret appears accessible or denial cannot be proven, **FAIL CLOSED**.
+2. After separate HP0 authorization for a harmless denial test, run only a separately reviewed **unprivileged test workflow without the protected environment**, in PR context, whose logic asserts the canary is absent. Do not attempt to echo, dump or exfiltrate any secret; capture only PASS/FAIL of absence. **This result alone is not proof of protected-job isolation.**
+3. Independently review every reachable workflow trigger (including pull_request_target, workflow_run, workflow_call and dispatch), checkout/ref selection, reusable workflows, job dependencies, environment reviewers, and runner-group allowlists. Confirm no path permits untrusted PR code to execute on the privileged runner or consume protected secrets. Inspect ruleset, environment gate and audit trail without invoking the numeric workflow. The unprivileged canary check is only one negative test, **not sufficient acceptance evidence**.
+4. Remove the dummy canary after test; archive only redacted evidence and reviewer signoff. If any secret appears accessible, if a trigger/ref/runner bypass exists, or if denial cannot be proven, **FAIL CLOSED**. Never run an unauthorized privileged job to test this boundary.
 
 ## HP2 — Blind evidence and approved executor (preflight only)
 1. Blind custodian signs the SHA-256 manifest for exactly `blind_input.pdf` and `blind_input_no_answer_key.xlsx` and stages files read-only outside checkout; no sealed answers or QA_Gates.
