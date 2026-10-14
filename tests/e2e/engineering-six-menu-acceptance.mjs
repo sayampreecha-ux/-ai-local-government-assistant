@@ -205,9 +205,10 @@ for(const device of devices){
    const copyButtons=page.locator('button').filter({hasText:/คัดลอก|copy/i});
    if(await copyButtons.count()){
     await copyButtons.first().click();
-    const clip=await page.evaluate(()=>navigator.clipboard.readText().catch(()=>null));
+    const clipResult=await page.evaluate(async()=>{try{return {text:await navigator.clipboard.readText(),error:null,secure:window.isSecureContext,permission:await navigator.permissions.query({name:'clipboard-read'}).then(x=>x.state).catch(e=>String(e))}}catch(e){return {text:null,error:String(e),secure:window.isSecureContext,permission:await navigator.permissions.query({name:'clipboard-read'}).then(x=>x.state).catch(err=>String(err))}}});
+    const clip=clipResult.text;
     if(clip!==null){assert.ok(clip.length>0,'Empty clipboard');clipboard='PASS';}
-    else {clipboard='BLOCKED (browser permission)';throw Error('Clipboard verification BLOCKED; cannot count as PASS');}
+    else {clipboard='BLOCKED (browser permission: '+JSON.stringify(clipResult)+')';throw Error('Clipboard verification BLOCKED; cannot count as PASS');}
    }else {clipboard='NOT TESTED (copy control absent)';throw Error('Clipboard not tested: copy control absent');}
    if(test.id.endsWith('-1'))await page.screenshot({path:`${out}/${device.name}-${test.id}.png`,fullPage:true});
   }catch(e){
