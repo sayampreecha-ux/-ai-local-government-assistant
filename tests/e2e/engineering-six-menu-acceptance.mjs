@@ -165,7 +165,7 @@ for(const device of devices){
  const context=await browser.newContext({viewport:device.viewport,isMobile:!!device.isMobile,hasTouch:!!device.hasTouch,locale:'th-TH',permissions:['clipboard-read','clipboard-write']});
  const page=await context.newPage();
  for(const test of cases){
-  let status='PASS',reason='',route='',promptLength=0,clipboard='NOT TESTED',guidedIntake='NOT TESTED';
+  let status='PASS',reason='',route='',outputRoute='',promptLength=0,clipboard='NOT TESTED',guidedIntake='NOT TESTED',qualityGates=null,promptEvidence={};
   const pageErrors=[],httpErrors=[];
   const onError=e=>pageErrors.push(String(e));
   const onResponse=r=>{if(r.url().startsWith(base)&&r.status()>=400)httpErrors.push(r.status()+':'+r.url())};
@@ -182,6 +182,9 @@ for(const device of devices){
     return {route:routed,outputRoute:bundle.route,prompt:bundle.prompt,gates:bundle.qualityGates};
    },test.question);
    route=result.route?.primaryModule||result.route?.moduleId||'';
+   outputRoute=result.outputRoute?.moduleId||result.outputRoute?.primaryModule||'';
+   qualityGates=result.gates;
+   promptEvidence={hasEngineeringMarker:/gov\\.engineering|Construction QA/i.test(result.prompt),hasHumanReview:/Human Review/i.test(result.prompt),hasDecisionLock:/Decision Lock/i.test(result.prompt),hasEvidenceText:/Evidence|หลักฐาน/i.test(result.prompt),hasPRWorkflow:/Primary Workflow[^\\n]*gov\\.pr\\b/i.test(result.prompt)};
    assert.ok([route,result.outputRoute?.moduleId].includes('GP007'),'Not GP007');
    assert.match(result.prompt,/gov\.engineering|Construction QA/i);
    assert.match(result.prompt,/Human Review/i);
@@ -204,16 +207,16 @@ for(const device of devices){
     await copyButtons.first().click();
     const clip=await page.evaluate(()=>navigator.clipboard.readText().catch(()=>null));
     if(clip!==null){assert.ok(clip.length>0,'Empty clipboard');clipboard='PASS';}
-    else clipboard='BLOCKED (browser permission)';
-   }else clipboard='NOT TESTED (copy control absent)';
+    else {clipboard='BLOCKED (browser permission)';throw Error('Clipboard verification BLOCKED; cannot count as PASS');}
+   }else {clipboard='NOT TESTED (copy control absent)';throw Error('Clipboard not tested: copy control absent');}
    if(test.id.endsWith('-1'))await page.screenshot({path:`${out}/${device.name}-${test.id}.png`,fullPage:true});
   }catch(e){
    status='FAIL';reason=String(e?.stack||e);
    await page.screenshot({path:`${out}/FAIL-${device.name}-${test.id}.png`,fullPage:true}).catch(()=>{});
   }finally{
    page.off('pageerror',onError);page.off('response',onResponse);
-   results.push({device:device.name,...test,status,reason,route,promptLength,clipboard,guidedIntake});
-   console.log(device.name,test.id,status,reason.slice(0,180));
+   results.push({device:device.name,...test,status,reason,route,outputRoute,qualityGates,promptEvidence,promptLength,clipboard,guidedIntake});
+   console.log(device.name,test.id,status,'route='+route,'output='+outputRoute,'prompt='+JSON.stringify(promptEvidence),'clipboard='+clipboard,reason.slice(0,180));
   }
  }
  await context.close();
