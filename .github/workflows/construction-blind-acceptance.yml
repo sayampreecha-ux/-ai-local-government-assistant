@@ -5,6 +5,8 @@ on:
     paths:
       - 'tests/e2e/construction-blind-acceptance.mjs'
       - 'tests/e2e/construction-blind-input-gate.mjs'
+      - 'tests/e2e/construction-trusted-negative.mjs'
+      - 'tests/e2e/construction-trusted-numeric-executor.mjs'
       - '.github/workflows/construction-blind-acceptance.yml'
 permissions:
   contents: read
@@ -40,6 +42,12 @@ jobs:
           BLIND_PDF_SHA256: ${{ secrets.CONSTRUCTION_BLIND_PDF_SHA256 }}
           BLIND_XLSX_SHA256: ${{ secrets.CONSTRUCTION_BLIND_XLSX_SHA256 }}
         run: node tests/e2e/construction-blind-input-gate.mjs
+      - name: Syntax and fail-closed negative tests (synthetic only)
+        run: |
+          node --check tests/e2e/construction-blind-input-gate.mjs
+          node --check tests/e2e/construction-trusted-numeric-executor.mjs
+          node --check tests/e2e/construction-trusted-negative.mjs
+          node tests/e2e/construction-trusted-negative.mjs
       - name: Run blind prompt routing, clipboard and UI acceptance
         run: node tests/e2e/construction-blind-acceptance.mjs
       - name: Run 500-case regression
