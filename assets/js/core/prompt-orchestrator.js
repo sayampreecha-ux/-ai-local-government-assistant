@@ -649,7 +649,15 @@
     const attachmentNames = (Array.isArray(attachments) ? attachments : []).map(item => normalizeText(item?.name || item)).filter(Boolean);
     const riskFlags = detectRiskFlags([userQuestion, ...attachmentNames].join(' '));
     const relatedModules = Array.isArray(activeRoute.modules) && activeRoute.modules.length ? activeRoute.modules.join(', ') : activeRoute.moduleId;
-    const taskPlan = constructionReviewPlan(userQuestion, planUniversalTask(userQuestion, normalizedContext));
+    const initialTaskPlan = constructionReviewPlan(userQuestion, planUniversalTask(userQuestion, normalizedContext));
+    // For engineering drawings, inspection, acceptance and physical diagnostics, retain
+    // their own deliverables rather than imposing the estimate-only A/B/C/D contract.
+    const engineeringWorkflow = activeRoute.moduleId === 'GP007'
+      && /(?:แบบรูปรายการ|รายการประกอบแบบ|ข้อกำหนดทางเทคนิค|ตรวจแบบ|ตรวจงาน|ตรวจรับ|ตรวจราคากลาง|วิเคราะห์ปัญหา|วิเคราะห์สาเหตุ|วิเคราะห์ความเสียหาย|แตกร้าว|ทรุดตัว|น้ำท่วมขัง|ถอดแบบ|ถอดปริมาณ|ประมาณราคา|ราคากลาง|boq)/i.test(userQuestion);
+    const taskPlan = engineeringWorkflow && !initialTaskPlan.constructionReview
+      ? Object.freeze({ ...initialTaskPlan, engineeringWorkflow: true,
+          qualityGates: Object.freeze({ ...initialTaskPlan.qualityGates, evidenceRequired: true, decisionRequired: true }) })
+      : initialTaskPlan;
     const gates = taskPlan.qualityGates;
     const casePrecedentGate = buildCasePrecedentGate(userQuestion, { ...normalizedContext, hasAttachments: attachments.length > 0 }, taskPlan.riskLevel);
     const operationalSummary = taskPlan.action === 'summarize'
@@ -834,7 +842,7 @@
       `1. เจตนาหลักของงาน: ${taskPlan.action}`,
       `2. ชิ้นงานที่ควรส่งมอบ: ${taskPlan.deliverable}`,
       `3. สาขางานที่เกี่ยวข้องจากเนื้อหา: ${taskPlan.disciplines.length ? taskPlan.disciplines.join(', ') : 'general-government'}`,
-      ...(taskPlan.constructionReview ? ['- Primary Workflow สำหรับงานนี้: gov.engineering; Supporting Workflow: gov.procurement (เฉพาะการจัดซื้อจัดจ้างและการรับรองราคากลาง)'] : []),
+      ...((taskPlan.constructionReview || taskPlan.engineeringWorkflow) ? ['- Primary Workflow สำหรับงานนี้: gov.engineering; Supporting Workflow: gov.procurement (เฉพาะขั้นตอนจัดซื้อจัดจ้าง)', '- Evidence Gate: ต้องตรวจแบบ เอกสาร และหลักฐานหน้างานตามที่มีจริง; ห้ามสมมุติว่าตรวจแล้ว', '- Decision Lock: คงข้อสรุปด้านความปลอดภัย การรับรองแบบและการตรวจรับที่หลักฐานไม่ครบเป็น UNVERIFIED', '- Human Review: ให้วิศวกรผู้มีหน้าที่และคณะกรรมการที่มีอำนาจตรวจทานก่อนรับรองหรืออนุมัติ'] : []),
       `4. ระดับความเสี่ยง: ${taskPlan.riskLevel}`,
       `5. วิธีใช้หลักฐาน: ${taskPlan.evidenceMode}`,
       '6. แยกให้ได้ว่าอะไรคือ “คำตอบ/ชิ้นงานที่ผู้ใช้ต้องการ” กับอะไรคือ “ข้อมูลสนับสนุนที่ระบบควรตรวจ”',
