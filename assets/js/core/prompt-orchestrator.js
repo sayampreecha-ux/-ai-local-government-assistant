@@ -171,7 +171,7 @@
       date_context: (() => {
         // Case citation years are not event dates. Prefer an explicitly described event date.
         const eventFacts = facts.replace(/(?:คำวินิจฉัย|คำพิพากษา)[^\n,.]{0,80}?\d+\s*\/\s*25\d{2}/gi, '');
-        const match = eventFacts.match(/(?:วัน(?:เริ่มไต่สวน|ชี้มูล|รับสำนวน|เกิดเหตุ|พ้นราชการ)|เมื่อวันที่|ตั้งแต่วันที่)\s*\d{1,2}[^,.\n]{0,30}/i);
+        const match = eventFacts.match(/(?:วัน(?:เริ่มไต่สวน|ชี้มูล|รับสำนวน|เกิดเหตุ|พ้นราชการ)|เมื่อวันที่|ตั้งแต่วันที่)\s*\d{1,2}[^,.\n]{0,30}|(?:เกิดเหตุ|เริ่มไต่สวน|ชี้มูล|รับสำนวน|พ้นราชการ|เหตุการณ์)[^\n,.]{0,25}?(?:พ\.ศ\.\s*)?25\d{2}|(?:พ\.ศ\.\s*)?25\d{2}\s*(?:เกิดเหตุ|เริ่มไต่สวน|ชี้มูล|รับสำนวน|พ้นราชการ)/i);
         return (match?.[0] || '[ต้องระบุวันที่เกิดข้อเท็จจริง]').replace(/\u2060/g, ',');
       })()
     });
@@ -480,7 +480,15 @@
       : ['หารือการพิจารณา', 'หารือแนวทางการปฏิบัติ', 'หลักเกณฑ์และแนวทาง',
         'ซักซ้อมความเข้าใจ', 'การเบิกค่าใช้จ่าย', 'การเดินทางไปราชการ',
         'การแต่งตั้ง', 'การรับการคัดเลือก']);
-    const disciplinaryQuery = 'ป.ป.ช. ไต่สวนชี้มูลความผิดทางวินัย ระยะเวลา 2 ปี 3 ปี คำวินิจฉัยศาลรัฐธรรมนูญ 14/2569 อบจ.';
+    const judgmentNumber = source.match(/(?:คำวินิจฉัย(?:ศาลรัฐธรรมนูญ)?(?:ที่)?|คำพิพากษา(?:ที่)?)\s*(\d+\s*\/\s*25\d{2})/i)?.[1] || '';
+    const organizationTerm = fingerprint.organization.startsWith('[') ? '' : fingerprint.organization;
+    const disciplinaryQuery = ['ป.ป.ช. ไต่สวนชี้มูลความผิดทางวินัย ระยะเวลาไต่สวน', judgmentNumber ? 'คำวินิจฉัย ' + judgmentNumber : '', organizationTerm].filter(Boolean).join(' ');
+    const disciplinaryQueries = [
+      [judgmentNumber ? 'คำวินิจฉัยศาลรัฐธรรมนูญที่ ' + judgmentNumber : 'ป.ป.ช. ระยะเวลาไต่สวนชี้มูลวินัย', 'site:ratchakitcha.soc.go.th'].join(' '),
+      'พ.ร.ป. ป้องกันและปราบปรามการทุจริต ระยะเวลาไต่สวน ขยายเวลา site:go.th',
+      ['ป.ป.ช. ชี้มูลวินัยเกินกำหนด อำนาจผู้บังคับบัญชา', organizationTerm, 'site:go.th'].filter(Boolean).join(' '),
+      [judgmentNumber ? 'คำวินิจฉัย ' + judgmentNumber : 'ป.ป.ช. วินัย', 'บทเฉพาะกาล ผลผูกพันทางวินัย พ้นราชการ site:go.th'].join(' ')
+    ];
     return Object.freeze({
       applicableAuthorityCheck,
       qualityStatus: applicableAuthorityCheck.qualityStatus,
@@ -521,12 +529,7 @@
       retrievalLoop: Object.freeze(['SEARCH', 'EXTRACT_LEADS', 'FOLLOW_BEST_LEAD', 'UPDATE_SEARCH', 'VERIFY']),
       leadTypes: Object.freeze(['documentNumber', 'date', 'title', 'issuingAuthority', 'legalProvision', 'officialTerminology', 'citedDocument', 'indexOrCompilation', 'pageNumber']),
       hiddenDocumentRecovery: Object.freeze(['open-pdf-or-compilation', 'inspect-index-and-table-of-contents', 'navigate-relevant-pages', 'inspect-page-images', 'ocr-only-when-needed-and-supported']),
-      searchQueries: Object.freeze(needsScopeClarification ? [] : disciplinarySearch ? [
-        'คำวินิจฉัยศาลรัฐธรรมนูญที่ 14/2569 ป.ป.ช. ระยะเวลาไต่สวน site:ratchakitcha.soc.go.th',
-        'พ.ร.ป. ป้องกันและปราบปรามการทุจริต ระยะเวลาไต่สวน 2 ปี 3 ปี ขยายเวลา site:go.th',
-        'ป.ป.ช. ชี้มูลวินัยเกินกำหนด อำนาจผู้บังคับบัญชา อบจ. ก.จ. ก.จ.จ. site:go.th',
-        'คำวินิจฉัย 14/2569 บทเฉพาะกาล ผลผูกพันทางวินัย พ้นราชการ site:go.th'
-      ] : [
+      searchQueries: Object.freeze(needsScopeClarification ? [] : disciplinarySearch ? disciplinaryQueries : [
         `${compactFacts || source} หนังสือหารือ ตอบข้อหารือ แนววินิจฉัย ซักซ้อม`,
         `${legalPhrase} ข้อ มาตรา หลักเกณฑ์ การพิจารณา แนวทางปฏิบัติ site:go.th`,
         `รวมหนังสือหารือ ประมวลข้อหารือ สารบัญ ดัชนี คู่มือ FAQ แนววินิจฉัย ${legalPhrase} ${normalizeText(context?.owningUnit || '')} site:go.th`,
