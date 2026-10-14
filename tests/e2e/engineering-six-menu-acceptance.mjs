@@ -184,7 +184,7 @@ for(const device of devices){
    route=result.route?.primaryModule||result.route?.moduleId||'';
    outputRoute=result.outputRoute?.moduleId||result.outputRoute?.primaryModule||'';
    qualityGates=result.gates;
-   promptEvidence={hasEngineeringMarker:/gov\\.engineering|Construction QA/i.test(result.prompt),hasHumanReview:/Human Review/i.test(result.prompt),hasDecisionLock:/Decision Lock/i.test(result.prompt),hasEvidenceText:/Evidence|หลักฐาน/i.test(result.prompt),hasPRWorkflow:/Primary Workflow[^\\n]*gov\\.pr\\b/i.test(result.prompt)};
+   promptEvidence={hasEngineeringMarker:/gov\.engineering|Construction QA/i.test(result.prompt),hasHumanReview:/Human Review/i.test(result.prompt),hasDecisionLock:/Decision Lock/i.test(result.prompt),hasEvidenceText:/Evidence|หลักฐาน/i.test(result.prompt),hasPRWorkflow:/Primary Workflow[^\n]*gov\.pr\b/i.test(result.prompt)};
    assert.ok([route,result.outputRoute?.moduleId].includes('GP007'),'Not GP007');
    assert.match(result.prompt,/gov\.engineering|Construction QA/i);
    assert.match(result.prompt,/Human Review/i);
