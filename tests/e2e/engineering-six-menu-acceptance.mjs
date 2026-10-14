@@ -182,6 +182,7 @@ for(const device of devices){
     return {route:routed,outputRoute:bundle.route,prompt:bundle.prompt,gates:bundle.qualityGates};
    },test.question);
    route=result.route?.primaryModule||result.route?.moduleId||'';
+   if(route!=='GP007') console.log('ROUTE_DIAGNOSTIC',device.name,test.id,JSON.stringify({route,reason:result.route?.reason,modules:result.route?.modules,confidence:result.route?.confidence,output:result.outputRoute}));
    outputRoute=result.outputRoute?.moduleId||result.outputRoute?.primaryModule||'';
    qualityGates=result.gates;
    promptEvidence={hasEngineeringMarker:/gov\.engineering|Construction QA/i.test(result.prompt),hasHumanReview:/Human Review/i.test(result.prompt),hasDecisionLock:/Decision Lock/i.test(result.prompt),hasEvidenceText:/Evidence|หลักฐาน/i.test(result.prompt),hasPRWorkflow:/Primary Workflow[^\n]*gov\.pr\b/i.test(result.prompt)};
