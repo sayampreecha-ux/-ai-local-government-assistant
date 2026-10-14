@@ -235,6 +235,13 @@
       return Object.freeze({ moduleId: 'GP007', confidence: 0.995, reason: 'engineering-deliverable-or-physical-diagnostic', secondary: inferSecondary(source, 'GP007') });
     }
 
+    // Explicit engineering outputs with incomplete input remain engineering tasks.
+    // These narrow phrases are not procurement procedure requests.
+    const engineeringIncomplete = /(?:ทำราคากลางเมื่อไม่มีราคาวัสดุ|จัดทำแบบรูปรายการเมื่อไม่มีผลสำรวจพื้นที่|จัดทำรายการประกอบแบบโดยแยกจาก\s*tor|ตรวจราคากลางเมื่อราคาวัสดุในเอกสารขัดแย้ง|ตรวจรับงานที่ปริมาณจริงไม่ตรงแบบสัญญา)/i.test(source);
+    if (engineeringIncomplete) {
+      return Object.freeze({ moduleId: 'GP007', confidence: 0.995, reason: 'explicit-engineering-output-with-missing-or-conflicting-evidence', secondary: inferSecondary(source, 'GP007') });
+    }
+
     const process = matchRule(source, PROCESS_RULES);
     if (process) return Object.freeze({ ...process, reason: 'specific-action-process', secondary: inferSecondary(source, process.moduleId) });
 
