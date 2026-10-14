@@ -44,7 +44,7 @@
 
 | HP / Gate | Accountable owner | Required record | Actual evidence ID/link | Reviewer / date | Verdict |
 |---|---|---|---|---|---|
-| HP0 / T12 | Release authority | Scoped setup approval, repository/default branch/plan | PENDING | PENDING | BLOCKED |
+| HP0 / setup authorization (not T12) | Release authority | Scoped setup approval, repository/default branch/plan | PENDING | PENDING | BLOCKED |
 | HP1 / T1 | Infrastructure admin | Ephemeral runner ID, runner-group restriction, isolation, teardown | PENDING | PENDING | BLOCKED |
 | HP1 / T2 | GitHub admin | Environment protection, required reviewers, branch restriction | PENDING | PENDING | BLOCKED |
 | HP1 / T3 | Security admin | Environment secret scope, denial test, audit trail | PENDING | PENDING | BLOCKED |
@@ -57,9 +57,15 @@
 | HP4 / T10 | Independent verifier | Post-lock sealed grading and signed comparison | PENDING | PENDING | NOT TESTED |
 | HP5 / T11 | QA reviewer | CI run, exact SHA, regression/security and artifact digest | 38492781875 / 11861854875 on baseline SHA | QA logs verified | PASS (prompt scope) |
 
+| HP5 / T12 | Release authority | Separate signed release approval | PENDING | PENDING | BLOCKED |
+
 ## HP3–HP5 — explicit stop conditions
 - HP3 requires separate authorization to run AI; save actual prompt/output first, lock them immutably and independently verify readback before any answer-key access.
 - HP4 is performed by a different authorized verifier **only after HP3 lock proof**. Compare A–D, concrete, formwork 42,000 THB, Factor F and Decision Lock per-cell without fabricated expected numbers.
 - HP5 requires signed numeric acceptance; **numeric PASS is prohibited before real execution**. Merge/deploy require their own explicit approval and must preserve the production URL.
 
 **Current decision: NO-GO for trusted numeric execution and production release.**
+
+## Review snapshot — 2026-10-14, PR head 7d1815f
+
+See [Final Readiness Report](construction-pr323-final-readiness-report.md) for the dated CI inventory and HP0–HP5/T1–T12 dispositions. Earlier SHA/run references above are historical evidence, not the current HEAD. T11 is prompt/synthetic scope only; HP0 setup authority does not grant T12 release authority. Proposed YAML remains inactive. Recheck CI on any later commit.

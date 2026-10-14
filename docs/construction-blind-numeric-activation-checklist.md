@@ -65,3 +65,7 @@ The proposed trusted workflow is a documentation template, not an enabled protec
 - Run 38489487180: syntax/negative 9/9, prompt E2E 14/14, regression 500/500, engineering 6/6, pilot 30/30, full-site 20/20, Security SUCCESS on baseline b83247833d586eebfdf1759e1aac316cff034aab.
 - The standalone Full-Site workflow is SKIPPED by its own PR-number guard; 20/20 passed inside the Blind Prompt workflow.
 - T1–T10 lack independently verified production-runner and numeric evidence; T12 approval absent. Therefore activation NO-GO.
+
+## Review snapshot — 2026-10-14, PR head 7d1815f
+
+See [Final Readiness Report](construction-pr323-final-readiness-report.md) for the dated CI inventory and HP0–HP5/T1–T12 dispositions. Earlier SHA/run references above are historical evidence, not the current HEAD. T11 is prompt/synthetic scope only; HP0 setup authority does not grant T12 release authority. Proposed YAML remains inactive. Recheck CI on any later commit.

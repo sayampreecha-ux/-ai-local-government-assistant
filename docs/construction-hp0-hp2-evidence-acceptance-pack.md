@@ -70,3 +70,7 @@
 | HP5 | Signed acceptance and separate release approval | BLOCKED |
 
 **Final decision: NO-GO for trusted numeric activation, sealed grading, merge and deployment.** A passing PR CI does not prove protected environment or secrets isolation.
+
+## Review snapshot — 2026-10-14, PR head 7d1815f
+
+See [Final Readiness Report](construction-pr323-final-readiness-report.md) for the dated CI inventory and HP0–HP5/T1–T12 dispositions. Earlier SHA/run references above are historical evidence, not the current HEAD. T11 is prompt/synthetic scope only; HP0 setup authority does not grant T12 release authority. Proposed YAML remains inactive. Recheck CI on any later commit.

@@ -66,5 +66,6 @@ jobs:
           name: construction-blind-prompt-acceptance
           path: |
             artifacts/construction-blind-acceptance/
+            artifacts/construction-full-site-pr/
             /tmp/govprompt-blind-http.log
           retention-days: 30

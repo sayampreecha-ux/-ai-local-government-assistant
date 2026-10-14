@@ -45,3 +45,7 @@
 - GitHub integration used for this review can read repository files and CI results but cannot independently read protected environment, secrets, runner inventory or storage configuration. Mark all unobserved operational controls BLOCKED, never PASS.
 - Existing numeric wrapper hashes output but does **not** implement independent WORM lock. Proposed workflow is documentation-only and cannot be enabled safely while reviewed scripts are absent from its trusted source.
 - Numeric execution and sealed grading remain NOT TESTED. Production release remains NO-GO.
+
+## Review snapshot — 2026-10-14, PR head 7d1815f
+
+See [Final Readiness Report](construction-pr323-final-readiness-report.md) for the dated CI inventory and HP0–HP5/T1–T12 dispositions. Earlier SHA/run references above are historical evidence, not the current HEAD. T11 is prompt/synthetic scope only; HP0 setup authority does not grant T12 release authority. Proposed YAML remains inactive. Recheck CI on any later commit.
