@@ -1047,7 +1047,8 @@
   const priorEngineeringRouteRequest = window.GovPromptCore.routeRequest;
   window.GovPromptCore.routeRequest = function routeEngineeringEstimate(request, options = {}) {
     const base = priorEngineeringRouteRequest(request, options);
-    return engineeringEstimateIntent(request) ? engineeringRoute(base) : base;
+    const technicalDrawingSeparateFromTor = /(?:รายการประกอบแบบ|แบบรูปรายการ|ข้อกำหนดทางเทคนิค).{0,35}(?:แยกจาก|ไม่ใช่|มิใช่|ต่างจาก)\s*(?:tor|ทีโออาร์|ขอบเขตของงาน)/i.test(String(request || ''));
+    return engineeringEstimateIntent(request) || technicalDrawingSeparateFromTor ? engineeringRoute(base) : base;
   };
   const priorEngineeringRouteTransaction = window.GovPromptCore.routeTransaction;
   if (typeof priorEngineeringRouteTransaction === 'function') {
