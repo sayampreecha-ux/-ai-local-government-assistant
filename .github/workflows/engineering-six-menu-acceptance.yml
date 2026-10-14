@@ -1,0 +1,37 @@
+name: Engineering Six-Menu Acceptance
+on:
+  pull_request:
+    paths:
+      - 'tests/e2e/engineering-six-menu-acceptance.mjs'
+      - '.github/workflows/engineering-six-menu-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  six-menu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Start local test site
+        run: |
+          python3 -m http.server 8765 > /tmp/engineering-six-menu-http.log 2>&1 &
+          echo $! > /tmp/engineering-six-menu-http.pid
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8765/ >/dev/null && exit 0; sleep 1; done
+          exit 1
+      - name: Run 30 scenarios on two viewports
+        run: node tests/e2e/engineering-six-menu-acceptance.mjs
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engineering-six-menu-acceptance
+          path: |
+            artifacts/engineering-six-menu-acceptance/
+            /tmp/engineering-six-menu-http.log
+          if-no-files-found: warn
