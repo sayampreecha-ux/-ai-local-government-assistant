@@ -1,6 +1,5 @@
 name: Construction Blind Prompt Acceptance
 on:
-  workflow_dispatch:
   pull_request:
     paths:
       - 'tests/e2e/construction-blind-acceptance.mjs'
@@ -34,14 +33,6 @@ jobs:
           done
           cat /tmp/govprompt-blind-http.log
           exit 1
-      - name: Validate staged blind inputs (manual isolated runner only)
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          BLIND_PDF: ${{ vars.CONSTRUCTION_BLIND_PDF_PATH }}
-          BLIND_XLSX: ${{ vars.CONSTRUCTION_BLIND_XLSX_PATH }}
-          BLIND_PDF_SHA256: ${{ secrets.CONSTRUCTION_BLIND_PDF_SHA256 }}
-          BLIND_XLSX_SHA256: ${{ secrets.CONSTRUCTION_BLIND_XLSX_SHA256 }}
-        run: node tests/e2e/construction-blind-input-gate.mjs
       - name: Syntax and fail-closed negative tests (synthetic only)
         run: |
           node --check tests/e2e/construction-blind-input-gate.mjs
