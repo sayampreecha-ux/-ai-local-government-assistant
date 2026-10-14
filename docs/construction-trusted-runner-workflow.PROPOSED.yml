@@ -1,6 +1,10 @@
 # PROPOSED ONLY — do not enable until approved and audited.
 # Store as a protected-default-branch workflow, NOT as a PR-run workflow.
 # Requires a dedicated ephemeral self-hosted runner pre-staged by an operator.
+# BLOCKER: scripts referenced below currently live in PR #323, not necessarily on main.
+# This template cannot run until the trusted reviewed scripts are independently promoted
+# to the protected branch or a separately approved immutable runner image.
+# Never solve this by checking out the untrusted PR SHA into a secret-bearing job.
 name: Construction Trusted Blind Numeric Capture
 on:
   workflow_dispatch:
@@ -13,6 +17,7 @@ permissions:
   contents: read
 jobs:
   capture:
+    # Confirm repository default branch is main before enabling.
     if: github.ref == 'refs/heads/main'
     environment: construction-blind-operator-approval
     runs-on: [self-hosted, linux, construction-blind-isolated]
@@ -23,6 +28,8 @@ jobs:
         with:
           persist-credentials: false
           ref: main
+      # STOP: repo admin must first attest that main contains reviewed, pinned scripts.
+      # Environment reviewers and a protected runner are mandatory; this YAML does not configure them.
       - name: Verify blind inputs pre-staged outside workspace
         env:
           BLIND_PDF: /opt/construction-blind/input/blind_input.pdf
