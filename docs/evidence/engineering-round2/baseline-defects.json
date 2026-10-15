@@ -1,0 +1,118 @@
+{
+  "sha": "c3e4bf2cab4566473ba9bccf5aecd2495535a50c",
+  "routes": [
+    {
+      "task": "T01",
+      "question": "ถอดปริมาณคอนกรีตถนนจากแบบ",
+      "primaryModule": "GP007",
+      "outputModule": "GP007",
+      "evidenceRequired": true,
+      "hasTaskContract": false,
+      "engineeringPlan": false
+    },
+    {
+      "task": "T02",
+      "question": "จัดทำ BOQ ปร.4 ถนน ค.ส.ล.",
+      "primaryModule": "GP007",
+      "outputModule": "GP007",
+      "evidenceRequired": true,
+      "hasTaskContract": false,
+      "engineeringPlan": false
+    },
+    {
+      "task": "T03",
+      "question": "สรุป ปร.5 และ ปร.6 อาคาร",
+      "primaryModule": "GP011",
+      "outputModule": "GP011",
+      "evidenceRequired": false,
+      "hasTaskContract": false,
+      "engineeringPlan": false
+    },
+    {
+      "task": "T04",
+      "question": "จัดทำราคากลางถนนและตรวจ Factor F",
+      "primaryModule": "GP007",
+      "outputModule": "GP007",
+      "evidenceRequired": true,
+      "hasTaskContract": false,
+      "engineeringPlan": false
+    },
+    {
+      "task": "T05",
+      "question": "ตรวจแบบก่อสร้างอาคาร",
+      "primaryModule": "GP007",
+      "outputModule": "GP007",
+      "evidenceRequired": true,
+      "hasTaskContract": false,
+      "engineeringPlan": false
+    },
+    {
+      "task": "T06",
+      "question": "ร่าง TOR งานก่อสร้างถนน",
+      "primaryModule": "GP003",
+      "outputModule": "GP003",
+      "evidenceRequired": true,
+      "hasTaskContract": false,
+      "engineeringPlan": false
+    },
+    {
+      "task": "T07",
+      "question": "ตรวจร่างสัญญาก่อสร้างอาคาร",
+      "primaryModule": "GP007",
+      "outputModule": "GP007",
+      "evidenceRequired": false,
+      "hasTaskContract": false,
+      "engineeringPlan": false
+    },
+    {
+      "task": "T08",
+      "question": "จัดทำรายงานควบคุมงานก่อสร้างถนน",
+      "primaryModule": "GP007",
+      "outputModule": "GP007",
+      "evidenceRequired": false,
+      "hasTaskContract": false,
+      "engineeringPlan": false
+    },
+    {
+      "task": "T09",
+      "question": "จัดทำ checklist ตรวจรับงานก่อสร้างอาคาร",
+      "primaryModule": "GP007",
+      "outputModule": "GP007",
+      "evidenceRequired": true,
+      "hasTaskContract": false,
+      "engineeringPlan": false
+    },
+    {
+      "task": "T10",
+      "question": "เสนอแก้สัญญาก่อสร้างถนนและเปลี่ยนแบบ",
+      "primaryModule": "GP007",
+      "outputModule": "GP007",
+      "evidenceRequired": false,
+      "hasTaskContract": false,
+      "engineeringPlan": false
+    },
+    {
+      "task": "T11",
+      "question": "ตรวจค่า K งานก่อสร้างถนน",
+      "primaryModule": "GP007",
+      "outputModule": "GP007",
+      "evidenceRequired": true,
+      "hasTaskContract": false,
+      "engineeringPlan": false
+    },
+    {
+      "task": "T12",
+      "question": "วางแผนซ่อมบำรุงถนนแตกร้าว",
+      "primaryModule": "GP007",
+      "outputModule": "GP007",
+      "evidenceRequired": true,
+      "hasTaskContract": false,
+      "engineeringPlan": false
+    }
+  ],
+  "calculation": {
+    "nullRateAccepted": true,
+    "invalidDeclaredCostNotFlagged": true,
+    "arithmeticPass": true
+  }
+}
