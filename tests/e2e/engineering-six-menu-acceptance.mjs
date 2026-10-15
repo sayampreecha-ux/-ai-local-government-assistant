@@ -164,6 +164,16 @@ try {
 for(const device of devices){
  const context=await browser.newContext({viewport:device.viewport,isMobile:!!device.isMobile,hasTouch:!!device.hasTouch,locale:'th-TH',permissions:['clipboard-read','clipboard-write']});
  const page=await context.newPage();
+ await page.addInitScript(() => {
+  window.__clipboardWrites = [];
+  const originalWriteText = navigator.clipboard?.writeText?.bind(navigator.clipboard);
+  if (originalWriteText) {
+   navigator.clipboard.writeText = async text => {
+    await originalWriteText(text);
+    window.__clipboardWrites.push(String(text));
+   };
+  }
+ });
  for(const test of cases){
   let status='PASS',reason='',route='',outputRoute='',promptLength=0,clipboard='NOT TESTED',guidedIntake='NOT TESTED',qualityGates=null,promptEvidence={};
   const pageErrors=[],httpErrors=[];
@@ -206,10 +216,12 @@ for(const device of devices){
    const copyButtons=page.locator('button').filter({hasText:/คัดลอก|copy/i});
    if(await copyButtons.count()){
     await copyButtons.first().click();
-    const clipResult=await page.evaluate(async()=>{try{return {text:await navigator.clipboard.readText(),error:null,secure:window.isSecureContext,permission:await navigator.permissions.query({name:'clipboard-read'}).then(x=>x.state).catch(e=>String(e))}}catch(e){return {text:null,error:String(e),secure:window.isSecureContext,permission:await navigator.permissions.query({name:'clipboard-read'}).then(x=>x.state).catch(err=>String(err))}}});
-    const clip=clipResult.text;
-    if(clip!==null){assert.ok(clip.length>0,'Empty clipboard');clipboard='PASS';}
-    else {clipboard='BLOCKED (browser permission: '+JSON.stringify(clipResult)+')';throw Error('Clipboard verification BLOCKED; cannot count as PASS');}
+    const clipResult=await page.evaluate(() => ({writes:window.__clipboardWrites || []}));
+    assert.ok(clipResult.writes.length>0,'Clipboard writeText did not complete successfully');
+    const clip=clipResult.writes.at(-1);
+    assert.ok(clip.length>0,'Empty clipboard payload');
+    assert.ok(clip.includes(test.question) || result.prompt.includes(clip) || clip.includes(result.prompt.slice(0,80)),'Copied content does not match generated prompt or question');
+    clipboard='PASS (successful native writeText with verified payload)';
    }else {clipboard='NOT TESTED (copy control absent)';throw Error('Clipboard not tested: copy control absent');}
    if(test.id.endsWith('-1'))await page.screenshot({path:`${out}/${device.name}-${test.id}.png`,fullPage:true});
   }catch(e){
