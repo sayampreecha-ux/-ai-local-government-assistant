@@ -228,10 +228,11 @@ for(const device of devices){
    await page.locator('#thinkingMessage').waitFor({state:'detached',timeout:25000});
    assert.equal(pageErrors.length,0,'Page errors: '+pageErrors.join(';'));
    assert.equal(httpErrors.length,0,'HTTP errors: '+httpErrors.join(';'));
-   const copyButtons=page.locator('button').filter({hasText:/คัดลอก|copy/i});
+   const copyButtons=page.locator('#conversation .answer-actions button').filter({hasText:/คัดลอกคำสั่งอย่างเดียว|คัดลอกไปใช้กับ AI|คัดลอกคำสั่ง/i});
    if(await copyButtons.count()){
+    await page.waitForFunction(() => document.querySelector('#conversation .answer-card')?.dataset.leanModeReady === 'true');
     const copyButtonLabel=await copyButtons.first().innerText();
-    await copyButtons.first().click();
+    await copyButtons.filter({hasText:/คัดลอกคำสั่งอย่างเดียว|คัดลอกไปใช้กับ AI|คัดลอกคำสั่ง/i}).first().click();
     if(test.id==='boq-1') console.log('COPY_DIAGNOSTIC',device.name,JSON.stringify(await page.evaluate(()=>({writes:window.__clipboardWrites,toast:document.querySelector('[role="alert"]')?.innerText,copyLabels:[...document.querySelectorAll('button')].filter(b=>/คัดลอก|copy/i.test(b.innerText)).map(b=>b.innerText),promptPrivacy:window.GovPromptCore?.sanitizeExternalContent?.(window.GovPromptCore?.canonicalHandoffPrompts?.get(document.querySelector('.answer-card')) || '')?.sensitiveContext}))),copyButtonLabel);
     await page.waitForFunction(() => (window.__clipboardWrites || []).length > 0,{},{timeout:3000});
     const clipResult=await page.evaluate(() => ({writes:window.__clipboardWrites || []}));
