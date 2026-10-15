@@ -170,9 +170,18 @@ for(const device of devices){
   if (originalWriteText) {
    navigator.clipboard.writeText = async text => {
     await originalWriteText(text);
-    window.__clipboardWrites.push(String(text));
+    window.__clipboardWrites.push({method:'writeText',text:String(text)});
    };
   }
+  const originalExecCommand = document.execCommand.bind(document);
+  document.execCommand = function(command, ...args) {
+   const selected = command.toLowerCase() === 'copy'
+    ? (document.activeElement?.value?.slice?.(document.activeElement.selectionStart, document.activeElement.selectionEnd) || String(window.getSelection() || ''))
+    : '';
+   const successful = originalExecCommand(command, ...args);
+   if (command.toLowerCase() === 'copy' && successful) window.__clipboardWrites.push({method:'execCommand',text:selected});
+   return successful;
+  };
  });
  for(const test of cases){
   let status='PASS',reason='',route='',outputRoute='',promptLength=0,clipboard='NOT TESTED',guidedIntake='NOT TESTED',qualityGates=null,promptEvidence={};
@@ -209,19 +218,26 @@ for(const device of devices){
    const choice=page.locator('#conversation button').filter({hasText:/ยังไม่ทราบ|ทำต่อ|ช่วยตั้งต้น/}).first();
    if(await choice.isVisible().catch(()=>false)){await choice.click();guidedIntake='CHOICE HANDLED';}
    else guidedIntake='NO CHOICE SHOWN';
-   await page.locator('#conversation .message.assistant').first().waitFor({state:'attached',timeout:25000});
+   try { await page.locator('#conversation .message.assistant').first().waitFor({state:'attached',timeout:25000}); }
+   catch (error) {
+    const snapshot=await page.locator('#conversation').evaluate(el=>({text:el.innerText.slice(-1800),buttons:[...el.querySelectorAll('button')].map(b=>({text:b.innerText,disabled:b.disabled})),html:el.innerHTML.slice(-3000)})).catch(e=>({error:String(e)}));
+    console.log('ASSISTANT_TIMEOUT_DIAGNOSTIC',device.name,test.id,JSON.stringify(snapshot));
+    throw error;
+   }
    await page.locator('#thinkingMessage').waitFor({state:'detached',timeout:25000});
    assert.equal(pageErrors.length,0,'Page errors: '+pageErrors.join(';'));
    assert.equal(httpErrors.length,0,'HTTP errors: '+httpErrors.join(';'));
    const copyButtons=page.locator('button').filter({hasText:/คัดลอก|copy/i});
    if(await copyButtons.count()){
     await copyButtons.first().click();
+    await page.waitForFunction(() => (window.__clipboardWrites || []).length > 0,{},{timeout:3000});
     const clipResult=await page.evaluate(() => ({writes:window.__clipboardWrites || []}));
-    assert.ok(clipResult.writes.length>0,'Clipboard writeText did not complete successfully');
-    const clip=clipResult.writes.at(-1);
+    assert.ok(clipResult.writes.length>0,'Neither native writeText nor legacy execCommand copied successfully');
+    const lastWrite=clipResult.writes.at(-1);
+    const clip=lastWrite.text;
     assert.ok(clip.length>0,'Empty clipboard payload');
     assert.ok(clip.includes(test.question) || result.prompt.includes(clip) || clip.includes(result.prompt.slice(0,80)),'Copied content does not match generated prompt or question');
-    clipboard='PASS (successful native writeText with verified payload)';
+    clipboard='PASS ('+lastWrite.method+' successful with verified payload)';
    }else {clipboard='NOT TESTED (copy control absent)';throw Error('Clipboard not tested: copy control absent');}
    if(test.id.endsWith('-1'))await page.screenshot({path:`${out}/${device.name}-${test.id}.png`,fullPage:true});
   }catch(e){
