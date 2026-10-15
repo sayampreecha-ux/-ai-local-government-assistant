@@ -232,7 +232,7 @@ for(const device of devices){
    if(await copyButtons.count()){
     const copyButtonLabel=await copyButtons.first().innerText();
     await copyButtons.first().click();
-    if(test.id==='boq-1') console.log('COPY_DIAGNOSTIC',device.name,JSON.stringify(await page.evaluate(()=>({writes:window.__clipboardWrites,toast:document.querySelector('[role="alert"]')?.innerText,copyLabels:[...document.querySelectorAll('button')].filter(b=>/คัดลอก|copy/i.test(b.innerText)).map(b=>b.innerText)}))),copyButtonLabel);
+    if(test.id==='boq-1') console.log('COPY_DIAGNOSTIC',device.name,JSON.stringify(await page.evaluate(()=>({writes:window.__clipboardWrites,toast:document.querySelector('[role="alert"]')?.innerText,copyLabels:[...document.querySelectorAll('button')].filter(b=>/คัดลอก|copy/i.test(b.innerText)).map(b=>b.innerText),promptPrivacy:window.GovPromptCore?.sanitizeExternalContent?.(window.GovPromptCore?.canonicalHandoffPrompts?.get(document.querySelector('.answer-card')) || '')?.sensitiveContext}))),copyButtonLabel);
     await page.waitForFunction(() => (window.__clipboardWrites || []).length > 0,{},{timeout:3000});
     const clipResult=await page.evaluate(() => ({writes:window.__clipboardWrites || []}));
     assert.ok(clipResult.writes.length>0,'Neither native writeText nor legacy execCommand copied successfully');
