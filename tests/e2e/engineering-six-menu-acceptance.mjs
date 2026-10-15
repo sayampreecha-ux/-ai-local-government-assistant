@@ -216,9 +216,18 @@ for(const device of devices){
    await page.locator('#promptInput').fill(test.question);
    await page.locator('#chatForm button[type="submit"]').click();
    if(test.id==='diagnose-4') console.log('DIAGNOSE_SUBMIT_SNAPSHOT',device.name,JSON.stringify(await page.evaluate(()=>({input:document.querySelector('#promptInput')?.value,conversation:document.querySelector('#conversation')?.innerText,toast:document.querySelector('[role="alert"]')?.innerText,htmlClass:document.documentElement.className,formData:document.querySelector('#chatForm')?.dataset}))));
-   const choice=page.locator('#conversation button').filter({hasText:/ยังไม่ทราบ|ทำต่อ|ช่วยตั้งต้น/}).first();
-   if(await choice.isVisible().catch(()=>false)){await choice.click();guidedIntake='CHOICE HANDLED';}
-   else guidedIntake='NO CHOICE SHOWN';
+   const choice=page.locator('#conversation .guided-intake-message button').filter({hasText:/ยังไม่ทราบ|ทำต่อ|ช่วยตั้งต้น/}).first();
+   if(await choice.isVisible().catch(()=>false)){
+    await choice.click();
+    guidedIntake='CHOICE HANDLED';
+    // Guided Intake resubmits asynchronously and may request a second missing-field round.
+    const followup=page.locator('#conversation .guided-intake-message button').filter({hasText:/ยังไม่ทราบ|ทำต่อ|ช่วยตั้งต้น/}).last();
+    await page.waitForTimeout(100);
+    if(await followup.isVisible().catch(()=>false) && await page.locator('#conversation .message.assistant:not(.guided-intake-message)').count()===0){
+     await followup.click();
+     guidedIntake='TWO CHOICES HANDLED';
+    }
+   }else guidedIntake='NO CHOICE SHOWN';
    try { await page.locator('#conversation .message.assistant').first().waitFor({state:'attached',timeout:25000}); }
    catch (error) {
     const snapshot=await page.locator('#conversation').evaluate(el=>({text:el.innerText.slice(-1800),buttons:[...el.querySelectorAll('button')].map(b=>({text:b.innerText,disabled:b.disabled})),html:el.innerHTML.slice(-3000)})).catch(e=>({error:String(e)}));
