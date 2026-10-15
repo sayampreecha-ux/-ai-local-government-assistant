@@ -215,6 +215,7 @@ for(const device of devices){
    promptLength=result.prompt.length;
    await page.locator('#promptInput').fill(test.question);
    await page.locator('#chatForm button[type="submit"]').click();
+   if(test.id==='diagnose-4') console.log('DIAGNOSE_SUBMIT_SNAPSHOT',device.name,JSON.stringify(await page.evaluate(()=>({input:document.querySelector('#promptInput')?.value,conversation:document.querySelector('#conversation')?.innerText,toast:document.querySelector('[role="alert"]')?.innerText,htmlClass:document.documentElement.className,formData:document.querySelector('#chatForm')?.dataset}))));
    const choice=page.locator('#conversation button').filter({hasText:/ยังไม่ทราบ|ทำต่อ|ช่วยตั้งต้น/}).first();
    if(await choice.isVisible().catch(()=>false)){await choice.click();guidedIntake='CHOICE HANDLED';}
    else guidedIntake='NO CHOICE SHOWN';
@@ -229,7 +230,9 @@ for(const device of devices){
    assert.equal(httpErrors.length,0,'HTTP errors: '+httpErrors.join(';'));
    const copyButtons=page.locator('button').filter({hasText:/คัดลอก|copy/i});
    if(await copyButtons.count()){
+    const copyButtonLabel=await copyButtons.first().innerText();
     await copyButtons.first().click();
+    if(test.id==='boq-1') console.log('COPY_DIAGNOSTIC',device.name,JSON.stringify(await page.evaluate(()=>({writes:window.__clipboardWrites,toast:document.querySelector('[role="alert"]')?.innerText,copyLabels:[...document.querySelectorAll('button')].filter(b=>/คัดลอก|copy/i.test(b.innerText)).map(b=>b.innerText)}))),copyButtonLabel);
     await page.waitForFunction(() => (window.__clipboardWrites || []).length > 0,{},{timeout:3000});
     const clipResult=await page.evaluate(() => ({writes:window.__clipboardWrites || []}));
     assert.ok(clipResult.writes.length>0,'Neither native writeText nor legacy execCommand copied successfully');
