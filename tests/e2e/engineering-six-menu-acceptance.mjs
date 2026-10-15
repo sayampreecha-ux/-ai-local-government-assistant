@@ -242,7 +242,11 @@ for(const device of devices){
     assert.ok(clip.length>0,'Empty clipboard payload');
     assert.ok(clip.includes(test.question) || result.prompt.includes(clip) || clip.includes(result.prompt.slice(0,80)),'Copied content does not match generated prompt or question');
     clipboard='PASS ('+lastWrite.method+' successful with verified payload)';
-   }else {clipboard='NOT TESTED (copy control absent)';throw Error('Clipboard not tested: copy control absent');}
+   }else {
+    const snapshot=await page.locator('#conversation').evaluate(el=>({text:el.innerText.slice(-1500),buttons:[...el.querySelectorAll('button')].map(b=>b.innerText),html:el.innerHTML.slice(-1800)}));
+    console.log('MISSING_COPY_CONTROL',device.name,test.id,JSON.stringify(snapshot));
+    clipboard='NOT TESTED (copy control absent)';throw Error('Clipboard not tested: copy control absent');
+   }
    if(test.id.endsWith('-1'))await page.screenshot({path:`${out}/${device.name}-${test.id}.png`,fullPage:true});
   }catch(e){
    status='FAIL';reason=String(e?.stack||e);
