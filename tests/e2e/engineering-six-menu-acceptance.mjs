@@ -269,8 +269,9 @@ for(const device of devices){
  await context.close();
 }
 }finally{await browser.close();}
-const summary={total:results.length,pass:results.filter(x=>x.status==='PASS').length,fail:results.filter(x=>x.status==='FAIL').length,clipboardUnverified:results.filter(x=>x.clipboard!=='PASS').length,results};
+const summary={total:results.length,pass:results.filter(x=>x.status==='PASS').length,fail:results.filter(x=>x.status==='FAIL').length,clipboardUnverified:results.filter(x=>!x.clipboard.startsWith('PASS (')).length,results};
 await writeFile(`${out}/results.json`,JSON.stringify(summary,null,2));
 await writeFile(`${out}/results.md`,'# Engineering six-menu acceptance\n\n'+JSON.stringify({total:summary.total,pass:summary.pass,fail:summary.fail,clipboardUnverified:summary.clipboardUnverified},null,2)+'\n');
 assert.equal(summary.total,60);
+assert.equal(summary.clipboardUnverified,0,'Clipboard verification incomplete');
 assert.equal(summary.fail,0,'Engineering six-menu acceptance failures');

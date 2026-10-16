@@ -4,6 +4,15 @@ on:
     paths:
       - 'tests/e2e/engineering-six-menu-acceptance.mjs'
       - '.github/workflows/engineering-six-menu-acceptance.yml'
+      - 'assets/js/core/**'
+      - 'assets/js/home-v3.js'
+      - 'assets/js/ui/status-copy.js'
+      - 'index.html'
+      - 'scripts/build-static.mjs'
+      - 'tests/engineering/**'
+      - 'tests/construction-qa/official-rate-validator*'
+      - 'tests/e2e/engineering-twelve-acceptance.mjs'
+      - 'tests/e2e/engineering-output-scope-acceptance.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,14 +31,21 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm build
+      - name: Verify twelve task rules and deterministic arithmetic
+        run: node --test tests/engineering/twelve-workflows.test.mjs tests/construction-qa/official-rate-validator.test.mjs
       - name: Start local test site
         run: |
-          python3 -m http.server 8765 > /tmp/engineering-six-menu-http.log 2>&1 &
+          python3 -m http.server 8765 --directory dist > /tmp/engineering-six-menu-http.log 2>&1 &
           echo $! > /tmp/engineering-six-menu-http.pid
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8765/ >/dev/null && exit 0; sleep 1; done
           exit 1
       - name: Run 30 scenarios on two viewports
         run: node tests/e2e/engineering-six-menu-acceptance.mjs
+      - name: Run twelve tasks with missing evidence and hostile input on two viewports
+        run: node tests/e2e/engineering-twelve-acceptance.mjs
+      - name: Verify technical and estimate output scope on desktop and mobile
+        run: node tests/e2e/engineering-output-scope-acceptance.mjs
       - name: Upload test evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -37,5 +53,7 @@ jobs:
           name: engineering-six-menu-acceptance
           path: |
             artifacts/engineering-six-menu-acceptance/
+            artifacts/engineering-twelve-acceptance/
+            artifacts/engineering-output-scope/
             /tmp/engineering-six-menu-http.log
           if-no-files-found: warn
