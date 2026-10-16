@@ -25,7 +25,8 @@
   // TOR named as an excluded/comparison output is not a request to draft TOR.
   function requestedSource(value) {
     return value.replace(/(?:โดย)?แยก(?:แบบรูปรายการ)?(?:ออก)?จาก\s*(?:TOR|ทีโออาร์|ขอบเขตของงาน)/gi, '')
-      .replace(/(?:ไม่ใช่|มิใช่|ไม่จัดทำ|ห้ามจัดทำ|ไม่ต้องทำ)\s*(?:TOR|ทีโออาร์)/gi, '');
+      .replace(/(?:ไม่ใช่|มิใช่|ไม่ได้ขอ|ไม่ขอ|ไม่ต้องการ|ไม่เอา|ไม่จัดทำ|ห้ามจัดทำ|ไม่ต้องทำ|ห้ามทำ|ไม่ต้อง)\s*(?:TOR|ทีโออาร์|ขอบเขต(?:ของ)?งาน)/gi, '')
+      .replace(/(?:ไม่ได้ขอ|ไม่ขอ|ไม่ต้องการ|ไม่เอา|ไม่จัดทำ|ห้ามจัดทำ|ไม่ต้องทำ|ห้ามทำ|ไม่ต้อง)\s*(?:ประมาณราคา|ราคากลาง|BOQ|ปร\.?\s*[456]|Factor\s*F)/gi, '');
   }
   function plan(question, context = {}) {
     const q = text(question);
