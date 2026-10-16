@@ -385,7 +385,7 @@
       '- ประเมินสถานะใหม่หลังค้น: VERIFIED=ปฐมภูมิครบ ตรงข้อเท็จจริง ยืนยันช่วงเวลาบังคับใช้; CONDITIONAL=ขึ้นกับเงื่อนไขสำคัญ; CONFLICT=ความขัดแย้งยังต้องวิเคราะห์; UNVERIFIED=ยังยืนยันต้นฉบับ/ฉบับที่ใช้/สถานะล่าสุดไม่ได้',
       '- พบเพียง FAQ/คู่มือ/บทความ ให้ UNVERIFIED และตามหาต้นฉบับต่อ; CONFLICT/UNVERIFIED ห้ามฟันธง ได้/ไม่ได้ โดยไม่มีคำเตือน; CONDITIONAL ต้องระบุเงื่อนไข; สถานะเริ่มต้นไม่ใช่ผลการตรวจจริง ห้ามอ้างว่าค้นแล้วหากยังไม่ค้น',
       '- หากภายหลังใช้คำพิพากษา หนังสือหารือ หรือแนววินิจฉัยเป็นเหตุหลัก ให้ยกระดับ FULL และตรวจทั้ง 6 ด้านก่อนตอบทุกครั้ง',
-      '- เก็บผลตรวจภายในแต่ละด้านพร้อมเหตุผลและแหล่งปฐมภูมิที่เปิดตรวจ (sourceIds/locator); คง Answer First แสดงเฉพาะข้อสรุป เหตุผล ฐานอำนาจ ความเสี่ยง และสิ่งที่ยังต้องตรวจ ไม่แสดง checklist ทั้งหมด'
+      '- เก็บผลการตรวจสอบภายในแต่ละด้านพร้อมเหตุผลและแหล่งปฐมภูมิที่เปิดตรวจ (sourceIds/locator); คง Answer First แสดงเฉพาะข้อสรุป เหตุผล ฐานอำนาจ ความเสี่ยง และสิ่งที่ยังต้องตรวจ ไม่แสดง checklist ทั้งหมด'
     ];
   }
 
@@ -589,6 +589,14 @@
   // the universal planner, authority resolver and backend remain unchanged.
   function constructionReviewPlan(question, basePlan) {
     const source = normalizeForReasoning(question);
+    const engineeringPlan = window.GovPromptCore.ENGINEERING_WORKFLOWS?.plan(question);
+    if (engineeringPlan && !engineeringPlan.estimationRequested) return basePlan;
+    // Technical review/acceptance outputs are not estimates merely because they
+    // mention a construction drawing or building. Keep explicit quantity/price
+    // audits on the existing A/B/C/D contract, including mixed-task requests.
+    const technicalDeliverable = /(?:ตรวจแบบ|ตรวจรับ|ควบคุมงาน|บันทึกหน้างาน|รายงานประจำวัน|ซ่อมบำรุง|บำรุงรักษา|แก้(?:ไข)?สัญญา)/.test(source);
+    const estimateDeliverable = /(?:ป\s*ร\s*\.?\s*[456]|\bboq\b|factor\s*f|ราคากลาง|ประมาณราคา|ตรวจปริมาณ|ถอดปริมาณ)/i.test(source);
+    if (technicalDeliverable && !estimateDeliverable) return basePlan;
     const review = /(?:ตรวจ|ตรวจสอบ|ตรวจทาน|เทียบ|ถอดปริมาณ|ประมาณราคา|คำนวณ|คิดราคาเกิน)/.test(source);
     const construction = /(?:ป\s*ร\s*\.?\s*[45]|factor\s*f|แบบก่อสร้าง|งานก่อสร้าง|ราคากลางก่อสร้าง)/i.test(source)
       || /(?:ถนน|คอนกรีต|หลังคา|ประปา|รางระบายน้ำ|ลานกีฬา|ทางลาด|อาคาร)/.test(source) && /(?:ปริมาณ|ราคากลาง|ประมาณราคา)/.test(source);
@@ -624,7 +632,7 @@
       '- ราคาวัสดุและค่าแรงต้องตรงจังหวัด ช่วงเวลา หน่วย สเปก แหล่งราคา ภาษีและค่าขนส่งที่เกี่ยวข้อง แยกข้อมูลสมมุติจากอัตราราชการชัดเจน ห้ามนำ Factor F สมมุติ 1.1500 หรือ 1.2000 ไปอ้างเป็นอัตราราชการ',
       '- Risk Assessment / Partial Decision Lock: ON สำหรับการรับรองราคากลาง การเลือกอัตราราชการ ความถูกต้องตามแบบที่อ่านไม่ได้ และข้อกล่าวหาทางกฎหมายที่หลักฐานไม่ครบ แต่ให้ตรวจเลข สูตรและทำร่างข้อสังเกตที่มีหลักฐานได้ต่อ แยก BLOCKED/NOT TESTED รายประเด็น ห้ามเหมาว่าราคาต่างกันคือหน่วยงานคิดราคาเกิน',
       '- Human Review: วิศวกร/ผู้ประมาณราคาและคณะกรรมการที่มีอำนาจตรวจทานก่อนใช้จริง AI ห้ามรับรองราคากลางหรือวินิจฉัยความผิดแทนคณะกรรมการ',
-      '- Audit Trace: เก็บโจทย์ เวลาตรวจ ไฟล์/หน้า/ฉบับ สูตร หน่วย แหล่งทางการ URL/วันที่เข้าถึง ข้อสมมุติ ผลตรวจ และผู้ตรวจทานให้ย้อนตรวจได้',
+      '- Audit Trace: เก็บโจทย์ เวลาตรวจ ไฟล์/หน้า/ฉบับ สูตร หน่วย แหล่งทางการ URL/วันที่เข้าถึง ข้อสมมุติ ผลการตรวจสอบ และผู้ตรวจทานให้ย้อนตรวจได้',
       '- Self-check: นับรายการที่ได้รับกับรายการที่รายงานให้ครบ ตรวจผลต่างปริมาณสัมพันธ์กับผลต่างมูลค่า ยอดรวม ปร.4/ปร.5 และรายงาน Factor F ที่ไม่ตรงอ้างอิงทุกโครงการ แม้อัตราอ้างอิงเป็นสมมุติ; แยกข้อผิดพลาดอ่านเอกสารจากคำนวณและวิเคราะห์'
     ];
   }
@@ -664,7 +672,18 @@
     const attachmentNames = (Array.isArray(attachments) ? attachments : []).map(item => normalizeText(item?.name || item)).filter(Boolean);
     const riskFlags = detectRiskFlags([userQuestion, ...attachmentNames].join(' '));
     const relatedModules = Array.isArray(activeRoute.modules) && activeRoute.modules.length ? activeRoute.modules.join(', ') : activeRoute.moduleId;
-    const taskPlan = constructionReviewPlan(userQuestion, planUniversalTask(userQuestion, normalizedContext));
+    const engineeringPlan = window.GovPromptCore.ENGINEERING_WORKFLOWS?.plan(userQuestion, normalizedContext);
+    const typedOutput = engineeringPlan && window.GovPromptCore.ENGINEERING_WORKFLOWS.output(engineeringPlan);
+    const initialTaskPlan = constructionReviewPlan(userQuestion, planUniversalTask(userQuestion, normalizedContext));
+    // For engineering drawings, inspection, acceptance and physical diagnostics, retain
+    // their own deliverables rather than imposing the estimate-only A/B/C/D contract.
+    const engineeringWorkflow = Boolean(engineeringPlan) || activeRoute.moduleId === 'GP007'
+      && /(?:แบบรูปรายการ|รายการประกอบแบบ|ข้อกำหนดทางเทคนิค|ตรวจแบบ|ตรวจงาน|ตรวจรับ|ตรวจราคากลาง|วิเคราะห์ปัญหา|วิเคราะห์สาเหตุ|วิเคราะห์ความเสียหาย|แตกร้าว|ทรุดตัว|น้ำท่วมขัง|ถอดแบบ|ถอดปริมาณ|ประมาณราคา|ราคากลาง|boq)/i.test(userQuestion);
+    const taskPlan = engineeringWorkflow
+      ? Object.freeze({ ...initialTaskPlan, engineeringWorkflow: true, evidenceMode:'verify-applicable-primary-source',
+          ...(typedOutput ? { action: typedOutput.action, deliverable: typedOutput.id, riskLevel: engineeringPlan.drawing ? 'HIGH' : (initialTaskPlan.riskLevel === 'LOW' ? 'MEDIUM' : initialTaskPlan.riskLevel) } : {}),
+          qualityGates: Object.freeze({ ...initialTaskPlan.qualityGates, evidenceRequired: true, decisionRequired: true, legalVersionRequired: initialTaskPlan.qualityGates.legalVersionRequired || Boolean(engineeringPlan && (engineeringPlan.drawing || engineeringPlan.estimationRequested || engineeringPlan.tasks.some(t=>t.id==='T11'))) }) })
+      : initialTaskPlan;
     const gates = taskPlan.qualityGates;
     const casePrecedentGate = buildCasePrecedentGate(userQuestion, { ...normalizedContext, hasAttachments: attachments.length > 0 }, taskPlan.riskLevel);
     const operationalSummary = taskPlan.action === 'summarize'
@@ -682,6 +701,7 @@
         'แยกค่าในเอกสารกับอัตราราชการที่ยืนยันได้ พร้อมหน่วย สูตร แหล่งข้อมูล และ UNVERIFIED'
       ])
     }) : outputPlan;
+    const resolvedOutputPlan = typedOutput && (!taskPlan.constructionReview || engineeringPlan.publicityRequested || engineeringPlan.documentRequested || engineeringPlan.tasks.some(t=>t.id==='T11')) ? typedOutput : effectiveOutputPlan;
     const presentationPreset = typeof window.GovPromptCore.resolveOutputFormatPreset === 'function'
       ? window.GovPromptCore.resolveOutputFormatPreset(outputFormatId)
       : null;
@@ -703,10 +723,10 @@
     const isVideoCreation = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
       && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|ประชาสัมพันธ์|แนะนำ)/i.test(String(userQuestion || ''));
     const isCreationAction = /^(?:create|draft|plan|summarize)$/.test(String(taskPlan.action || ''));
-    const isPrCreation = isPrVideoIntent
+    const isPrCreation = !engineeringPlan && (isPrVideoIntent
       || isVideoCreation
       || (isCreationAction && (taskPlan.deliverable === 'public-content' || taskPlan.deliverable === 'speech'))
-      || (isPrMediaText && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|วางข้อความ|ทำโพสต์)/i.test(String(userQuestion || '')));
+      || (isPrMediaText && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|วางข้อความ|ทำโพสต์)/i.test(String(userQuestion || ''))));
     const isPrRoute = activeRoute?.moduleId === 'GP012'
       || /ประชาสัมพันธ์/.test(String(activeRoute?.label || activeRoute?.title || activeRoute?.assistant?.title || ''))
       || isPrMediaText;
@@ -788,7 +808,7 @@
         riskFlags,
         route: activeRoute,
         taskPlan,
-        outputPlan: effectiveOutputPlan,
+        outputPlan: resolvedOutputPlan,
         outputFormatId: presentationPreset?.id || 'auto',
         presentationPreset,
         governancePlan,
@@ -849,7 +869,7 @@
       `1. เจตนาหลักของงาน: ${taskPlan.action}`,
       `2. ชิ้นงานที่ควรส่งมอบ: ${taskPlan.deliverable}`,
       `3. สาขางานที่เกี่ยวข้องจากเนื้อหา: ${taskPlan.disciplines.length ? taskPlan.disciplines.join(', ') : 'general-government'}`,
-      ...(taskPlan.constructionReview ? ['- Primary Workflow สำหรับงานนี้: gov.engineering; Supporting Workflow: gov.procurement (เฉพาะการจัดซื้อจัดจ้างและการรับรองราคากลาง)'] : []),
+      ...((taskPlan.constructionReview || taskPlan.engineeringWorkflow) ? ['- Primary Workflow สำหรับงานนี้: gov.engineering; Supporting Workflow: gov.procurement (เฉพาะขั้นตอนจัดซื้อจัดจ้าง)', '- Evidence Gate: ต้องตรวจแบบ เอกสาร และหลักฐานหน้างานตามที่มีจริง; ห้ามสมมุติว่าตรวจแล้ว', '- Decision Lock: คงข้อสรุปด้านความปลอดภัย การรับรองแบบและการตรวจรับที่หลักฐานไม่ครบเป็น UNVERIFIED', '- Human Review: ให้วิศวกรผู้มีหน้าที่และคณะกรรมการที่มีอำนาจตรวจทานก่อนรับรองหรืออนุมัติ'] : []),
       `4. ระดับความเสี่ยง: ${taskPlan.riskLevel}`,
       `5. วิธีใช้หลักฐาน: ${taskPlan.evidenceMode}`,
       '6. แยกให้ได้ว่าอะไรคือ “คำตอบ/ชิ้นงานที่ผู้ใช้ต้องการ” กับอะไรคือ “ข้อมูลสนับสนุนที่ระบบควรตรวจ”',
@@ -947,8 +967,8 @@
       `- เอกสารแนบ: ${attachmentNames.length ? attachmentNames.join(', ') : '[ไม่มี/ยังไม่ได้แนบ]'}`,
       `- ผลลัพธ์ที่ต้องการ: ${normalizedContext.desiredOutput || userQuestion}`,
       '', presentationPreset ? 'ชิ้นงานหลักที่ Output Router เลือก' : 'รูปแบบผลลัพธ์ที่ GovPrompt เลือกให้อัตโนมัติ',
-      `- ประเภท: ${effectiveOutputPlan.label}`, `- รูปแบบ: ${effectiveOutputPlan.format}`, `- เหตุผลการเลือก: ${effectiveOutputPlan.reason}`,
-      ...(effectiveOutputPlan.instructions || []).map((item, index) => `${index + 1}. ${item}`),
+      `- ประเภท: ${resolvedOutputPlan.label}`, `- รูปแบบ: ${resolvedOutputPlan.format}`, `- เหตุผลการเลือก: ${resolvedOutputPlan.reason}`,
+      ...(resolvedOutputPlan.instructions || []).map((item, index) => `${index + 1}. ${item}`),
       ...(presentationBlock ? ['', 'รูปแบบการนำเสนอที่ผู้ใช้เลือก', ...presentationBlock.split('\n')] : []),
       '', 'ขอบเขต AI Agent Governance',
       `- ระดับที่ผู้ใช้ร้องขอโดยพฤติกรรม: ${governancePlan.requestedLevel}`,
@@ -978,7 +998,7 @@
       '', 'สถานะความเสี่ยงเบื้องต้นจาก GovPrompt',
       riskFlags.length ? riskFlags.map(flag => `- ${flag}`).join('\n') : (taskPlan.riskLevel === 'HIGH' ? '- งานความเสี่ยงสูง: ต้องตรวจฐานอำนาจ หลักฐาน และเงื่อนไขก่อนฟันธง' : taskPlan.riskLevel === 'MEDIUM' ? '- งานความเสี่ยงปานกลาง: ต้องตรวจข้อเท็จจริงและเอกสารประกอบ' : '- ไม่พบสัญญาณความเสี่ยงจากข้อความเบื้องต้น แต่ยังต้องตรวจทานก่อนใช้จริง'),
       '', 'ข้อกำหนดผลลัพธ์',
-      `- ส่งผลลัพธ์หลักในรูปแบบ “${effectiveOutputPlan.label}” ตามที่ Output Router เลือก เว้นแต่ผู้ใช้สั่งรูปแบบอื่นชัดเจน`,
+      `- ส่งผลลัพธ์หลักในรูปแบบ “${resolvedOutputPlan.label}” ตามที่ Output Router เลือก เว้นแต่ผู้ใช้สั่งรูปแบบอื่นชัดเจน`,
       ...(presentationPreset ? [`- จัดการนำเสนอชิ้นงานด้วย “${presentationPreset.label}” ตามที่ผู้ใช้เลือก โดยไม่ลดทอนโครงสร้างบังคับของชิ้นงานหลัก`] : []),
       '- ใช้ภาษาไทยชัดเจน กระชับ และเหมาะกับการปฏิบัติราชการ',
       '- อ้างแหล่งที่มาต่อข้อความสำคัญเมื่อสามารถตรวจสอบต้นฉบับได้',
@@ -1000,7 +1020,7 @@
       riskFlags,
       route: activeRoute,
       taskPlan,
-      outputPlan: effectiveOutputPlan,
+      outputPlan: resolvedOutputPlan,
       outputFormatId: presentationPreset?.id || 'auto',
       presentationPreset,
       governancePlan,
@@ -1054,7 +1074,8 @@
   const priorEngineeringRouteRequest = window.GovPromptCore.routeRequest;
   window.GovPromptCore.routeRequest = function routeEngineeringEstimate(request, options = {}) {
     const base = priorEngineeringRouteRequest(request, options);
-    return engineeringEstimateIntent(request) ? engineeringRoute(base) : base;
+    const technicalDrawingSeparateFromTor = /(?:รายการประกอบแบบ|แบบรูปรายการ|ข้อกำหนดทางเทคนิค).{0,35}(?:แยกจาก|ไม่ใช่|มิใช่|ต่างจาก)\s*(?:tor|ทีโออาร์|ขอบเขตของงาน)/i.test(String(request || ''));
+    return engineeringEstimateIntent(request) || technicalDrawingSeparateFromTor ? engineeringRoute(base) : base;
   };
   const priorEngineeringRouteTransaction = window.GovPromptCore.routeTransaction;
   if (typeof priorEngineeringRouteTransaction === 'function') {

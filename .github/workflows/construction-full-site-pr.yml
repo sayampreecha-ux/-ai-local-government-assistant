@@ -11,7 +11,6 @@ permissions:
   contents: read
 jobs:
   full-site-pr:
-    if: github.event_name != 'pull_request' || github.event.pull_request.number == 321
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
