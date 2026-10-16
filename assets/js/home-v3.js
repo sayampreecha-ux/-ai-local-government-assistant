@@ -380,6 +380,12 @@
       attachments: safeAttachments,
       outputFormatId: outputFormatSelect?.value || 'auto'
     });
+    // Preserve the user's original whitespace in the copyable question section.
+    const normalizedQuestion = text.replace(/\s+/g, ' ').trim();
+    const questionHeader = 'คำถามจากผู้ใช้\n' + normalizedQuestion + '\n';
+    const promptBundleWithOriginalQuestion = text !== normalizedQuestion && promptBundleBase.prompt.includes(questionHeader)
+      ? Object.freeze({...promptBundleBase, prompt: promptBundleBase.prompt.replace(questionHeader, 'คำถามจากผู้ใช้\n' + text + '\n')})
+      : promptBundleBase;
     const toolPlan = typeof core.createToolRoutingPlan === 'function'
       ? core.createToolRoutingPlan({ question: text, attachments: safeAttachments })
       : null;
@@ -388,11 +394,11 @@
       : '';
     const routedPromptBundle = toolRoutingBlock
       ? Object.freeze({
-          ...promptBundleBase,
-          prompt: `${promptBundleBase.prompt}\n\nแนวทางเลือกเครื่องมือ\n${toolRoutingBlock}`,
+          ...promptBundleWithOriginalQuestion,
+          prompt: `${promptBundleWithOriginalQuestion.prompt}\n\nแนวทางเลือกเครื่องมือ\n${toolRoutingBlock}`,
           toolRoutingPlan: toolPlan
         })
-      : promptBundleBase;
+      : promptBundleWithOriginalQuestion;
     let promptBundle = enrichNaturalPersonServiceTor(routedPromptBundle, text);
 
     const assistanceRoute = typeof core.detectAssistanceRoute === 'function'
