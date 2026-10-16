@@ -192,7 +192,7 @@
   // Whitespace normalization is not a privacy finding. Redaction, masking,
   // sensitive-context and residual-risk signals still fail closed.
   function hasSecurityRelevantChange(privacy, original) {
-    const normalizedWhitespace = String(original ?? '').replace(/[ \\t]+/g, ' ').replace(/ *\\n */g, '\\n').trim();
+    const normalizedWhitespace = String(original ?? '').replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim();
     return privacy.changed && privacy.safeText !== normalizedWhitespace;
   }
 
