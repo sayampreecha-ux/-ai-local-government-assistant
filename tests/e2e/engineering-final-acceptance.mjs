@@ -53,7 +53,9 @@ try{for(const d of devices){
     assert.equal(await page.locator('.guided-intake-message li').count(),1,'drawing asks one question in main chat');
    }
    await page.locator('#promptInput').fill(c.question);await page.locator('#chatForm button[type="submit"]').click();
-   const copy=await finishIntake(page);await page.waitForFunction(()=>document.querySelector('#conversation .answer-card[data-lean-mode-ready="true"]'));
+   const copy=c.menu ? page.getByRole('button',{name:/^(?:คัดลอกไปใช้กับ AI|คัดลอกคำสั่งอย่างเดียว|คัดลอกคำสั่ง)$/}).first() : await finishIntake(page);
+   if(c.menu)await copy.waitFor({state:'visible',timeout:12000});
+   await page.waitForFunction(()=>document.querySelector('#conversation .answer-card[data-lean-mode-ready="true"]'));
    await copy.click();row.prompt=await page.evaluate(()=>navigator.clipboard.readText());
    // Compare source planner metadata with the actual copied handoff, without replacing UI submit/copy.
    row.actual=await page.evaluate(question=>{const core=window.GovPromptCore;const context=core.createSharedContext({facts:question,desiredOutput:question});const transaction=core.routeTransaction(context);const r=core.createGovernmentPrompt({question,context,route:transaction});return{module:r.route.moduleId,transaction:transaction.primaryModule||transaction.moduleId,output:r.outputPlan.id,label:r.outputPlan.label,action:r.taskPlan.action,risk:r.taskPlan.riskLevel,tasks:r.engineeringPlan?.tasks.map(t=>t.id)||[],gates:r.qualityGates}},c.question);
