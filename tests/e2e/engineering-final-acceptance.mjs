@@ -29,9 +29,12 @@ function verifyPrompt(c,prompt,meta){
  assert.match(prompt,/GovPrompt สร้าง Prompt สำหรับ AI ภายนอกเท่านั้น/);
  assert.doesNotMatch(prompt,/- ส่งผลลัพธ์หลักในรูปแบบ “บทวิเคราะห์”/);
  assert.ok(prompt.includes('- ประเภท: '+meta.label),'actual clipboard output differs from generated bundle');
- if(c.id==='T05-critical-drawing'||c.id==='drawing-menu'){
+ if((c.expectedTasks?.length===1&&c.expectedTasks[0]==='D01')||c.id==='drawing-menu'){
   assert.equal(meta.output,'technical-drawing');assert.equal(meta.action,'draft');assert.equal(meta.risk,'HIGH');
   assert.deepEqual(meta.tasks,['D01']);assert.match(prompt,/ห้ามเดาความหนา เหล็กเสริม/);assert.match(prompt,/หากสร้างไฟล์ CAD\/แบบจริงไม่ได้/);
+  if(/100 เมตร/.test(c.question))assert.match(prompt,/100 เมตร/);
+  if(/6 เมตร/.test(c.question))assert.match(prompt,/6 เมตร/);
+  assert.doesNotMatch(prompt,/^T04 /m);assert.doesNotMatch(prompt,/^T06 /m);
  }
  if((c.task==='T01'&&!/BOQ|ปร\.?4/i.test(c.question))||c.task==='T11')assert.doesNotMatch(prompt,/ผลลัพธ์บังคับแยก 4 ส่วน/);
  if(c.id==='T08-cross'||c.id==='T12-cross')assert.match(prompt,/ส่งโพสต์\/ชิ้นงานประชาสัมพันธ์ที่ขอร่วมด้วย/);
@@ -67,4 +70,4 @@ try{for(const d of devices){
  }
  await context.close();
 }}finally{await browser.close();}
-const summary={total:rows.length,pass:rows.filter(r=>r.status==='PASS').length,fail:rows.filter(r=>r.status!=='PASS').length,results:rows};await writeFile(`${out}/results.json`,JSON.stringify(summary,null,2));assert.equal(summary.total,132);assert.equal(summary.fail,0,'final engineering acceptance failed');
+const summary={total:rows.length,pass:rows.filter(r=>r.status==='PASS').length,fail:rows.filter(r=>r.status!=='PASS').length,results:rows};await writeFile(`${out}/results.json`,JSON.stringify(summary,null,2));assert.equal(summary.total,138);assert.equal(summary.fail,0,'final engineering acceptance failed');
