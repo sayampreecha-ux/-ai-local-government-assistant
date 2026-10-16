@@ -161,14 +161,20 @@
     const priorEvent = pick(/(?:ผ่านการสรรหา|ผ่านการคัดเลือก|ประกาศผล|ได้รับคำสั่ง|ได้รับแต่งตั้ง)[^,.\n]{0,80}/i);
     return Object.freeze({
       actor: pick(/(?:ข้าราชการ|พนักงานส่วนท้องถิ่น|ลูกจ้าง|ผู้บริหาร|ผู้ผ่านการสรรหา|ผู้สมัคร)[^,.\n]{0,80}/i),
-      organization: pick(/(?:องค์การบริหารส่วนจังหวัด|อบจ\.|องค์การบริหารส่วนตำบล|อบต\.|เทศบาล|อปท\.|หน่วยงาน)[^,.\n]{0,60}/i),
+      organization: pick(/(?:องค์การบริหารส่วนจังหวัด|อบจ\.|องค์การบริหารส่วนตำบล|อบต\.|เทศบาล|อปท\.)/i),
+      amount_context: pick(/(?:วงเงิน|งบประมาณ)\s*\d[\d\u2060]*(?:\s*บาท)?/i),
       status_or_prior_event: [status, priorEvent].filter(value => !value.startsWith('[')).join(' / ') || '[ให้ AI สกัดสถานะหรือเหตุการณ์ก่อนหน้า]',
       current_stage: normalizeText(context?.currentStage) || pick(/(?:รายงานตัวครั้งแรก|รายงานตัว|เลือก[^,.\n]{0,60}|รับตำแหน่ง|ก่อนสอบ|หลังสอบ)[^,.\n]{0,80}/i),
       disputed_action: pick(/(?:เดินทาง|รายงานตัว|เลือก|เบิก|จ่าย|แต่งตั้ง|ย้าย|โอน|รับโอน)[^,.\n]{0,100}/i),
       claim_or_power: pick(/(?:ค่าใช้จ่ายในการเดินทาง|ค่าเดินทาง|สิทธิ|ค่าใช้จ่าย|อำนาจ|เบิก|จ่าย)[^,.\n]{0,80}/i),
       legal_issue: pick(/(?:รับการคัดเลือก|ข้อ\s*\d+(?:\(\d+\))?|ถือเป็น|เข้าข่าย|มีอำนาจ)[^,.\n]{0,100}/i),
       applicable_rule: pick(/(?:พระราชบัญญัติ|กฎกระทรวง|ระเบียบ|ประกาศ|หนังสือ(?:สั่งการ|เวียน)?|มาตรา\s*\d+|ข้อ\s*\d+(?:\(\d+\))?)[^,.\n]{0,120}/i),
-      date_context: pick(/(?:พ\.ศ\.\s*)?25\d{2}|(?:พ\.ศ\.\s*)?26\d{2}|ปี\s*\d{2,4}|วันที่\s*\d{1,2}[^,.\n]{0,30}/i, '[ต้องระบุวันที่เกิดข้อเท็จจริง]')
+      date_context: (() => {
+        // Case citation years are not event dates. Prefer an explicitly described event date.
+        const eventFacts = facts.replace(/(?:คำวินิจฉัย|คำพิพากษา)[^\n,.]{0,80}?\d+\s*\/\s*25\d{2}/gi, '');
+        const match = eventFacts.match(/(?:วัน(?:เริ่มไต่สวน|ชี้มูล|รับสำนวน|เกิดเหตุ|พ้นราชการ)|(?:เหตุเกิด|เกิดเหตุ|พ้นราชการ)\s*วันที่|เมื่อวันที่|ตั้งแต่วันที่)\s*\d{1,2}[^,.\n]{0,30}|(?:เกิดเหตุ|เริ่มไต่สวน|ชี้มูล|รับสำนวน|พ้นราชการ|เหตุการณ์)[^\n,.]{0,25}?(?:พ\.ศ\.\s*)?25\d{2}|(?:พ\.ศ\.\s*)?25\d{2}\s*(?:เกิดเหตุ|เริ่มไต่สวน|ชี้มูล|รับสำนวน|พ้นราชการ)/i);
+        return (match?.[0] || '[ต้องระบุวันที่เกิดข้อเท็จจริง]').replace(/\u2060/g, ',');
+      })()
     });
   }
 
@@ -469,11 +475,21 @@
       workflowStatus = 'BLOCKED_MISSING_SCOPE';
       nextAction = 'CLARIFY_DECISIVE_SCOPE';
     }
-    const officialDocumentLanguage = Object.freeze([
-      'หารือการพิจารณา', 'หารือแนวทางการปฏิบัติ', 'หลักเกณฑ์และแนวทาง',
-      'ซักซ้อมความเข้าใจ', 'การเบิกค่าใช้จ่าย', 'การเดินทางไปราชการ',
-      'การแต่งตั้ง', 'การรับการคัดเลือก'
-    ]);
+    const disciplinarySearch = DISCIPLINARY_CASE.test(source);
+    const officialDocumentLanguage = Object.freeze(disciplinarySearch
+      ? ['ป.ป.ช. ไต่สวนชี้มูลวินัย', 'ระยะเวลาไต่สวน', 'คำวินิจฉัยศาลรัฐธรรมนูญ', 'กฎหมายบริหารงานบุคคลท้องถิ่น']
+      : ['หารือการพิจารณา', 'หารือแนวทางการปฏิบัติ', 'หลักเกณฑ์และแนวทาง',
+        'ซักซ้อมความเข้าใจ', 'การเบิกค่าใช้จ่าย', 'การเดินทางไปราชการ',
+        'การแต่งตั้ง', 'การรับการคัดเลือก']);
+    const judgmentNumber = source.match(/(?:คำวินิจฉัย(?:ศาลรัฐธรรมนูญ)?(?:ที่)?|คำพิพากษา(?:ที่)?)\s*(\d+\s*\/\s*25\d{2})/i)?.[1] || '';
+    const organizationTerm = fingerprint.organization.startsWith('[') ? '' : fingerprint.organization;
+    const disciplinaryQuery = ['ป.ป.ช. ไต่สวนชี้มูลความผิดทางวินัย ระยะเวลาไต่สวน', judgmentNumber ? 'คำวินิจฉัย ' + judgmentNumber : '', organizationTerm].filter(Boolean).join(' ');
+    const disciplinaryQueries = [
+      [judgmentNumber ? 'คำวินิจฉัยศาลรัฐธรรมนูญที่ ' + judgmentNumber : 'ป.ป.ช. ระยะเวลาไต่สวนชี้มูลวินัย', 'site:ratchakitcha.soc.go.th'].join(' '),
+      'พ.ร.ป. ป้องกันและปราบปรามการทุจริต ระยะเวลาไต่สวน ขยายเวลา site:go.th',
+      ['ป.ป.ช. ชี้มูลวินัยเกินกำหนด อำนาจผู้บังคับบัญชา', organizationTerm, 'site:go.th'].filter(Boolean).join(' '),
+      [judgmentNumber ? 'คำวินิจฉัย ' + judgmentNumber : 'ป.ป.ช. วินัย', 'บทเฉพาะกาล ผลผูกพันทางวินัย พ้นราชการ site:go.th'].join(' ')
+    ];
     return Object.freeze({
       applicableAuthorityCheck,
       qualityStatus: applicableAuthorityCheck.qualityStatus,
@@ -506,15 +522,15 @@
       requiredPrecedentVerification: REQUIRED_PRECEDENT_VERIFICATION,
       evidenceState,
       searchConcepts: Object.freeze({
-        factLanguage: compactFacts || source,
-        legalLanguage: legalPhrase,
+        factLanguage: disciplinarySearch ? disciplinaryQuery : (compactFacts || source),
+        legalLanguage: disciplinarySearch ? disciplinaryQuery : legalPhrase,
         officialDocumentLanguage,
         sourceLanguage: normalizeText(context?.owningUnit || context?.organizationType || fingerprint.organization)
       }),
       retrievalLoop: Object.freeze(['SEARCH', 'EXTRACT_LEADS', 'FOLLOW_BEST_LEAD', 'UPDATE_SEARCH', 'VERIFY']),
       leadTypes: Object.freeze(['documentNumber', 'date', 'title', 'issuingAuthority', 'legalProvision', 'officialTerminology', 'citedDocument', 'indexOrCompilation', 'pageNumber']),
       hiddenDocumentRecovery: Object.freeze(['open-pdf-or-compilation', 'inspect-index-and-table-of-contents', 'navigate-relevant-pages', 'inspect-page-images', 'ocr-only-when-needed-and-supported']),
-      searchQueries: Object.freeze(needsScopeClarification ? [] : [
+      searchQueries: Object.freeze(needsScopeClarification ? [] : disciplinarySearch ? disciplinaryQueries : [
         `${compactFacts || source} หนังสือหารือ ตอบข้อหารือ แนววินิจฉัย ซักซ้อม`,
         `${legalPhrase} ข้อ มาตรา หลักเกณฑ์ การพิจารณา แนวทางปฏิบัติ site:go.th`,
         `รวมหนังสือหารือ ประมวลข้อหารือ สารบัญ ดัชนี คู่มือ FAQ แนววินิจฉัย ${legalPhrase} ${normalizeText(context?.owningUnit || '')} site:go.th`,
