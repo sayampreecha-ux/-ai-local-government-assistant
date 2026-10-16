@@ -702,5 +702,41 @@
       "drawing-review"
     ],
     "supplementary": true
+  },
+  {
+    "id": "D01-production-smoke",
+    "task": "D01",
+    "question": "ซ่อมถนน ค.ส.ล. แตกร้าว ยาว 100 เมตร กว้าง 6 เมตร ช่วยจัดทำแบบรูปรายการ",
+    "supplementary": true,
+    "expectedTasks": [
+      "D01"
+    ],
+    "expectedOutputs": [
+      "technical-drawing"
+    ]
+  },
+  {
+    "id": "D01-negated-tor",
+    "task": "D01",
+    "question": "ซ่อมถนน ค.ส.ล. แตกร้าว ยาว 100 เมตร กว้าง 6 เมตร ช่วยจัดทำแบบรูปรายการ ไม่ได้ขอ TOR",
+    "supplementary": true,
+    "expectedTasks": [
+      "D01"
+    ],
+    "expectedOutputs": [
+      "technical-drawing"
+    ]
+  },
+  {
+    "id": "D01-no-estimate",
+    "task": "D01",
+    "question": "ซ่อมถนน ค.ส.ล. แตกร้าว ยาว 100 เมตร กว้าง 6 เมตร ช่วยจัดทำแบบรูปรายการ ไม่ต้องประมาณราคา",
+    "supplementary": true,
+    "expectedTasks": [
+      "D01"
+    ],
+    "expectedOutputs": [
+      "technical-drawing"
+    ]
   }
 ]
