@@ -574,6 +574,12 @@
   // the universal planner, authority resolver and backend remain unchanged.
   function constructionReviewPlan(question, basePlan) {
     const source = normalizeForReasoning(question);
+    // Technical review/acceptance outputs are not estimates merely because they
+    // mention a construction drawing or building. Keep explicit quantity/price
+    // audits on the existing A/B/C/D contract, including mixed-task requests.
+    const technicalDeliverable = /(?:ตรวจแบบ|ตรวจรับ|ควบคุมงาน|บันทึกหน้างาน|รายงานประจำวัน|ซ่อมบำรุง|บำรุงรักษา|แก้(?:ไข)?สัญญา)/.test(source);
+    const estimateDeliverable = /(?:ป\s*ร\s*\.?\s*[456]|\bboq\b|factor\s*f|ราคากลาง|ประมาณราคา|ตรวจปริมาณ|ถอดปริมาณ)/i.test(source);
+    if (technicalDeliverable && !estimateDeliverable) return basePlan;
     const review = /(?:ตรวจ|ตรวจสอบ|ตรวจทาน|เทียบ|ถอดปริมาณ|ประมาณราคา|คำนวณ|คิดราคาเกิน)/.test(source);
     const construction = /(?:ป\s*ร\s*\.?\s*[45]|factor\s*f|แบบก่อสร้าง|งานก่อสร้าง|ราคากลางก่อสร้าง)/i.test(source)
       || /(?:ถนน|คอนกรีต|หลังคา|ประปา|รางระบายน้ำ|ลานกีฬา|ทางลาด|อาคาร)/.test(source) && /(?:ปริมาณ|ราคากลาง|ประมาณราคา)/.test(source);

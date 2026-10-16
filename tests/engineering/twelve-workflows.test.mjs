@@ -76,3 +76,25 @@ test('arithmetic results never mutate cross-task state',()=>{
  assert.equal(engine.plan('ตรวจแบบอาคาร').decisionLock,true);
  assert.equal(engine.plan('ตรวจแบบอาคาร').numericStatus,'UNVERIFIED');
 });
+
+// Added after a real current-head prompt probe reproduced estimate-contract leakage.
+const {outputScopeCases}=await import('./output-scope-cases.mjs');
+for(const c of outputScopeCases) test('output scope: '+c.id,()=>{
+ const context=core.createSharedContext({facts:c.question,desiredOutput:c.question});
+ const result=core.createGovernmentPrompt({question:c.question,context,route:core.routeTransaction(context)});
+ assert.ok(result.engineeringPlan.tasks.some(t=>t.id===c.task));
+ assert.equal(result.route.moduleId,'GP007');
+ assert.equal(result.qualityGates.evidenceRequired,true);
+ assert.equal(result.qualityGates.decisionRequired,true);
+ assert.equal(result.engineeringPlan.decisionLock,true);
+ assert.match(result.prompt,/Human Review/);
+ if(c.estimate){
+  assert.equal(result.taskPlan.constructionReview,true);
+  assert.equal(result.outputPlan.id,'construction-estimate');
+  assert.match(result.prompt,/ผลลัพธ์บังคับแยก 4 ส่วน/);
+ }else{
+  assert.notEqual(result.taskPlan.constructionReview,true);
+  assert.notEqual(result.outputPlan.id,'construction-estimate');
+  assert.doesNotMatch(result.prompt,/ผลลัพธ์บังคับแยก 4 ส่วน/);
+ }
+});

@@ -12,6 +12,7 @@ on:
       - 'tests/engineering/**'
       - 'tests/construction-qa/official-rate-validator*'
       - 'tests/e2e/engineering-twelve-acceptance.mjs'
+      - 'tests/e2e/engineering-output-scope-acceptance.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -43,6 +44,8 @@ jobs:
         run: node tests/e2e/engineering-six-menu-acceptance.mjs
       - name: Run twelve tasks with missing evidence and hostile input on two viewports
         run: node tests/e2e/engineering-twelve-acceptance.mjs
+      - name: Verify technical and estimate output scope on desktop and mobile
+        run: node tests/e2e/engineering-output-scope-acceptance.mjs
       - name: Upload test evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -51,5 +54,6 @@ jobs:
           path: |
             artifacts/engineering-six-menu-acceptance/
             artifacts/engineering-twelve-acceptance/
+            artifacts/engineering-output-scope/
             /tmp/engineering-six-menu-http.log
           if-no-files-found: warn
