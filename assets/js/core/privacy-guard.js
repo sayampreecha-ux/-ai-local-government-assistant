@@ -99,7 +99,7 @@
     safeText = protectedNumbers.protectedText.replace(/\b\d{16,}\b/g, ' [ปกปิดชุดตัวเลข] ');
     safeText = restoreMaskMarkers(safeText, protectedNumbers.markers);
     safeText = preserveWhitespace
-      ? safeText.replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim()
+      ? safeText.trim()
       : collapseWhitespace(safeText);
     return { safeText, redactions: Object.freeze([...new Set(redactions)]) };
   }
