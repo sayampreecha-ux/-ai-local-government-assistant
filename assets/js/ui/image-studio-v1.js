@@ -11,6 +11,12 @@ function normalize(value) {
 
 export function isImageCreativeIntent(value) {
   const source = normalize(value);
+  // Technical drawing/takeoff requests can contain "สร้างจากแบบรูป", which is
+  // not a request to create an image. Keep explicit image-creation requests eligible.
+  const engineeringTakeoff = /(?:ถอดแบบ|ถอดปริมาณ|จัดทำ\s*boq|ปร\.?4|ปร\.?5|งานก่อสร้าง)/i.test(source);
+  const explicitCreative = /(?:ทำ|สร้าง|ออกแบบ|จัดทำ|ปรับ|แต่ง|รีดีไซน์).{0,24}(?:ภาพประชาสัมพันธ์|รูปภาพ|โปสเตอร์|การ์ด|อินโฟกราฟิก)|(?:ภาพ|รูป).{0,28}(?:ให้สวย|สวยที่สุด|ประชาสัมพันธ์)/i.test(source);
+  const engineeringDrawing = /(?:จัดทำ|ตรวจ|ปรับปรุง).{0,20}(?:แบบรูปรายการ|รายการประกอบแบบ|ข้อกำหนดทางเทคนิค|แบบก่อสร้าง|แบบแปลน)/i.test(source);
+  if ((engineeringTakeoff || engineeringDrawing) && !explicitCreative) return false;
   return Boolean(source && !FINANCE_DECISION.test(source) && IMAGE_CREATIVE_INTENT.test(source));
 }
 

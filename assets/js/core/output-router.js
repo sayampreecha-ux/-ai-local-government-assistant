@@ -143,6 +143,15 @@
       context?.facts
     ].filter(Boolean).join(' '));
 
+    const engineeringPlan = window.GovPromptCore?.ENGINEERING_WORKFLOWS?.plan(input, context || {});
+    if (engineeringPlan) {
+      const typed = window.GovPromptCore.ENGINEERING_WORKFLOWS.output(engineeringPlan);
+      if (engineeringPlan.estimationRequested && !engineeringPlan.publicityRequested && !engineeringPlan.documentRequested && !engineeringPlan.tasks.some(t=>t.id==='T11') && window.GovPromptCore.isEngineeringEstimateIntent?.(input)) {
+        return Object.freeze({...OUTPUTS['construction-estimate'],id:'construction-estimate',confidence:1,reason:'construction-estimate-evidence-first'});
+      }
+      return typed;
+    }
+
     const explicitPrefix = inferExplicitPrefix(source);
     if (explicitPrefix) {
       const definition = OUTPUTS[explicitPrefix] || OUTPUTS.default;
