@@ -1,12 +1,17 @@
 import { chromium } from 'playwright';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 
 const base = process.env.GOVPROMPT_TEST_URL || 'http://127.0.0.1:8765/';
 if (!/^http:\/\/127\.0\.0\.1:8765\/$/.test(base)) throw Error('Local PR server only');
 const out='artifacts/construction-full-site-pr';
 await mkdir(out,{recursive:true});
+// Only source cells: no QA_Gates, calculated quantities, differences or answer key.
+const roadInputs=JSON.parse(await readFile('tests/fixtures/road-csl/blind-input.json','utf8'));
 const cases=[
+ ['engineering-road-blind-input','ถอดปริมาณงานก่อสร้างจากแบบรูปรายการถนน ค.ส.ล. ตรวจ BOQ/ปร.4/ปร.5 แสดงตาราง A B C D จากข้อมูลจำลองต้นทางต่อไปนี้ ห้ามเดาข้อมูลที่ขาด: '+JSON.stringify(roadInputs),'GP007'],
+ ['engineering-road-csl-full','ช่วยถอดปริมาณงานก่อสร้างจากแบบรูปรายการและจัดทำ BOQ/ปร.4 เป็นรายการ พร้อมหน่วย สูตรคำนวณ ตำแหน่งอ้างอิงแบบ และหลักฐานแต่ละปริมาณ แยกรายการที่คำนวณได้จริงกับรายการที่ข้อมูลไม่พอ ห้ามเดาขนาด ปริมาณ หรือรายละเอียดที่ไม่มีในแบบ และให้วิศวกรตรวจรับรองผล ก่อสร้างถนนคสล','GP007'],
+ ['engineering-road-csl-short','ถอดแบบถนน ค.ส.ล. จัดทำรูปแบบ BOQ และ ปร.4/ปร.5','GP007'],
  ['engineering-building','ถอดแบบก่อสร้างอาคารและจัดทำ BOQ','GP007'],
  ['engineering-generic','ถอดแบบและถอดปริมาณเพื่อทำ BOQ','GP007'],
  ['engineering-pr4','ประมาณราคางานก่อสร้างอาคาร จัดทำ ปร.4 และ ปร.5','GP007'],
@@ -26,6 +31,7 @@ try {
   const page=await context.newPage();
   const errors=[];const network=[];const httpErrors=[];let navigating=false;const unexpectedFailures=[];
   page.on('pageerror',e=>errors.push(String(e)));
+  page.on('console',message=>{if(message.type()==='error')errors.push('console.error: '+message.text());});
   page.on('response',r=>{if(r.status()>=400&&r.url().startsWith(base))httpErrors.push({url:r.url(),status:r.status()});});
   page.on('requestfailed',r=>{const failure={url:r.url(),error:r.failure()?.errorText,duringNavigation:navigating};network.push(failure);if(!(navigating&&failure.error==='net::ERR_ABORTED'))unexpectedFailures.push(failure);});
   for(const [id,question,expected] of cases) {
@@ -68,6 +74,15 @@ try {
     const clipboard=await page.evaluate(()=>navigator.clipboard.readText());
     assert.ok(clipboard.length>100,'clipboard missing generated prompt');
     if(expected==='GP007')assert.match(clipboard,/gov\\.engineering|Construction QA|Factor F/i,'engineering instructions absent from clipboard');
+    if(expected==='GP007'){
+     assert.doesNotMatch(clipboard,/IMAGE CREATIVE MODE|หมวดที่ระบบคาดการณ์: GP012/,'late image route contaminated construction prompt');
+     assert.match(clipboard,/หมวดที่ระบบคาดการณ์: GP007/,'copied prompt must retain engineering route');
+     for(const marker of ['A ตาราง','B สูตร','C ตาราง','D ข้อจำกัด'])assert.ok(clipboard.includes(marker),marker);
+    }
+    if(id==='engineering-road-blind-input'){
+     assert.ok(clipboard.includes(JSON.stringify(roadInputs)),'blind source quantities, prices and factors must survive clipboard unchanged');
+    }
+    await writeFile(`${out}/${device.name}-${id}-prompt.txt`,clipboard);
     assert.equal(errors.length,0,'page errors: '+errors.join('; '));
     assert.equal(unexpectedFailures.length,0,'unexpected network failures: '+JSON.stringify(unexpectedFailures));
     assert.equal(httpErrors.length,0,'HTTP errors: '+JSON.stringify(httpErrors));

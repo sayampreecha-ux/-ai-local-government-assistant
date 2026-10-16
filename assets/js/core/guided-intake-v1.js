@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.2.1';
+  const VERSION = '1.2.3';
   const MAX_QUESTIONS = 3;
   const UNKNOWN_PATTERN = /(?:ไม่ทราบ|ยังไม่ทราบ|ยังไม่กำหนด|ยังไม่มีข้อมูล)/i;
   const CREATE_PATTERN = /(?:^|\s)(?:ร่าง|จัดทำ|ทำ|สร้าง|เขียน|เตรียม|ออกแบบ|จัดซื้อ|จัดจ้าง|จัดอบรม)(?:\s|$|[^ก-๙a-z0-9])/i;
@@ -93,6 +93,7 @@
 
   function inferIntent(text, route = {}) {
     const value = lower(text);
+    if (window.GovPromptCore?.ENGINEERING_WORKFLOWS?.plan(text)?.drawing) return 'engineering';
     if (/(?:ร่าง\s*tor|\btor\b|จัดซื้อ|จัดจ้าง|พัสดุ|ราคากลาง|e-?bidding)/i.test(value)) return 'procurement';
     if (/(?:ประชาสัมพันธ์|วิดีโอ|คำกล่าว|สคริปต์|โพสต์|อินโฟกราฟิก)/i.test(value)) return 'pr';
     if (/(?:ทำโครงการ|จัดทำโครงการ|โครงการ|จัดอบรม|อบรม|กิจกรรม)/i.test(value)) return 'project';
@@ -187,7 +188,7 @@
     const unknown = new Set((acknowledgedUnknown || []).map(String));
     const isIndividualContractorTor = intent === 'procurement' && /จ้างเหมาบริการบุคคลธรรมดา|จ้างเหมาบริการ.*บุคคลธรรมดา/i.test(value);
     const profile = isIndividualContractorTor ? PROFILES.individualContractor : (PROFILES[intent] || PROFILES.general);
-    const missing = profile.filter(item => !unknown.has(item.key) && (options.force || !fieldSatisfied(item.key, value))).slice(0, MAX_QUESTIONS);
+    const missing = profile.filter(item => !unknown.has(item.key) && (options.force || !fieldSatisfied(item.key, value))).slice(0, window.GovPromptCore?.ENGINEERING_WORKFLOWS?.plan(value)?.drawing ? 1 : MAX_QUESTIONS);
     return Object.freeze({
       ready: missing.length === 0,
       intent,

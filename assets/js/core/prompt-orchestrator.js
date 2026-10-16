@@ -574,6 +574,8 @@
   // the universal planner, authority resolver and backend remain unchanged.
   function constructionReviewPlan(question, basePlan) {
     const source = normalizeForReasoning(question);
+    const engineeringPlan = window.GovPromptCore.ENGINEERING_WORKFLOWS?.plan(question);
+    if (engineeringPlan && !engineeringPlan.estimationRequested) return basePlan;
     // Technical review/acceptance outputs are not estimates merely because they
     // mention a construction drawing or building. Keep explicit quantity/price
     // audits on the existing A/B/C/D contract, including mixed-task requests.
@@ -655,14 +657,17 @@
     const attachmentNames = (Array.isArray(attachments) ? attachments : []).map(item => normalizeText(item?.name || item)).filter(Boolean);
     const riskFlags = detectRiskFlags([userQuestion, ...attachmentNames].join(' '));
     const relatedModules = Array.isArray(activeRoute.modules) && activeRoute.modules.length ? activeRoute.modules.join(', ') : activeRoute.moduleId;
+    const engineeringPlan = window.GovPromptCore.ENGINEERING_WORKFLOWS?.plan(userQuestion, normalizedContext);
+    const typedOutput = engineeringPlan && window.GovPromptCore.ENGINEERING_WORKFLOWS.output(engineeringPlan);
     const initialTaskPlan = constructionReviewPlan(userQuestion, planUniversalTask(userQuestion, normalizedContext));
     // For engineering drawings, inspection, acceptance and physical diagnostics, retain
     // their own deliverables rather than imposing the estimate-only A/B/C/D contract.
-    const engineeringWorkflow = activeRoute.moduleId === 'GP007'
+    const engineeringWorkflow = Boolean(engineeringPlan) || activeRoute.moduleId === 'GP007'
       && /(?:แบบรูปรายการ|รายการประกอบแบบ|ข้อกำหนดทางเทคนิค|ตรวจแบบ|ตรวจงาน|ตรวจรับ|ตรวจราคากลาง|วิเคราะห์ปัญหา|วิเคราะห์สาเหตุ|วิเคราะห์ความเสียหาย|แตกร้าว|ทรุดตัว|น้ำท่วมขัง|ถอดแบบ|ถอดปริมาณ|ประมาณราคา|ราคากลาง|boq)/i.test(userQuestion);
-    const taskPlan = engineeringWorkflow && !initialTaskPlan.constructionReview
-      ? Object.freeze({ ...initialTaskPlan, engineeringWorkflow: true,
-          qualityGates: Object.freeze({ ...initialTaskPlan.qualityGates, evidenceRequired: true, decisionRequired: true }) })
+    const taskPlan = engineeringWorkflow
+      ? Object.freeze({ ...initialTaskPlan, engineeringWorkflow: true, evidenceMode:'verify-applicable-primary-source',
+          ...(typedOutput ? { action: typedOutput.action, deliverable: typedOutput.id, riskLevel: engineeringPlan.drawing ? 'HIGH' : (initialTaskPlan.riskLevel === 'LOW' ? 'MEDIUM' : initialTaskPlan.riskLevel) } : {}),
+          qualityGates: Object.freeze({ ...initialTaskPlan.qualityGates, evidenceRequired: true, decisionRequired: true, legalVersionRequired: initialTaskPlan.qualityGates.legalVersionRequired || Boolean(engineeringPlan && (engineeringPlan.drawing || engineeringPlan.estimationRequested || engineeringPlan.tasks.some(t=>t.id==='T11'))) }) })
       : initialTaskPlan;
     const gates = taskPlan.qualityGates;
     const casePrecedentGate = buildCasePrecedentGate(userQuestion, { ...normalizedContext, hasAttachments: attachments.length > 0 }, taskPlan.riskLevel);
@@ -681,6 +686,7 @@
         'แยกค่าในเอกสารกับอัตราราชการที่ยืนยันได้ พร้อมหน่วย สูตร แหล่งข้อมูล และ UNVERIFIED'
       ])
     }) : outputPlan;
+    const resolvedOutputPlan = typedOutput && (!taskPlan.constructionReview || engineeringPlan.publicityRequested || engineeringPlan.documentRequested || engineeringPlan.tasks.some(t=>t.id==='T11')) ? typedOutput : effectiveOutputPlan;
     const presentationPreset = typeof window.GovPromptCore.resolveOutputFormatPreset === 'function'
       ? window.GovPromptCore.resolveOutputFormatPreset(outputFormatId)
       : null;
@@ -702,10 +708,10 @@
     const isVideoCreation = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
       && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|ประชาสัมพันธ์|แนะนำ)/i.test(String(userQuestion || ''));
     const isCreationAction = /^(?:create|draft|plan|summarize)$/.test(String(taskPlan.action || ''));
-    const isPrCreation = isPrVideoIntent
+    const isPrCreation = !engineeringPlan && (isPrVideoIntent
       || isVideoCreation
       || (isCreationAction && (taskPlan.deliverable === 'public-content' || taskPlan.deliverable === 'speech'))
-      || (isPrMediaText && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|วางข้อความ|ทำโพสต์)/i.test(String(userQuestion || '')));
+      || (isPrMediaText && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|วางข้อความ|ทำโพสต์)/i.test(String(userQuestion || ''))));
     const isPrRoute = activeRoute?.moduleId === 'GP012'
       || /ประชาสัมพันธ์/.test(String(activeRoute?.label || activeRoute?.title || activeRoute?.assistant?.title || ''))
       || isPrMediaText;
@@ -787,7 +793,7 @@
         riskFlags,
         route: activeRoute,
         taskPlan,
-        outputPlan: effectiveOutputPlan,
+        outputPlan: resolvedOutputPlan,
         outputFormatId: presentationPreset?.id || 'auto',
         presentationPreset,
         governancePlan,
@@ -946,8 +952,8 @@
       `- เอกสารแนบ: ${attachmentNames.length ? attachmentNames.join(', ') : '[ไม่มี/ยังไม่ได้แนบ]'}`,
       `- ผลลัพธ์ที่ต้องการ: ${normalizedContext.desiredOutput || userQuestion}`,
       '', presentationPreset ? 'ชิ้นงานหลักที่ Output Router เลือก' : 'รูปแบบผลลัพธ์ที่ GovPrompt เลือกให้อัตโนมัติ',
-      `- ประเภท: ${effectiveOutputPlan.label}`, `- รูปแบบ: ${effectiveOutputPlan.format}`, `- เหตุผลการเลือก: ${effectiveOutputPlan.reason}`,
-      ...(effectiveOutputPlan.instructions || []).map((item, index) => `${index + 1}. ${item}`),
+      `- ประเภท: ${resolvedOutputPlan.label}`, `- รูปแบบ: ${resolvedOutputPlan.format}`, `- เหตุผลการเลือก: ${resolvedOutputPlan.reason}`,
+      ...(resolvedOutputPlan.instructions || []).map((item, index) => `${index + 1}. ${item}`),
       ...(presentationBlock ? ['', 'รูปแบบการนำเสนอที่ผู้ใช้เลือก', ...presentationBlock.split('\n')] : []),
       '', 'ขอบเขต AI Agent Governance',
       `- ระดับที่ผู้ใช้ร้องขอโดยพฤติกรรม: ${governancePlan.requestedLevel}`,
@@ -977,7 +983,7 @@
       '', 'สถานะความเสี่ยงเบื้องต้นจาก GovPrompt',
       riskFlags.length ? riskFlags.map(flag => `- ${flag}`).join('\n') : (taskPlan.riskLevel === 'HIGH' ? '- งานความเสี่ยงสูง: ต้องตรวจฐานอำนาจ หลักฐาน และเงื่อนไขก่อนฟันธง' : taskPlan.riskLevel === 'MEDIUM' ? '- งานความเสี่ยงปานกลาง: ต้องตรวจข้อเท็จจริงและเอกสารประกอบ' : '- ไม่พบสัญญาณความเสี่ยงจากข้อความเบื้องต้น แต่ยังต้องตรวจทานก่อนใช้จริง'),
       '', 'ข้อกำหนดผลลัพธ์',
-      `- ส่งผลลัพธ์หลักในรูปแบบ “${effectiveOutputPlan.label}” ตามที่ Output Router เลือก เว้นแต่ผู้ใช้สั่งรูปแบบอื่นชัดเจน`,
+      `- ส่งผลลัพธ์หลักในรูปแบบ “${resolvedOutputPlan.label}” ตามที่ Output Router เลือก เว้นแต่ผู้ใช้สั่งรูปแบบอื่นชัดเจน`,
       ...(presentationPreset ? [`- จัดการนำเสนอชิ้นงานด้วย “${presentationPreset.label}” ตามที่ผู้ใช้เลือก โดยไม่ลดทอนโครงสร้างบังคับของชิ้นงานหลัก`] : []),
       '- ใช้ภาษาไทยชัดเจน กระชับ และเหมาะกับการปฏิบัติราชการ',
       '- อ้างแหล่งที่มาต่อข้อความสำคัญเมื่อสามารถตรวจสอบต้นฉบับได้',
@@ -999,7 +1005,7 @@
       riskFlags,
       route: activeRoute,
       taskPlan,
-      outputPlan: effectiveOutputPlan,
+      outputPlan: resolvedOutputPlan,
       outputFormatId: presentationPreset?.id || 'auto',
       presentationPreset,
       governancePlan,

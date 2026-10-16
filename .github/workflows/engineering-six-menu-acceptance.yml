@@ -13,6 +13,7 @@ on:
       - 'tests/construction-qa/official-rate-validator*'
       - 'tests/e2e/engineering-twelve-acceptance.mjs'
       - 'tests/e2e/engineering-output-scope-acceptance.mjs'
+      - 'tests/e2e/engineering-final-acceptance.mjs'
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,7 +34,7 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm build
       - name: Verify twelve task rules and deterministic arithmetic
-        run: node --test tests/engineering/twelve-workflows.test.mjs tests/construction-qa/official-rate-validator.test.mjs
+        run: node --test tests/engineering/twelve-workflows.test.mjs tests/engineering/final-acceptance.test.mjs tests/construction-qa/official-rate-validator.test.mjs
       - name: Start local test site
         run: |
           python3 -m http.server 8765 --directory dist > /tmp/engineering-six-menu-http.log 2>&1 &
@@ -46,6 +47,8 @@ jobs:
         run: node tests/e2e/engineering-twelve-acceptance.mjs
       - name: Verify technical and estimate output scope on desktop and mobile
         run: node tests/e2e/engineering-output-scope-acceptance.mjs
+      - name: Verify final engineering matrix, drawing menu and other domains on desktop and mobile
+        run: node tests/e2e/engineering-final-acceptance.mjs
       - name: Upload test evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -55,5 +58,6 @@ jobs:
             artifacts/engineering-six-menu-acceptance/
             artifacts/engineering-twelve-acceptance/
             artifacts/engineering-output-scope/
+            artifacts/engineering-final-acceptance/
             /tmp/engineering-six-menu-http.log
           if-no-files-found: warn
