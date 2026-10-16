@@ -27,14 +27,26 @@ try {
   for (const [mode, viewport] of [['desktop',{width:1363,height:936}],['mobile',{width:390,height:844}]]) {
     const context = await browser.newContext({viewport,isMobile:mode==='mobile',hasTouch:mode==='mobile',permissions:['clipboard-read','clipboard-write'],serviceWorkers:'block'});
     const page = await context.newPage();
-    for (const {id,question} of cases) {
+    for (const {id,question,organization,eventYear,expected,privateValue} of cases) {
       const record = {id,mode,question,status:'BLOCKED',scope,downstreamAnswer:'NOT TESTED'};
       try {
-        await page.goto(origin + '/index.html', {waitUntil:'networkidle'});
+        const response = await page.goto(origin + '/index.html', {waitUntil:'networkidle'});
+        record.httpStatus = response.status();
+        assert.equal(record.httpStatus,200);
         const input = page.getByRole('textbox', {name:'ข้อความถึง GovPrompt'});
         await input.fill(question);
         assert.equal(await input.inputValue(), question);
         await page.getByRole('button', {name:'ส่งข้อความ',exact:true}).click();
+        if (expected === 'BLOCK') {
+          await page.locator('#privacySubmitWarning').waitFor({state:'visible'});
+          record.warning = await page.locator('#privacySubmitWarning').innerText();
+          assert.match(record.warning,/บล็อก/);
+          assert.equal(await input.inputValue(),'');
+          assert.equal(await page.locator('.answer-card').count(),0);
+          const persisted = await page.evaluate(()=>JSON.stringify({local:{...localStorage},session:{...sessionStorage}}));
+          assert.ok(!persisted.includes(privateValue),'PII must not enter persistent history');
+          record.status='PASS';
+        } else {
         const details = page.locator('.answer-card .answer-section details').filter({has:page.getByText('ดูคำสั่งที่ GovPrompt เตรียมไว้',{exact:true})});
         await details.locator('summary').click({timeout:20000});
         const preview = details.locator('pre');
@@ -56,6 +68,18 @@ try {
           assert.doesNotMatch(record.copied, /สาขางานที่เกี่ยวข้องจากเนื้อหา:[^\n]*public-health/);
           assert.doesNotMatch(await page.locator('.answer-section h3').innerText(), /จัดหน้าเอกสาร/);
         }
+        if (organization) {
+          assert.ok(record.copied.includes('- ORG='+organization));
+          assert.match(record.copied,/qualityStatus=UNVERIFIED/);
+          assert.match(record.copied,/searchStatus=NOT_SEARCHED/);
+          assert.ok(record.copied.includes('พ้นราชการก่อนชี้มูล'));
+          const time=record.copied.split('\n').find(line=>line.startsWith('- TIME='));
+          if(eventYear) assert.ok(time.includes(eventYear),time);
+          else assert.equal(time,'- TIME=[ต้องระบุวันที่เกิดข้อเท็จจริง]');
+          assert.ok(!time.includes('2569'),'judgment year must not be an event date');
+          assert.ok(record.copied.split('\n').some(line=>line.startsWith('- Query 3:')&&line.includes(organization)));
+          assert.match(record.copied,/- Query 1:.*14\/2569.*site:ratchakitcha.soc.go.th/);
+        }
         if (id==='RG01') assert.doesNotMatch(record.copied, /สาขางานที่เกี่ยวข้องจากเนื้อหา:[^\n]*public-health/);
         const amount = {'RG02':'100,000','RG03':'300,000','RG04':'20,000'}[id];
         if (amount) {
@@ -67,6 +91,7 @@ try {
         record.layout = await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth}));
         assert.ok(record.layout.scrollWidth<=viewport.width+2, 'no horizontal page overflow');
         record.status='PASS';
+        }
       } catch(error) {record.status='FAIL';record.error=String(error.stack||error);}
       await page.screenshot({path:resolve(directory,`${mode}-${id}.png`),fullPage:false});
       await writeFile(resolve(directory,`${mode}-${id}.json`), JSON.stringify(record,null,2));
