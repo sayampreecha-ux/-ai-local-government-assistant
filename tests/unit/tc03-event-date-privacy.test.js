@@ -41,3 +41,18 @@ test('standalone personal birthdays stay blocked on successive submits',()=>{
  assert.equal(gate.submit('ยังไม่ทราบวันเกิดเหตุ').stopped,false);
  assert.equal(gate.submit('วันเกิด 20 ธันวาคม 2515').stopped,true);
 });
+
+// Regression for TC14: benign repeated whitespace must not trip the privacy submit gate.
+test('TC14 without incident date permits prompt generation despite repeated spaces',()=>{
+ const gate=boundary();
+ const question='วิเคราะห์ ป.ป.ช. ไต่สวนเกิน 3 ปี ข้าราชการ เทศบาล พ้นราชการก่อนชี้มูล  คำวินิจฉัยศาลรัฐธรรมนูญที่ 14/2569 ผู้บังคับบัญชาต้องลงโทษหรือไม่ ไม่มีเอกสารต้นฉบับ';
+ assert.deepEqual(gate.submit(question),{stopped:false,value:question});
+});
+test('TC14 whitespace cannot conceal personal birth date or credentials',()=>{
+ for(const pii of ['วันเกิด 20 ธันวาคม 2515','เลขบัตรประชาชน 1234567890123','token: private-test-value']) {
+  const gate=boundary();
+  const result=gate.submit('วิเคราะห์ ป.ป.ช.  พ้นราชการก่อนชี้มูล  '+pii);
+  assert.equal(result.stopped,true);
+  assert.equal(result.value,'');
+ }
+});
