@@ -29,12 +29,16 @@ for(const c of cases)test(c.id+' preserves deliverable and serialized gates',()=
  assert.equal(r.engineeringPlan.certificationAllowed,false);
  assert.equal(r.engineeringPlan.numericStatus,'UNVERIFIED');
  assert.doesNotMatch(r.prompt,/- ส่งผลลัพธ์หลักในรูปแบบ “บทวิเคราะห์”/);
- if(c.id==='T05-critical-drawing'){
+ if(c.expectedTasks.length===1&&c.expectedTasks[0]==='D01'){
   assert.equal(r.qualityGates.legalVersionRequired,true);
   assert.equal(r.taskPlan.action,'draft');assert.equal(r.taskPlan.riskLevel,'HIGH');
   assert.deepEqual(Array.from(r.engineeringPlan.tasks,t=>t.id),['D01']);
+  assert.equal(r.engineeringPlan.estimationRequested,false);
+  assert.ok(!r.engineeringPlan.tasks.some(t=>t.id==='T04'||t.id==='T06'));
   assert.match(r.prompt,/ห้ามเดาความหนา เหล็กเสริม/);
   assert.match(r.prompt,/หากสร้างไฟล์ CAD\/แบบจริงไม่ได้/);
+  if(/100 เมตร/.test(c.question))assert.match(r.prompt,/100 เมตร/);
+  if(/6 เมตร/.test(c.question))assert.match(r.prompt,/6 เมตร/);
  }
  if((c.task==='T01'&&!/BOQ|ปร\.?4/i.test(c.question))||c.task==='T11'){
   assert.notEqual(r.taskPlan.constructionReview,true);assert.doesNotMatch(r.prompt,/ผลลัพธ์บังคับแยก 4 ส่วน/);
@@ -51,5 +55,5 @@ for(const [q,expected] of [['ทำโพสต์ประชาสัมพั
  assert.equal(core.routeRequest(q).primaryModule,expected);assert.equal(core.ENGINEERING_WORKFLOWS.plan(q),null);
 });
 test('original 36 baseline inputs and IDs retained',async()=>{
- const {cases:original}=await import('./cases.mjs');for(const c of original)assert.ok(cases.some(x=>x.id===c.id&&x.question===c.question));assert.equal(original.length,36);assert.equal(cases.length,61);
+ const {cases:original}=await import('./cases.mjs');for(const c of original)assert.ok(cases.some(x=>x.id===c.id&&x.question===c.question));assert.equal(original.length,36);assert.equal(cases.length,64);
 });
