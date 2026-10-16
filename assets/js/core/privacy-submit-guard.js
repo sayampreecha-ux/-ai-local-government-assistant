@@ -189,6 +189,13 @@
     }).map(rule => rule.label));
   }
 
+  // Whitespace normalization is not a privacy finding. Redaction, masking,
+  // sensitive-context and residual-risk signals still fail closed.
+  function hasSecurityRelevantChange(privacy, original) {
+    const normalizedWhitespace = String(original ?? '').replace(/[ \\t]+/g, ' ').replace(/ *\\n */g, '\\n').trim();
+    return privacy.changed && privacy.safeText !== normalizedWhitespace;
+  }
+
   function stopSubmit(event) {
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -322,7 +329,7 @@
       // EVERY detected PII/sensitive signal fails closed in capture phase.
       // The only exception is a domain-scoped Procurement/Finance SANITIZE result whose
       // raw identifiers have already been removed before downstream code can observe them.
-      const detected = reasons.length > 0 || Boolean(privacy.changed) || Boolean(privacy.blocked);
+      const detected = reasons.length > 0 || hasSecurityRelevantChange(privacy, normalized) || Boolean(privacy.blocked);
       if (detected) {
         clearAndBlock(event, input, reasons);
         return;
@@ -336,7 +343,7 @@
         ...(finalCheck.sensitiveContext || []),
         ...(finalCheck.residualRisks || [])
       ])];
-      if (finalCheck.changed || finalCheck.blocked || finalReasons.length > 0) {
+      if (hasSecurityRelevantChange(finalCheck, candidate) || finalCheck.blocked || finalReasons.length > 0) {
         clearAndBlock(event, input, finalReasons);
         return;
       }
