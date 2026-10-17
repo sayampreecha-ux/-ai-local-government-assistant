@@ -1,0 +1,54 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import vm from 'node:vm';
+const script=await readFile(new URL('../assets/js/core/prompt-registry.js',import.meta.url),'utf8');
+const window={GovPromptCore:{createGovernmentPrompt:({question})=>({prompt:'BASE '+question})}};
+vm.runInNewContext(script,{window,console});
+const core=window.GovPromptCore;
+assert.equal(core.installPromptQualityStandard(),true,'install the production quality wrapper in the DOM-less test harness');
+const contract=Array.from(core.PROMPT_QUALITY_STANDARD.domainRules.records).join(' ');
+const scenarios=["ร่างหนังสือภายนอก กรณี 1","ชี้แจง ป.ป.ช. กรณี 2","ตอบ สตง. กรณี 3","หารือจังหวัด กรณี 4","ตอบข้อร้องเรียน กรณี 5","ชี้แจง ป.ป.ท. กรณี 6","ตอบศูนย์ดำรงธรรม กรณี 7","ตอบคู่สัญญา กรณี 8","ร่างหนังสือภายนอก กรณี 9","ชี้แจง ป.ป.ช. กรณี 10","ตอบ สตง. กรณี 11","หารือจังหวัด กรณี 12","ตอบข้อร้องเรียน กรณี 13","ชี้แจง ป.ป.ท. กรณี 14","ตอบศูนย์ดำรงธรรม กรณี 15","ตอบคู่สัญญา กรณี 16","ร่างหนังสือภายนอก กรณี 17","ชี้แจง ป.ป.ช. กรณี 18","ตอบ สตง. กรณี 19","หารือจังหวัด กรณี 20","ตอบข้อร้องเรียน กรณี 21","ชี้แจง ป.ป.ท. กรณี 22","ตอบศูนย์ดำรงธรรม กรณี 23","ตอบคู่สัญญา กรณี 24","ร่างหนังสือภายนอก กรณี 25","ชี้แจง ป.ป.ช. กรณี 26","ตอบ สตง. กรณี 27","หารือจังหวัด กรณี 28","ตอบข้อร้องเรียน กรณี 29","ชี้แจง ป.ป.ท. กรณี 30","ตอบศูนย์ดำรงธรรม กรณี 31","ตอบคู่สัญญา กรณี 32","ร่างหนังสือภายนอก กรณี 33","ชี้แจง ป.ป.ช. กรณี 34","ตอบ สตง. กรณี 35","หารือจังหวัด กรณี 36","ตอบข้อร้องเรียน กรณี 37","ชี้แจง ป.ป.ท. กรณี 38","ตอบศูนย์ดำรงธรรม กรณี 39","ตอบคู่สัญญา กรณี 40"];
+const unrelated=["เบิกจ่าย","จัดซื้อ TOR","งบประมาณ","งานบุคคล","งานช่าง","สภาท้องถิ่น","ประชาสัมพันธ์","กฎหมาย"];
+for(let i=0;i<40;i++)test('GP001 acceptance '+(i+1),()=>{
+ const question='ร่างหนังสือราชการ '+scenarios[i];
+ const quality=core.buildPromptQualityInstructions(question);
+ assert.ok(quality.domains.includes('records'));
+ assert.ok(['Issue Coverage Matrix','Decision Lock','Human Review','ฉบับแก้ไข','ข้อเท็จจริง'].every(s=>contract.includes(s)));
+ const result=core.createGovernmentPrompt({question});
+ assert.ok(result.prompt.startsWith('BASE '+question));
+ assert.ok(result.prompt.includes('Issue Coverage Matrix'));
+ assert.ok(result.prompt.includes('Human Review'));
+});
+for(let i=0;i<40;i++)test('Cross-module smoke '+(i+1),()=>{
+ const question=unrelated[i%8];
+ const quality=core.buildPromptQualityInstructions(question);
+ assert.ok(quality.lines.some(s=>s.includes('Final Quality Check')));
+ const result=core.createGovernmentPrompt({question});
+ assert.ok(result.prompt.startsWith('BASE '+question));
+ assert.equal(core.getPromptDefinition('GP001').moduleId,'GP001');
+ assert.equal(core.PROMPT_QUALITY_STANDARD.version,'7.2');
+});
+
+test('GP001 wrapper lifecycle: VM window without addEventListener does not throw',()=>{
+  const listeners={};
+  const mockWindow={GovPromptCore:{createGovernmentPrompt:({question})=>({prompt:'BASE '+question})}};
+  const mockDocument={readyState:'loading',addEventListener:(name,callback)=>{listeners[name]=callback;}};
+  assert.doesNotThrow(()=>vm.runInNewContext(script,{window:mockWindow,document:mockDocument,console}));
+  assert.equal(typeof listeners.DOMContentLoaded,'function');
+  listeners.DOMContentLoaded();
+  assert.equal(mockWindow.GovPromptCore.createGovernmentPrompt.__qualityStandardV72,true);
+  assert.match(mockWindow.GovPromptCore.createGovernmentPrompt({question:'ร่างหนังสือราชการ'}).prompt,/Issue Coverage Matrix/);
+});
+test('GP001 wrapper lifecycle: browser load rechecks generator after reassignment',()=>{
+  const listeners={};
+  const mockWindow={GovPromptCore:{createGovernmentPrompt:({question})=>({prompt:'BASE '+question})},addEventListener:(name,callback)=>{listeners['window:'+name]=callback;}};
+  const mockDocument={readyState:'loading',addEventListener:(name,callback)=>{listeners[name]=callback;}};
+  vm.runInNewContext(script,{window:mockWindow,document:mockDocument,console});
+  assert.equal(typeof listeners['window:load'],'function');
+  listeners.DOMContentLoaded();
+  mockWindow.GovPromptCore.createGovernmentPrompt=({question})=>({prompt:'REASSIGNED '+question});
+  listeners['window:load']();
+  assert.equal(mockWindow.GovPromptCore.createGovernmentPrompt.__qualityStandardV72,true);
+  assert.match(mockWindow.GovPromptCore.createGovernmentPrompt({question:'ร่างหนังสือราชการ'}).prompt,/Issue Coverage Matrix/);
+});

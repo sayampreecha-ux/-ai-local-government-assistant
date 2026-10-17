@@ -43,6 +43,16 @@ jobs:
         run: node scripts/verify-workflow-mobile-e2e.mjs
       - name: Verify FAT discipline and regression cases in real desktop and mobile UI
         run: FAT_UI_ROOT=dist node scripts/verify-fat-ui.mjs
+      - name: GP001 PR-head browser acceptance (desktop and mobile)
+        run: node tests/e2e/gp001-browser-acceptance.mjs
+      - name: Preserve GP001 browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gp001-browser-evidence
+          path: artifacts/gp001-browser-e2e/
+          if-no-files-found: warn
+          retention-days: 7
       - name: Preserve FAT UI evidence
         if: always()
         uses: actions/upload-artifact@v4
