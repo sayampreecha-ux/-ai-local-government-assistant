@@ -236,7 +236,12 @@ EVIDENCE GATE: คง Official Source / Authority / Version / Evidence / Decisio
   });
 
   if (typeof document !== 'undefined') {
+    // The orchestrator and other deferred scripts can assign the prompt
+    // generator after this registry is evaluated. Install after DOM readiness
+    // and recheck at window load so the final runtime generator is wrapped.
+    // The installer is idempotent and does not change routing or other modules.
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installPromptQualityStandard, { once: true });
     else installPromptQualityStandard();
+    if (document.readyState !== 'complete') window.addEventListener('load', installPromptQualityStandard, { once: true });
   }
 })();
