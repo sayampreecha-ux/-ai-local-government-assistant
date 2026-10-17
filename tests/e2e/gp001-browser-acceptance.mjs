@@ -40,6 +40,13 @@ try{
     const details=page.locator('.answer-card .answer-section details').filter({has:page.getByText('ดูคำสั่งที่ GovPrompt เตรียมไว้',{exact:true})});
     await details.locator('summary').click({timeout:20000});
     const prompt=await details.locator('pre').textContent();
+    result.diagnostics=await page.evaluate(question=>{
+      const core=window.GovPromptCore;
+      const domains=core?.detectPromptQualityDomains?.(question);
+      const quality=core?.buildPromptQualityInstructions?.(question);
+      return {installed:Boolean(core?.createGovernmentPrompt?.__qualityStandardV72),domains,qualityHasMatrix:Boolean(quality?.lines?.join('\\n').includes('Issue Coverage Matrix')),previewHasMatrix:Boolean(document.querySelector('.answer-card pre')?.textContent?.includes('Issue Coverage Matrix'))};
+    },fixture.question);
+    console.log('GP001 runtime diagnostics',device.name,fixture.id,JSON.stringify(result.diagnostics));
     assert.ok(prompt.includes(fixture.question),'original question preserved');
     for(const term of ['Issue Coverage Matrix','Human Review','Decision Lock','ข้อเท็จจริง'])assert.ok(prompt.includes(term),'missing '+term);
     await page.getByRole('button',{name:/^คัดลอก(?:ไปใช้กับ AI|คำสั่งอย่างเดียว|คำสั่ง)$/}).click();
