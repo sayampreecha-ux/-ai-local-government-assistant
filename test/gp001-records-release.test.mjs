@@ -29,3 +29,26 @@ for(let i=0;i<40;i++)test('Cross-module smoke '+(i+1),()=>{
  assert.equal(core.getPromptDefinition('GP001').moduleId,'GP001');
  assert.equal(core.PROMPT_QUALITY_STANDARD.version,'7.2');
 });
+
+test('GP001 wrapper lifecycle: VM window without addEventListener does not throw',()=>{
+  const listeners={};
+  const mockWindow={GovPromptCore:{createGovernmentPrompt:({question})=>({prompt:'BASE '+question})}};
+  const mockDocument={readyState:'loading',addEventListener:(name,callback)=>{listeners[name]=callback;}};
+  assert.doesNotThrow(()=>vm.runInNewContext(script,{window:mockWindow,document:mockDocument,console}));
+  assert.equal(typeof listeners.DOMContentLoaded,'function');
+  listeners.DOMContentLoaded();
+  assert.equal(mockWindow.GovPromptCore.createGovernmentPrompt.__qualityStandardV72,true);
+  assert.match(mockWindow.GovPromptCore.createGovernmentPrompt({question:'ร่างหนังสือราชการ'}).prompt,/Issue Coverage Matrix/);
+});
+test('GP001 wrapper lifecycle: browser load rechecks generator after reassignment',()=>{
+  const listeners={};
+  const mockWindow={GovPromptCore:{createGovernmentPrompt:({question})=>({prompt:'BASE '+question})},addEventListener:(name,callback)=>{listeners['window:'+name]=callback;}};
+  const mockDocument={readyState:'loading',addEventListener:(name,callback)=>{listeners[name]=callback;}};
+  vm.runInNewContext(script,{window:mockWindow,document:mockDocument,console});
+  assert.equal(typeof listeners['window:load'],'function');
+  listeners.DOMContentLoaded();
+  mockWindow.GovPromptCore.createGovernmentPrompt=({question})=>({prompt:'REASSIGNED '+question});
+  listeners['window:load']();
+  assert.equal(mockWindow.GovPromptCore.createGovernmentPrompt.__qualityStandardV72,true);
+  assert.match(mockWindow.GovPromptCore.createGovernmentPrompt({question:'ร่างหนังสือราชการ'}).prompt,/Issue Coverage Matrix/);
+});
