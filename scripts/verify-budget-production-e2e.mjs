@@ -1,8 +1,14 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 
 const frontend = process.env.GOVPROMPT_FRONTEND_URL || 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/index.html';
-const RELEASE_HOME_VERSION = '6.4.25';
+// Resolve the expected version from the approved checkout, not the live page.
+const committedIndex = await readFile(new URL('../index.html', import.meta.url),'utf8');
+const homeReferences = [...committedIndex.matchAll(/src=["']assets\/js\/home-v3\.js\?v=([^"']+)["']/g)];
+assert.equal(homeReferences.length,1,'expected one committed Home version reference');
+const RELEASE_HOME_VERSION = homeReferences[0][1];
+assert.match(RELEASE_HOME_VERSION,/^\d+(?:\.\d+)+$/,'invalid committed Home version');
 const browser = await chromium.launch({ headless:true });
 const context = await browser.newContext({ serviceWorkers:'allow', viewport:{width:390,height:844}, isMobile:true, hasTouch:true });
 const page = await context.newPage();
