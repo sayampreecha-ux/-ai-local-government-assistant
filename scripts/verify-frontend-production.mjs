@@ -11,8 +11,19 @@ const sitemapUrl = page('sitemap.xml');
 const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
-const quickActionBridgeUrl = page('assets/js/ui/quick-action-guided-bridge-v1.js?v=1.3.17');
-const RELEASE = Object.freeze({ home:'6.4.25', homeCss:'2.6.17', serviceWorker:'3.6.14', mic:'2.4.3', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
+// Expected asset versions come from the approved checkout, never from live production.
+const committedIndex = await readFile(new URL('../index.html', import.meta.url),'utf8');
+function committedAsset(path) {
+  const references = [...committedIndex.matchAll(/(?:src|href)=["']([^"']+)["']/g)]
+    .map(match => match[1]).filter(value => value.startsWith(path + '?v='));
+  assert.equal(references.length,1,`expected one committed version reference for ${path}`);
+  const version = references[0].slice(path.length + 3);
+  assert.match(version,/^\d+(?:\.\d+)+$/,`invalid committed version for ${path}`);
+  return { path:references[0], version };
+}
+const homeRelease = committedAsset('assets/js/home-v3.js');
+const quickActionBridgeUrl = page(committedAsset('assets/js/ui/quick-action-guided-bridge-v1.js').path);
+const RELEASE = Object.freeze({ home:homeRelease.version, homeCss:'2.6.17', serviceWorker:'3.6.14', mic:'2.4.3', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
 const WORKFLOW_RUNTIME_VERSION = '5.7.5';
 const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.7.5';
 const WORKFLOW_UI_VERSION = '1.3';
@@ -34,7 +45,7 @@ const budgetBrowserAssets = Object.freeze([
 ]);
 
 const [localIndex, localHomeSource, localPrivacyGuard, localSubmitGuard, localServiceWorker, localRuntimeBridge, localHomeCss, localDocumentStudio, localCaseListBootstrap, localCaseListUi, ...rest] = await Promise.all([
-  readFile(new URL('../index.html', import.meta.url),'utf8'),
+  Promise.resolve(committedIndex),
   readFile(new URL('../assets/js/home-v3.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/core/privacy-guard.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/core/privacy-submit-guard.js', import.meta.url),'utf8'),
