@@ -242,6 +242,6 @@ EVIDENCE GATE: คง Official Source / Authority / Version / Evidence / Decisio
     // The installer is idempotent and does not change routing or other modules.
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installPromptQualityStandard, { once: true });
     else installPromptQualityStandard();
-    if (document.readyState !== 'complete') window.addEventListener('load', installPromptQualityStandard, { once: true });
+    if (document.readyState !== 'complete' && typeof window.addEventListener === 'function') window.addEventListener('load', installPromptQualityStandard, { once: true });
   }
 })();
