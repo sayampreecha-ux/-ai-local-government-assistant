@@ -145,7 +145,7 @@
 
     // Explicit correspondence drafting takes precedence over subject-matter
     // engineering output. Do not infer this from 'หนังสือ' alone.
-    if (/(?:ช่วย)?(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i.test(normalize(input))) {
+    if (/^(?:กรุณา|โปรด|ช่วย)?\s*(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i.test(normalize(input))) {
       return Object.freeze({ ...OUTPUTS.official_document, id: 'official_document', confidence: 0.99, reason: 'explicit-correspondence-draft' });
     }
 
