@@ -675,7 +675,7 @@
     const relatedModules = Array.isArray(activeRoute.modules) && activeRoute.modules.length ? activeRoute.modules.join(', ') : activeRoute.moduleId;
     const engineeringPlan = window.GovPromptCore.ENGINEERING_WORKFLOWS?.plan(userQuestion, normalizedContext);
     const typedOutput = engineeringPlan && window.GovPromptCore.ENGINEERING_WORKFLOWS.output(engineeringPlan);
-    const correspondenceDraft = /(?:ช่วย)?(?:ร่าง|เขียน|จัดทำ|ทำ)\\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i.test(userQuestion);
+    const correspondenceDraft = /(?:ช่วย)?(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i.test(userQuestion);
     const initialTaskPlan = constructionReviewPlan(userQuestion, planUniversalTask(userQuestion, normalizedContext));
     // For engineering drawings, inspection, acceptance and physical diagnostics, retain
     // their own deliverables rather than imposing the estimate-only A/B/C/D contract.
