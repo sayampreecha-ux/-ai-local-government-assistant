@@ -218,6 +218,18 @@
     const source = normalize(request);
     if (!source) return null;
 
+    // The requested work product wins over the subject domain. Keep this guard
+    // ahead of engineering classification and every downstream hybrid override.
+    // Mentioning a letter without an explicit drafting verb does not activate it.
+    if (/^(?:กรุณา|โปรด|ช่วย)?\s*(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i.test(source)) {
+      return Object.freeze({
+        moduleId: 'GP001',
+        confidence: 0.999,
+        reason: 'explicit-correspondence-draft',
+        secondary: inferSecondary(source, 'GP001')
+      });
+    }
+
     // Eligibility about a ring-fenced subject fund is a subject decision, unless an explicit procurement process is requested.
     const healthEligibility = /เงินบำรุง/.test(source)
       && /(?:ใช้|เบิก|จ่าย|ซื้อ|ค่า|โครงการ)/.test(source)
