@@ -265,7 +265,7 @@
       fallback: !healthFundingIntake && !domainOverride && !action && !hasEvidence,
       ambiguous: !healthFundingIntake && !domainOverride && !action && ambiguous,
       ranking: Object.freeze(ranking), healthFundingIntake, domainOverride, actionIntent: action,
-      reason: correspondenceDraft ? 'explicit-correspondence-draft' : (healthFundingIntake ? 'health-funding-intake' : (domainOverride ? 'strong-domain-override' : (action ? 'action-intent-primary' : (hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence')))
+      reason: correspondenceDraft ? 'explicit-correspondence-draft' : (healthFundingIntake ? 'health-funding-intake' : (domainOverride ? 'strong-domain-override' : (action ? 'action-intent-primary' : (hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence'))))
     });
   }
 
