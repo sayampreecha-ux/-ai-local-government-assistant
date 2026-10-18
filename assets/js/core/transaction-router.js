@@ -232,6 +232,13 @@
     }).sort((a, b) => b.rawScore - a.rawScore || b.confidence - a.confidence || a.moduleId.localeCompare(b.moduleId));
   }
 
+  // A request to CREATE official correspondence is a records task even when its
+  // subject concerns audit, legal authority, procurement or engineering.
+  // Merely mentioning an existing 'หนังสือ' never activates this rule.
+  function isCorrespondenceDraft(request) {
+    return /^(?:กรุณา|โปรด|ช่วย)?\s*(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i.test(normalize(request));
+  }
+
   function routeRequest(request, options = {}) {
     if (typeof request !== 'string' || !request.trim()) throw new TypeError('request must be a non-empty string');
     const settings = { ...DEFAULT_OPTIONS, ...options };
@@ -244,9 +251,10 @@
     const second = ranking[1];
     const hasEvidence = top.rawScore > 0;
     const ambiguous = hasEvidence && second.rawScore > 0 && (top.confidence - second.confidence) < settings.ambiguityGap;
-    const primaryModule = healthFundingIntake?.moduleId || domainOverride?.moduleId || action?.moduleId || (hasEvidence ? top.moduleId : (activeModule || settings.fallbackModule));
+    const correspondenceDraft = isCorrespondenceDraft(request);
+    const primaryModule = correspondenceDraft ? 'GP001' : (healthFundingIntake?.moduleId || domainOverride?.moduleId || action?.moduleId || (hasEvidence ? top.moduleId : (activeModule || settings.fallbackModule)));
     const domainModules = ranking.filter(item => item.rawScore > 0 && item.moduleId !== primaryModule).slice(0, 2).map(item => item.moduleId);
-    const modules = options.multiModule === false ? [primaryModule] : [...new Set([primaryModule, action?.moduleId, ...domainModules].filter(Boolean))].slice(0, 3);
+    const modules = options.multiModule === false ? [primaryModule] : [...new Set([primaryModule, ...(correspondenceDraft ? [] : [action?.moduleId]), ...domainModules].filter(Boolean))].slice(0, 3);
     const intakeConfidence = healthFundingIntake ? Math.min(0.99, 0.62 + healthFundingIntake.weight / 20) : 0;
     const overrideConfidence = domainOverride ? Math.min(0.99, 0.58 + domainOverride.weight / 20) : 0;
     const actionConfidence = action ? Math.min(0.99, 0.55 + action.weight / 20) : 0;
@@ -257,7 +265,7 @@
       fallback: !healthFundingIntake && !domainOverride && !action && !hasEvidence,
       ambiguous: !healthFundingIntake && !domainOverride && !action && ambiguous,
       ranking: Object.freeze(ranking), healthFundingIntake, domainOverride, actionIntent: action,
-      reason: healthFundingIntake ? 'health-funding-intake' : (domainOverride ? 'strong-domain-override' : (action ? 'action-intent-primary' : (hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence')))
+      reason: correspondenceDraft ? 'explicit-correspondence-draft' : (healthFundingIntake ? 'health-funding-intake' : (domainOverride ? 'strong-domain-override' : (action ? 'action-intent-primary' : (hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence'))))
     });
   }
 
