@@ -38,7 +38,7 @@ test('GP001 workflow priority does not hijack other domains or generic reference
     ['ถอด BOQ งานก่อสร้างถนน', 'gov.engineering'],
     ['จัดทำ TOR งานก่อสร้างถนน', 'gov.engineering'],
     ['วิเคราะห์ข้อกฎหมายเกี่ยวกับอำนาจของจังหวัด', 'gov.legal'],
-    ['ตรวจสอบภายในเรื่องการเบิกจ่าย', 'gov.internal-audit'],
+    ['ตรวจสอบภายในเรื่องการเบิกจ่าย', 'gov.finance'],
     ['วิเคราะห์หนังสือเวียนว่ามีผลใช้บังคับหรือไม่', 'gov.legal'],
     ['วิเคราะห์ปัญหาถนนชำรุดและข้อกฎหมายที่เกี่ยวข้อง', 'gov.engineering']
   ]) {
