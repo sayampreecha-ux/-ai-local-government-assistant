@@ -125,7 +125,15 @@
     return Object.freeze(entries.filter(([, pattern]) => pattern.test(source)).map(([id]) => id));
   }
 
+  // Construction verification needs evidence even without legal keywords (#316).
+  // This only governs evidence, never routing or verification of supplied facts.
+  function isConstructionVerification(source) {
+    return /(?:ตรวจ|เทียบ|คำนวณ|ถอดปริมาณ|หักเงิน|รับรอง)/i.test(source)
+      && /(?:ก่อสร้าง|คอนกรีต|ถนน|หินคลุก|\bboq\b|ปร\s*\.?\s*[45]|factor\s*f|ค่า\s*k\b|ราคาวัสดุ|ค่าแรง)/i.test(source);
+  }
+
   function classifyRiskLevel(source) {
+    if (isConstructionVerification(source)) return 'HIGH';
     if (DISCIPLINARY_CASE.test(source)) return 'HIGH';
     // Actionable government-vehicle decisions need legal/procurement review,
     // even when phrased without the words "law", "budget" or "procurement".
@@ -903,6 +911,17 @@
         '- Evidence Gate: ก่อนฟันธงต้องยืนยันแหล่งปฐมภูมิ/ราชการที่ตรวจสอบได้ และตรวจความใหม่ของแหล่งนั้น',
         '- ลำดับน้ำหนักหลักฐาน: กฎหมาย/กฎ/ระเบียบ/ประกาศต้นฉบับ → หน่วยงานเจ้าของเรื่อง/หนังสือสั่งการทางการ → คำวินิจฉัยหรือคำพิพากษาที่เกี่ยวข้อง → เว็บไซต์ราชการอื่น → แหล่งสรุป',
         '- หากแหล่งสรุปขัดกับต้นฉบับ ให้ยึดต้นฉบับ และหากต้นฉบับหลายฉบับขัดกันให้ตรวจลำดับศักดิ์ วันมีผล และฉบับแก้ไข'
+      ] : []),
+      ...(isConstructionVerification(userQuestion) ? [
+        '', 'CONSTRUCTION EVIDENCE CONTROL (#316)',
+        '- constructionEvidenceStatus=UNVERIFIED; decisionLock=ON เฉพาะการรับรองที่ยังไม่มีหลักฐาน ไม่ใช่ผลตรวจเอกสารจริง',
+        '- ตรวจคณิตศาสตร์จากข้อมูลที่ให้ได้ทันที แต่แยกจากการรับรองปริมาณตามแบบ ราคากลาง สิทธิ การแก้สัญญา และการตรวจรับ',
+        '- หากไม่มี PDF/แบบ/BOQ จริง ห้ามอ้างว่าเปิดอ่านหรือถอดปริมาณแล้ว; ชื่อไฟล์ไม่ใช่หลักฐานว่าอ่านเนื้อหาแล้ว',
+        '- ตัวเลขและราคาจำลองไม่ใช่ราคามาตรฐานราชการ; ระบุสมมุติฐานและแหล่งข้อมูลทุกครั้ง',
+        '- ตรวจปริมาณ × ราคาต่อหน่วย ผลรวม ปร.4 และ ปร.5; หาก Factor F สูตรค่า K หรือดัชนีไม่ครบ ห้ามสร้างค่าแทน',
+        '- เมื่อแบบและ BOQ ขัดกัน ให้แสดงความคลาดเคลื่อน; ส่วนต่างเชิงคณิตศาสตร์ไม่ใช่ยอดหักตามสัญญาอัตโนมัติ',
+        '- ก่อนรับรองตรวจรับหรือหักเงิน ต้องตรวจแบบอนุมัติ สัญญา ผลทดสอบ การแก้สัญญา และอำนาจผู้อนุมัติ; หลักฐานขาดให้คง Decision Lock',
+        '- ให้ AI ปลายทางตรวจต้นฉบับทางการ วันที่ประกาศ วันมีผล และฉบับที่ใช้กับกรณี ก่อนปลดล็อกเฉพาะประเด็นที่ยืนยันได้'
       ] : []),
       ...applicableAuthorityInstructions(taskPlan.applicableAuthorityCheck),
       ...disciplinaryInstructions(userQuestion),
