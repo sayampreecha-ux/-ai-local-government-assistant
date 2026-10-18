@@ -236,7 +236,7 @@
   // subject concerns audit, legal authority, procurement or engineering.
   // Merely mentioning an existing 'หนังสือ' never activates this rule.
   function isCorrespondenceDraft(request) {
-    return /(?:ช่วย)?(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i.test(normalize(request));
+    return /^(?:กรุณา|โปรด|ช่วย)?\s*(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i.test(normalize(request));
   }
 
   function routeRequest(request, options = {}) {
