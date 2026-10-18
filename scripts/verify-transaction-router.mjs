@@ -151,4 +151,21 @@ for (let index = 1; index <= 13; index += 1) {
   assert.equal(normalizeEol(current.replace(insertedScripts, '')), normalizeEol(baseline), `${file}: existing UI or prompt behavior changed`);
 }
 
+// Exact production failure plus cross-domain negative controls. These exercise the
+// post-router hybrid classifier and real-world override load order, not source regexes alone.
+const correspondenceProductionCase = 'ร่างหนังสือตอบสำนักงานการตรวจเงินแผ่นดิน กรณีข้อทักท้วงเกี่ยวกับการซ่อมแซมถนนของ อบจ. โดยแยกข้อเท็จจริง ข้อกฎหมาย ข้อพิจารณา และข้อเสนอ หากข้อมูลไม่ครบให้ระบุสิ่งที่ต้องตรวจสอบ ห้ามสมมุติข้อเท็จจริงหรือฐานกฎหมาย';
+assert.equal(routeRequest(correspondenceProductionCase).primaryModule, 'GP001', 'production SAI correspondence must remain GP001');
+assert.equal(routeTransaction({ facts: correspondenceProductionCase, desiredOutput: correspondenceProductionCase }).moduleId, 'GP001', 'transaction override must preserve GP001 correspondence');
+for (const [request, expected] of [
+  ['ตรวจแบบรูปรายการถนน ค.ส.ล. และคำนวณปริมาณ', 'GP007'],
+  ['ถอด BOQ งานก่อสร้างถนน', 'GP007'],
+  ['จัดทำ TOR งานก่อสร้างถนน', 'GP003'],
+  ['วิเคราะห์ข้อกฎหมายเกี่ยวกับอำนาจของจังหวัด', 'GP002'],
+  ['ตรวจสอบภายในเรื่องการเบิกจ่าย', 'GP010'],
+  ['วิเคราะห์หนังสือเวียนว่ามีผลใช้บังคับหรือไม่', 'GP002']
+]) {
+  assert.equal(routeRequest(request).primaryModule, expected, `cross-domain negative: ${request}`);
+}
+assert.equal(routeRequest('วิเคราะห์ปัญหาถนนชำรุดและข้อกฎหมายที่เกี่ยวข้อง').primaryModule, 'GP007', 'engineering analysis without drafting verb remains GP007');
+
 console.log('GovPrompt hybrid intent router verification passed for GP001-GP013, cross-domain adversarial cases, GP008 static health tools, simplified GP012 UX, and 36 real-language production queries.');
