@@ -53,6 +53,13 @@ assert.match(torInstructions, /ต้องตรวจเพิ่มก่อ�
 
 const documentInstructions = routeOutput('ช่วยร่างหนังสือขออนุเคราะห์').instructions.join('\n')
 assert.match(documentInstructions, /ส่งร่างฉบับใช้งานได้ก่อน/)
+assert.match(documentInstructions, /ปรับความละเอียดตามประเภทและความเสี่ยง/)
+assert.match(documentInstructions, /ข้อเท็จจริง หลักฐาน ข้อกฎหมายที่ตรวจยืนยันได้/)
+assert.match(documentInstructions, /ไม่บังคับห้าหัวข้อในหนังสือภายนอก/)
+assert.match(documentInstructions, /ไม่ตัดสาระเพื่อความกระชับ/)
+assert.equal(routeOutput('ร่างหนังสือราชการภายนอกตอบชี้แจงสำนักงาน ป.ป.ช. เรื่องถนน', { moduleId: 'GP007' }).id, 'official_document')
+assert.equal(routeOutput('ร่างหนังสือตอบ สตง. เรื่องค่าจ้างค้างจ่าย', { moduleId: 'GP003' }).id, 'official_document')
+assert.equal(routeOutput('ทำโพสต์ Facebook ประชาสัมพันธ์โครงการ').id, 'public_content')
 
 const projectInstructions = routeOutput('ช่วยเขียนโครงการส่งเสริมสุขภาพ').instructions.join('\n')
 assert.match(projectInstructions, /ตรวจฐานอำนาจ แหล่งเงิน กลุ่มเป้าหมาย/)
