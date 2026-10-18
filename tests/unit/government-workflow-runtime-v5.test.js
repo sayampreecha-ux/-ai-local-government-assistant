@@ -11,6 +11,41 @@ test('runtime bridge exposes a sanitized V4 work order for a government task', (
   assert.equal(view.governance.autoApprovalAllowed,false); assert.equal(view.governance.rawEvidenceValuesReturned,false);
 });
 
+
+test('GP001 explicit SAI road correspondence stays primary throughout Workflow Contract v5', () => {
+  const question = 'ร่างหนังสือตอบสำนักงานการตรวจเงินแผ่นดิน กรณีข้อทักท้วงเกี่ยวกับการซ่อมแซมถนนของ อบจ. โดยแยกข้อเท็จจริง ข้อกฎหมาย ข้อพิจารณา และข้อเสนอ หากข้อมูลไม่ครบให้ระบุสิ่งที่ต้องตรวจสอบ ห้ามสมมุติข้อเท็จจริงหรือฐานกฎหมาย';
+  const view = buildWorkflowRuntimeView({ query: question });
+  assert.equal(view.primary.workflowId, 'gov.correspondence');
+  assert.equal(view.primary.currentStage.id, 'document-type');
+  assert.equal(view.workflowIds[0], 'gov.correspondence');
+  assert.ok(view.workflowIds.includes('gov.engineering'), 'engineering must remain supporting context');
+  assert.ok(view.workflowIds.includes('gov.legal'), 'legal must remain supporting context');
+  assert.ok(view.primary.deliverables.some(item => item.artifactKey === 'document-type-decision'));
+  assert.ok(!view.primary.deliverables.some(item => item.artifactKey === 'engineering-authority-check'));
+  const block = buildWorkflowPromptBlock(view);
+  assert.match(block, /Primary workflow: gov\.correspondence/);
+  assert.doesNotMatch(block, /Primary workflow: gov\.engineering/);
+  assert.equal(view.governance.autoApprovalAllowed, false);
+});
+
+test('GP001 workflow priority does not hijack other domains or generic references to letters', () => {
+  for (const [question, expected] of [
+    ['จัดทำหนังสือหารือจังหวัดเกี่ยวกับถนนชำรุดและข้อกฎหมาย', 'gov.correspondence'],
+    ['ช่วยร่างหนังสือตอบร้องเรียนถนนพังและการตรวจรับ', 'gov.correspondence'],
+    ['เขียนหนังสือชี้แจงข้อทักท้วงของ สตง. เกี่ยวกับอำนาจ', 'gov.correspondence'],
+    ['ร่างบันทึกข้อความรายงานปัญหาถนนให้ผู้บริหาร', 'gov.correspondence'],
+    ['ตรวจแบบรูปรายการถนน ค.ส.ล. และคำนวณปริมาณ', 'gov.engineering'],
+    ['ถอด BOQ งานก่อสร้างถนน', 'gov.engineering'],
+    ['จัดทำ TOR งานก่อสร้างถนน', 'gov.procurement'],
+    ['วิเคราะห์ข้อกฎหมายเกี่ยวกับอำนาจของจังหวัด', 'gov.legal'],
+    ['ตรวจสอบภายในเรื่องการเบิกจ่าย', 'gov.internal-audit'],
+    ['วิเคราะห์หนังสือเวียนว่ามีผลใช้บังคับหรือไม่', 'gov.legal'],
+    ['วิเคราะห์ปัญหาถนนชำรุดและข้อกฎหมายที่เกี่ยวข้อง', 'gov.engineering']
+  ]) {
+    assert.equal(buildWorkflowRuntimeView({ query: question }).primary?.workflowId, expected, question);
+  }
+});
+
 test('runtime bridge never returns raw evidence or artifact values', () => {
   const view = buildWorkflowRuntimeView({ query:'จัดซื้อรถขุด e-bidding', evidence:[{key:'missionAuthority',value:'SECRET_AUTHORITY_VALUE',official:true,verified:true},{key:'needJustification',value:'SECRET_NEED_VALUE'}], artifacts:[{key:'need-memo',workflowId:'gov.procurement',stageId:'need-and-authority',content:{body:'SECRET_ARTIFACT_BODY'}}] });
   assert.doesNotMatch(JSON.stringify(view),/SECRET_AUTHORITY_VALUE|SECRET_NEED_VALUE|SECRET_ARTIFACT_BODY/);
