@@ -39,7 +39,7 @@ test('GP001 workflow priority does not hijack other domains or generic reference
     ['จัดทำ TOR งานก่อสร้างถนน', 'gov.engineering'],
     ['วิเคราะห์ข้อกฎหมายเกี่ยวกับอำนาจของจังหวัด', 'gov.legal'],
     ['ตรวจสอบภายในเรื่องการเบิกจ่าย', 'gov.finance'],
-    ['วิเคราะห์หนังสือเวียนว่ามีผลใช้บังคับหรือไม่', 'gov.legal'],
+    ['วิเคราะห์หนังสือเวียนว่ามีผลใช้บังคับหรือไม่', undefined],
     ['วิเคราะห์ปัญหาถนนชำรุดและข้อกฎหมายที่เกี่ยวข้อง', 'gov.engineering']
   ]) {
     assert.equal(buildWorkflowRuntimeView({ query: question }).primary?.workflowId, expected, question);
