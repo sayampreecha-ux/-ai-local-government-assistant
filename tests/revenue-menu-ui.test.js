@@ -40,10 +40,12 @@ test('eight correctly labeled revenue buttons fill only the existing composer', 
 });
 
 test('existing catalog accessibility and mobile one-open-at-a-time behavior preserved', () => {
-  assert.match(bridge, /heading\.setAttribute\('role', 'button'\)/);
-  assert.match(bridge, /heading\.setAttribute\('tabindex', '0'\)/);
-  assert.match(bridge, /heading\.setAttribute\('aria-expanded', 'false'\)/);
-  assert.match(bridge, /event\.key === 'Enter' \|\| event\.key === ' '/);
+  assert.match(bridge, /const trigger = document\.createElement\('button'\)/);
+  assert.match(bridge, /trigger\.type = 'button'/);
+  assert.match(bridge, /trigger\.setAttribute\('aria-controls', tasks\.id\)/);
+  assert.match(bridge, /trigger\.setAttribute\('aria-expanded', 'false'\)/);
+  assert.match(bridge, /trigger\.addEventListener\('click', toggleCategory\)/);
+  assert.doesNotMatch(bridge, /trigger\.addEventListener\('keydown'/);
   assert.match(bridge, /groups\.querySelectorAll\('\.work-catalog-group'\)/);
   assert.match(bridge, /otherTasks\.hidden = true/);
   assert.match(bridge, /@media \(max-width:620px\)/);
