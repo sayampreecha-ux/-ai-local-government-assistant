@@ -58,3 +58,49 @@ test('static build publishes revenue guidance at the browser import path', async
   assert.ok(build.includes('"revenue-guidance.js"'));
   assert.ok(build.includes('await cp(join("src", file), join(runtimeOutput, file))'));
 });
+
+const productionAcceptanceQuestions = [
+  ['land-building', 'อบจ. มีอำนาจจัดเก็บภาษีที่ดินและสิ่งปลูกสร้างหรือไม่'],
+  ['sign', 'เทศบาลต้องประเมินภาษีป้ายร้านค้าที่มีภาษาไทยและต่างประเทศอย่างไร'],
+  ['assessment-appeal', 'ประชาชนได้รับหนังสือแจ้งประเมินภาษีและต้องการอุทธรณ์ภาษี'],
+  ['arrears', 'เทศบาลมีภาษีค้างชำระหลายปี จะเร่งรัดภาษีอย่างไร'],
+  ['tax-map', 'เทศบาลปรับปรุงแผนที่ภาษีและสำรวจทรัพย์สินใหม่'],
+  ['ltax', 'ตรวจสอบข้อมูลในระบบ LTAX GIS และ LTAX ONLINE ก่อนนำไปประเมินภาษี'],
+  ['elaas', 'เจ้าหน้าที่บันทึกรายรับภาษีใน New e-LAAS'],
+  ['documents', 'ช่วยร่างหนังสือแจ้งภาษีโดยไม่มีข้อมูลผู้เสียภาษี']
+];
+for (const [expected, question] of productionAcceptanceQuestions) {
+  test('production acceptance intent: ' + expected, () => {
+    const guidance = revenueGuidance(question);
+    assert.equal(guidance?.domain, expected);
+    assert.equal(guidance.decisionLock, true);
+    assert.equal(guidance.mode, 'guidance-only');
+  });
+}
+test('LTAX wins over incidental assessment while retaining both sets of evidence', () => {
+  const result = revenueGuidance('LTAX GIS นำข้อมูลไปประเมินภาษี');
+  assert.equal(result.domain, 'ltax');
+  assert.ok(result.relatedDomains.includes('assessment-appeal'));
+  assert.ok(result.missingEvidence.includes('คู่มือทางการฉบับตรงรุ่น'));
+  assert.ok(result.missingEvidence.includes('หนังสือแจ้งประเมิน'));
+});
+test('New e-LAAS takes precedence over generic revenue recording', () => {
+  const result = revenueGuidance('ตรวจบันทึกรายรับในระบบ New e-LAAS');
+  assert.equal(result.domain, 'elaas');
+});
+test('tax arrears still requires primary law even with generic LOW or ai-only routing', () => {
+  const result = revenueGuidance('ภาษีค้างชำระหลายปี เร่งรัดภาษีและเบี้ยปรับภาษี');
+  assert.equal(result.domain, 'arrears');
+  assert.ok(result.instructions.some(x => x.includes('LOW') && x.includes('ai-only')));
+  assert.ok(result.missingEvidence.includes('กฎหมายฉบับใช้บังคับ'));
+});
+test('unrelated administrative work has no revenue side effects', () => {
+  assert.equal(revenueGuidance('ช่วยจัดตารางประชุมเจ้าหน้าที่'), null);
+});
+test('generated prompt contains scoped revenue safety override without altering router', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const home = await readFile(new URL('../assets/js/home-v3.js', import.meta.url), 'utf8');
+  assert.match(home, /Revenue Safety Override/);
+  assert.match(home, /revenue.relatedDomains.join/);
+  assert.match(home, /prompt: promptBundle.prompt \+ '\\n\\n' \+ revenueBlock/);
+});
