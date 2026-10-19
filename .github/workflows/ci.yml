@@ -88,7 +88,7 @@ jobs:
           git worktree add --detach .prompt-base "$BASE_REF"
           ln -s ../node_modules .prompt-base/node_modules
           (cd .prompt-base && node scripts/build-static.mjs)
-          PROMPT_RUNTIME_ROOT=.prompt-base/dist PROMPT_RUNTIME_REPORT=baseline.json node scripts/verify-prompt-efficiency-runtime.mjs
+          PROMPT_RUNTIME_SOURCE_REF="$BASE_REF" PROMPT_RUNTIME_ROOT=.prompt-base/dist PROMPT_RUNTIME_REPORT=baseline.json node scripts/verify-prompt-efficiency-runtime.mjs
           node --input-type=module <<'NODE'
           import { readFileSync, writeFileSync } from 'node:fs';
           const before = JSON.parse(readFileSync('artifacts/prompt-efficiency-runtime/baseline.json'));
@@ -103,7 +103,7 @@ jobs:
               deltaEstimatedTokens:item.tokenEstimate-base.tokenEstimate,
               sha256Equal:base.sha256===item.sha256 };
           });
-          const result={baseRef:process.env.GITHUB_BASE_REF||'pinned event commit',note:'Estimated tokens = ceil(UTF8 bytes/4), not model tokens',rows};
+          const result={baseRef:before.head,headRef:after.head,note:'Estimated tokens = ceil(UTF8 bytes/4), not model tokens',rows};
           writeFileSync('artifacts/prompt-efficiency-runtime/comparison.json',JSON.stringify(result,null,2));
           console.log(JSON.stringify(result,null,2));
           // Strict UI-only contract: same exact browser-copyable prompt bytes.
