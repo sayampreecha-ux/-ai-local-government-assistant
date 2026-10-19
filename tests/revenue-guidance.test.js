@@ -132,6 +132,8 @@ test('revenue upstream risk, authority and tool routing use real policy state', 
   for (const [question, expectedModule] of cases) {
     const plan = core.planUniversalTask(question);
     assert.equal(plan.riskLevel, 'HIGH', question + ': risk level');
+    assert.equal(plan.disciplines.includes('human-resources'), false, question + ': no spurious HR');
+    assert.equal(plan.disciplines.includes('engineering'), false, question + ': no spurious engineering');
     assert.equal(plan.qualityGates.evidenceRequired, true, question + ': evidence');
     assert.equal(plan.qualityGates.legalVersionRequired, true, question + ': legal version');
     assert.equal(plan.qualityGates.decisionRequired, true, question + ': decision');
