@@ -206,6 +206,8 @@
       .work-catalog-group h3{position:relative;margin:0;padding:2px 28px 2px 42px;color:#30483d;font-size:.98rem;line-height:1.42;min-height:38px;display:flex;align-items:center;cursor:pointer}
       .work-catalog-group h3::before{content:'•';position:absolute;left:10px;top:50%;transform:translateY(-50%);width:27px;height:27px;display:grid;place-items:center;border-radius:9px;background:#edf6f1;color:#12372a;font-size:17px;font-weight:800}
       .work-catalog-group h3::after{content:'⌄';position:absolute;right:4px;top:50%;transform:translateY(-55%);color:#60736a;font-size:16px;font-weight:800}
+      .work-catalog-category-toggle{display:flex;align-items:center;width:100%;min-height:38px;padding:0;border:0!important;background:transparent!important;color:inherit!important;text-align:left;font:inherit;font-weight:inherit;cursor:pointer}
+      .work-catalog-category-toggle:focus-visible{outline:3px solid #005fcc!important;outline-offset:2px}
       .work-catalog-group.work-catalog-tone-1 h3::before{content:'🚨';background:#fff0ef}
       .work-catalog-group.work-catalog-tone-2 h3::before{content:'👥';background:#edf4ff}
       .work-catalog-group.work-catalog-tone-3 h3::before{content:'📄';background:#f3f5f6}
@@ -319,6 +321,7 @@
       if (!category) return;
       const section = document.createElement('section');
       const heading = document.createElement('h3');
+      const trigger = document.createElement('button');
       const tasks = document.createElement('div');
       section.className = `work-catalog-group work-catalog-tone-${(index % 6) + 1}`;
       // Mobile UI hardening: keep each category card and heading full-width.
@@ -342,7 +345,10 @@
       icon.textContent = CATEGORY_ICONS[category.id] || '•';
       name.className = 'assistant-catalog-name';
       name.textContent = category.title;
-      heading.append(icon, name);
+      trigger.type = 'button';
+      trigger.className = 'work-catalog-category-toggle';
+      trigger.append(icon, name);
+      heading.append(trigger);
       tasks.className = 'work-catalog-tasks';
       tasks.hidden = true;
       category.tasks.forEach(task => {
@@ -379,9 +385,9 @@
         }
         tasks.append(button);
       });
-      heading.setAttribute('role', 'button');
-      heading.setAttribute('tabindex', '0');
-      heading.setAttribute('aria-expanded', 'false');
+      trigger.setAttribute('aria-expanded', 'false');
+      tasks.id = `work-catalog-tasks-${category.id}`;
+      trigger.setAttribute('aria-controls', tasks.id);
       const toggleCategory = () => {
         const nextHidden = !tasks.hidden;
 
@@ -390,24 +396,20 @@
           groups.querySelectorAll('.work-catalog-group').forEach(other => {
             if (other === section) return;
             const otherTasks = other.querySelector('.work-catalog-tasks');
-            const otherHeading = other.querySelector(':scope > h3');
+            const otherTrigger = other.querySelector(':scope > h3 > button.work-catalog-category-toggle');
             if (otherTasks) otherTasks.hidden = true;
-            if (otherHeading) otherHeading.setAttribute('aria-expanded', 'false');
+            if (otherTrigger) otherTrigger.setAttribute('aria-expanded', 'false');
             other.classList.remove('is-open');
           });
         }
 
         tasks.hidden = nextHidden;
-        heading.setAttribute('aria-expanded', String(!nextHidden));
+        trigger.setAttribute('aria-expanded', String(!nextHidden));
         section.classList.toggle('is-open', !nextHidden);
       };
-      heading.addEventListener('click', toggleCategory);
-      heading.addEventListener('keydown', event => {
-        if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar' || event.code === 'Space') {
-          event.preventDefault();
-          toggleCategory();
-        }
-      });
+      // Native button dispatches one click for mouse, touch, Enter and Space.
+      // No synthetic keyboard toggle: it previously caused a double toggle.
+      trigger.addEventListener('click', toggleCategory);
       section.append(heading, tasks);
       groups.append(section);
     };
