@@ -10,7 +10,7 @@ const labels = [
 const browser = await chromium.launch({headless:true});
 try {
   for (const viewport of [{width:390,height:844},{width:1280,height:900}]) {
-    const page = await browser.newPage({viewport});
+    const page = await browser.newPage({viewport, hasTouch: viewport.width <= 390});
     await page.goto(base, {waitUntil:'domcontentloaded'});
     const revenue = page.locator('.work-catalog-group[data-category-id="revenue"]');
     await revenue.waitFor();
@@ -54,7 +54,6 @@ try {
     assert.equal(await revenue.locator('.work-catalog-tasks').isVisible(), false);
     // Exercise touch on mobile and pointer on desktop against native button.
     if (viewport.width <= 390) {
-      await page.evaluate(() => { window.__revenueTouch = true; });
       await heading.tap();
       assert.equal(await heading.getAttribute('aria-expanded'), 'true');
     }
