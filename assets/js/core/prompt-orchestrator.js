@@ -125,7 +125,14 @@
     return Object.freeze(entries.filter(([, pattern]) => pattern.test(source)).map(([id]) => id));
   }
 
+  function revenueAuthorityCase(source) {
+    const text = normalizeText(source).toLocaleLowerCase();
+    return /ภาษีที่ดิน|สิ่งปลูกสร้าง|ภาษีป้าย|ประเมินภาษี|อุทธรณ์ภาษี|คัดค้านภาษี|ภาษีค้าง|เร่งรัดภาษี|เบี้ยปรับภาษี|เงินเพิ่มภาษี|แผนที่ภาษี|สำรวจทรัพย์สิน|ltax|แอลแท็กซ์|e-laas|อีลาส|หนังสือแจ้งภาษี|แบบฟอร์มภาษี/.test(text)
+      || /บันทึกรายรับ/.test(text) && /ภาษี|เทศบาล|อบจ|อบต|อปท/.test(text);
+  }
+
   function classifyRiskLevel(source) {
+    if (revenueAuthorityCase(source)) return 'HIGH';
     if (DISCIPLINARY_CASE.test(source)) return 'HIGH';
     // Actionable government-vehicle decisions need legal/procurement review,
     // even when phrased without the words "law", "budget" or "procurement".
@@ -138,7 +145,7 @@
   function buildQualityGates(source, riskLevel) {
     const vehicleDecision = Boolean(window.GovPromptCore.isVehicleRegulationDecision?.(source));
     const disciplinaryCase = DISCIPLINARY_CASE.test(source);
-    const decisionRequired = disciplinaryCase || vehicleDecision || DECISION_TERMS.test(source);
+    const decisionRequired = disciplinaryCase || vehicleDecision || revenueAuthorityCase(source) || DECISION_TERMS.test(source);
     const multiConditionRequired = decisionRequired && (disciplinaryCase || vehicleDecision || MULTI_CONDITION_TERMS.test(source));
     const legalVersionRequired = riskLevel === 'HIGH' || LEGAL_VERSION_TERMS.test(source);
     const evidenceRequired = riskLevel === 'HIGH' || legalVersionRequired;
@@ -327,7 +334,7 @@
   function buildApplicableAuthorityCheck(question, context = {}, evidence = {}) {
     const source = normalizeForReasoning([question, context.facts, context.currentStage].filter(Boolean).join(' '));
     const precedentUsed = EXPLICIT_PRECEDENT_TERMS.test(source) || evidence.officialPrecedent === 'VERIFIED' || evidence.reliesOnPrecedent === true;
-    const full = DISCIPLINARY_CASE.test(source) || precedentUsed || detectInterpretationIssue(source) || OFFICIAL_DOCUMENT_DECISION_TERMS.test(source)
+    const full = revenueAuthorityCase(source) || DISCIPLINARY_CASE.test(source) || precedentUsed || detectInterpretationIssue(source) || OFFICIAL_DOCUMENT_DECISION_TERMS.test(source)
       || MULTI_CONDITION_TERMS.test(source)
       || /(?:การเงิน|การคลัง|สวัสดิการ|สิทธิประโยชน์|บุคคล|บุคลากร|ข้าราชการ|งบประมาณ)/i.test(source);
     const mode = full ? 'FULL' : LEGAL_VERSION_TERMS.test(source) ? 'RULE_VERSION' : 'NONE';
@@ -645,7 +652,7 @@
     if (/(?:\+66|0)\d{8,9}\b/.test(source)) flags.push('พบหมายเลขโทรศัพท์ — ตรวจและปกปิดหากไม่จำเป็น');
     if (/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/.test(source)) flags.push('พบอีเมล — ตรวจและปกปิดหากไม่จำเป็น');
     if (/(?:เลขบัญชี|พร้อมเพย์|ข้อมูลสุขภาพ|ผลตรวจ|โรค|ข้อมูลลับ)/i.test(source)) flags.push('อาจมีข้อมูลอ่อนไหว/ข้อมูลลับ');
-    if (HIGH_RISK_TERMS.some(term => source.includes(term))) flags.push('งานความเสี่ยงสูง — ต้องตรวจแหล่งปฐมภูมิ ฉบับที่ใช้กับเหตุ และการเปลี่ยนแปลงภายหลังก่อนฟันธง');
+    if (revenueAuthorityCase(source) || HIGH_RISK_TERMS.some(term => source.includes(term))) flags.push('งานความเสี่ยงสูง — ต้องตรวจแหล่งปฐมภูมิ ฉบับที่ใช้กับเหตุ และการเปลี่ยนแปลงภายหลังก่อนฟันธง');
     if (DECISION_TERMS.test(source) && MULTI_CONDITION_TERMS.test(source)) flags.push('Decision Gate — ห้ามสรุปจากเงื่อนไขเพียงข้อเดียว');
     return Object.freeze([...new Set(flags)]);
   }
