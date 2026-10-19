@@ -408,7 +408,9 @@
       const revenueBlock = [
         'งานจัดเก็บรายได้ท้องถิ่น — ข้อกำหนดเฉพาะ (guidance only)',
         'ประเภทงาน: ' + revenue.domain,
+        'หมวดที่เกี่ยวข้อง: ' + revenue.relatedDomains.join(' / '),
         'หลักฐานที่ต้องตรวจ: ' + revenue.missingEvidence.join(' / '),
+        'Revenue Safety Override: สำหรับคำถามด้านภาษี/หนี้ภาษี/ข้อมูลประเมิน ให้ใช้ HIGH risk และตรวจ Official Source, Legal Version, Evidence และ Decision Lock ก่อนสรุป แม้ Risk/Tool Routing เบื้องต้นเป็น LOW หรือ ai-only; ไม่เปลี่ยนเส้นทางงานหลักหรือการทำธุรกรรม',
         'Evidence Gate: ยังไม่มีหลักฐานที่ตรวจยืนยันใน GovPrompt; AI ปลายทางต้องค้นและตรวจต้นฉบับเอง',
         'Decision Lock: ห้ามรับรองการคำนวณภาษี อัตรา กำหนดเวลา หรือการทำธุรกรรมจนกว่าจะยืนยันข้อมูลครบ',
         ...revenue.instructions
