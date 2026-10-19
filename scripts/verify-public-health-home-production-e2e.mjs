@@ -1,6 +1,67 @@
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 
+// Approved Home catalog: twelve original domains plus revenue (merged PRs #337/#338).
+const expectedHomeCategories = [
+  {
+    "id": "pr",
+    "title": "ประชาสัมพันธ์และสื่อสาร"
+  },
+  {
+    "id": "records",
+    "title": "สารบรรณและหนังสือราชการ"
+  },
+  {
+    "id": "audit",
+    "title": "กฎหมาย ระเบียบ และตรวจสอบ"
+  },
+  {
+    "id": "finance",
+    "title": "การเงิน การคลัง และเบิกจ่าย"
+  },
+  {
+    "id": "revenue",
+    "title": "งานจัดเก็บรายได้ อปท."
+  },
+  {
+    "id": "planning",
+    "title": "แผน โครงการ และงบประมาณ"
+  },
+  {
+    "id": "procurement",
+    "title": "พัสดุและจัดซื้อจัดจ้าง"
+  },
+  {
+    "id": "hr",
+    "title": "งานบุคคล"
+  },
+  {
+    "id": "executive",
+    "title": "บริหารและผู้บริหาร"
+  },
+  {
+    "id": "engineering",
+    "title": "งานช่างและวิศวกรรม"
+  },
+  {
+    "id": "health",
+    "title": "สาธารณสุขและ รพ.สต."
+  },
+  {
+    "id": "education",
+    "title": "การศึกษา เยาวชน และการอบรม"
+  },
+  {
+    "id": "council",
+    "title": "สภาท้องถิ่น"
+  }
+];
+function assertHomeCategories(actual) {
+  assert.equal(actual.length, expectedHomeCategories.length, 'Home must expose every approved category without an extra opener');
+  assert.equal(new Set(actual.map(category => category.id)).size, actual.length, 'Home category IDs must be unique');
+  assert.deepEqual(actual, expectedHomeCategories, 'Home category IDs, names and order must match the approved catalog');
+}
+
 const frontend = process.env.GOVPROMPT_FRONTEND_URL || 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/index.html';
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({ serviceWorkers: 'allow', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
@@ -15,7 +76,11 @@ await page.waitForFunction(() => document.readyState === 'complete', undefined, 
 
 const catalog = page.locator('.work-catalog-groups');
 await catalog.waitFor({ state: 'visible', timeout: 15_000 });
-assert.equal(await catalog.locator('.work-catalog-group:not([data-assistance-route])').count(), 12, 'Home must expose all 12 assistant categories without an extra opener');
+const homeCategories = await catalog.locator('.work-catalog-group').evaluateAll(groups => groups.map(group => ({
+  id: group.dataset.categoryId,
+  title: group.querySelector('.assistant-catalog-name')?.textContent.trim()
+})));
+assertHomeCategories(homeCategories);
 
 const recordsGroup = page.locator('.work-catalog-group').filter({ hasText: /สารบรรณ|หนังสือราชการ/i }).first();
 await recordsGroup.locator('h3.assistant-catalog-toggle').click();
@@ -106,7 +171,7 @@ assert.deepEqual(pageErrors, [], `page errors: ${JSON.stringify(pageErrors)}`);
 console.log(JSON.stringify({
   frontend,
   checks: {
-    allHomeCategoriesVisible: '12 categories PASS',
+    allHomeCategoriesVisible: '13 categories; exact IDs, names, order and uniqueness PASS',
     selectedTaskUsesDedicatedResultPage: 'PASS',
     publicHealthGroupVisible: 'PASS',
     featuredMenuCountClear: '5 เมนูเด่น PASS',

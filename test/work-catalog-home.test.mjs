@@ -45,3 +45,32 @@ test('catalog is mobile and accessibility aware', () => {
   assert.match(source, /@media\(max-width:620px\)/);
   assert.match(source, /work-catalog-heading/);
 });
+
+// Exercise the existing production verifier's catalog assertions without starting a browser.
+const productionVerifier = readFileSync('scripts/verify-public-health-home-production-e2e.mjs', 'utf8');
+const catalogAssertions = productionVerifier.slice(
+  productionVerifier.indexOf('const expectedHomeCategories ='), productionVerifier.indexOf('const frontend ='));
+const { assertHomeCategories, expectedHomeCategories } = new Function('assert',
+  catalogAssertions + '\nreturn { assertHomeCategories, expectedHomeCategories };')(assert);
+
+test('production catalog proof matches approved source IDs, names and order', () => {
+  const order = source.match(/const CATALOG_ORDER = Object\.freeze\(\[([\s\S]*?)\]\);/)[1];
+  const catalog = source.match(/const WORK_CATALOG = Object\.freeze\(\[([\s\S]*?)\n  \]\);/)[1];
+  const actual = new Function(
+    'const order=['+order+']; const catalog=['+catalog+']; return order.map(id => ({id, title:catalog.find(c => c.id===id).title}));')();
+  assertHomeCategories(actual);
+  assert.equal(actual.length, 13);
+  assert.ok(productionVerifier.includes("catalog.locator('.work-catalog-group').evaluateAll"));
+  assert.ok(productionVerifier.includes('assertHomeCategories(homeCategories)'));
+});
+
+test('production catalog proof rejects missing, extra, duplicate, reordered and renamed categories', () => {
+  const copy = () => expectedHomeCategories.map(category => ({...category}));
+  const missing = copy(); missing.splice(4,1);
+  const extra = copy(); extra.push({id:'unexpected', title:'Unexpected'});
+  const duplicate = copy(); duplicate[4] = {...duplicate[3]};
+  const reordered = copy(); [reordered[0],reordered[1]] = [reordered[1],reordered[0]];
+  const renamed = copy(); renamed[4].title += ' changed';
+  for (const [name, actual] of Object.entries({missing,extra,duplicate,reordered,renamed}))
+    assert.throws(() => assertHomeCategories(actual), {name:'AssertionError'}, name+' must block production proof');
+});
