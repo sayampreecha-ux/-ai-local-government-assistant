@@ -92,3 +92,20 @@ test('revenue subject never replaces an explicit correspondence or PR deliverabl
     ['เขียนข่าวประชาสัมพันธ์ภาษีป้าย','GP012']
   ]) assert.equal(core.routeTransaction(core.createSharedContext({facts:question,desiredOutput:question})).moduleId,moduleId,question);
 });
+
+test('efficiency review accepts only exact documented improvements and rejects drift', () => {
+  const workflow=readFileSync('.github/workflows/ci.yml','utf8');
+  const declaration=workflow.match(/const reviewedChanges=([^;]+);/)[1];
+  const predicate=workflow.match(/const isReviewedChange=row => ([^;]+);/)[1];
+  const check=vm.runInNewContext('const reviewedChanges='+declaration+'; row => '+predicate);
+  const changes=JSON.parse(declaration);
+  assert.deepEqual(changes.map(x=>x.scenario),['GP007','RUNTIME-REVENUE']);
+  for(const item of changes) {
+    const row={scenario:item.scenario,before:{sha256:item.before},after:{sha256:item.after},deltaUtf8Bytes:item.deltaUtf8Bytes};
+    assert.equal(check(row),true);
+    assert.equal(check({...row,scenario:'GP001'}),false);
+    assert.equal(check({...row,after:{sha256:'unreviewed'}}),false);
+    assert.equal(check({...row,deltaUtf8Bytes:row.deltaUtf8Bytes+1}),false);
+    assert.equal(check({...row,before:{sha256:'different-baseline'}}),false);
+  }
+});
