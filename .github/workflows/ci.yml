@@ -22,6 +22,24 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Verify prompt efficiency against base
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="origin/${{ github.base_ref }}"
+          else
+            BASE_REF="HEAD^"
+          fi
+          PROMPT_BASE_REF="$BASE_REF" node scripts/verify-prompt-efficiency.mjs | tee prompt-efficiency.log
+      - name: Preserve prompt efficiency evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-efficiency-evidence
+          path: prompt-efficiency.log
+          if-no-files-found: warn
+          retention-days: 7
       - name: Run P0 verification tests
         shell: bash
         run: |
