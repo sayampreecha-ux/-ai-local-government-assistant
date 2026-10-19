@@ -80,3 +80,15 @@ test('technical priority preserves requested TOR, correspondence, PR and finance
     ['เบิกค่าเช่าซื้อบ้าน','gov.finance']
   ]) assert.equal(detectGovernmentWorkflows({query})[0].id,expected,query);
 });
+
+test('revenue subject never replaces an explicit correspondence or PR deliverable', () => {
+  const sandbox=vm.createContext({window:{},location:{pathname:'/index.html'}});
+  for(const file of ['shared-context','prompt-registry','transaction-router','router-regression-overrides',
+    'hybrid-intent-classifier','hybrid-real-world-overrides','output-router','prompt-orchestrator'])
+    vm.runInContext(readFileSync('assets/js/core/'+file+'.js','utf8'),sandbox);
+  const core=sandbox.window.GovPromptCore;
+  for(const [question,moduleId] of [
+    ['ร่างหนังสือชี้แจงภาษีป้าย','GP001'],
+    ['เขียนข่าวประชาสัมพันธ์ภาษีป้าย','GP012']
+  ]) assert.equal(core.routeTransaction(core.createSharedContext({facts:question,desiredOutput:question})).moduleId,moduleId,question);
+});
