@@ -29,3 +29,25 @@ test('all verified evidence lifts only the evidence lock',()=>{
   assert.equal(result.mode,'guidance-only');
 });
 test('missing question is inert',()=>assert.equal(revenueGuidance(null),null));
+
+test('runtime integration imports the module and appends guidance without replacing route', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const home = await readFile(new URL('../assets/js/home-v3.js', import.meta.url), 'utf8');
+  assert.match(home, /await import\('\.\.\/\.\.\/src\/revenue-guidance\.js'\)/);
+  assert.match(home, /const revenue = revenueGuidance\(text\)/);
+  assert.match(home, /prompt: promptBundle\.prompt \+ '\\n\\n' \+ revenueBlock/);
+  assert.match(home, /revenueGuidanceDomain: revenue\.domain/);
+});
+test('authority and external-system safety instructions remain mandatory', () => {
+  const instructions = revenueGuidance('ภาษีที่ดิน').instructions.join(' ');
+  assert.match(instructions, /อำนาจจัดเก็บภาษี/);
+  assert.match(instructions, /ห้ามอ้างว่าเชื่อมต่อ LTAX/);
+  assert.match(instructions, /ข้อมูลส่วนบุคคล/);
+});
+test('explicit source evidence does not imply live system connection', () => {
+  const evidence = Object.fromEntries(REVENUE_DOMAINS[5].evidence.map(key => [key, true]));
+  const result = revenueGuidance('LTAX ONLINE', evidence);
+  assert.equal(result.decisionLock, false);
+  assert.equal(result.mode, 'guidance-only');
+  assert.ok(result.instructions.some(line => line.includes('ห้ามอ้างว่าเชื่อมต่อ')));
+});
