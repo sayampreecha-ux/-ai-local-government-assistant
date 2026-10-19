@@ -35,7 +35,16 @@ try {
     assert.equal(await heading.getAttribute('aria-controls'), 'work-catalog-tasks-revenue');
     await heading.focus();
     assert.equal(await heading.evaluate(el => document.activeElement === el), true);
+    await heading.evaluate(el => {
+      window.__accordionKeys = [];
+      el.addEventListener('click', e => window.__accordionKeys.push(['click',e.detail,e.isTrusted]),true);
+      el.addEventListener('keydown', e => window.__accordionKeys.push(['keydown',e.key,e.code]),true);
+      el.addEventListener('keyup', e => window.__accordionKeys.push(['keyup',e.key,e.code]),true);
+      new MutationObserver(() => window.__accordionKeys.push(['aria',el.getAttribute('aria-expanded')]))
+        .observe(el,{attributes:true,attributeFilter:['aria-expanded']});
+    });
     await heading.press('Space');
+    console.log('Native accordion Space sequence', viewport.width, await page.evaluate(() => window.__accordionKeys));
     assert.equal(await heading.getAttribute('aria-expanded'),'false');
     const other = page.locator('.work-catalog-group[data-category-id="records"]');
     const otherHeading = other.locator(':scope > h3 > button.work-catalog-category-toggle');
