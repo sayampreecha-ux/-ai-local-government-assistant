@@ -16,6 +16,7 @@
     records: '📄',
     audit: '⚖️',
     finance: '💰',
+    revenue: '🏛️',
     planning: '📊',
     procurement: '🛒',
     hr: '👥',
@@ -27,11 +28,26 @@
   });
 
   const CATALOG_ORDER = Object.freeze([
-    'pr', 'records', 'audit', 'finance', 'planning', 'procurement',
+    'pr', 'records', 'audit', 'finance', 'revenue', 'planning', 'procurement',
     'hr', 'executive', 'engineering', 'health', 'education', 'council'
   ]);
 
   const WORK_CATALOG = Object.freeze([
+    Object.freeze({
+      id: 'revenue',
+      title: 'งานจัดเก็บรายได้ท้องถิ่น',
+      keywords: 'ภาษีที่ดินและสิ่งปลูกสร้าง ภาษีป้าย ประเมินภาษี อุทธรณ์ภาษี ภาษีค้างชำระ เร่งรัดภาษี แผนที่ภาษี LTAX GIS LTAX ONLINE New e-LAAS หนังสือแจ้งภาษี',
+      tasks: Object.freeze([
+        Object.freeze({ label: 'ภาษีที่ดินและสิ่งปลูกสร้าง', fillOnly: true, prompt: 'ตรวจอำนาจจัดเก็บภาษีที่ดินและสิ่งปลูกสร้างของ อปท. ตามประเภทหน่วยงาน พร้อมกฎหมายฉบับที่ใช้บังคับ ข้อมูลทรัพย์สิน ปีภาษี และหลักฐานที่ต้องตรวจก่อนดำเนินการ โดยไม่สมมุติอัตราหรือจำนวนเงิน' }),
+        Object.freeze({ label: 'ภาษีป้าย', fillOnly: true, prompt: 'ตรวจแนวทางประเมินภาษีป้ายของเทศบาล ทั้งประเภทและขนาดป้าย พร้อมกฎหมายและหลักฐานปัจจุบันที่ต้องตรวจ ห้ามสมมุติอัตราหรือยอดภาษี' }),
+        Object.freeze({ label: 'การประเมินและอุทธรณ์ภาษี', fillOnly: true, prompt: 'ตรวจขั้นตอนการแจ้งประเมินและอุทธรณ์ภาษี พร้อมวันรับแจ้ง เอกสารหลักฐาน กฎหมายและแบบทางการที่ใช้บังคับ โดยไม่สมมุติกำหนดเวลาหรือสิทธิ' }),
+        Object.freeze({ label: 'ภาษีค้างชำระและเร่งรัด', fillOnly: true, prompt: 'ตรวจขั้นตอนเร่งรัดภาษีค้างชำระ เบี้ยปรับภาษี และเงินเพิ่มภาษี โดยยืนยันยอดค้าง ปีภาษี ประวัติชำระ และฐานกฎหมายก่อนสรุป ห้ามสมมุติอัตรา' }),
+        Object.freeze({ label: 'แผนที่ภาษีและสำรวจทรัพย์สิน', fillOnly: true, prompt: 'ตรวจแนวทางปรับปรุงแผนที่ภาษีและสำรวจทรัพย์สินของ อปท. พร้อมทะเบียนทรัพย์สิน หลักฐาน คู่มือทางการและการคุ้มครองข้อมูลส่วนบุคคล' }),
+        Object.freeze({ label: 'LTAX GIS / ONLINE', fillOnly: true, prompt: 'ตรวจการปรับปรุงข้อมูลใน LTAX GIS และ LTAX ONLINE ก่อนนำไปประเมินภาษี โดยตรวจรุ่นระบบ คู่มือทางการ ข้อมูลแปลงที่ดิน และวิธีตรวจความถูกต้อง ห้ามอ้างว่าเชื่อมต่อระบบจริง' }),
+        Object.freeze({ label: 'New e-LAAS', fillOnly: true, prompt: 'ตรวจการบันทึกรายรับภาษีใน New e-LAAS พร้อมประเภทเงิน เอกสารการรับเงิน คู่มือทางการฉบับปัจจุบัน และการตรวจสอบก่อนเจ้าหน้าที่บันทึกจริง โดย AI ห้ามทำธุรกรรมแทน' }),
+        Object.freeze({ label: 'หนังสือแจ้งภาษี', fillOnly: true, prompt: 'ช่วยร่างหนังสือแจ้งภาษีสำหรับประชาชน โดยยังไม่มีข้อมูลผู้เสียภาษีและยอดประเมิน ให้ใช้ช่องว่างเฉพาะจุด ตรวจแบบฟอร์มภาษีและกฎหมายทางการก่อนใช้จริง ห้ามสมมุติข้อมูลส่วนบุคคลหรือจำนวนเงิน' })
+      ])
+    }),
   Object.freeze({
       id: 'assistance', title: 'ช่วยเหลือประชาชนและสาธารณภัย', keywords: 'ช่วยเหลือประชาชน ผู้ประสบภัย ภัยพิบัติ สาธารณภัย น้ำท่วม น้ำป่า ดินถล่ม วาตภัย อัคคีภัย ภัยแล้ง ถุงยังชีพ เงินทดรองราชการ',
       tasks: Object.freeze([
@@ -295,7 +311,7 @@
     heading.className = 'work-catalog-heading';
     title.textContent = 'เลือกผู้ช่วยตามงาน';
     intro.className = 'work-catalog-intro';
-    intro.textContent = '13 หมวดงาน เรียงจากงานที่ใช้บ่อย • มีเส้นทางช่วยเหลือประชาชนและสาธารณภัยอัตโนมัติ';
+    intro.textContent = 'เลือกหมวดงาน แล้วเลือกเรื่องที่ต้องการ • งานจัดเก็บรายได้มีตัวอย่างคำถาม 8 เรื่อง';
     groups.className = 'work-catalog-groups';
 
     const categories = new Map(WORK_CATALOG.map(category => [category.id, category]));
@@ -333,7 +349,19 @@
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'work-catalog-task';
-        button.dataset.prompt = task.prompt;
+        if (task.fillOnly) {
+          // Revenue entry points fill the existing composer; never auto-submit.
+          // Do not use data-prompt: the legacy homepage handler auto-submits it.
+          button.dataset.revenuePrompt = task.prompt;
+          button.addEventListener('click', () => {
+            if (dialog?.open) dialog.close();
+            input.value = task.prompt;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.focus();
+          });
+        } else {
+          button.dataset.prompt = task.prompt;
+        }
         if (Array.isArray(task.choices) && task.choices.length) {
           button.dataset.taskChoices = JSON.stringify(task.choices);
         }
