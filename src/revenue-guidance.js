@@ -7,18 +7,20 @@ export const REVENUE_DOMAINS = Object.freeze([
   {id:'tax-map', keywords:['แผนที่ภาษี','สำรวจทรัพย์สิน'], evidence:['ข้อมูลสำรวจที่ได้รับอนุญาต','ทะเบียนทรัพย์สิน','คู่มือทางการ']},
   {id:'ltax', keywords:['LTAX','แอลแท็กซ์'], evidence:['ชื่อระบบและรุ่น','คู่มือทางการฉบับตรงรุ่น']},
   {id:'elaas', keywords:['e-LAAS','อีลาส','บันทึกรายรับ'], evidence:['คู่มือทางการฉบับปัจจุบัน','ประเภทการรับเงิน','เอกสารการรับเงิน']},
-  {id:'documents', keywords:['หนังสือแจ้งภาษี','บันทึกข้อความภาษี','แบบฟอร์มภาษี'], evidence:['ประเภทเอกสาร','ข้อเท็จจริงที่ยืนยัน','แบบทางการที่ใช้บังคับ']}
+  {id:'documents', keywords:['หนังสือแจ้งภาษี','บันทึกข้อความภาษี','แบบฟอร์มภาษี'], evidence:['ประเภทเอกสาร','ข้อเท็จจริงที่ยืนยัน','แบบทางการที่ใช้บังคับ']},
+  {id:'hotel', keywords:['ภาษีผู้เข้าพัก','ภาษีโรงแรม','ภาษีจากผู้เข้าพัก'], match: q => /ค่าธรรมเนียม.{0,25}โรงแรม/.test(q), evidence:['ประเภท อปท. และอำนาจจัดเก็บ','กฎหมายและข้อบัญญัติฉบับใช้บังคับ','ผู้มีหน้าที่ชำระและข้อยกเว้น','ฐานคำนวณ อัตรา และช่วงเวลาที่ใช้','หลักฐานการยื่น ชำระ และแจ้ง'], instructions:['ตรวจชื่อและลักษณะรายได้ตามต้นฉบับ แยกภาษีกับค่าธรรมเนียม ผู้เข้าพักกับผู้ประกอบการ ตรวจข้อยกเว้น การยื่น ชำระ แจ้ง อุทธรณ์ และค้างชำระตามที่เกี่ยวข้อง ห้ามถือว่าทุก อปท. มีอำนาจเหมือน อบจ.']},
+  {id:'fuel-tobacco', keywords:[], match: q => /น้ำมัน|ก๊าซ|ก๊าส|ยาสูบ/.test(q) && /ภาษี|รายได้|ข้อบัญญัติ|จัดเก็บ/.test(q), evidence:['ประเภท อปท. และอำนาจจัดเก็บ','กฎหมายและข้อบัญญัติฉบับใช้บังคับ','ชนิดสินค้าและลักษณะรายได้','ผู้มีหน้าที่ชำระ ฐานคำนวณ และข้อยกเว้น','อัตราและช่วงเวลาที่ใช้','หลักฐานการยื่น ชำระ และแจ้ง'], instructions:['แยกน้ำมัน ก๊าซ และยาสูบทีละประเภท ตรวจว่าเป็นรายได้จัดเก็บเองหรือจัดสรร ผู้มีหน้าที่ชำระ ฐาน อัตรา ข้อบัญญัติ ข้อยกเว้น การยื่น ชำระ แจ้ง อุทธรณ์ และค้างชำระตามต้นฉบับ ห้ามสันนิษฐานว่าเก็บได้ทุกชนิดหรือทุก อปท.']}
 ]);
 export function revenueGuidance(question, suppliedEvidence = {}) {
   const q = String(question ?? '').normalize('NFC').toLowerCase();
-  const matches = REVENUE_DOMAINS.filter(d => d.keywords.some(k => q.includes(k.toLowerCase())));
+  const matches = REVENUE_DOMAINS.filter(d => d.keywords.some(k => q.includes(k.toLowerCase())) || d.match?.(q));
   if (!matches.length) return null;
   // A named system or a clearly requested output takes precedence over incidental
   // references to assessment. Preserve the matching evidence of every domain.
   const explicitAppeal = /อุทธรณ์ภาษี|คัดค้านภาษี/.test(q);
   const priority = explicitAppeal
-    ? ['assessment-appeal', 'ltax', 'elaas', 'documents', 'tax-map', 'arrears', 'sign', 'land-building']
-    : ['ltax', 'elaas', 'documents', 'tax-map', 'arrears', 'sign', 'land-building', 'assessment-appeal'];
+    ? ['assessment-appeal', 'ltax', 'elaas', 'documents', 'tax-map', 'arrears', 'sign', 'land-building', 'hotel', 'fuel-tobacco']
+    : ['ltax', 'elaas', 'documents', 'tax-map', 'arrears', 'sign', 'land-building', 'hotel', 'fuel-tobacco', 'assessment-appeal'];
   const domain = [...matches].sort((a,b) =>
     priority.indexOf(a.id) - priority.indexOf(b.id))[0];
   const missing = [...new Set(matches.flatMap(d => d.evidence))]
@@ -38,7 +40,8 @@ export function revenueGuidance(question, suppliedEvidence = {}) {
       'ก่อนให้คำแนะนำต้องตรวจประเภท อปท. และอำนาจจัดเก็บภาษีเฉพาะประเภท โดยเฉพาะกรณี อบจ. ห้ามสันนิษฐานว่าเป็นผู้จัดเก็บภาษีที่ดินและสิ่งปลูกสร้าง',
       'ห้ามอ้างว่าเชื่อมต่อ LTAX หรือ e-LAAS หรือทำธุรกรรมแล้ว',
       'ถามข้อมูลที่ขาดผ่านช่องหลักทีละประเด็น ห้ามขอข้อมูลส่วนบุคคลเกินจำเป็น',
-      'ต้องให้เจ้าหน้าที่ตรวจสอบก่อนใช้จริง'
+      'ต้องให้เจ้าหน้าที่ตรวจสอบก่อนใช้จริง',
+      ...matches.flatMap(d => d.instructions || [])
     ]
   });
 }

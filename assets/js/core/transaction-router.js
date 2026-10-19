@@ -257,6 +257,7 @@
       : /อุทธรณ์ภาษี|คัดค้านภาษี|หนังสือแจ้งประเมินภาษี/.test(revenueText) ? 'GP002'
       : /ltax|แอลแท็กซ์|แผนที่ภาษี|สำรวจทรัพย์สิน|ภาษีป้าย|ภาษีที่ดิน|สิ่งปลูกสร้าง/.test(revenueText) ? 'GP002'
       : /ภาษีค้าง|เร่งรัดภาษี|เบี้ยปรับภาษี|เงินเพิ่มภาษี|e-laas|อีลาส|บันทึกรายรับ/.test(revenueText) && /ภาษี|e-laas|อีลาส|เทศบาล/.test(revenueText) ? 'GP005'
+      : /ภาษีผู้เข้าพัก|ภาษีโรงแรม|ภาษีจากผู้เข้าพัก|ค่าธรรมเนียม.{0,25}โรงแรม/.test(revenueText) || (/น้ำมัน|ก๊าซ|ก๊าส|ยาสูบ/.test(revenueText) && /ภาษี|รายได้|ข้อบัญญัติ|จัดเก็บ/.test(revenueText)) ? 'GP002'
       : '';
     const primaryModule = revenueRoute || (correspondenceDraft ? 'GP001' : (healthFundingIntake?.moduleId || domainOverride?.moduleId || action?.moduleId || (hasEvidence ? top.moduleId : (activeModule || settings.fallbackModule))));
     const domainModules = ranking.filter(item => item.rawScore > 0 && item.moduleId !== primaryModule).slice(0, 2).map(item => item.moduleId);
