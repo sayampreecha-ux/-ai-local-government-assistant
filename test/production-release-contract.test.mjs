@@ -4,6 +4,7 @@ import { cp, mkdtemp, readdir, readFile, writeFile, rm, symlink } from 'node:fs/
 import { tmpdir } from 'node:os';
 import { resolve, join, extname } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { committedAsset, RELEASE_VERSIONS } from '../scripts/release-versions.mjs';
 
 test('built release satisfies the full surface verifier and rejects stale/tampered assets', async () => {
@@ -56,6 +57,39 @@ test('built release satisfies the full surface verifier and rejects stale/tamper
     assert.equal(output.checks.privacyBoundary,'PASS');
     assert.equal(output.checks.releaseCacheBust,'PASS');
     assert.equal(output.checks.workflowRuntimeModules,'18 PASS');
+
+
+    // Read-only live observation, separate from fixture acceptance. No deployment or Browser.
+    // A mismatch is expected before an approved release; never turn it into a Production PASS.
+    try {
+      const origin='https://sayampreecha-ux.github.io/-ai-local-government-assistant/';
+      const get=async path=>{
+        const response=await fetch(new URL(path,origin),{signal:AbortSignal.timeout(12000),
+          headers:{'cache-control':'no-cache, no-store',pragma:'no-cache'}});
+        const text=await response.text();
+        return {status:response.status,url:response.url,etag:response.headers.get('etag'),text};
+      };
+      const live=await get('index.html');
+      const observedHome=live.text.match(/assets\/js\/home-v3\.js\?v=[^"'\s<]+/)?.[0];
+      const bridgeRef=committedAsset('assets/js/ui/quick-action-guided-bridge-v1.js').path;
+      const [home,bridge]=await Promise.all([observedHome?get(observedHome):null,get(bridgeRef)]);
+      const hash=text=>createHash('sha256').update(text,'utf8').digest('hex');
+      const expectedHome=await readFile(join(dist,'assets/js/home-v3.js'),'utf8');
+      const expectedBridge=await readFile(join(dist,'assets/js/ui/quick-action-guided-bridge-v1.js'),'utf8');
+      console.log('LIVE_RELEASE_OBSERVATION_ONLY '+JSON.stringify({
+        index:{status:live.status,url:live.url,etag:live.etag},
+        expectedHome:committedAsset('assets/js/home-v3.js').path,observedHome,
+        homeVersionMatches:observedHome===committedAsset('assets/js/home-v3.js').path,
+        home:home?{status:home.status,sha256:hash(home.text),expectedSha256:hash(expectedHome),
+          contentMatches:home.text===expectedHome}:null,
+        bridge:{status:bridge.status,sha256:hash(bridge.text),expectedSha256:hash(expectedBridge),
+          contentMatches:bridge.text===expectedBridge},
+        acceptance:'NOT_CERTIFIED_BY_OBSERVATION'
+      }));
+    } catch(error) {
+      console.log('LIVE_RELEASE_OBSERVATION_ONLY '+JSON.stringify({error:String(error.message),
+        acceptance:'UNAVAILABLE_NOT_CERTIFIED'}));
+    }
 
     await writeFile(indexPath,index.replace(committedAsset('assets/js/home-v3.js').path,
       'assets/js/home-v3.js?v=0.0.0'));
