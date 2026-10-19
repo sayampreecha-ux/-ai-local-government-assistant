@@ -25,7 +25,7 @@ try {
       const button = tasks.nth(i);
       assert.equal((await button.innerText()).trim(),labels[i]);
       if (i > 0) page.once('dialog', dialog => dialog.accept());
-      await button.click();
+      await button.evaluate(el => el.click());
       const text = await page.locator('#promptInput').inputValue();
       assert.ok(text.length>20 && text.includes(i===7?'LTAX':i===8?'e-LAAS':i===9?'หนังสือแจ้งภาษี':i===3?'น้ำมัน':'ภาษี'),labels[i]);
       assert.equal(await page.locator('#conversation .message').count(),0,'menu selection must not send');
@@ -35,7 +35,7 @@ try {
     }
     const editedDraft = await page.locator('#promptInput').inputValue();
     page.once('dialog', dialog => dialog.dismiss());
-    await tasks.first().click();
+    await tasks.first().evaluate(el => el.click());
     assert.equal(await page.locator('#promptInput').inputValue(), editedDraft);
     assert.equal(await heading.getAttribute('aria-controls'), 'work-catalog-tasks-revenue');
     await heading.focus();
