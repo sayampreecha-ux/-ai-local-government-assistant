@@ -275,10 +275,12 @@
     const externalVerificationRequested = rawExternalVerificationRequested
       && !explicitNoWeb
       && (!userDataFirst || userDataVerificationRequested);
+    const revenuePrimarySource = /ภาษีที่ดิน|สิ่งปลูกสร้าง|ภาษีป้าย|ประเมินภาษี|อุทธรณ์ภาษี|คัดค้านภาษี|ภาษีค้าง|เร่งรัดภาษี|เบี้ยปรับภาษี|เงินเพิ่มภาษี|แผนที่ภาษี|สำรวจทรัพย์สิน|ltax|แอลแท็กซ์|e-laas|อีลาส|หนังสือแจ้งภาษี|แบบฟอร์มภาษี/i.test(text)
+      || /บันทึกรายรับ/.test(text) && /ภาษี|เทศบาล|อบจ|อบต|อปท/.test(text);
     const needsPrimarySource = !explicitNoWeb
-      && (rawNeedsPrimarySource || externalVerificationRequested)
-      && (!sourceFirstTask || externalVerificationRequested)
-      && (!stableCreation || externalVerificationRequested);
+      && (rawNeedsPrimarySource || externalVerificationRequested || revenuePrimarySource)
+      && (!sourceFirstTask || externalVerificationRequested || revenuePrimarySource)
+      && (!stableCreation || externalVerificationRequested || revenuePrimarySource);
     const freshnessRequested = includesAny(text, FRESHNESS_TERMS);
     const needsCurrentWeb = !explicitNoWeb
       && freshnessRequested
