@@ -11,15 +11,27 @@ export const REVENUE_DOMAINS = Object.freeze([
 ]);
 export function revenueGuidance(question, suppliedEvidence = {}) {
   const q = String(question ?? '').normalize('NFC').toLowerCase();
-  const domain = REVENUE_DOMAINS.find(d => d.keywords.some(k => q.includes(k.toLowerCase())));
-  if (!domain) return null;
-  const missing = domain.evidence.filter(k => suppliedEvidence[k] !== true);
+  const matches = REVENUE_DOMAINS.filter(d => d.keywords.some(k => q.includes(k.toLowerCase())));
+  if (!matches.length) return null;
+  // A named system or a clearly requested output takes precedence over incidental
+  // references to assessment. Preserve the matching evidence of every domain.
+  const explicitAppeal = /อุทธรณ์ภาษี|คัดค้านภาษี/.test(q);
+  const priority = explicitAppeal
+    ? ['assessment-appeal', 'ltax', 'elaas', 'documents', 'tax-map', 'arrears', 'sign', 'land-building']
+    : ['ltax', 'elaas', 'documents', 'tax-map', 'arrears', 'sign', 'land-building', 'assessment-appeal'];
+  const domain = [...matches].sort((a,b) =>
+    priority.indexOf(a.id) - priority.indexOf(b.id))[0];
+  const missing = [...new Set(matches.flatMap(d => d.evidence))]
+    .filter(k => suppliedEvidence[k] !== true);
   return Object.freeze({
     domain: domain.id,
+    relatedDomains: Object.freeze(matches.map(d => d.id)),
     mode: 'guidance-only',
     missingEvidence: missing,
     decisionLock: missing.length > 0,
     instructions: [
+      'งานจัดเก็บรายได้ที่มีผลต่อภาษี หนี้ หรือฐานประเมิน ต้องตรวจหลักฐานและกฎฉบับใช้บังคับ แม้คำสั่งทั่วไปจัดความเสี่ยง LOW หรือเลือก ai-only; ห้ามใช้ค่า LOW/ปิด Evidence Gate เดิมเพื่อฟันธง',
+      'หากกล่าวถึงหลายประเภทรายได้ ให้ตรวจหลักฐานที่เกี่ยวข้องทั้งหมดก่อนรับรองผล',
       'ตอบขั้นตอนและข้อควรตรวจสอบเท่าที่มีหลักฐาน โดยแยกข้อเท็จจริงกับข้อเสนอ',
       'ให้ AI ปลายทางเปิดตรวจต้นฉบับกฎหมาย/หนังสือสั่งการ/คู่มือทางการ รวมวันมีผลและการแก้ไขก่อนสรุป',
       'ห้ามสมมุติอัตรา สูตร กำหนดเวลา แบบฟอร์ม หรือขั้นตอนหน้าจอ',
