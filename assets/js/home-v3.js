@@ -400,6 +400,25 @@
         })
       : promptBundleWithOriginalQuestion;
     let promptBundle = enrichNaturalPersonServiceTor(routedPromptBundle, text);
+    // Additive revenue guidance: only annotate matching revenue questions.
+    // Keep the original route, search behavior, and unrelated prompts unchanged.
+    const { revenueGuidance } = await import('../../src/revenue-guidance.js');
+    const revenue = revenueGuidance(text);
+    if (revenue) {
+      const revenueBlock = [
+        'งานจัดเก็บรายได้ท้องถิ่น — ข้อกำหนดเฉพาะ (guidance only)',
+        'ประเภทงาน: ' + revenue.domain,
+        'หลักฐานที่ต้องตรวจ: ' + revenue.missingEvidence.join(' / '),
+        'Evidence Gate: ยังไม่มีหลักฐานที่ตรวจยืนยันใน GovPrompt; AI ปลายทางต้องค้นและตรวจต้นฉบับเอง',
+        'Decision Lock: ห้ามรับรองการคำนวณภาษี อัตรา กำหนดเวลา หรือการทำธุรกรรมจนกว่าจะยืนยันข้อมูลครบ',
+        ...revenue.instructions
+      ].join('\\n');
+      promptBundle = Object.freeze({
+        ...promptBundle,
+        prompt: promptBundle.prompt + '\\n\\n' + revenueBlock,
+        revenueGuidanceDomain: revenue.domain
+      });
+    }
 
     const assistanceRoute = typeof core.detectAssistanceRoute === 'function'
       ? core.detectAssistanceRoute(text)
