@@ -51,3 +51,10 @@ test('explicit source evidence does not imply live system connection', () => {
   assert.equal(result.mode, 'guidance-only');
   assert.ok(result.instructions.some(line => line.includes('ห้ามอ้างว่าเชื่อมต่อ')));
 });
+
+test('static build publishes revenue guidance at the browser import path', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const build = await readFile(new URL('../scripts/build-static.mjs', import.meta.url), 'utf8');
+  assert.match(build, /"revenue-guidance\\.js"/);
+  assert.match(build, /await cp\\(join\\("src", file\\), join\\(runtimeOutput, file\\)\\)/);
+});
