@@ -32,6 +32,13 @@ try {
       await page.locator('#promptInput').fill(text+' เพิ่มข้อมูล');
       assert.ok((await page.locator('#promptInput').inputValue()).endsWith('เพิ่มข้อมูล'));
     }
+    await heading.evaluate(el => {
+      window.__revenueToggleEvents = [];
+      for (const type of ['keydown','keyup']) el.addEventListener(type,e =>
+        window.__revenueToggleEvents.push([type,e.key,e.code,document.activeElement===el]),true);
+      new MutationObserver(() => window.__revenueToggleEvents.push(['aria',el.getAttribute('aria-expanded')]))
+        .observe(el,{attributes:true,attributeFilter:['aria-expanded']});
+    });
     const beforeKeyboard = await heading.evaluate(el => ({focused: document.activeElement === el, expanded: el.getAttribute('aria-expanded')}));
     await heading.press('Space');
     const afterKeyboard = await heading.evaluate(el => ({focused: document.activeElement === el, expanded: el.getAttribute('aria-expanded')}));
