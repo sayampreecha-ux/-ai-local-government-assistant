@@ -32,8 +32,7 @@ try {
       await page.locator('#promptInput').fill(text+' เพิ่มข้อมูล');
       assert.ok((await page.locator('#promptInput').inputValue()).endsWith('เพิ่มข้อมูล'));
     }
-    await heading.focus();
-    await page.keyboard.press('Space');
+    await heading.press('Space');
     assert.equal(await heading.getAttribute('aria-expanded'),'false');
     const other = page.locator('.work-catalog-group[data-category-id="records"]');
     await other.locator(':scope > h3').click();
