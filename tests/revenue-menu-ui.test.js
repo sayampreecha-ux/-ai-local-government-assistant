@@ -45,7 +45,9 @@ test('existing catalog accessibility and mobile one-open-at-a-time behavior pres
   assert.match(bridge, /trigger\.setAttribute\('aria-controls', tasks\.id\)/);
   assert.match(bridge, /trigger\.setAttribute\('aria-expanded', 'false'\)/);
   assert.match(bridge, /trigger\.addEventListener\('click', toggleCategory\)/);
-  assert.doesNotMatch(bridge, /trigger\.addEventListener\('keydown'/);
+  assert.match(bridge, /trigger\.addEventListener\('keydown'/);
+  assert.match(bridge, /event\.preventDefault\(\)/);
+  assert.match(bridge, /trigger\.click\(\)/);
   assert.match(bridge, /groups\.querySelectorAll\('\.work-catalog-group'\)/);
   assert.match(bridge, /otherTasks\.hidden = true/);
   assert.match(bridge, /@media \(max-width:620px\)/);
