@@ -50,9 +50,10 @@ function collect(ref) {
     const route = entry ? { moduleId: id, assistant: entry, modules: [id], transactionType: entry.transactionTypes?.[0] } : core.routeTransaction(context);
     const output = core.createGovernmentPrompt({ question, route, context });
     assert.ok(output.prompt.length > 0, id);
-    for (const phrase of ['Answer First', 'Decision Lock']) {
-      assert.ok(output.prompt.includes(phrase), id + ': missing ' + phrase);
-    }
+    // Gate applicability is risk-dependent; existing governance tests verify
+    // decision-lock behavior. This test measures length without forcing all
+    // low-risk outputs to contain high-risk boilerplate.
+    assert.ok(output.prompt.includes('Answer First'), id + ': missing Answer First');
     return [id, metric(output.prompt)];
   }));
 }
