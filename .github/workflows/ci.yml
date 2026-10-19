@@ -27,10 +27,14 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE_REF="origin/${{ github.base_ref }}"
+            BASE_REF="${{ github.event.pull_request.base.sha }}"
           else
-            BASE_REF="HEAD^"
+            BASE_REF="${{ github.event.before }}"
+            if ! git cat-file -e "$BASE_REF^{commit}" 2>/dev/null; then
+              BASE_REF="HEAD^"
+            fi
           fi
+          git cat-file -e "$BASE_REF^{commit}"
           PROMPT_BASE_REF="$BASE_REF" node scripts/verify-prompt-efficiency.mjs | tee prompt-efficiency.log
       - name: Preserve prompt efficiency evidence
         if: always()
