@@ -17,8 +17,7 @@ try {
     assert.equal(await revenue.count(),1);
     assert.equal(await revenue.locator('.work-catalog-tasks').isVisible(),false);
     const heading = revenue.locator(':scope > h3');
-    await heading.focus();
-    await page.keyboard.press('Enter');
+    await heading.click();
     assert.equal(await heading.getAttribute('aria-expanded'),'true');
     const tasks = revenue.locator('.work-catalog-task');
     assert.equal(await tasks.count(),8);
