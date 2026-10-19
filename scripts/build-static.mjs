@@ -26,7 +26,8 @@ const workflowRuntimeSourceFiles = Object.freeze([
   "government-case-orchestrator-v4.js",
   "government-workflow-suite.js",
   "government-case-memory-v1.js",
-  "citizen-service-workflow.js"
+  "citizen-service-workflow.js",
+  "revenue-guidance.js"
 ]);
 
 await rm(output, { recursive: true, force: true });
