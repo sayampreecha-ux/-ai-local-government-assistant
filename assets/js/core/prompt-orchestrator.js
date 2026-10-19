@@ -131,6 +131,18 @@
       || /บันทึกรายรับ/.test(text) && /ภาษี|เทศบาล|อบจ|อบต|อปท/.test(text);
   }
 
+  function revenueTaskDisciplines(source) {
+    const original = allMatches(source, DISCIPLINES);
+    if (!revenueAuthorityCase(source)) return original;
+    const hasRealPersonnelIssue = /บุคลากร|ข้าราชการ|พนักงาน|ตำแหน่ง|วินัย|ลาป่วย|อัตรากำลัง|บรรจุ|แต่งตั้ง|เงินเดือน|เลื่อนระดับ/.test(source);
+    const hasRealEngineeringIssue = /ถนน|สะพาน|ก่อสร้าง|งานช่าง|วิศวกรรม|ประมาณราคา|หน้างาน/.test(source);
+    const filtered = original.filter(id =>
+      (id !== 'human-resources' || hasRealPersonnelIssue) &&
+      (id !== 'engineering' || hasRealEngineeringIssue));
+    const revenueDiscipline = /e-laas|อีลาส|บันทึกรายรับ|ภาษีค้าง|เร่งรัดภาษี|เบี้ยปรับภาษี|เงินเพิ่มภาษี/.test(source) ? 'finance' : 'legal';
+    return Object.freeze([...new Set([...filtered, revenueDiscipline])]);
+  }
+
   function classifyRiskLevel(source) {
     if (revenueAuthorityCase(source)) return 'HIGH';
     if (DISCIPLINARY_CASE.test(source)) return 'HIGH';
@@ -571,7 +583,7 @@
       standard: 'GovPrompt Prompt Standard v7.1',
       action: internalControlDocument ? 'draft' : firstMatch(source, ACTIONS, 'answer'),
       deliverable: internalControlDocument ? 'official-document' : firstMatch(source, DELIVERABLES, 'general-answer'),
-      disciplines: internalControlDocument ? ['audit'] : allMatches(source, DISCIPLINES),
+      disciplines: internalControlDocument ? ['audit'] : revenueTaskDisciplines(source),
       riskLevel,
       qualityGates,
       applicableAuthorityCheck,
