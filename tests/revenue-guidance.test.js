@@ -55,6 +55,6 @@ test('explicit source evidence does not imply live system connection', () => {
 test('static build publishes revenue guidance at the browser import path', async () => {
   const { readFile } = await import('node:fs/promises');
   const build = await readFile(new URL('../scripts/build-static.mjs', import.meta.url), 'utf8');
-  assert.match(build, /"revenue-guidance\\.js"/);
-  assert.match(build, /await cp\\(join\\("src", file\\), join\\(runtimeOutput, file\\)\\)/);
+  assert.ok(build.includes('"revenue-guidance.js"'));
+  assert.ok(build.includes('await cp(join("src", file), join(runtimeOutput, file))'));
 });
