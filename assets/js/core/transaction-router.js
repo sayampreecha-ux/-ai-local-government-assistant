@@ -252,7 +252,13 @@
     const hasEvidence = top.rawScore > 0;
     const ambiguous = hasEvidence && second.rawScore > 0 && (top.confidence - second.confidence) < settings.ambiguityGap;
     const correspondenceDraft = isCorrespondenceDraft(request);
-    const primaryModule = correspondenceDraft ? 'GP001' : (healthFundingIntake?.moduleId || domainOverride?.moduleId || action?.moduleId || (hasEvidence ? top.moduleId : (activeModule || settings.fallbackModule)));
+    const revenueText = normalize(request);
+    const revenueRoute = /(?:ร่าง|เขียน|จัดทำ).{0,25}(?:หนังสือแจ้งภาษี|บันทึกข้อความภาษี|แบบฟอร์มภาษี)/.test(revenueText) ? 'GP001'
+      : /อุทธรณ์ภาษี|คัดค้านภาษี|หนังสือแจ้งประเมินภาษี/.test(revenueText) ? 'GP002'
+      : /ltax|แอลแท็กซ์|แผนที่ภาษี|สำรวจทรัพย์สิน|ภาษีป้าย|ภาษีที่ดิน|สิ่งปลูกสร้าง/.test(revenueText) ? 'GP002'
+      : /ภาษีค้าง|เร่งรัดภาษี|เบี้ยปรับภาษี|เงินเพิ่มภาษี|e-laas|อีลาส|บันทึกรายรับ/.test(revenueText) && /ภาษี|e-laas|อีลาส|เทศบาล/.test(revenueText) ? 'GP005'
+      : '';
+    const primaryModule = revenueRoute || (correspondenceDraft ? 'GP001' : (healthFundingIntake?.moduleId || domainOverride?.moduleId || action?.moduleId || (hasEvidence ? top.moduleId : (activeModule || settings.fallbackModule))));
     const domainModules = ranking.filter(item => item.rawScore > 0 && item.moduleId !== primaryModule).slice(0, 2).map(item => item.moduleId);
     const modules = options.multiModule === false ? [primaryModule] : [...new Set([primaryModule, ...(correspondenceDraft ? [] : [action?.moduleId]), ...domainModules].filter(Boolean))].slice(0, 3);
     const intakeConfidence = healthFundingIntake ? Math.min(0.99, 0.62 + healthFundingIntake.weight / 20) : 0;
@@ -265,7 +271,7 @@
       fallback: !healthFundingIntake && !domainOverride && !action && !hasEvidence,
       ambiguous: !healthFundingIntake && !domainOverride && !action && ambiguous,
       ranking: Object.freeze(ranking), healthFundingIntake, domainOverride, actionIntent: action,
-      reason: correspondenceDraft ? 'explicit-correspondence-draft' : (healthFundingIntake ? 'health-funding-intake' : (domainOverride ? 'strong-domain-override' : (action ? 'action-intent-primary' : (hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence'))))
+      reason: revenueRoute ? 'revenue-task-override' : (correspondenceDraft ? 'explicit-correspondence-draft' : (healthFundingIntake ? 'health-funding-intake' : (domainOverride ? 'strong-domain-override' : (action ? 'action-intent-primary' : (hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence')))))
     });
   }
 
