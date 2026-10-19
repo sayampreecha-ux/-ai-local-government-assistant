@@ -407,9 +407,17 @@
         trigger.setAttribute('aria-expanded', String(!nextHidden));
         section.classList.toggle('is-open', !nextHidden);
       };
-      // Native button dispatches one click for mouse, touch, Enter and Space.
-      // No synthetic keyboard toggle: it previously caused a double toggle.
       trigger.addEventListener('click', toggleCategory);
+      // The host shell suppresses the native Space-generated click in some
+      // browsers. Provide one keyboard activation without bubbling to legacy
+      // keyboard shortcuts or allowing a second native activation.
+      trigger.addEventListener('keydown', event => {
+        if (event.key !== ' ' && event.key !== 'Spacebar' && event.code !== 'Space') return;
+        if (event.repeat) { event.preventDefault(); return; }
+        event.preventDefault();
+        event.stopPropagation();
+        trigger.click();
+      });
       section.append(heading, tasks);
       groups.append(section);
     };
