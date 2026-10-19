@@ -15,8 +15,10 @@ export function revenueGuidance(question, suppliedEvidence = {}) {
   if (!matches.length) return null;
   // A named system or a clearly requested output takes precedence over incidental
   // references to assessment. Preserve the matching evidence of every domain.
-  const priority = ['ltax', 'elaas', 'documents', 'tax-map', 'arrears',
-    'assessment-appeal', 'sign', 'land-building'];
+  const explicitAppeal = /อุทธรณ์ภาษี|คัดค้านภาษี/.test(q);
+  const priority = explicitAppeal
+    ? ['assessment-appeal', 'ltax', 'elaas', 'documents', 'tax-map', 'arrears', 'sign', 'land-building']
+    : ['ltax', 'elaas', 'documents', 'tax-map', 'arrears', 'sign', 'land-building', 'assessment-appeal'];
   const domain = [...matches].sort((a,b) =>
     priority.indexOf(a.id) - priority.indexOf(b.id))[0];
   const missing = [...new Set(matches.flatMap(d => d.evidence))]
