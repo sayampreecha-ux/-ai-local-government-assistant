@@ -32,7 +32,10 @@ try {
       await page.locator('#promptInput').fill(text+' เพิ่มข้อมูล');
       assert.ok((await page.locator('#promptInput').inputValue()).endsWith('เพิ่มข้อมูล'));
     }
+    const beforeKeyboard = await heading.evaluate(el => ({focused: document.activeElement === el, expanded: el.getAttribute('aria-expanded')}));
     await heading.press('Space');
+    const afterKeyboard = await heading.evaluate(el => ({focused: document.activeElement === el, expanded: el.getAttribute('aria-expanded')}));
+    console.log('Keyboard toggle diagnostic', viewport.width, beforeKeyboard, afterKeyboard);
     assert.equal(await heading.getAttribute('aria-expanded'),'false');
     const other = page.locator('.work-catalog-group[data-category-id="records"]');
     await other.locator(':scope > h3').click();
