@@ -277,7 +277,7 @@
       && (!userDataFirst || userDataVerificationRequested);
     const revenuePrimarySource = /ภาษีที่ดิน|สิ่งปลูกสร้าง|ภาษีป้าย|ประเมินภาษี|อุทธรณ์ภาษี|คัดค้านภาษี|ภาษีค้าง|เร่งรัดภาษี|เบี้ยปรับภาษี|เงินเพิ่มภาษี|แผนที่ภาษี|สำรวจทรัพย์สิน|ltax|แอลแท็กซ์|e-laas|อีลาส|หนังสือแจ้งภาษี|แบบฟอร์มภาษี/i.test(text)
       || /ภาษีผู้เข้าพัก|ภาษีโรงแรม|ภาษีจากผู้เข้าพัก|ค่าธรรมเนียม.{0,25}โรงแรม/.test(text)
-      || /น้ำมัน|ก๊าซ|ก๊าส|ยาสูบ/.test(text) && /ภาษี|รายได้|ข้อบัญญัติ|จัดเก็บ/.test(text)
+      || /น้ำมัน|ก๊าซ|ก๊าส|ยาสูบ/.test(text) && /ภาษี(?:จาก)?(?:น้ำมัน|ก๊าซ|ก๊าส|ยาสูบ)|รายได้|ข้อบัญญัติ|จัดเก็บ/.test(text)
       || /บันทึกรายรับ/.test(text) && /ภาษี|เทศบาล|อบจ|อบต|อปท/.test(text);
     const needsPrimarySource = !explicitNoWeb
       && (rawNeedsPrimarySource || externalVerificationRequested || revenuePrimarySource)

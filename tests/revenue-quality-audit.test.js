@@ -242,7 +242,7 @@ for(const c of cases) test('revenue quality '+c.id+' '+c.kind,()=>{
   const bundle=core.createGovernmentPrompt({question:c.question,route});
   assert.ok(bundle.prompt.includes(c.question));
   assert.match(bundle.prompt,/Answer First/);
-  assert.match(bundle.prompt,/ห้ามแต่ง/);
+  assert.match(bundle.prompt,/ห้ามสมมติข้อเท็จจริง/);
   assert.match(g.instructions.join(' '),/อำนาจจัดเก็บภาษี/);
   assert.match(g.instructions.join(' '),/เจ้าหน้าที่ตรวจสอบ/);
   if(c.domain==='documents') {
@@ -279,5 +279,11 @@ test('mixed revenue retains all applicable evidence and explicit document/appeal
   assert.equal(core.routeRequest('อุทธรณ์ภาษีผู้เข้าพักโรงแรม').primaryModule,'GP002');
 });
 test('new PAO domains do not classify unrelated purchases, meetings or PR as revenue',()=>{
-  for(const q of ['ร่าง TOR จัดซื้อน้ำมันเชื้อเพลิง','จองโรงแรมประชุม','ทำข่าวรณรงค์งดสูบบุหรี่']) assert.equal(revenueGuidance(q),null);
+  for(const q of ['ร่าง TOR จัดซื้อน้ำมันเชื้อเพลิง','ร่าง TOR จัดซื้อน้ำมันเชื้อเพลิง วงเงินรวมภาษีมูลค่าเพิ่ม','จองโรงแรมประชุม','ทำข่าวรณรงค์งดสูบบุหรี่']) assert.equal(revenueGuidance(q),null);
+});
+
+test('explicit correspondence and PR concerning new PAO topics retain their output route',()=> {
+  assert.equal(core.routeRequest('ทำข่าวประชาสัมพันธ์ภาษีผู้เข้าพักโรงแรม').primaryModule,'GP012');
+  assert.equal(core.routeRequest('ทำข่าวประชาสัมพันธ์รายได้ อบจ. จากยาสูบ').primaryModule,'GP012');
+  assert.equal(core.routeRequest('ร่าง TOR จัดซื้อน้ำมันเชื้อเพลิง วงเงินรวมภาษีมูลค่าเพิ่ม').primaryModule,'GP003');
 });
