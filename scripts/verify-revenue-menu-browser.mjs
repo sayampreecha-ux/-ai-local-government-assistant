@@ -16,7 +16,7 @@ try {
     await revenue.waitFor();
     assert.equal(await revenue.count(),1);
     assert.equal(await revenue.locator('.work-catalog-tasks').isVisible(),false);
-    const heading = revenue.locator(':scope > h3');
+    const heading = revenue.locator(':scope > h3 > button.work-catalog-category-toggle');
     await heading.click();
     assert.equal(await heading.getAttribute('aria-expanded'),'true');
     const tasks = revenue.locator('.work-catalog-task');
@@ -32,25 +32,32 @@ try {
       await page.locator('#promptInput').fill(text+' เพิ่มข้อมูล');
       assert.ok((await page.locator('#promptInput').inputValue()).endsWith('เพิ่มข้อมูล'));
     }
-    await heading.evaluate(el => {
-      window.__revenueToggleEvents = [];
-      for (const type of ['keydown','keyup']) el.addEventListener(type,e =>
-        window.__revenueToggleEvents.push([type,e.key,e.code,document.activeElement===el]),true);
-      new MutationObserver(() => window.__revenueToggleEvents.push(['aria',el.getAttribute('aria-expanded')]))
-        .observe(el,{attributes:true,attributeFilter:['aria-expanded']});
-    });
-    const beforeKeyboard = await heading.evaluate(el => ({focused: document.activeElement === el, expanded: el.getAttribute('aria-expanded')}));
+    assert.equal(await heading.getAttribute('aria-controls'), 'work-catalog-tasks-revenue');
+    await heading.focus();
+    assert.equal(await heading.evaluate(el => document.activeElement === el), true);
     await heading.press('Space');
-    const afterKeyboard = await heading.evaluate(el => ({focused: document.activeElement === el, expanded: el.getAttribute('aria-expanded')}));
-    console.log('Keyboard toggle diagnostic', viewport.width, beforeKeyboard, afterKeyboard, await page.evaluate(() => window.__revenueToggleEvents));
     assert.equal(await heading.getAttribute('aria-expanded'),'false');
     const other = page.locator('.work-catalog-group[data-category-id="records"]');
-    await other.locator(':scope > h3').click();
-    assert.equal(await other.locator(':scope > h3').getAttribute('aria-expanded'),'true');
+    const otherHeading = other.locator(':scope > h3 > button.work-catalog-category-toggle');
+    await otherHeading.click();
+    assert.equal(await otherHeading.getAttribute('aria-expanded'),'true');
     await heading.click();
     assert.equal(await other.locator(':scope > h3').getAttribute('aria-expanded'),'false');
     assert.equal(await heading.getAttribute('aria-expanded'),'true');
     assert.equal(await page.locator('.work-catalog-group').count(),14);
+    await heading.press('Enter');
+    assert.equal(await heading.getAttribute('aria-expanded'), 'false');
+    await heading.press('Enter');
+    assert.equal(await heading.getAttribute('aria-expanded'), 'true');
+    assert.equal(await revenue.locator('.work-catalog-tasks').isVisible(), true);
+    await heading.press('Space');
+    assert.equal(await revenue.locator('.work-catalog-tasks').isVisible(), false);
+    // Exercise touch on mobile and pointer on desktop against native button.
+    if (viewport.width <= 390) {
+      await page.evaluate(() => { window.__revenueTouch = true; });
+      await heading.tap();
+      assert.equal(await heading.getAttribute('aria-expanded'), 'true');
+    }
     // The normal form is still the only send path. Selecting a revenue task
     // never bypasses the user's explicit submit action.
     assert.equal(await page.locator('#chatForm button[type="submit"]').count(),1);
