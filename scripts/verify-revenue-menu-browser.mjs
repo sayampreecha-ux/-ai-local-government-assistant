@@ -3,7 +3,7 @@ import { chromium } from 'playwright';
 
 const base = process.env.GOVPROMPT_TEST_URL || 'http://127.0.0.1:4177/index.html';
 const labels = [
-  'ภาษีที่ดินและสิ่งปลูกสร้าง', 'ภาษีป้าย', 'การประเมินและอุทธรณ์ภาษี',
+  'ภาษีที่ดินและสิ่งปลูกสร้าง', 'ภาษีป้าย', 'ภาษีผู้เข้าพักโรงแรม (อบจ.)', 'น้ำมัน ก๊าซ และยาสูบ (อบจ.)', 'การประเมินและอุทธรณ์ภาษี',
   'ภาษีค้างชำระและเร่งรัด', 'แผนที่ภาษีและสำรวจทรัพย์สิน',
   'LTAX GIS / ONLINE', 'New e-LAAS', 'หนังสือแจ้งภาษี'
 ];
@@ -20,18 +20,23 @@ try {
     await heading.click();
     assert.equal(await heading.getAttribute('aria-expanded'),'true');
     const tasks = revenue.locator('.work-catalog-task');
-    assert.equal(await tasks.count(),8);
+    assert.equal(await tasks.count(),10);
     for (let i=0;i<labels.length;i++) {
       const button = tasks.nth(i);
       assert.equal((await button.innerText()).trim(),labels[i]);
+      if (i > 0) page.once('dialog', dialog => dialog.accept());
       await button.click();
       const text = await page.locator('#promptInput').inputValue();
-      assert.ok(text.length>20 && text.includes(i===5?'LTAX':i===6?'e-LAAS':i===7?'หนังสือแจ้งภาษี':'ภาษี'),labels[i]);
+      assert.ok(text.length>20 && text.includes(i===7?'LTAX':i===8?'e-LAAS':i===9?'หนังสือแจ้งภาษี':i===3?'น้ำมัน':'ภาษี'),labels[i]);
       assert.equal(await page.locator('#conversation .message').count(),0,'menu selection must not send');
       assert.equal(await page.locator('#promptInput').evaluate(el=>document.activeElement===el),true);
       await page.locator('#promptInput').fill(text+' เพิ่มข้อมูล');
       assert.ok((await page.locator('#promptInput').inputValue()).endsWith('เพิ่มข้อมูล'));
     }
+    const editedDraft = await page.locator('#promptInput').inputValue();
+    page.once('dialog', dialog => dialog.dismiss());
+    await tasks.first().click();
+    assert.equal(await page.locator('#promptInput').inputValue(), editedDraft);
     assert.equal(await heading.getAttribute('aria-controls'), 'work-catalog-tasks-revenue');
     await heading.focus();
     assert.equal(await heading.evaluate(el => document.activeElement === el), true);
