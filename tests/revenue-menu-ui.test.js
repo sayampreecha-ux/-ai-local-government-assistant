@@ -8,6 +8,8 @@ const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const labels = [
   'ภาษีที่ดินและสิ่งปลูกสร้าง',
   'ภาษีป้าย',
+  'ภาษีผู้เข้าพักโรงแรม (อบจ.)',
+  'น้ำมัน ก๊าซ และยาสูบ (อบจ.)',
   'การประเมินและอุทธรณ์ภาษี',
   'ภาษีค้างชำระและเร่งรัด',
   'แผนที่ภาษีและสำรวจทรัพย์สิน',
@@ -18,18 +20,18 @@ const labels = [
 
 test('visible revenue category is in existing homepage catalog', () => {
   assert.match(bridge, /id: 'revenue'/);
-  assert.match(bridge, /title: 'งานจัดเก็บรายได้ท้องถิ่น'/);
+  assert.match(bridge, /title: 'งานจัดเก็บรายได้ อปท.'/);
   assert.match(bridge, /'finance', 'revenue', 'planning'/);
   assert.match(index, /quick-actions/);
   assert.match(index, /quick-action-guided-bridge-v1\.js/);
   assert.match(bridge, /quickActions\.replaceChildren\(buildCatalog\(\)\)/);
 });
 
-test('eight correctly labeled revenue buttons fill only the existing composer', () => {
+test('ten correctly labeled revenue buttons fill only the existing composer', () => {
   const revenueStart = bridge.indexOf("id: 'revenue'");
   const nextCategory = bridge.indexOf("id: 'assistance'", revenueStart);
   const block = bridge.slice(revenueStart, nextCategory);
-  assert.equal((block.match(/fillOnly: true/g) || []).length, 8);
+  assert.equal((block.match(/fillOnly: true/g) || []).length, 10);
   for (const label of labels) assert.ok(block.includes("label: '" + label + "'"), label);
   assert.match(bridge, /button\.dataset\.revenuePrompt = task\.prompt/);
   assert.match(bridge, /input\.value = task\.prompt/);
