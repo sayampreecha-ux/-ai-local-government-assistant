@@ -67,6 +67,16 @@ jobs:
         run: FAT_UI_ROOT=dist node scripts/verify-fat-ui.mjs
       - name: GP001 PR-head browser acceptance (desktop and mobile)
         run: node tests/e2e/gp001-browser-acceptance.mjs
+      - name: Measure final copyable browser prompt for all GP domains
+        run: node scripts/verify-prompt-efficiency-runtime.mjs
+      - name: Preserve final runtime prompt evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompt-efficiency-final-runtime
+          path: artifacts/prompt-efficiency-runtime/results.json
+          if-no-files-found: warn
+          retention-days: 7
       - name: Preserve GP001 browser evidence
         if: always()
         uses: actions/upload-artifact@v4
