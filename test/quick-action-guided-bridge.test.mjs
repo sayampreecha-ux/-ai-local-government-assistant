@@ -1,3 +1,4 @@
+import { RELEASE_VERSIONS } from '../scripts/release-versions.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
@@ -30,19 +31,20 @@ test('collapsed catalog groups stay hidden and published CSS and service worker 
   assert.match(homeCss, /html body\.app-shell \.quick-actions \.work-catalog-home \.work-catalog-tasks:not\(\[hidden\]\)\s*\{\s*display:grid!important;/);
 
   const indexBridgeVersion = index.match(/quick-action-guided-bridge-v1\.js\?v=([^"'&]+)/)?.[1];
-  const buildBridgeVersion = buildScript.match(/quickActionBridge:\s*"([^"]+)"/)?.[1];
+  const buildBridgeVersion = RELEASE_VERSIONS.quickActionBridge;
+  assert.ok(buildScript.includes("import { RELEASE_VERSIONS } from './release-versions.mjs'"));
   assert.ok(indexBridgeVersion, 'production HTML must version the bridge asset');
   assert.equal(buildBridgeVersion, indexBridgeVersion, 'static build must preserve the bridge asset version');
 
   const indexCssVersion = index.match(/home-v3\.css\?v=([^"'&]+)/)?.[1];
-  const buildCssVersion = buildScript.match(/homeCss:\s*"([^"]+)"/)?.[1];
+  const buildCssVersion = RELEASE_VERSIONS.homeCss;
   const precachedCssVersion = serviceWorker.match(/home-v3\.css\?v=([^"'&]+)/)?.[1];
   assert.ok(indexCssVersion, 'production HTML must version the catalog CSS');
   assert.equal(buildCssVersion, indexCssVersion, 'static build must preserve the catalog CSS cache-buster');
   assert.equal(precachedCssVersion, indexCssVersion, 'service worker must precache the versioned catalog CSS');
 
   const indexWorkerVersion = index.match(/service-worker\.js\?v=([^"'&]+)/)?.[1];
-  const buildWorkerVersion = buildScript.match(/serviceWorker:\s*"([^"]+)"/)?.[1];
+  const buildWorkerVersion = RELEASE_VERSIONS.serviceWorker;
   const workerCacheVersion = serviceWorker.match(/const APP_VERSION = '([^']+)'/)?.[1];
   assert.ok(indexWorkerVersion, 'production HTML must version the service worker');
   assert.equal(buildWorkerVersion, indexWorkerVersion, 'static build must preserve the service worker cache-buster');
