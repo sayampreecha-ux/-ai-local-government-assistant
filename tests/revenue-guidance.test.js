@@ -104,3 +104,54 @@ test('generated prompt contains scoped revenue safety override without altering 
   assert.match(home, /revenue.relatedDomains.join/);
   assert.match(home, /prompt: promptBundle.prompt \+ '\\n\\n' \+ revenueBlock/);
 });
+
+test('revenue upstream risk, authority and tool routing use real policy state', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const vm = await import('node:vm');
+  const sandbox = { window: {} };
+  for (const path of [
+    '../assets/js/core/shared-context.js',
+    '../assets/js/core/prompt-orchestrator.js',
+    '../assets/js/core/tool-routing-policy.js',
+    '../assets/js/core/prompt-registry.js',
+    '../assets/js/core/transaction-router.js'
+  ]) {
+    vm.runInNewContext(await readFile(new URL(path, import.meta.url), 'utf8'), sandbox);
+  }
+  const core = sandbox.window.GovPromptCore;
+  const cases = [
+    ['อบจ. มีอำนาจจัดเก็บภาษีที่ดินและสิ่งปลูกสร้างหรือไม่', 'GP002'],
+    ['เทศบาลต้องประเมินภาษีป้ายร้านค้าที่มีภาษาไทยและภาษาต่างประเทศอย่างไร', 'GP002'],
+    ['ประชาชนได้รับหนังสือแจ้งประเมินภาษีและต้องการอุทธรณ์ภาษี', 'GP002'],
+    ['เทศบาลมีภาษีค้างชำระหลายปี จะเร่งรัดภาษี คิดเบี้ยปรับภาษีอย่างไร', 'GP005'],
+    ['เทศบาลต้องปรับปรุงแผนที่ภาษีและสำรวจทรัพย์สินใหม่', 'GP002'],
+    ['ตรวจข้อมูล LTAX GIS และ LTAX ONLINE ก่อนนำไปประเมินภาษี', 'GP002'],
+    ['เจ้าหน้าที่เทศบาลต้องบันทึกรายรับภาษีใน New e-LAAS', 'GP005'],
+    ['ช่วยร่างหนังสือแจ้งภาษีโดยไม่สมมุติข้อมูลหรือจำนวนเงิน', 'GP001']
+  ];
+  for (const [question, expectedModule] of cases) {
+    const plan = core.planUniversalTask(question);
+    assert.equal(plan.riskLevel, 'HIGH', question + ': risk level');
+    assert.equal(plan.qualityGates.evidenceRequired, true, question + ': evidence');
+    assert.equal(plan.qualityGates.legalVersionRequired, true, question + ': legal version');
+    assert.equal(plan.qualityGates.decisionRequired, true, question + ': decision');
+    assert.equal(plan.evidenceMode, 'verify-applicable-primary-source', question + ': evidence mode');
+    assert.equal(plan.applicableAuthorityCheck.required, true, question + ': applicable authority');
+    assert.equal(core.routeRequest(question).primaryModule, expectedModule, question + ': primary route');
+    const toolPlan = core.createToolRoutingPlan({question});
+    assert.equal(toolPlan.mode, 'web-when-needed', question + ': tool mode');
+    assert.equal(toolPlan.flags.needsPrimarySource, true, question + ': primary source');
+    assert.ok(toolPlan.tools.includes('web-search'), question + ': official web search');
+  }
+});
+test('revenue overrides do not change unrelated low risk meeting notes', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const vm = await import('node:vm');
+  const sandbox = {window:{}};
+  for (const path of ['../assets/js/core/shared-context.js','../assets/js/core/prompt-orchestrator.js','../assets/js/core/tool-routing-policy.js','../assets/js/core/prompt-registry.js','../assets/js/core/transaction-router.js']) {
+    vm.runInNewContext(await readFile(new URL(path, import.meta.url),'utf8'), sandbox);
+  }
+  const core = sandbox.window.GovPromptCore;
+  assert.equal(core.planUniversalTask('สรุปข้อความนัดประชุม').riskLevel, 'LOW');
+  assert.equal(core.createToolRoutingPlan({question:'สรุปข้อความนัดประชุม'}).mode, 'ai-only');
+});
