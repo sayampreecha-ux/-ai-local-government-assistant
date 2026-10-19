@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import { detectGovernmentWorkflows } from '../src/government-workflow-suite.js';
+import { buildWorkflowRuntimeView, buildWorkflowPromptBlock } from '../assets/js/core/government-workflow-runtime-v5.js';
 
 test('P0 baseline pins exact tested merge main parent, never stale event base', () => {
   const workflow=readFileSync('.github/workflows/ci.yml','utf8');
@@ -38,4 +40,43 @@ test('browser comparison controls the Case ID entropy at input without normalizi
   assert.equal(after,before);
   assert.ok(verifier.indexOf('context.addInitScript') < verifier.indexOf('context.newPage'));
   assert.match(verifier,/row\.prompt=prompt/);
+});
+
+test('explicit revenue route survives the installed hybrid fallback', () => {
+  const sandbox=vm.createContext({window:{},location:{pathname:'/index.html'}});
+  for(const file of ['shared-context','prompt-registry','transaction-router','router-regression-overrides',
+    'hybrid-intent-classifier','hybrid-real-world-overrides','output-router','prompt-orchestrator']) {
+    vm.runInContext(readFileSync('assets/js/core/'+file+'.js','utf8'),sandbox);
+  }
+  const core=sandbox.window.GovPromptCore;
+  for(const question of ['ตรวจภาษีป้ายที่ค้างชำระและการอุทธรณ์','ตรวจภาษีป้าย','ตรวจภาษีที่ดินและสิ่งปลูกสร้าง']) {
+    const route=core.routeTransaction(core.createSharedContext({facts:question,desiredOutput:question}));
+    assert.equal(route.moduleId,'GP002',question);
+    assert.equal(route.fallback,false,question);
+    const bundle=core.createGovernmentPrompt({question,route});
+    assert.ok(bundle.prompt.includes(question));
+    assert.equal(bundle.taskPlan.riskLevel,'HIGH');
+    assert.equal(bundle.qualityGates.evidenceRequired,true);
+  }
+});
+
+test('technical quantity review keeps engineering primary and procurement supporting', () => {
+  const question='ตรวจปริมาณงานซ่อมถนนคอนกรีตและราคากลาง';
+  const ids=detectGovernmentWorkflows({query:question}).map(x=>x.id);
+  assert.equal(ids[0],'gov.engineering');
+  assert.ok(ids.includes('gov.procurement'));
+  const view=buildWorkflowRuntimeView({query:question,caseId:'test-engineering'});
+  assert.equal(view.primary.workflowId,'gov.engineering');
+  assert.match(buildWorkflowPromptBlock(view),/Primary workflow: gov.engineering/);
+  assert.equal(view.governance.autoApprovalAllowed,false);
+  assert.equal(view.governance.failClosed,true);
+});
+
+test('technical priority preserves requested TOR, correspondence, PR and finance jobs', () => {
+  for(const [query,expected] of [
+    ['ตรวจ TOR จ้างซ่อมถนนและประมาณราคา','gov.procurement'],
+    ['ร่างหนังสือชี้แจงผลตรวจปริมาณงานถนนและราคากลาง','gov.correspondence'],
+    ['ร่างโพสต์ประชาสัมพันธ์ผลตรวจปริมาณงานถนน','gov.public-relations'],
+    ['เบิกค่าเช่าซื้อบ้าน','gov.finance']
+  ]) assert.equal(detectGovernmentWorkflows({query})[0].id,expected,query);
 });
