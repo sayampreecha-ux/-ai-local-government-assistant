@@ -60,8 +60,9 @@ test('production catalog proof matches approved source IDs, names and order', ()
     'const order=['+order+']; const catalog=['+catalog+']; return order.map(id => ({id, title:catalog.find(c => c.id===id).title}));')();
   assertHomeCategories(actual);
   assert.equal(actual.length, 13);
-  assert.ok(productionVerifier.includes("catalog.locator('.work-catalog-group').evaluateAll"));
+  assert.ok(productionVerifier.includes("catalog.locator('.work-catalog-group:not([data-assistance-route])').evaluateAll"));
   assert.ok(productionVerifier.includes('assertHomeCategories(homeCategories)'));
+  assert.match(source, /renderCategory\(categories\.get\('assistance'\), 0\)/);
 });
 
 test('production catalog proof rejects missing, extra, duplicate, reordered and renamed categories', () => {

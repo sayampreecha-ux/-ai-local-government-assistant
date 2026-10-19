@@ -76,7 +76,7 @@ await page.waitForFunction(() => document.readyState === 'complete', undefined, 
 
 const catalog = page.locator('.work-catalog-groups');
 await catalog.waitFor({ state: 'visible', timeout: 15_000 });
-const homeCategories = await catalog.locator('.work-catalog-group').evaluateAll(groups => groups.map(group => ({
+const homeCategories = await catalog.locator('.work-catalog-group:not([data-assistance-route])').evaluateAll(groups => groups.map(group => ({
   id: group.dataset.categoryId,
   title: group.querySelector('.assistant-catalog-name')?.textContent.trim()
 })));
