@@ -1,0 +1,36 @@
+name: Revenue Eight-Menu Browser Acceptance
+on:
+  pull_request:
+    paths:
+      - 'assets/js/ui/quick-action-guided-bridge-v1.js'
+      - 'tests/revenue-menu-ui.test.js'
+      - 'scripts/verify-revenue-menu-browser.mjs'
+      - '.github/workflows/revenue-menu-browser.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  revenue-menu-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Start local PR-head site
+        run: |
+          python3 -m http.server 4177 --bind 127.0.0.1 > /tmp/govprompt-revenue-server.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4177/index.html > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Verify eight menu buttons on mobile and desktop
+        run: node scripts/verify-revenue-menu-browser.mjs

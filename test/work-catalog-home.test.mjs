@@ -4,14 +4,14 @@ import test from 'node:test';
 
 const source = readFileSync('assets/js/ui/quick-action-guided-bridge-v1.js', 'utf8');
 
-test('home shows all thirteen categories in frequent-use order without another-work opener', () => {
+test('home preserves twelve core categories plus the revenue category without another-work opener', () => {
   const orderBlock = source.match(/const CATALOG_ORDER = Object\.freeze\(\[([\s\S]*?)\]\);/)?.[1] || '';
   const ids = [...orderBlock.matchAll(/'([^']+)'/g)].map(match => match[1]);
   assert.deepEqual(ids, [
-    'pr', 'records', 'audit', 'finance', 'planning', 'procurement',
+    'pr', 'records', 'audit', 'finance', 'revenue', 'planning', 'procurement',
     'hr', 'executive', 'engineering', 'health', 'education', 'council'
   ]);
-  assert.match(source, /13 หมวดงาน เรียงจากงานที่ใช้บ่อย/);
+  assert.match(source, /งานจัดเก็บรายได้มีตัวอย่างคำถาม 8 เรื่อง/);
   assert.match(source, /quickActions\.replaceChildren\(buildCatalog\(\)\)/);
   assert.doesNotMatch(source, /data-work-catalog-open|งานอื่น ๆ/);
 });

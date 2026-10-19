@@ -272,6 +272,7 @@
 
   function mergeRoute(base, classified) {
     if (!classified) return base;
+    if (base?.reason === 'revenue-task-override' && classified.reason === 'semantic-example-match') return base;
     if (classified.reason === 'general-government-fallback' && base?.fallback === false) return base;
     const moduleId = classified.moduleId;
     const modules = Object.freeze([...new Set([moduleId, ...(classified.secondary || []), ...(base?.modules || [])])].slice(0, 3));

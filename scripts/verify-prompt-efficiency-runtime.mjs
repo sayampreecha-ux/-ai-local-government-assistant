@@ -1,6 +1,7 @@
 // Browser evidence: measure the final copyable prompt after home-v3 runtime enrichment.
 // This is a head-branch runtime measurement; it is not a before/after tokenizer benchmark.
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
@@ -41,6 +42,12 @@ let browser; const rows=[];
 try {
  browser=await chromium.launch({headless:true});
  const context=await browser.newContext({permissions:['clipboard-read','clipboard-write'],serviceWorkers:'block',locale:'th-TH'});
+ // Control only exogenous inputs before application modules execute, identically for base/head.
+ // generateCaseId uses Date.now and Math.random; variable base-36 IDs are not prompt growth.
+ await context.addInitScript(() => {
+  Date.now = () => 1792440000000;
+  Math.random = () => 0.5;
+ });
  const page=await context.newPage();
  for (const [scenario,question] of examples) {
   const row={scenario,status:'FAIL',measurement:'FINAL_COPYABLE_BROWSER_PROMPT'};
@@ -55,7 +62,11 @@ try {
    await page.getByRole('button',{name:/^คัดลอก(?:ไปใช้กับ AI|คำสั่งอย่างเดียว|คำสั่ง)$/}).click();
    const copied=await page.evaluate(()=>navigator.clipboard.readText());
    assert.equal(copied,prompt,scenario+': copy differs from preview');
+   const caseLine=prompt.match(/^- Case: (case-[a-z0-9]+-[a-z0-9]+) ·/m);
+   if(caseLine) assert.equal(caseLine[1],'case-mvfohvk0-89oqgw',scenario+': uncontrolled Case ID');
+   row.prompt=prompt;
    row.status='PASS';row.chars=[...prompt].length;row.utf8Bytes=Buffer.byteLength(prompt,'utf8');
+   row.sha256=createHash('sha256').update(prompt,'utf8').digest('hex');
    row.tokenEstimate=Math.ceil(row.utf8Bytes/4);
    row.qualityStandard=prompt.includes('GovPrompt Prompt Quality Standard v7.2');
    row.revenueGuidance=prompt.includes('งานจัดเก็บรายได้ท้องถิ่น — ข้อกำหนดเฉพาะ');
@@ -66,7 +77,7 @@ try {
  await context.close();
 }finally{
  await browser?.close();await new Promise(done=>server.close(done));
- await writeFile(resolve(out,process.env.PROMPT_RUNTIME_REPORT || 'results.json'),JSON.stringify({head:process.env.GITHUB_SHA||null,tokenMeasure:'ceil(UTF8 bytes/4), not provider tokenizer',rows},null,2));
+ await writeFile(resolve(out,process.env.PROMPT_RUNTIME_REPORT || 'results.json'),JSON.stringify({head:process.env.PROMPT_RUNTIME_SOURCE_REF||process.env.GITHUB_SHA||null,tokenMeasure:'ceil(UTF8 bytes/4), not provider tokenizer',rows},null,2));
 }
 assert.equal(rows.length,examples.length);
 assert.equal(rows.filter(r=>r.status!=='PASS').length,0,'final browser prompt scenarios failed');

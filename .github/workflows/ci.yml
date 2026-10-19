@@ -27,7 +27,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE_REF="${{ github.event.pull_request.base.sha }}"
+            test "$(git rev-list --parents -n 1 HEAD | wc -w)" -eq 3
+            # Baseline is the tested synthetic merge commit's pinned main parent.
+            # Event base.sha can be older than the main included in HEAD.
+            BASE_REF="$(git rev-parse HEAD^1)"
           else
             BASE_REF="${{ github.event.before }}"
             if ! git cat-file -e "$BASE_REF^{commit}" 2>/dev/null; then
@@ -74,7 +77,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            BASE_REF="${{ github.event.pull_request.base.sha }}"
+            test "$(git rev-list --parents -n 1 HEAD | wc -w)" -eq 3
+            # Baseline is the tested synthetic merge commit's pinned main parent.
+            # Event base.sha can be older than the main included in HEAD.
+            BASE_REF="$(git rev-parse HEAD^1)"
           else
             BASE_REF="${{ github.event.before }}"
             git cat-file -e "$BASE_REF^{commit}" 2>/dev/null || BASE_REF="HEAD^"
@@ -82,24 +88,34 @@ jobs:
           git worktree add --detach .prompt-base "$BASE_REF"
           ln -s ../node_modules .prompt-base/node_modules
           (cd .prompt-base && node scripts/build-static.mjs)
-          PROMPT_RUNTIME_ROOT=.prompt-base/dist PROMPT_RUNTIME_REPORT=baseline.json node scripts/verify-prompt-efficiency-runtime.mjs
+          PROMPT_RUNTIME_SOURCE_REF="$BASE_REF" PROMPT_RUNTIME_ROOT=.prompt-base/dist PROMPT_RUNTIME_REPORT=baseline.json node scripts/verify-prompt-efficiency-runtime.mjs
           node --input-type=module <<'NODE'
           import { readFileSync, writeFileSync } from 'node:fs';
           const before = JSON.parse(readFileSync('artifacts/prompt-efficiency-runtime/baseline.json'));
           const after = JSON.parse(readFileSync('artifacts/prompt-efficiency-runtime/results.json'));
           const old = new Map(before.rows.map(x => [x.scenario, x]));
+          // Exact, reviewable improvements authorized for this PR; no wildcard or token budget.
+          // Human approval of the PR remains required before merge/deployment.
+          const reviewedChanges=[{"scenario":"GP007","before":"d225b6cf580831414e71b7e729e67424537849ed4fe68e29ede8973fae424b28","after":"f5fc2c6ec5fa9b68f568a9a4a855b7151112324075e5658b3d7c06c4d03ae473","deltaUtf8Bytes":24,"reason":"Engineering quantity review uses engineering authority/evidence contract instead of procurement need memo"},{"scenario":"RUNTIME-REVENUE","before":"dd80e1cbc64a4c79f68f81e25ee59e5761bc355ecdc0ba7b8f1b2c2c517d6cda","after":"30b571010e1d31620d4fdb5ccce2238420133784a58796fc2927794c39bb04a5","deltaUtf8Bytes":1444,"reason":"Tax question uses legal analysis and evidence instructions instead of executive summary"}];
+          const isReviewedChange=row => reviewedChanges.some(x=>x.scenario===row.scenario && x.before===row.before.sha256 && x.after===row.after.sha256 && x.deltaUtf8Bytes===row.deltaUtf8Bytes);
           const rows = after.rows.map(item => {
             const base = old.get(item.scenario);
             if (!base || base.status !== 'PASS' || item.status !== 'PASS') throw Error('Missing successful baseline: '+item.scenario);
-            return { scenario:item.scenario, before:{chars:base.chars,utf8Bytes:base.utf8Bytes,estimatedTokens:base.tokenEstimate},
-              after:{chars:item.chars,utf8Bytes:item.utf8Bytes,estimatedTokens:item.tokenEstimate},
+            return { scenario:item.scenario, before:{chars:base.chars,utf8Bytes:base.utf8Bytes,estimatedTokens:base.tokenEstimate,sha256:base.sha256},
+              after:{chars:item.chars,utf8Bytes:item.utf8Bytes,estimatedTokens:item.tokenEstimate,sha256:item.sha256},
               deltaChars:item.chars-base.chars,deltaUtf8Bytes:item.utf8Bytes-base.utf8Bytes,
-              deltaEstimatedTokens:item.tokenEstimate-base.tokenEstimate };
+              deltaEstimatedTokens:item.tokenEstimate-base.tokenEstimate,
+              sha256Equal:base.sha256===item.sha256 };
           });
-          const result={baseRef:process.env.GITHUB_BASE_REF||'pinned event commit',note:'Estimated tokens = ceil(UTF8 bytes/4), not model tokens',rows};
+          for (const row of rows) row.reviewedChange=reviewedChanges.find(x=>isReviewedChange(row) && x.scenario===row.scenario)?.reason || null;
+          const result={baseRef:before.head,headRef:after.head,requiresHumanMergeReview:true,note:'Estimated tokens = ceil(UTF8 bytes/4), not model tokens',rows};
           writeFileSync('artifacts/prompt-efficiency-runtime/comparison.json',JSON.stringify(result,null,2));
           console.log(JSON.stringify(result,null,2));
-          const growth=rows.filter(x=>x.deltaUtf8Bytes>0);
+          // All unchanged scenarios retain exact-copy and zero-growth contracts.
+          // Only the two exact, tested semantic improvements above may differ.
+          const changed=rows.filter(x=>!x.before.sha256||!x.after.sha256||(!x.sha256Equal&&!isReviewedChange(x)));
+          if(changed.length){console.error('Browser-final prompt SHA-256 mismatch:',changed.map(x=>x.scenario));process.exitCode=1;}
+          const growth=rows.filter(x=>x.deltaUtf8Bytes>0&&!isReviewedChange(x));
           if(growth.length){console.error('Browser-final prompt growth requires human review and verified exception:',growth.map(x=>x.scenario));process.exitCode=1;}
           NODE
       - name: Preserve final runtime prompt evidence

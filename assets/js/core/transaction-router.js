@@ -267,9 +267,9 @@
     return Object.freeze({
       primaryModule,
       modules: Object.freeze(modules),
-      confidence: healthFundingIntake ? intakeConfidence : (domainOverride ? overrideConfidence : (action ? actionConfidence : (hasEvidence ? top.confidence : 0))),
-      fallback: !healthFundingIntake && !domainOverride && !action && !hasEvidence,
-      ambiguous: !healthFundingIntake && !domainOverride && !action && ambiguous,
+      confidence: revenueRoute ? 0.99 : healthFundingIntake ? intakeConfidence : (domainOverride ? overrideConfidence : (action ? actionConfidence : (hasEvidence ? top.confidence : 0))),
+      fallback: !revenueRoute && !healthFundingIntake && !domainOverride && !action && !hasEvidence,
+      ambiguous: !revenueRoute && !healthFundingIntake && !domainOverride && !action && ambiguous,
       ranking: Object.freeze(ranking), healthFundingIntake, domainOverride, actionIntent: action,
       reason: revenueRoute ? 'revenue-task-override' : (correspondenceDraft ? 'explicit-correspondence-draft' : (healthFundingIntake ? 'health-funding-intake' : (domainOverride ? 'strong-domain-override' : (action ? 'action-intent-primary' : (hasEvidence ? (ambiguous ? 'multi-intent-close-score' : 'weighted-intent') : 'no-domain-evidence')))))
     });

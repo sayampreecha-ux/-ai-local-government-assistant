@@ -62,6 +62,11 @@ const textOf = (input = {}) => String(input.query || input.question || input.tex
 
 function resolvePrimaryWorkflowId(text, directIds, matched) {
   if (directIds.has("gov.correspondence") && EXPLICIT_CORRESPONDENCE_DRAFT.test(text)) return "gov.correspondence";
+  // Quantity/estimate review is an engineering deliverable; "ราคากลาง" alone
+  // must not promote its supporting procurement workflow above the requested job.
+  if (directIds.has("gov.engineering")
+    && /(?:ตรวจปริมาณ|ถอดแบบ|ถอดปริมาณ|ประมาณราคา|ตรวจ(?:สอบ)?ราคากลาง)/i.test(text)
+    && !/(?:\btor\b|ทีโออาร์|จัดซื้อ|จัดจ้าง|ประกวดราคา|e-?bidding|เฉพาะเจาะจง|ร่างสัญญา|ประชาสัมพันธ์|โพสต์|โปสเตอร์|อินโฟกราฟิก)/i.test(text)) return "gov.engineering";
   for (const [workflowId, pattern] of PRIMARY_ACTION_RULES) {
     if (directIds.has(workflowId) && pattern.test(text)) return workflowId;
   }
