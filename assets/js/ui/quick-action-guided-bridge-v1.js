@@ -408,11 +408,11 @@
         section.classList.toggle('is-open', !nextHidden);
       };
       trigger.addEventListener('click', toggleCategory);
-      // The host shell suppresses the native Space-generated click in some
-      // browsers. Provide one keyboard activation without bubbling to legacy
-      // keyboard shortcuts or allowing a second native activation.
+      // The host shell suppresses synthesized keyboard clicks for Enter and
+      // Space in some browsers. Activate once at keydown and prevent duplicate
+      // native/legacy activations, while preserving pointer and touch clicks.
       trigger.addEventListener('keydown', event => {
-        if (event.key !== ' ' && event.key !== 'Spacebar' && event.code !== 'Space') return;
+        if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar' && event.code !== 'Space') return;
         if (event.repeat) { event.preventDefault(); return; }
         event.preventDefault();
         event.stopPropagation();
