@@ -35,11 +35,13 @@
   const WORK_CATALOG = Object.freeze([
     Object.freeze({
       id: 'revenue',
-      title: 'งานจัดเก็บรายได้ท้องถิ่น',
-      keywords: 'ภาษีที่ดินและสิ่งปลูกสร้าง ภาษีป้าย ประเมินภาษี อุทธรณ์ภาษี ภาษีค้างชำระ เร่งรัดภาษี แผนที่ภาษี LTAX GIS LTAX ONLINE New e-LAAS หนังสือแจ้งภาษี',
+      title: 'งานจัดเก็บรายได้ อปท.',
+      keywords: 'ภาษีโรงแรม ภาษีผู้เข้าพักโรงแรม อบจ. น้ำมัน ก๊าซ ยาสูบ ภาษีที่ดินและสิ่งปลูกสร้าง ภาษีป้าย ประเมินภาษี อุทธรณ์ภาษี ภาษีค้างชำระ เร่งรัดภาษี แผนที่ภาษี LTAX GIS LTAX ONLINE New e-LAAS หนังสือแจ้งภาษี',
       tasks: Object.freeze([
         Object.freeze({ label: 'ภาษีที่ดินและสิ่งปลูกสร้าง', fillOnly: true, prompt: 'ตรวจอำนาจจัดเก็บภาษีที่ดินและสิ่งปลูกสร้างของ อปท. ตามประเภทหน่วยงาน พร้อมกฎหมายฉบับที่ใช้บังคับ ข้อมูลทรัพย์สิน ปีภาษี และหลักฐานที่ต้องตรวจก่อนดำเนินการ โดยไม่สมมุติอัตราหรือจำนวนเงิน' }),
         Object.freeze({ label: 'ภาษีป้าย', fillOnly: true, prompt: 'ตรวจแนวทางประเมินภาษีป้ายของเทศบาล ทั้งประเภทและขนาดป้าย พร้อมกฎหมายและหลักฐานปัจจุบันที่ต้องตรวจ ห้ามสมมุติอัตราหรือยอดภาษี' }),
+        Object.freeze({ label: 'ภาษีผู้เข้าพักโรงแรม (อบจ.)', fillOnly: true, prompt: 'ตรวจอำนาจขององค์การบริหารส่วนจังหวัดในการจัดเก็บภาษีจากผู้เข้าพักในโรงแรม โดยตรวจนิยามและข้อยกเว้น ผู้มีหน้าที่เสียภาษี ฐานคำนวณ ข้อบัญญัติ อัตราและปีที่มีผลใช้บังคับ ขั้นตอนยื่นและชำระ หลักฐาน และการติดตามค้างชำระจากกฎหมายต้นฉบับ ห้ามสมมุติอัตราหรือจำนวนเงิน' }),
+        Object.freeze({ label: 'น้ำมัน ก๊าซ และยาสูบ (อบจ.)', fillOnly: true, prompt: 'ตรวจอำนาจขององค์การบริหารส่วนจังหวัดเกี่ยวกับรายได้จากน้ำมัน ก๊าซ และยาสูบ แยกฐานกฎหมายและลักษณะรายได้แต่ละประเภท ตรวจผู้มีหน้าที่เสียภาษีหรือชำระเงิน ฐานคำนวณ ข้อบัญญัติ อัตราและช่วงเวลาที่มีผล ขั้นตอน หลักฐาน และการติดตามค้างชำระ ห้ามสมมุติว่าเก็บได้ทุกประเภทหรือสมมุติอัตรา' }),
         Object.freeze({ label: 'การประเมินและอุทธรณ์ภาษี', fillOnly: true, prompt: 'ตรวจขั้นตอนการแจ้งประเมินและอุทธรณ์ภาษี พร้อมวันรับแจ้ง เอกสารหลักฐาน กฎหมายและแบบทางการที่ใช้บังคับ โดยไม่สมมุติกำหนดเวลาหรือสิทธิ' }),
         Object.freeze({ label: 'ภาษีค้างชำระและเร่งรัด', fillOnly: true, prompt: 'ตรวจขั้นตอนเร่งรัดภาษีค้างชำระ เบี้ยปรับภาษี และเงินเพิ่มภาษี โดยยืนยันยอดค้าง ปีภาษี ประวัติชำระ และฐานกฎหมายก่อนสรุป ห้ามสมมุติอัตรา' }),
         Object.freeze({ label: 'แผนที่ภาษีและสำรวจทรัพย์สิน', fillOnly: true, prompt: 'ตรวจแนวทางปรับปรุงแผนที่ภาษีและสำรวจทรัพย์สินของ อปท. พร้อมทะเบียนทรัพย์สิน หลักฐาน คู่มือทางการและการคุ้มครองข้อมูลส่วนบุคคล' }),
@@ -360,8 +362,16 @@
           // Do not use data-prompt: the legacy homepage handler auto-submits it.
           button.dataset.revenuePrompt = task.prompt;
           button.addEventListener('click', () => {
+            // Only replace unchanged menu suggestions without confirmation.
+            // A user-edited or independently typed draft must be protected.
+            const current = input.value;
+            const previousSuggestion = input.dataset.revenueSuggestion || '';
+            if (current.trim() && current !== previousSuggestion) {
+              if (!window.confirm('มีข้อความที่พิมพ์ไว้ ต้องการแทนที่ด้วยคำถามจากเมนูใหม่หรือไม่?')) return;
+            }
             if (dialog?.open) dialog.close();
             input.value = task.prompt;
+            input.dataset.revenueSuggestion = task.prompt;
             input.dispatchEvent(new Event('input', { bubbles: true }));
             input.focus();
           });
