@@ -5,7 +5,7 @@ import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 import { chromium } from 'playwright';
-const root=resolve('dist'), out=resolve('artifacts/prompt-efficiency-runtime');
+const root=resolve(process.env.PROMPT_RUNTIME_ROOT || 'dist'), out=resolve('artifacts/prompt-efficiency-runtime');
 await mkdir(out,{recursive:true});
 const examples=[
  ['GP001','ร่างหนังสือราชการขอข้อมูลการประชุม'],
@@ -66,7 +66,7 @@ try {
  await context.close();
 }finally{
  await browser?.close();await new Promise(done=>server.close(done));
- await writeFile(resolve(out,'results.json'),JSON.stringify({head:process.env.GITHUB_SHA||null,tokenMeasure:'ceil(UTF8 bytes/4), not provider tokenizer',rows},null,2));
+ await writeFile(resolve(out,process.env.PROMPT_RUNTIME_REPORT || 'results.json'),JSON.stringify({head:process.env.GITHUB_SHA||null,tokenMeasure:'ceil(UTF8 bytes/4), not provider tokenizer',rows},null,2));
 }
 assert.equal(rows.length,examples.length);
 assert.equal(rows.filter(r=>r.status!=='PASS').length,0,'final browser prompt scenarios failed');
