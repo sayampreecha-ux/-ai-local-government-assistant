@@ -42,7 +42,7 @@ try {
     await otherHeading.click();
     assert.equal(await otherHeading.getAttribute('aria-expanded'),'true');
     await heading.click();
-    assert.equal(await other.locator(':scope > h3').getAttribute('aria-expanded'),'false');
+    assert.equal(await otherHeading.getAttribute('aria-expanded'),'false');
     assert.equal(await heading.getAttribute('aria-expanded'),'true');
     assert.equal(await page.locator('.work-catalog-group').count(),14);
     await heading.press('Enter');
