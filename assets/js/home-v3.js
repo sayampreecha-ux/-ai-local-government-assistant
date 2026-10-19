@@ -412,10 +412,10 @@
         'Evidence Gate: ยังไม่มีหลักฐานที่ตรวจยืนยันใน GovPrompt; AI ปลายทางต้องค้นและตรวจต้นฉบับเอง',
         'Decision Lock: ห้ามรับรองการคำนวณภาษี อัตรา กำหนดเวลา หรือการทำธุรกรรมจนกว่าจะยืนยันข้อมูลครบ',
         ...revenue.instructions
-      ].join('\\n');
+      ].join('\n');
       promptBundle = Object.freeze({
         ...promptBundle,
-        prompt: promptBundle.prompt + '\\n\\n' + revenueBlock,
+        prompt: promptBundle.prompt + '\n\n' + revenueBlock,
         revenueGuidanceDomain: revenue.domain
       });
     }
