@@ -69,12 +69,45 @@ jobs:
         run: node tests/e2e/gp001-browser-acceptance.mjs
       - name: Measure final copyable browser prompt for all GP domains
         run: node scripts/verify-prompt-efficiency-runtime.mjs
+      - name: Compare browser-final prompt with pinned base
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE_REF="${{ github.event.before }}"
+            git cat-file -e "$BASE_REF^{commit}" 2>/dev/null || BASE_REF="HEAD^"
+          fi
+          git worktree add --detach .prompt-base "$BASE_REF"
+          ln -s ../node_modules .prompt-base/node_modules
+          (cd .prompt-base && node scripts/build-static.mjs)
+          PROMPT_RUNTIME_ROOT=.prompt-base/dist PROMPT_RUNTIME_REPORT=baseline.json node scripts/verify-prompt-efficiency-runtime.mjs
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const before = JSON.parse(readFileSync('artifacts/prompt-efficiency-runtime/baseline.json'));
+          const after = JSON.parse(readFileSync('artifacts/prompt-efficiency-runtime/results.json'));
+          const old = new Map(before.rows.map(x => [x.scenario, x]));
+          const rows = after.rows.map(item => {
+            const base = old.get(item.scenario);
+            if (!base || base.status !== 'PASS' || item.status !== 'PASS') throw Error('Missing successful baseline: '+item.scenario);
+            return { scenario:item.scenario, before:{chars:base.chars,utf8Bytes:base.utf8Bytes,estimatedTokens:base.tokenEstimate},
+              after:{chars:item.chars,utf8Bytes:item.utf8Bytes,estimatedTokens:item.tokenEstimate},
+              deltaChars:item.chars-base.chars,deltaUtf8Bytes:item.utf8Bytes-base.utf8Bytes,
+              deltaEstimatedTokens:item.tokenEstimate-base.tokenEstimate };
+          });
+          const result={baseRef:process.env.GITHUB_BASE_REF||'pinned event commit',note:'Estimated tokens = ceil(UTF8 bytes/4), not model tokens',rows};
+          writeFileSync('artifacts/prompt-efficiency-runtime/comparison.json',JSON.stringify(result,null,2));
+          console.log(JSON.stringify(result,null,2));
+          const growth=rows.filter(x=>x.deltaUtf8Bytes>0);
+          if(growth.length){console.error('Browser-final prompt growth requires human review and verified exception:',growth.map(x=>x.scenario));process.exitCode=1;}
+          NODE
       - name: Preserve final runtime prompt evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: prompt-efficiency-final-runtime
-          path: artifacts/prompt-efficiency-runtime/results.json
+          path: artifacts/prompt-efficiency-runtime/*.json
           if-no-files-found: warn
           retention-days: 7
       - name: Preserve GP001 browser evidence
