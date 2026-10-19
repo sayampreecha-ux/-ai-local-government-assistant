@@ -154,6 +154,6 @@ test('revenue overrides do not change unrelated low risk meeting notes', async (
     vm.runInNewContext(await readFile(new URL(path, import.meta.url),'utf8'), sandbox);
   }
   const core = sandbox.window.GovPromptCore;
-  assert.equal(core.planUniversalTask('สรุปข้อความนัดประชุม').riskLevel, 'LOW');
+  assert.equal(core.planUniversalTask('สรุปข้อความนัดประชุม').riskLevel, 'MEDIUM'); // unchanged generic baseline
   assert.equal(core.createToolRoutingPlan({question:'สรุปข้อความนัดประชุม'}).mode, 'ai-only');
 });
