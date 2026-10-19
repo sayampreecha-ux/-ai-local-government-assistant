@@ -54,6 +54,12 @@ function collect(ref) {
     // decision-lock behavior. This test measures length without forcing all
     // low-risk outputs to contain high-risk boilerplate.
     assert.ok(output.prompt.includes('Answer First'), id + ': missing Answer First');
+    assert.ok(output.prompt.includes('GovPrompt Prompt Quality Standard v7.2'), id + ': missing registry quality standard');
+    if (id.startsWith('HIGH-RISK')) {
+      assert.equal(output.taskPlan.riskLevel, 'HIGH', id + ': unexpected risk level');
+      assert.equal(output.qualityGates.evidenceRequired, true, id + ': evidence gate disabled');
+      assert.equal(output.qualityGates.legalVersionRequired, true, id + ': legal version gate disabled');
+    }
     return [id, metric(output.prompt)];
   }));
 }
