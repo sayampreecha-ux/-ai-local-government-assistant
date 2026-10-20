@@ -35,12 +35,17 @@ try {
     await page.locator('#promptInput').fill(question);
     const preSubmit = await page.evaluate(()=>({readyState:document.readyState,homeScript:[...document.scripts].filter(x=>x.src.includes('home-v3')).map(x=>x.src),form:!!document.querySelector('#chatForm'),messageCount:document.querySelectorAll('#conversation .message.user').length,pathname:location.pathname}));
     await page.locator('#chatForm button[type="submit"]').click();
-    if(id==='R07') {
-      // An abstract question must not be intercepted by capture-phase Privacy Gate.
-      await page.locator('#conversation .message.user').first().waitFor({state:'attached',timeout:20000});
-    } else {
-      await page.locator('#conversation .message.user').first().waitFor({state:'attached',timeout:20000});
+    if(id==='R10') {
+      const intake=page.locator('#conversation .guided-intake-message');
+      await intake.first().waitFor({state:'attached',timeout:20000});
+      const intakeText=await intake.first().textContent();
+      assert.match(intakeText,/ขอข้อมูลเพิ่ม|ข้อมูลเพิ่มเติม|ข้อมูลที่จำเป็น/,'R10 must request missing details without fabricating them');
+      const conversation=await page.locator('#conversation').textContent();
+      assert.ok(conversation.includes(question.slice(0,30)),'R10 must retain original request');
+      stage='guided-intake';
+      throw Object.assign(new Error('R10 requires multi-turn guided intake for full copyable prompt acceptance'),{acceptanceBlocked:true});
     }
+    await page.locator('#conversation .message.user').first().waitFor({state:'attached',timeout:20000});
     const sourceMessage=await page.locator('#conversation .message.user').first().textContent();
     assert.ok(sourceMessage.includes(question),'submitted question missing from DOM');
     await page.locator('#thinkingMessage').waitFor({state:'detached',timeout:30000});
@@ -48,7 +53,8 @@ try {
     const card=page.locator('#conversation .message.assistant .answer-card').first();
     await card.waitFor({timeout:20000});
     const visible=await card.innerText();
-    assert.match(visible,/งานจัดเก็บรายได้ อปท./,'missing topical revenue label');
+    const label=await page.locator('#conversation .message.assistant .route-label').first().textContent();
+    assert.match(label,/งานจัดเก็บรายได้ อปท./,'missing topical revenue label');
     assert.ok(visible.includes(expectedEvidence),'missing case-specific evidence '+expectedEvidence);
     stage='handoff';
     const prompt=await card.locator('details pre').innerText();
