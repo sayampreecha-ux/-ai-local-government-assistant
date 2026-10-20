@@ -101,8 +101,14 @@
       || resetAndTest(ACTIVE_STAGE_PATTERN, original);
     const isPublished = context.isPublished === true || (isProcurement && resetAndTest(PUBLIC_PROCUREMENT_PATTERN, original));
     const isDraftInternal = context.isPublished === false || resetAndTest(DRAFT_INTERNAL_PATTERN, original);
-    const hasPersonLevelMarker = resetAndTest(PERSON_LEVEL_MARKER_PATTERN, original)
-      || resetAndTest(PERSON_NAME_PATTERN, original);
+    // A question mentioning "เลขบัตรประชาชน" or personal tax data is not itself
+    // a person's record. Require an identifying value or person-linked amount.
+    // Actual IDs, named-person records and finance amounts remain protected.
+    const hasPersonLevelMarker = resetAndTest(PERSON_NAME_PATTERN, original)
+      || resetAndTest(NATIONAL_ID_PATTERN, original)
+      || resetAndTest(TAX_ID_PATTERN, original)
+      || (resetAndTest(PERSON_LEVEL_MARKER_PATTERN, original)
+        && /(?:เงินเดือน|ค่าจ้าง|ภาษี|ยอดค้าง|ยอดชำระ)[^\n]{0,65}\d[\d,.]*\s*บาท/i.test(original));
     const aggregateBudget = isFinance && resetAndTest(AGGREGATE_BUDGET_PATTERN, original) && !hasPersonLevelMarker;
 
     if (resetAndTest(CREDENTIAL_VALUE_PATTERN, original) || resetAndTest(PRIVATE_KEY_PATTERN, original)) {

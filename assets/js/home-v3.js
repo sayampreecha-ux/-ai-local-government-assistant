@@ -418,7 +418,8 @@
       promptBundle = Object.freeze({
         ...promptBundle,
         prompt: promptBundle.prompt + '\n\n' + revenueBlock,
-        revenueGuidanceDomain: revenue.domain
+        revenueGuidanceDomain: revenue.domain,
+        revenueMissingEvidence: revenue.missingEvidence
       });
     }
 
@@ -660,7 +661,9 @@
 
     article.className = 'message assistant'; content.className = 'assistant-content'; label.className = 'route-label'; card.className = 'answer-card'; section.className = 'answer-section'; actions.className = 'answer-actions'; mark.className = 'assistant-mark'; mark.setAttribute('aria-hidden', 'true'); mark.textContent = 'กพ';
     if (promptBundle.gp223) window.GovPromptCore.gp223HandoffPrompts.set(card, promptBundle.prompt);
-    label.textContent = `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
+    label.textContent = promptBundle.revenueGuidanceDomain
+      ? `งานจัดเก็บรายได้ อปท. · ${route.moduleId}`
+      : `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
     const isPrResult = Boolean(promptBundle?.prMode);
     const isMinutesResult = workflowRuntime?.meetingMinutes?.mode === 'draft-from-recorded-facts';
     if (isMinutesResult) {
@@ -682,6 +685,17 @@
         ? `GP จัดคำสั่งเฉพาะงานประชาสัมพันธ์ให้แล้ว พร้อมตรวจข้อเท็จจริง PDPA และรูปแบบสื่อ${workflowSummary}${presentationSummary}`
         : `ระบบจัดคำถาม ตรวจความเสี่ยง และเตรียม Prompt กำหนดวิธีค้นแหล่งราชการให้แล้ว — กดคัดลอกไปวางใน ChatGPT หรือ AI ที่คุณใช้${workflowSummary}${presentationSummary}`;
 
+    if (promptBundle.revenueGuidanceDomain) {
+      // Revenue is a topical context, not a replacement for the chosen output module.
+      // Show actionable evidence on the result page; the AI destination still verifies law.
+      const evidence = Array.isArray(promptBundle.revenueMissingEvidence)
+        ? promptBundle.revenueMissingEvidence : [];
+      description.textContent = 'แนวทางตรวจเบื้องต้น: ตรวจประเภท อปท. และอำนาจจัดเก็บก่อน ตรวจข้อบัญญัติ/กฎหมายฉบับใช้บังคับ แล้วตรวจหลักฐานเฉพาะเรื่องก่อนคำนวณหรือสั่งดำเนินการ';
+      const evidenceNote = document.createElement('p');
+      evidenceNote.className = 'revenue-result-evidence';
+      evidenceNote.textContent = 'หลักฐานที่ต้องตรวจ: ' + (evidence.length ? evidence.join(' · ') : 'ตรวจต้นฉบับทางการที่เกี่ยวข้อง');
+      section.append(evidenceNote);
+    }
     const v8Assessment = searchResult?.v8Assessment;
     if (isPrResult) status.textContent = '✅ พร้อมทำสื่อประชาสัมพันธ์ — ไม่ดึงกฎงานอื่นมาปน';
     else if (isMinutesResult) status.textContent = 'ร่างจากข้อมูลที่มี กรุณาตรวจสอบกับต้นฉบับก่อนรับรองรายงานการประชุม';
