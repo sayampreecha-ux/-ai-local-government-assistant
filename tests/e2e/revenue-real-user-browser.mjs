@@ -29,7 +29,7 @@ try {
     await page.locator('#promptInput').waitFor({state:'visible',timeout:15000});
     await page.waitForFunction(()=>typeof window.GovPromptCore?.createGovernmentPrompt==='function' && typeof window.GovPromptCore?.prepareGP223IntakeTurn==='function',null,{timeout:20000});
     await page.locator('#promptInput').fill(question);
-    await page.locator('#chatForm').evaluate(form=>form.requestSubmit());
+    await page.locator('#chatForm button[type="submit"]').click();
     if(id==='R07') {
       // An abstract question must not be intercepted by capture-phase Privacy Gate.
       await page.locator('#conversation .message.user').first().waitFor({timeout:20000});
@@ -56,7 +56,7 @@ try {
       stage='privacy-negative';
       await page.goto(base,{waitUntil:'domcontentloaded'});
       await page.locator('#promptInput').fill('ข้อมูลภาษีของนายสมชาย ใจดี เลขบัตรประชาชน 1234567890123');
-      await page.locator('#chatForm').evaluate(form=>form.requestSubmit());
+      await page.locator('#chatForm button[type="submit"]').click();
       await page.waitForTimeout(250);
       assert.equal(await page.locator('#conversation .message.user').count(),0,'PII unexpectedly reached UI');
     }
