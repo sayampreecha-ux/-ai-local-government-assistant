@@ -43,7 +43,12 @@ try {
       const conversation=await page.locator('#conversation').textContent();
       assert.ok(conversation.includes(question.slice(0,30)),'R10 must retain original request');
       stage='guided-intake';
-      throw Object.assign(new Error('R10 requires multi-turn guided intake for full copyable prompt acceptance'),{acceptanceBlocked:true});
+      await intake.first().locator('button').filter({hasText:'ยังไม่ทราบบางข้อ'}).click();
+      await page.locator('#conversation .message.user').first().waitFor({state:'attached',timeout:20000});
+      const sourceMessage=await page.locator('#conversation .message.user').first().textContent();
+      assert.ok(sourceMessage.includes(question),'R10 original request lost after guided intake');
+      assert.match(sourceMessage,/ข้อมูลที่ผู้ใช้ยังไม่ทราบหรือยังไม่กำหนด/,'R10 missing-field acknowledgement lost');
+      await page.locator('#thinkingMessage').waitFor({state:'detached',timeout:30000});
     }
     await page.locator('#conversation .message.user').first().waitFor({state:'attached',timeout:20000});
     const sourceMessage=await page.locator('#conversation .message.user').first().textContent();
@@ -53,18 +58,25 @@ try {
     const card=page.locator('#conversation .message.assistant .answer-card').first();
     await card.waitFor({timeout:20000});
     const visible=await card.innerText();
+    const evidenceNode=card.locator('.revenue-result-evidence');
+    await evidenceNode.waitFor({state:'attached',timeout:10000});
+    const evidenceText=await evidenceNode.textContent();
     const label=await page.locator('#conversation .message.assistant .route-label').first().textContent();
     assert.match(label,/งานจัดเก็บรายได้ อปท./,'missing topical revenue label');
-    assert.ok(visible.includes(expectedEvidence),'missing case-specific evidence '+expectedEvidence);
+    assert.ok(evidenceText.includes(expectedEvidence),'missing case-specific evidence '+expectedEvidence);
     stage='handoff';
-    const prompt=await card.locator('details pre').innerText();
+    const prompt=await card.locator('details pre').textContent();
     assert.ok(prompt.includes(question),'copyable prompt lost original question');
     assert.match(prompt,/Evidence Gate|หลักฐาน/);
     assert.match(prompt,/Decision Lock/);
     assert.match(prompt,/Human Review|ตรวจสอบก่อนใช้จริง|เจ้าหน้าที่ตรวจสอบ/);
     const handoff=await card.locator('button').filter({hasText:'คัดลอกไปใช้กับ AI'}).count();
     assert.ok(handoff>=1,'copy button missing');
-    if(id==='R10') assert.match(prompt,/ร่าง|เว้นช่อง|ข้อมูลที่ขาด/);
+    if(id==='R10') {
+      assert.match(prompt,/ข้อมูลที่ผู้ใช้ยังไม่ทราบหรือยังไม่กำหนด/);
+      assert.match(prompt,/ร่าง|เว้นช่อง|ข้อมูลที่ขาด/);
+      assert.ok(!/นายสมชาย ใจดี|ยอดค้าง 10,000 บาท/.test(prompt),'no invented taxpayer details');
+    }
     if(id==='R07'){
       stage='privacy-negative';
       await page.goto(base,{waitUntil:'domcontentloaded'});
