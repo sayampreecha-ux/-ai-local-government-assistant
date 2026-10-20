@@ -59,7 +59,36 @@ try{
     assert.ok(record.prompt.includes(record.seed),'selected menu seed preserved');
     for(const text of c.expect)assert.ok(record.prompt.includes(text),text);
     if(c.button<3)for(const text of ['VERIFIED','PENDING','BLOCKED','Partial Decision Lock','Human Review'])assert.ok(record.prompt.includes(text),text);
+    // Read-only diagnostic: preserve the exact submitted prompt and the runtime routing decisions.
     record.route=await page.locator('.route-label').last().innerText();
+    record.routingDiagnostic=await page.evaluate(({seed,scenario})=>{
+      const core=window.GovPromptCore;
+      const question=String(seed||'')+' '+String(scenario||'');
+      const ctx=core.createSharedContext({facts:question,desiredOutput:question});
+      const direct=core.routeRequest(question);
+      const transaction=core.routeTransaction(ctx);
+      const summarize=route=>({
+        primaryModule:route.primaryModule||route.moduleId,
+        reason:route.reason,
+        domainOverride:route.domainOverride,
+        actionIntent:route.actionIntent,
+        ranking:(route.ranking||[]).filter(x=>['GP003','GP007','GP012'].includes(x.moduleId)).map(x=>({
+          moduleId:x.moduleId,rawScore:x.rawScore,matchedIntents:x.matchedIntents
+        }))
+      });
+      return {question,routeRequest:summarize(direct),routeTransaction:summarize(transaction),
+        output:core.routeOutput(question,{moduleId:transaction.moduleId},ctx)};
+    },{seed:record.seed,scenario:c.scenario});
+    if(device==='desktop'&&c.id==='BOQ01'){
+      record.negativePrDiagnostics=await page.evaluate(()=>{
+        const core=window.GovPromptCore;
+        return ['ทำข่าวประชาสัมพันธ์กิจกรรมของ อบจ.','เขียนโพสต์เฟซบุ๊กประชาสัมพันธ์โครงการ','สร้างอินโฟกราฟิกประชาสัมพันธ์'].map(question=>{
+          const r=core.routeRequest(question);
+          return {question,primaryModule:r.primaryModule,domainOverride:r.domainOverride,actionIntent:r.actionIntent,
+            ranking:r.ranking.filter(x=>['GP007','GP012'].includes(x.moduleId)).map(x=>({moduleId:x.moduleId,rawScore:x.rawScore,matchedIntents:x.matchedIntents}))};
+        });
+      });
+    }
     assert.match(record.route,/ช่าง|วิศวกรรม|พัสดุ|จัดซื้อ/,'engineering or procurement route');
     record.layout=await page.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth}));
     assert.ok(record.layout.scrollWidth<=viewport.width+2,'no horizontal overflow');
