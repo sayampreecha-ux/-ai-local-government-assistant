@@ -21,6 +21,10 @@ try {
  for(const device of [{name:'desktop',viewport:{width:1440,height:900}},{name:'mobile',viewport:{width:390,height:844},isMobile:true,hasTouch:true}]) {
   const context=await browser.newContext({viewport:device.viewport,isMobile:device.isMobile,hasTouch:device.hasTouch,locale:'th-TH',permissions:['clipboard-read','clipboard-write']});
   const page=await context.newPage();
+  const browserEvents=[];
+  page.on('pageerror',e=>browserEvents.push('PAGEERROR '+String(e)));
+  page.on('console',m=>{if(m.type()==='error')browserEvents.push('CONSOLE '+m.text())});
+  page.on('requestfailed',req=>browserEvents.push('NETWORK '+req.url()+' '+req.failure()?.errorText));
   for(const [id,question,expectedEvidence] of cases) {
    let status='PASS',reason='',stage='submit';
    try {
@@ -29,6 +33,7 @@ try {
     await page.locator('#promptInput').waitFor({state:'visible',timeout:15000});
     await page.waitForFunction(()=>typeof window.GovPromptCore?.createGovernmentPrompt==='function' && typeof window.GovPromptCore?.prepareGP223IntakeTurn==='function',null,{timeout:20000});
     await page.locator('#promptInput').fill(question);
+    const preSubmit = await page.evaluate(()=>({readyState:document.readyState,homeScript:[...document.scripts].filter(x=>x.src.includes('home-v3')).map(x=>x.src),form:!!document.querySelector('#chatForm'),messageCount:document.querySelectorAll('#conversation .message.user').length,pathname:location.pathname}));
     await page.locator('#chatForm button[type="submit"]').click();
     if(id==='R07') {
       // An abstract question must not be intercepted by capture-phase Privacy Gate.
@@ -60,10 +65,10 @@ try {
       await page.waitForTimeout(250);
       assert.equal(await page.locator('#conversation .message.user').count(),0,'PII unexpectedly reached UI');
     }
-   } catch(e) { status='FAIL';reason=String(e?.stack||e);}
+   } catch(e) { status='FAIL';reason=String(e?.stack||e);reason+='\nBROWSER_EVENTS: '+browserEvents.slice(-16).join(' | '); reason+='\nDOM_STATE: '+JSON.stringify(await page.evaluate(()=>({url:location.href,readyState:document.readyState,input:document.querySelector('#promptInput')?.value,form:document.querySelector('#chatForm')?.outerHTML.slice(0,450),conversation:document.querySelector('#conversation')?.innerText.slice(0,450),result:document.documentElement.className})).catch(()=>({unavailable:true})));}
    try {await page.screenshot({path:`${out}/${device.name}-${id}-${status}.png`,fullPage:true});}catch{}
    results.push({id,device:device.name,status,stage,reason,head:process.env.GITHUB_SHA||null,source:'local-PR-branch-http-server',downstreamAnswer:'NOT TESTED'});
-   console.log(device.name,id,status,stage,reason.split('\n')[0]);
+   console.log(device.name,id,status,stage,reason.slice(0,2500));
   }
   await context.close();
  }
