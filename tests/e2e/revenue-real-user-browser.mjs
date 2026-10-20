@@ -37,10 +37,12 @@ try {
     await page.locator('#chatForm button[type="submit"]').click();
     if(id==='R07') {
       // An abstract question must not be intercepted by capture-phase Privacy Gate.
-      await page.locator('#conversation .message.user').first().waitFor({timeout:20000});
+      await page.locator('#conversation .message.user').first().waitFor({state:'attached',timeout:20000});
     } else {
-      await page.locator('#conversation .message.user').first().waitFor({timeout:20000});
+      await page.locator('#conversation .message.user').first().waitFor({state:'attached',timeout:20000});
     }
+    const sourceMessage=await page.locator('#conversation .message.user').first().textContent();
+    assert.ok(sourceMessage.includes(question),'submitted question missing from DOM');
     await page.locator('#thinkingMessage').waitFor({state:'detached',timeout:30000});
     stage='result';
     const card=page.locator('#conversation .message.assistant .answer-card').first();
