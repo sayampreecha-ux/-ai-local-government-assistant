@@ -50,7 +50,10 @@
     const reviewingContract = tasks.some(t=>t.id==='T07'||t.id==='T11');
     if (reviewingContract && !/(?:จัดทำ|ทำ|ร่าง)\s*(?:BOQ|ปร\.?\s*4)/i.test(source)) tasks = tasks.map(t=>t.id==='T02' ? Object.freeze({...t,referenceOnly:true,deliverable:'ตรวจเทียบ BOQ/ปร.4 ที่ได้รับกับสัญญา แบบและงวดงาน; ไม่สร้าง BOQ ใหม่เมื่อผู้ใช้ขอเพียงตรวจเอกสารอ้างอิง'}) : t);
     const estimationRequested = tasks.some(t=>['T02','T03','T04'].includes(t.id)&&!t.referenceOnly) && /(?:\bBOQ\b|ปร\.?\s*[456]|ราคากลาง|ประมาณราคา|Factor\s*F)/i.test(source);
-    return Object.freeze({version:'1.1.0', tasks:Object.freeze(tasks), decisionLock:true,
+    const primaryDraft = drawing || tasks.some(t=>t.id==='T06')
+      || /^(?:ช่วย)?(?:จัดทำ|ทำ|ร่าง|ถอดแบบและจัดทำ)\s*(?:BOQ|ปร\.?\s*4)/i.test(source)
+        && !tasks.some(t=>['T03','T04'].includes(t.id));
+    return Object.freeze({version:'1.1.0', tasks:Object.freeze(tasks), decisionLock:true, primaryDraft,
       numericStatus:'UNVERIFIED', certificationAllowed:false, source, drawing, estimationRequested,
       publicityRequested: publicity.test(q),
       documentRequested: /(?:ร่าง|จัดทำ|เขียน).{0,12}(?:บันทึกข้อความ|หนังสือ)/.test(q)});

@@ -41,6 +41,12 @@
 
   function createSharedContext(input = {}) {
     const source = input && typeof input === 'object' ? input : {};
+    // The same extractor supplies both the canonical context and health policy.
+    // Explicit context is retained; conflicting text is reported by the policy.
+    const inferred = window.GovPromptCore?.extractHealthFundingContext?.(
+      normalizeText(source.facts || source.desiredOutput));
+    const fundingLabels = { maintenanceFund: 'เงินบำรุง', localGovernmentBudget: 'งบประมาณ อปท.',
+      grant: 'เงินอุดหนุน', fund: 'กองทุน', other: 'แหล่งเงินอื่น', mixed: 'หลายแหล่งเงิน/ข้อมูลขัดแย้ง — ต้องแยกรายการตรวจสอบ' };
 
     return {
       ...DEFAULT_CONTEXT,
@@ -49,7 +55,7 @@
       domain: normalizeText(source.domain),
       currentStage: normalizeText(source.currentStage),
       transactionType: normalizeText(source.transactionType),
-      fundingSource: normalizeText(source.fundingSource),
+      fundingSource: normalizeText(source.fundingSource) || fundingLabels[inferred?.sourceOfFunds] || '',
       facts: normalizeText(source.facts),
       documents: normalizeText(source.documents),
       specialFlags: normalizeFlags(source.specialFlags),

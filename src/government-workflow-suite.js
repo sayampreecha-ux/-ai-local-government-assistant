@@ -8,7 +8,7 @@ const WORKFLOWS = Object.freeze({
   procurement: { id: "gov.procurement", keywords: ["จัดซื้อ", "จัดจ้าง", "ซื้อ", "เครื่องจักร", "รถขุด", "รถบรรทุก", "tor", "ราคากลาง", "e-bidding", "เฉพาะเจาะจง"] },
   finance: { id: "gov.finance", keywords: ["เบิก", "เบิกจ่าย", "งบประมาณ", "เงินกู้", "กู้เงิน", "เงินสะสม", "ค่าใช้จ่าย", "การเงิน", "ค่าเช่าซื้อบ้าน", "ค่าซื้อบ้าน", "ผ่อนบ้าน", "ผ่อนชำระบ้าน"] },
   correspondence: { id: "gov.correspondence", keywords: ["หนังสือราชการ", "ร่างหนังสือ", "บันทึกข้อความ", "หนังสือภายนอก", "หนังสือภายใน", "ทำรายงานการประชุม", "ทำรายงานการประชุมทั่วไป", "รายงานการประชุม", "สรุปประชุม", "ถอดประชุม", "ไฟล์เสียงประชุม"] },
-  legal: { id: "gov.legal", keywords: ["กฎหมาย", "ระเบียบ", "ข้อกฎหมาย", "อำนาจ", "หารือ", "คำพิพากษา", "วินัย"] },
+  legal: { id: "gov.legal", keywords: ["กฎหมาย", "ระเบียบ", "ข้อกฎหมาย", "อำนาจ", "หารือ", "คำพิพากษา", "วินัย", "pdpa", "ข้อมูลส่วนบุคคล"] },
   project: { id: "gov.project", keywords: ["ทำโครงการ", "โครงการ", "จัดอบรม", "กิจกรรม", "ดำเนินโครงการ"] },
   hr: { id: "gov.hr", keywords: ["บุคคล", "อัตรากำลัง", "เลื่อนขั้น", "เลื่อนเงินเดือน", "บรรจุ", "แต่งตั้ง", "โอน", "ย้าย"] },
   engineering: { id: "gov.engineering", keywords: ["งานช่าง", "วิศวกรรม", "ถนน", "สะพาน", "ก่อสร้าง", "แบบก่อสร้าง", "ประมาณราคา", "ควบคุมงาน", "ตรวจรับงาน", "ความหนาแน่นดิน"] },
@@ -62,6 +62,11 @@ const textOf = (input = {}) => String(input.query || input.question || input.tex
 
 function resolvePrimaryWorkflowId(text, directIds, matched) {
   if (directIds.has("gov.correspondence") && EXPLICIT_CORRESPONDENCE_DRAFT.test(text)) return "gov.correspondence";
+  // An explicit project draft remains the main job when legal spending advice
+  // is expressly deferred. A positive spending question keeps its finance path.
+  if (directIds.has('gov.project') && /^(?:ช่วย)?(?:ร่าง|จัดทำ|ทำ|เขียน)\s*โครงการ/.test(text)
+    && /(?:ไม่|ยังไม่)(?:ขอ|ต้องการ|ยืนยัน|ตรวจ|วิเคราะห์)(?:สิทธิ|เรื่อง|การ)?เบิกจ่าย/.test(text)
+    && !/(?:เบิก(?:จ่าย)?ได้(?:ไหม|หรือไม่)|ขอเบิก|จ่ายได้ไหม)/.test(text)) return 'gov.project';
   // Quantity/estimate review is an engineering deliverable; "ราคากลาง" alone
   // must not promote its supporting procurement workflow above the requested job.
   if (directIds.has("gov.engineering")
@@ -83,7 +88,8 @@ export function detectGovernmentWorkflows(input = {}) {
   const meetingMinutesDraft = /(?:ทำ|จัดทำ|ร่าง).{0,18}รายงาน(?:การ)?ประชุม|(?:^|\s)สรุป(?:การ)?ประชุม(?:\s|$)|ถอด(?:เสียง)?ประชุม|จัดรายงาน(?:การ)?ประชุม|ทำรายงานจากไฟล์เสียง/i.test(text)
     && !councilLegalReview;
   const councilMeetingContext = /(?:สภาท้องถิ่น|ประชุมสภา|รายงาน(?:การ)?ประชุม\s*สภา|มติสภา|ญัตติ|ประธานสภา|สมาชิกสภา|องค์ประชุม|สมัยประชุม)/i.test(text);
-  let matched = all.filter((wf) => wf.keywords.some((k) => (wf.id === "gov.procurement" ? procurementText(text) : text).includes(k.toLowerCase())));
+  let matched = all.filter((wf) => wf.keywords.some((k) => (wf.id === "gov.procurement" ? procurementText(text)
+    : wf.id === 'gov.hr' ? text.replace(/ข้อมูล(?:ส่วน)?บุคคล/g, 'ข้อมูลความเป็นส่วนตัว') : text).includes(k.toLowerCase())));
   if (meetingMinutesDraft) {
     matched = matched.filter((wf) => wf.id !== 'gov.council' && wf.id !== 'gov.correspondence');
     matched.unshift(councilMeetingContext ? WORKFLOWS.council : WORKFLOWS.correspondence);

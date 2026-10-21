@@ -73,7 +73,17 @@
 
   const detectBlockingRisk = input => detectByRules(input, BLOCK_RULES);
   const detectResidualRisk = input => detectByRules(input, RESIDUAL_RISK_RULES);
-  const detectSensitiveContext = input => detectByRules(input, SENSITIVE_CONTEXT_RULES);
+  // A complete category-only question is not a person's record. The anchored
+  // grammar accepts no values, identifiers or extra prose; a disclaimer alone
+  // never grants an exception. All other sensitive wording still fails closed.
+  function isSensitiveTopicQuestion(input) {
+    const source = String(input ?? '').normalize('NFC').trim();
+    const category = '(?:ข้อมูลสุขภาพ|ความพิการ|ข้อมูลพันธุกรรม|ข้อมูลชีวมิติ|เชื้อชาติ|ความคิดเห็นทางการเมือง|ศาสนา|ความเชื่อ|พฤติกรรมทางเพศ|รสนิยมทางเพศ|ประวัติอาชญากรรม|ข้อมูลสหภาพแรงงาน)';
+    const prefix = '(?:อธิบาย|สรุป|เปรียบเทียบ|ขอแนวทาง|ร่างแนวทาง)\\s*(?:(?:หลักการ|หลัก|แนวทาง|กฎหมาย|การคุ้มครอง|การจัดการ|PDPA)\\s*)*(?:(?:สำหรับ|เกี่ยวกับ|เรื่อง)\\s*)?';
+    return new RegExp('^' + prefix + category + '(?:[\\s,、]*(?:และ|หรือ)?\\s*' + category + ')*(?:\\s*(?:ตามหลัก PDPA|ตาม PDPA|โดยไม่ใช้ข้อมูลบุคคลจริง))?\\s*[?？]?$','i').test(source);
+  }
+  const detectSensitiveContext = input => isSensitiveTopicQuestion(input)
+    ? Object.freeze([]) : detectByRules(input, SENSITIVE_CONTEXT_RULES);
 
   function applyRedactions(input, { preserveWhitespace = false } = {}) {
     const original = String(input ?? '');

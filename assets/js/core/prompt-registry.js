@@ -82,7 +82,7 @@
     const councilMeeting = /(?:สภาท้องถิ่น|ประชุมสภา|รายงาน(?:การ)?ประชุม\s*สภา|มติสภา|ญัตติ|ประธานสภา|สมาชิกสภา|องค์ประชุม|สมัยประชุม)/i.test(source);
     if (/(?:เบิก|การเงิน|คลัง|ฎีกา|ค่าใช้จ่าย|เงินสะสม|เงินบำรุง|โบนัส|งบประมาณ)/i.test(source)) domains.push('finance');
     if (/(?:พัสดุ|จัดซื้อ|จัดจ้าง|tor|ราคากลาง|สัญญา|ผู้รับจ้าง|ผู้ยื่น|ตรวจรับ|e-bidding)/i.test(source)) domains.push('procurement');
-    if (/(?:บุคคล|บรรจุ|แต่งตั้ง|เลื่อนเงินเดือน|เลื่อนระดับ|ทดลองงาน|คุณสมบัติปลัด|วินัย|พนักงาน|ข้าราชการ|อัตรากำลัง)/i.test(source)) domains.push('hr');
+    if (/(?:บุคคล|บรรจุ|แต่งตั้ง|เลื่อนเงินเดือน|เลื่อนระดับ|ทดลองงาน|คุณสมบัติปลัด|วินัย|พนักงาน|ข้าราชการ|อัตรากำลัง)/i.test(source.replace(/ข้อมูล(?:ส่วน)?บุคคล/g, 'ข้อมูลความเป็นส่วนตัว'))) domains.push('hr');
     if (/(?:หนังสือราชการ|หนังสือ|บันทึกข้อความ|บันทึก|สารบรรณ|ร่างหนังสือ|คำสั่ง|ประกาศ)/i.test(source) || (meetingMinutes && !councilMeeting)) domains.push('records');
     if (/(?:กฎหมาย|ระเบียบ|อำนาจ|ข้อหารือ|คำพิพากษา|มาตรา|สิทธิ|หนังสือเวียน|บทเฉพาะกาล|หลักเกณฑ์)/i.test(source)) domains.push('legal');
     if (/(?:รพ\.สต|รพสต|สอน\.(?:เฉลิมพระเกียรติ(?:ฯ)?)?|สถานีอนามัย|สาธารณสุข|สุขภาพ|เงินบำรุง|ผู้ป่วย|อสม\.?|ยา|เวชภัณฑ์|เบาหวาน)/i.test(source)) domains.push('health');
@@ -93,16 +93,19 @@
   }
 
   // Instruction policy, not a verified legal ruling or an authorization to spend.
-  function extractHealthFundingContext(question = '', { healthContext = false } = {}) {
+  function extractHealthFundingContext(question = '', { healthContext = false, fundingSource = '' } = {}) {
     const text = String(question).normalize('NFC');
     const isHealth = healthContext || /(?:เงินบำรุง|โรงพยาบาล|รพ\.?สต\.?|รพสต|โรงพยาบาลส่งเสริมสุขภาพตำบล|สอน\.(?:เฉลิมพระเกียรติ(?:ฯ)?)?|สถานีอนามัย|หน่วยบริการ(?:สาธารณสุข)?|สาธารณสุข|ส่งเสริมสุขภาพ|อาหารปลอดภัย)/i.test(text);
     if (!isHealth) return Object.freeze({ healthContext: false, sourceOfFunds: 'not-applicable', facilityType: 'unknown', projectIntent: false });
-    let sourceOfFunds = 'unknown';
-    if (/เงินบำรุง/i.test(text)) sourceOfFunds = 'maintenanceFund';
-    else if (/(?:งบประมาณ(?:รายจ่าย)?|งบ)(?:\s*ของ)?\s*(?:อปท\.?|อบจ\.?|อบต\.?|เทศบาล|องค์กรปกครองส่วนท้องถิ่น)/i.test(text)) sourceOfFunds = 'localGovernmentBudget';
-    else if (/เงินอุดหนุน/i.test(text)) sourceOfFunds = 'grant';
-    else if (/กองทุน/i.test(text)) sourceOfFunds = 'fund';
-    else if (/เงินเฉพาะ(?:กิจ)?|เงินอื่น|แหล่งเงินอื่น/i.test(text)) sourceOfFunds = 'other';
+    const fundingText = [text, fundingSource].join(' ').replace(/(?:ไม่ใช้|ไม่ใช่|ไม่ได้ใช้)\s*(?:เงินบำรุง|เงินอุดหนุน|กองทุน)/g, '');
+    const sources = [
+      ['maintenanceFund', /เงินบำรุง|\bmaintenanceFund\b/i],
+      ['localGovernmentBudget', /(?:งบประมาณ(?:รายจ่าย)?|งบ)(?:\s*ของ)?\s*(?:อปท\.?|อบจ\.?|อบต\.?|เทศบาล|องค์กรปกครองส่วนท้องถิ่น)|\blocalGovernmentBudget\b/i],
+      ['grant', /เงินอุดหนุน|\bgrant\b/i], ['fund', /กองทุน|\bfund\b/i],
+      ['other', /เงินเฉพาะ(?:กิจ)?|เงินอื่น|แหล่งเงินอื่น|\bother\b/i]
+    ].filter(([, pattern]) => pattern.test(fundingText)).map(([id]) => id);
+    const sourceOfFunds = sources.length > 1 || /หลายแหล่งเงิน|\bmixed\b/.test(fundingText)
+      ? 'mixed' : sources[0] || 'unknown';
     const facilityType = /รพ\.?สต\.?|รพสต|โรงพยาบาลส่งเสริมสุขภาพตำบล|สอน\.(?:เฉลิมพระเกียรติ(?:ฯ)?)?|สถานีอนามัย|หน่วยบริการ(?:สาธารณสุข)?/i.test(text)
       ? 'healthServiceUnit'
       : /โรงพยาบาล/i.test(text) ? 'hospital' : 'unknown';
@@ -113,7 +116,9 @@
   function buildHealthFundingInstructions(question = '', options = {}) {
     const ctx = extractHealthFundingContext(question, options);
     if (!ctx.healthContext) return '';
-    const sourceLine = ctx.sourceOfFunds === 'maintenanceFund'
+    const sourceLine = ctx.sourceOfFunds === 'mixed'
+      ? 'SOURCE STATE: sourceOfFunds=mixed — พบหลายแหล่งเงินหรือข้อมูลขัดแย้ง แยกรายการและตรวจแต่ละแหล่งก่อนฟันธง ห้ามเลือกกฎเงินบำรุงอัตโนมัติ'
+      : ctx.sourceOfFunds === 'maintenanceFund'
       ? 'SOURCE STATE: sourceOfFunds=maintenanceFund (VERIFIED FROM USER TEXT) — ห้ามแสดงว่าแหล่งเงินยังไม่ระบุและห้ามถามแหล่งเงินซ้ำ'
       : ctx.sourceOfFunds === 'localGovernmentBudget'
         ? 'SOURCE STATE: sourceOfFunds=localGovernmentBudget (VERIFIED FROM USER TEXT) — หยุด Maintenance Fund Workflow'
