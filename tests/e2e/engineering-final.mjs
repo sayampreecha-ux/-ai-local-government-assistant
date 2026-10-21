@@ -49,7 +49,8 @@ try{
     await page.goto(base,{waitUntil:'networkidle'});
     const group=page.locator('[data-category-id="engineering"]');
     const buttons=group.locator('.work-catalog-task');
-    await group.getByRole('button',{name:actionLabels.k,exact:true}).waitFor({state:'attached'});
+    // The category is initially collapsed: ARIA role selectors exclude hidden tasks.
+    await group.locator('[data-gp-k-audit]').waitFor({state:'attached'});
     assert.deepEqual(await buttons.allTextContents(),labels);
     await group.getByRole('button',{name:'งานช่างและวิศวกรรม',exact:true}).click();
     assert.ok(await buttons.first().isVisible());
