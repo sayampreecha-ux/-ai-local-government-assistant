@@ -58,6 +58,7 @@ try{
     await summary.last().click({timeout:30000});const prompt=await page.locator('.answer-card .answer-section details pre').last().textContent();row.question=q;row.prompt=prompt;
     assert.ok(prompt.includes(q),'original question retained');if(previousQuestion)assert.ok(!prompt.includes(previousQuestion),'no previous task contamination');
     if(format)assert.ok(prompt.includes('- รูปแบบ: '+format),'actual final prompt format '+format);
+    if(id==='GP013')assert.match(prompt,/ชิ้นงานที่ควรส่งมอบ: council-agenda/);
     if(['TOR04','DRAW01','BOQ01','STRUCT01','ESTIMATE','K'].includes(id)){assert.match(prompt,/Human Review/);assert.match(prompt,/Decision Lock: ON/);}
     if(id==='FUND'){assert.match(prompt,/- แหล่งเงิน: เงินบำรุง/);assert.doesNotMatch(prompt,/- แหล่งเงิน: \[ยังไม่ได้ระบุ\]/);assert.match(prompt,/Primary workflow: gov.project/);}
     if(id==='PDPA')assert.doesNotMatch(prompt,/Primary workflow: gov.hr/);

@@ -41,7 +41,8 @@ test('fund source matches context and prompt without unlocking legal decision',(
  assert.match(build(q,{fundingSource:'เงินอุดหนุน'}).prompt,/sourceOfFunds=mixed/);
 });
 test('agenda drafting stays an agenda and estimate audits retain A-D contract',()=>{
- assert.equal(build('ร่างระเบียบวาระประชุมสภาท้องถิ่น โดยใช้ช่องว่างสำหรับวันเวลาและเรื่องเสนอ').outputPlan.format,'council-agenda');
+ const agenda=build('ร่างระเบียบวาระประชุมสภาท้องถิ่น โดยใช้ช่องว่างสำหรับวันเวลาและเรื่องเสนอ');
+ assert.equal(agenda.outputPlan.format,'council-agenda');assert.equal(agenda.taskPlan.deliverable,'council-agenda');assert.equal(agenda.taskPlan.action,'draft');
  const r=build('ตรวจปริมาณงานซ่อมถนนคอนกรีตและราคากลาง');assert.equal(r.outputPlan.format,'engineering-estimate');assert.match(r.prompt,/Factor F/);assert.match(r.prompt,/ตาราง C/);
  assert.equal(build('ร่างหนังสือตอบ สตง. เรื่องงานก่อสร้างถนน').outputPlan.format,'official-document');
  assert.equal(core.routeRequest('ทำโพสต์ประชาสัมพันธ์งานก่อสร้างถนน').primaryModule,'GP012');

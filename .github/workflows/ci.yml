@@ -11,6 +11,7 @@ permissions:
 jobs:
   production-diagnosis-acceptance:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -143,7 +144,7 @@ jobs:
           const old = new Map(before.rows.map(x => [x.scenario, x]));
           // Exact, reviewable improvements authorized for this PR; no wildcard or token budget.
           // Human approval of the PR remains required before merge/deployment.
-          const reviewedChanges=[{"scenario":"GP007","before":"d225b6cf580831414e71b7e729e67424537849ed4fe68e29ede8973fae424b28","after":"f5fc2c6ec5fa9b68f568a9a4a855b7151112324075e5658b3d7c06c4d03ae473","deltaUtf8Bytes":24,"reason":"Engineering quantity review uses engineering authority/evidence contract instead of procurement need memo"},{"scenario":"RUNTIME-REVENUE","before":"dd80e1cbc64a4c79f68f81e25ee59e5761bc355ecdc0ba7b8f1b2c2c517d6cda","after":"30b571010e1d31620d4fdb5ccce2238420133784a58796fc2927794c39bb04a5","deltaUtf8Bytes":1444,"reason":"Tax question uses legal analysis and evidence instructions instead of executive summary"}];
+          const reviewedChanges=[{"scenario":"GP013","before":"720fd773ef673436d51ce9e40c9292fc9548ff64a5f978db2f7351fd939d5a76","after":"008a441de231cefaf08b27a51eb2196a8f04f9a31d286deb75a4860a675faee5","deltaUtf8Bytes":-1310,"reason":"Explicit council agenda drafting emits draft/agenda contract instead of general legal analysis; actual orchestrator and clipboard acceptance required"},{"scenario":"GP007","before":"d225b6cf580831414e71b7e729e67424537849ed4fe68e29ede8973fae424b28","after":"f5fc2c6ec5fa9b68f568a9a4a855b7151112324075e5658b3d7c06c4d03ae473","deltaUtf8Bytes":24,"reason":"Engineering quantity review uses engineering authority/evidence contract instead of procurement need memo"},{"scenario":"RUNTIME-REVENUE","before":"dd80e1cbc64a4c79f68f81e25ee59e5761bc355ecdc0ba7b8f1b2c2c517d6cda","after":"30b571010e1d31620d4fdb5ccce2238420133784a58796fc2927794c39bb04a5","deltaUtf8Bytes":1444,"reason":"Tax question uses legal analysis and evidence instructions instead of executive summary"}];
           const isReviewedChange=row => reviewedChanges.some(x=>x.scenario===row.scenario && x.before===row.before.sha256 && x.after===row.after.sha256 && x.deltaUtf8Bytes===row.deltaUtf8Bytes);
           const rows = after.rows.map(item => {
             const base = old.get(item.scenario);
@@ -159,7 +160,7 @@ jobs:
           writeFileSync('artifacts/prompt-efficiency-runtime/comparison.json',JSON.stringify(result,null,2));
           console.log(JSON.stringify(result,null,2));
           // All unchanged scenarios retain exact-copy and zero-growth contracts.
-          // Only the two exact, tested semantic improvements above may differ.
+          // Only the exact, tested semantic improvements above may differ.
           const changed=rows.filter(x=>!x.before.sha256||!x.after.sha256||(!x.sha256Equal&&!isReviewedChange(x)));
           if(changed.length){console.error('Browser-final prompt SHA-256 mismatch:',changed.map(x=>x.scenario));process.exitCode=1;}
           const growth=rows.filter(x=>x.deltaUtf8Bytes>0&&!isReviewedChange(x));

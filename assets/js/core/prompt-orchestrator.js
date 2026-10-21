@@ -697,6 +697,7 @@
     const engineeringPlan = window.GovPromptCore.ENGINEERING_WORKFLOWS?.plan(userQuestion, normalizedContext);
     const typedOutput = engineeringPlan && window.GovPromptCore.ENGINEERING_WORKFLOWS.output(engineeringPlan);
     const correspondenceDraft = /^(?:กรุณา|โปรด|ช่วย)?\s*(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i.test(userQuestion);
+    const councilAgendaDraft = /^(?:ช่วย)?(?:ร่าง|จัดทำ|ทำ)\s*(?:ระเบียบ)?วาระ(?:การ)?ประชุมสภา/i.test(userQuestion);
     const initialTaskPlan = constructionReviewPlan(userQuestion, planUniversalTask(userQuestion, normalizedContext));
     // For engineering drawings, inspection, acceptance and physical diagnostics, retain
     // their own deliverables rather than imposing the estimate-only A/B/C/D contract.
@@ -704,6 +705,8 @@
       && /(?:แบบรูปรายการ|รายการประกอบแบบ|ข้อกำหนดทางเทคนิค|ตรวจแบบ|ตรวจงาน|ตรวจรับ|ตรวจราคากลาง|วิเคราะห์ปัญหา|วิเคราะห์สาเหตุ|วิเคราะห์ความเสียหาย|แตกร้าว|ทรุดตัว|น้ำท่วมขัง|ถอดแบบ|ถอดปริมาณ|ประมาณราคา|ราคากลาง|boq)/i.test(userQuestion));
     const taskPlan = correspondenceDraft
       ? Object.freeze({ ...initialTaskPlan, action: 'draft', deliverable: 'official-document' })
+      : councilAgendaDraft
+      ? Object.freeze({ ...initialTaskPlan, action: 'draft', deliverable: 'council-agenda' })
       : engineeringWorkflow
       ? Object.freeze({ ...initialTaskPlan, engineeringWorkflow: true, evidenceMode:'verify-applicable-primary-source',
           ...(typedOutput ? { action: typedOutput.action, deliverable: typedOutput.id, riskLevel: engineeringPlan.drawing ? 'HIGH' : (initialTaskPlan.riskLevel === 'LOW' ? 'MEDIUM' : initialTaskPlan.riskLevel) } : {}),
