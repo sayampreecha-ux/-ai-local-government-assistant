@@ -75,7 +75,7 @@
     const primary = p.drawing ? 'D01' : p.tasks.some(t=>t.id==='T06') ? 'T06' : p.tasks.some(t=>t.id==='T11') ? 'T11'
       : p.tasks.some(t=>t.id==='T10') ? 'T10' : p.tasks.some(t=>t.id==='T07') ? 'T07' : p.tasks[0].id;
     const kind = outputKinds[primary];
-    const composite = p.publicityRequested || p.documentRequested || (p.tasks.length > 1 && !['T06','T07','T10','T11'].includes(primary));
+    const composite = p.publicityRequested || p.documentRequested || (p.tasks.length > 1 && (!['T06','T07','T10','T11'].includes(primary) || (primary === 'T06' && p.tasks.some(t => t.id === 'T09'))));
     const instructions = [primary + ': ผลส่งมอบหลักต้องเป็น ' + kind[1], ...p.tasks.map(t => t.id + ': ' + t.deliverable)];
     if (p.publicityRequested) instructions.push('ส่งโพสต์/ชิ้นงานประชาสัมพันธ์ที่ขอร่วมด้วยเป็นอีกส่วน ใช้เฉพาะความก้าวหน้าหรือข้อเท็จจริงที่ยืนยันแล้ว ห้ามแทนรายงาน/แผนงานช่างด้วย PR');
     if (p.documentRequested) instructions.push('จัดทำร่างบันทึกข้อความ/หนังสือที่ผู้ใช้ขอร่วมด้วย แยกจากตารางงานวิศวกรรม');
