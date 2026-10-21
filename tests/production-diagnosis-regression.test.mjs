@@ -16,6 +16,7 @@ for(const [id,q,format] of [
   ['STRUCT01','ตรวจแบบก่อสร้างอาคารและโครงสร้าง ประเมินความเสี่ยง ไม่รับรองความปลอดภัย','drawing-review']
 ])test(id+' real orchestrator retains primary output',()=>{const r=build(q);assert.equal(r.outputPlan.format,format);assert.equal(r.taskPlan.deliverable,format);assert.ok(r.prompt.includes(q));assert.match(r.prompt,/Human Review/);assert.equal(r.qualityGates.evidenceRequired,true);});
 test('category-only sensitive question allowed; added values/disclaimers never bypass security',()=>{
+ assert.equal(core.evaluateProcurementFinanceData('จัดซื้อจัดจ้างอยู่ระหว่างพิจารณา บริษัททดสอบ ราคาเสนอ 500000 บาท').decision,'BLOCK');
  const topic='อธิบายหลัก PDPA สำหรับข้อมูลสุขภาพ ศาสนา และประวัติอาชญากรรม โดยไม่ใช้ข้อมูลบุคคลจริง';
  assert.equal(core.sanitizeExternalContent(topic).blocked,false);
  for(const q of [topic+' นายสมชาย ใจดี เป็นเบาหวาน',topic+' HN1234',topic+' ศาสนา: พุทธ',topic+' password=demo-secret',topic+' เลขบัตรประชาชน 1234567890123','ข้อมูลสุขภาพของบุคคล','อธิบายข้อมูลสุขภาพ นายสมชาย ใจดี','ผู้ป่วยใช้ยา amoxicillin','ข้อมูลศาสนา พุทธ','ประวัติอาชญากรรมของบุคคล']){

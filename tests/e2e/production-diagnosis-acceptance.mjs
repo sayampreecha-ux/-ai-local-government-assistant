@@ -37,11 +37,20 @@ const blocked=[
  'PDPA ไม่มีข้อมูลจริง password=demo-secret',
  'PDPA ไม่มีข้อมูลจริง เลขบัตรประชาชน 1234567890123',
  'ข้อมูลศาสนา พุทธ',
- 'อยู่ระหว่างพิจารณา บริษัททดสอบ ราคาเสนอ 500000 บาท'
+ 'จัดซื้อจัดจ้างอยู่ระหว่างพิจารณา บริษัททดสอบ ราคาเสนอ 500000 บาท'
 ];
 const server=createServer(async(req,res)=>{const path=resolve(root,'.'+(new URL(req.url,'http://localhost').pathname==='/'?'/index.html':decodeURIComponent(new URL(req.url,'http://localhost').pathname)));if(!path.startsWith(root+sep)){res.writeHead(403).end();return;}try{res.writeHead(200,{'content-type':({'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml'})[extname(path)]||'application/octet-stream'}).end(await readFile(path));}catch{res.writeHead(404).end();}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${server.address().port}`;
 const results=[];let browser;
+async function startNew(page){
+ if(!page.url().startsWith(base))await page.goto(base+'/?gpv=20261001-2',{waitUntil:'networkidle'});
+ else {
+  const stableHome=page.waitForURL(url=>url.pathname==='/index.html' && url.searchParams.get('gpv')==='20261001-2' && !url.searchParams.has('view'),{waitUntil:'networkidle'});
+  await page.getByRole('button',{name:'เริ่มงานใหม่',exact:true}).click();await stableHome;
+ }
+ await page.waitForLoadState('networkidle');
+ await page.waitForFunction(()=>document.getElementById('chatForm')?.dataset.privacySubmitGuard==='3' && typeof window.GovPrompt?.on==='function');
+}
 try{
  browser=await chromium.launch({headless:true});
  for(const [device,width] of [['mobile',390],['desktop',1365]]){
@@ -51,7 +60,7 @@ try{
   const page=await context.newPage();let previousQuestion='';
   for(const [id,q,format] of cases){const row={id,device,width,source,status:'FAIL',downstreamAI:'NOT VERIFIED'};
    try{
-    if(!previousQuestion)await page.goto(base,{waitUntil:'networkidle'});else await page.getByRole('button',{name:'เริ่มงานใหม่',exact:true}).click();
+    await startNew(page);
     await page.getByRole('textbox',{name:'ข้อความถึง GovPrompt'}).fill(q);await page.getByRole('button',{name:'ส่งข้อความ',exact:true}).click();
     const summary=page.getByText('ดูคำสั่งที่ GovPrompt เตรียมไว้',{exact:true}),skip=page.getByRole('button',{name:'ยังไม่ทราบบางข้อ — ทำต่อ',exact:true});
     await summary.or(skip).first().waitFor({state:'visible',timeout:30000});if(await skip.isVisible()){row.intake=await page.locator('main').innerText();await skip.click();}
@@ -69,7 +78,7 @@ try{
    }catch(e){row.error=String(e.stack||e);}
    await page.screenshot({path:resolve(out,`${device}-${id}.png`),fullPage:true}).catch(()=>{});results.push(row);console.log(device,id,row.status,row.error?.split('\n')[0]||'');previousQuestion=q;
   }
-  for(const [n,q] of blocked.entries()){const row={id:'BLOCK-'+n,device,source,status:'FAIL'};try{await page.getByRole('button',{name:'เริ่มงานใหม่',exact:true}).click();await page.getByRole('textbox',{name:'ข้อความถึง GovPrompt'}).fill(q);await page.getByRole('button',{name:'ส่งข้อความ',exact:true}).click();await page.locator('#privacySubmitWarning').waitFor({state:'visible'});assert.equal(await page.getByRole('textbox',{name:'ข้อความถึง GovPrompt'}).inputValue(),'');assert.equal(await page.locator('.answer-card').count(),0);row.reason=await page.locator('#privacySubmitWarning').textContent();row.status='PASS';}catch(e){row.error=String(e.stack||e);}results.push(row);console.log(device,row.id,row.status);}
+  for(const [n,q] of blocked.entries()){const row={id:'BLOCK-'+n,device,source,status:'FAIL'};try{await startNew(page);await page.getByRole('textbox',{name:'ข้อความถึง GovPrompt'}).fill(q);await page.getByRole('button',{name:'ส่งข้อความ',exact:true}).click();await page.locator('#privacySubmitWarning').waitFor({state:'visible'});assert.equal(await page.getByRole('textbox',{name:'ข้อความถึง GovPrompt'}).inputValue(),'');assert.equal(await page.locator('.answer-card').count(),0);row.reason=await page.locator('#privacySubmitWarning').textContent();row.status='PASS';}catch(e){row.error=String(e.stack||e);}results.push(row);console.log(device,row.id,row.status);}
   await context.close();
  }
 }finally{await browser?.close();await new Promise(r=>server.close(r));await writeFile(resolve(out,'results.json'),JSON.stringify({source,scope:'built branch; UI + clipboard + 13-domain smoke',downstreamAI:'NOT VERIFIED',results},null,2));}
