@@ -1,0 +1,35 @@
+name: Revenue Real-User Browser E2E
+on:
+  pull_request:
+    paths:
+      - 'tests/e2e/revenue-real-user-browser.mjs'
+      - 'assets/js/**'
+      - 'src/revenue-guidance.js'
+      - '.github/workflows/revenue-real-user-browser-e2e.yml'
+  workflow_dispatch:
+jobs:
+  revenue-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Start PR branch web server
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/revenue-http.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8765/ > /dev/null && exit 0; sleep 1; done
+          exit 1
+      - name: Browser acceptance R03-R10
+        run: node tests/e2e/revenue-real-user-browser.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revenue-real-user-browser-evidence
+          path: artifacts/revenue-real-user-browser/
+          if-no-files-found: warn

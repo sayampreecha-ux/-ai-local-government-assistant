@@ -53,11 +53,20 @@ const PRIMARY_DOMAIN_RULES = Object.freeze([
   ['gov.finance', /(?:เงินสะสม|ค่าใช้จ่าย|การเงิน)/i]
 ]);
 
+// The requested document is the primary job; roads and law are supporting context.
+const EXPLICIT_CORRESPONDENCE_DRAFT = /^(?:กรุณา|โปรด|ช่วย)?\s*(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i;
+
 const procurementText = text => text.replace(/(?:ค่า(?:เช่าซื้อ|ซื้อ|เช่า)บ้าน(?!พัก)|(?:ผ่อนชำระ|ผ่อน)(?:เงินกู้(?:เพื่อ)?)?(?:ซื้อ)?บ้าน(?!พัก))/g, 'สิทธิที่อยู่อาศัย');
 
 const textOf = (input = {}) => String(input.query || input.question || input.text || input.intent || "").toLowerCase();
 
 function resolvePrimaryWorkflowId(text, directIds, matched) {
+  if (directIds.has("gov.correspondence") && EXPLICIT_CORRESPONDENCE_DRAFT.test(text)) return "gov.correspondence";
+  // Quantity/estimate review is an engineering deliverable; "ราคากลาง" alone
+  // must not promote its supporting procurement workflow above the requested job.
+  if (directIds.has("gov.engineering")
+    && /(?:ตรวจปริมาณ|ถอดแบบ|ถอดปริมาณ|ประมาณราคา|ตรวจ(?:สอบ)?ราคากลาง)/i.test(text)
+    && !/(?:\btor\b|ทีโออาร์|จัดซื้อ|จัดจ้าง|ประกวดราคา|e-?bidding|เฉพาะเจาะจง|ร่างสัญญา|ประชาสัมพันธ์|โพสต์|โปสเตอร์|อินโฟกราฟิก)/i.test(text)) return "gov.engineering";
   for (const [workflowId, pattern] of PRIMARY_ACTION_RULES) {
     if (directIds.has(workflowId) && pattern.test(text)) return workflowId;
   }
@@ -80,6 +89,7 @@ export function detectGovernmentWorkflows(input = {}) {
     matched.unshift(councilMeetingContext ? WORKFLOWS.council : WORKFLOWS.correspondence);
   }
   if (councilLegalReview && !matched.some((wf) => wf.id === 'gov.council')) matched.unshift(WORKFLOWS.council);
+  if (EXPLICIT_CORRESPONDENCE_DRAFT.test(text) && !matched.some((wf) => wf.id === 'gov.correspondence')) matched.unshift(WORKFLOWS.correspondence);
   const directIds = new Set(matched.map((x) => x.id));
   const ids = new Set(directIds);
   if (ids.has("gov.budget-draft")) ids.add("gov.finance");

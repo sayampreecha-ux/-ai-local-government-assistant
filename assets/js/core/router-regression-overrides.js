@@ -136,6 +136,7 @@
 
   core.routeTransaction = function routeTransactionWithRegressionGuardrails(sharedContext, options = {}) {
     const result = originalRouteTransaction(sharedContext, options);
+    if (result.reason === 'revenue-task-override') return result;
     const source = getSource(result.context || sharedContext);
     const forced = forcedModule(source);
     if (forced) return buildCorrectedResult(result, forced, 'regression-guardrail');

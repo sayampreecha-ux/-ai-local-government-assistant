@@ -94,7 +94,7 @@ assert.equal(precedentBundle.casePrecedentGate.nextAction, 'EXECUTE_CURRENT_RULE
 assert.deepEqual([...precedentBundle.casePrecedentGate.requiredEvidence], ['currentRule', 'officialPrecedent', 'caseMatch', 'legalVersion', 'newerOrConflictingAuthority', 'contraryEvidenceCheck']);
 assert.equal(precedentBundle.casePrecedentGate.searchQueries.length, 4);
 assert.equal(precedentBundle.casePrecedentGate.searchLadder.length, 4);
-assert.deepEqual(Object.keys(precedentBundle.casePrecedentGate.fingerprint), ['actor', 'organization', 'status_or_prior_event', 'current_stage', 'disputed_action', 'claim_or_power', 'legal_issue', 'applicable_rule', 'date_context']);
+assert.deepEqual(Object.keys(precedentBundle.casePrecedentGate.fingerprint), ['actor', 'organization', 'amount_context', 'status_or_prior_event', 'current_stage', 'disputed_action', 'claim_or_power', 'legal_issue', 'applicable_rule', 'date_context']);
 assert.ok(precedentBundle.casePrecedentGate.searchConcepts.factLanguage);
 assert.ok(precedentBundle.casePrecedentGate.searchConcepts.legalLanguage);
 assert.ok(precedentBundle.casePrecedentGate.searchConcepts.officialDocumentLanguage.length >= 3);

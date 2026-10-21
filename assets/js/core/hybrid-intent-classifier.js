@@ -219,12 +219,41 @@
     const source = normalize(request);
     if (!source) return null;
 
+    // The requested work product wins over the subject domain. Keep this guard
+    // ahead of engineering classification and every downstream hybrid override.
+    // Mentioning a letter without an explicit drafting verb does not activate it.
+    if (/^(?:กรุณา|โปรด|ช่วย)?\s*(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i.test(source)) {
+      return Object.freeze({
+        moduleId: 'GP001',
+        confidence: 0.999,
+        reason: 'explicit-correspondence-draft',
+        secondary: inferSecondary(source, 'GP001')
+      });
+    }
+
     // Eligibility about a ring-fenced subject fund is a subject decision, unless an explicit procurement process is requested.
     const healthEligibility = /เงินบำรุง/.test(source)
       && /(?:ใช้|เบิก|จ่าย|ซื้อ|ค่า|โครงการ)/.test(source)
       && /(?:ได้ไหม|ได้หรือไม่|ได้หรือเปล่า|สามารถ|หลักเกณฑ์|แนวทาง)/.test(source)
       && !/(?:จัดซื้อ|จัดจ้าง|tor|วิธีเฉพาะเจาะจง|ประกวดราคา|ราคากลาง|ตรวจรับ)/i.test(source);
     if (healthEligibility) return Object.freeze({ moduleId: 'GP008', confidence: 0.995, reason: 'subject-eligibility', secondary: inferSecondary(source, 'GP008') });
+
+    // Engineering deliverables and physical-condition diagnostics take precedence over
+    // generic drafting, procurement, legal-analysis and communications vocabulary.
+    // Explicit tendering / purchase procedures remain GP003.
+    const engineeringSubject = /(?:ถนน|อาคาร|สะพาน|โครงสร้าง|คอนกรีต|งานก่อสร้าง|แบบก่อสร้าง|แบบรูปรายการ|ประกอบแบบ|งานระบายน้ำ|ชั้นทาง|factor\\s*f|ป\\s*ร\\s*\\.?\\s*[45]|boq)/i.test(source);
+    const engineeringAction = /(?:ถอดแบบ|ถอดปริมาณ|จัดทำแบบรูปรายการ|รายการประกอบแบบ|ข้อกำหนดทางเทคนิค|ราคากลาง|ประมาณราคา|ตรวจแบบ|ตรวจงาน|ตรวจรับงาน|ตรวจรับก่อสร้าง|ตรวจรับงานก่อสร้าง|ตรวจรับงานคอนกรีต|วิเคราะห์ปัญหา|วิเคราะห์สาเหตุ|วิเคราะห์ความเสียหาย|วิเคราะห์ปัญหาโครงสร้าง|แตกร้าว|ทรุดตัว|น้ำท่วมขัง|ตรวจ\\s*ป\\s*ร\\s*\\.?\\s*[45]|ตรวจราคาวัสดุ|ตรวจราคากลาง|checklist\\s*ตรวจรับ|ตรวจรับ|factor\\s*f)/i.test(source);
+    const explicitProcurement = /(?:จัดซื้อ|จัดจ้าง|ประกวดราคา|e-?bidding|วิธีเฉพาะเจาะจง|วิธีคัดเลือก|ตรวจรับพัสดุ|จัดทำ\\s*tor|กำหนด\\s*tor|ตรวจ\\s*tor|ล็อกสเปก)/i.test(source);
+    if (engineeringSubject && engineeringAction && !explicitProcurement && !/(?:ควรมีหลักฐาน|หลักฐานประกอบ|เอกสารประกอบ).{0,24}(?:อะไร|ใด|บ้าง)|(?:ควรมี|ต้องมี).{0,24}(?:หลักฐาน|เอกสาร)/.test(source)) {
+      return Object.freeze({ moduleId: 'GP007', confidence: 0.995, reason: 'engineering-deliverable-or-physical-diagnostic', secondary: inferSecondary(source, 'GP007') });
+    }
+
+    // Explicit engineering outputs with incomplete input remain engineering tasks.
+    // These narrow phrases are not procurement procedure requests.
+    const engineeringIncomplete = /(?:ทำราคากลางเมื่อไม่มีราคาวัสดุ|จัดทำแบบรูปรายการเมื่อไม่มีผลสำรวจพื้นที่|จัดทำรายการประกอบแบบโดยแยกจาก\s*tor|ตรวจราคากลางเมื่อราคาวัสดุในเอกสารขัดแย้ง|ตรวจรับงานที่ปริมาณจริงไม่ตรงแบบสัญญา)/i.test(source);
+    if (engineeringIncomplete) {
+      return Object.freeze({ moduleId: 'GP007', confidence: 0.995, reason: 'explicit-engineering-output-with-missing-or-conflicting-evidence', secondary: inferSecondary(source, 'GP007') });
+    }
 
     const process = matchRule(source, PROCESS_RULES);
     if (process) return Object.freeze({ ...process, reason: 'specific-action-process', secondary: inferSecondary(source, process.moduleId) });
@@ -244,6 +273,7 @@
 
   function mergeRoute(base, classified) {
     if (!classified) return base;
+    if (base?.reason === 'revenue-task-override' && classified.reason === 'semantic-example-match') return base;
     if (classified.reason === 'general-government-fallback' && base?.fallback === false) return base;
     const moduleId = classified.moduleId;
     const modules = Object.freeze([...new Set([moduleId, ...(classified.secondary || []), ...(base?.modules || [])])].slice(0, 3));

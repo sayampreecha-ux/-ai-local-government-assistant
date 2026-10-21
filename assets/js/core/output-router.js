@@ -2,9 +2,15 @@
   'use strict';
 
   const OUTPUTS = Object.freeze({
+    'construction-estimate': Object.freeze({ label: 'ตารางประมาณราคา ปร.4/ปร.5 และรายงานตรวจสอบ', format: 'engineering-estimate', instructions: Object.freeze([
+      'จัดทำ BOQ/ปร.4/ปร.5 จากหลักฐานที่อ่านได้ แสดงหน่วย สูตร และไฟล์/หน้า/เลขแบบ ห้ามเดาข้อมูลที่ขาด',
+      'แสดงตาราง A ตรวจปริมาณและผลต่าง ตาราง B สูตรรวม ปร.4 ตาราง C เปรียบเทียบ Factor F และ ปร.5 และตาราง D ข้อจำกัดและ Human Review',
+      'แยกการตรวจเลขจากการรับรองอัตราราชการ และให้วิศวกร/ผู้มีอำนาจตรวจรับรองก่อนใช้จริง'
+    ]) }),
     official_document: Object.freeze({ label: 'หนังสือราชการ/เอกสารพร้อมใช้', format: 'official-document', instructions: Object.freeze([
       'ร่างฉบับพร้อมใช้ก่อน โดยใช้ [ระบุ...] เฉพาะข้อมูลสำคัญที่ยังขาด',
       'คงรูปแบบและถ้อยคำราชการที่เหมาะสมกับประเภทเอกสาร',
+      'ปรับความละเอียดตามประเภทและความเสี่ยงของหนังสือ: หนังสือทั่วไปให้กระชับ แต่งานชี้แจงข้อทักท้วง ป.ป.ช./สตง. หรือหนังสือหารือที่ซับซ้อนต้องตอบครบทุกประเด็น พร้อมเรื่องเดิม ลำดับข้อเท็จจริง หลักฐาน ข้อกฎหมายที่ตรวจยืนยันได้ ข้อพิจารณา และข้อเสนอเท่าที่เหมาะกับประเภทหนังสือ; ไม่บังคับห้าหัวข้อในหนังสือภายนอก ไม่ยืดเนื้อหาเพื่อความยาว และไม่ตัดสาระเพื่อความกระชับ',
       'ห้ามแต่งเลขหนังสือ วันที่ ชื่อบุคคล หรือฐานกฎหมายที่ผู้ใช้ไม่ได้ให้',
       'ถ้าข้อมูลยังไม่ครบแต่ยังร่างได้ ให้ส่งร่างฉบับใช้งานได้ก่อน แล้วค่อยระบุเฉพาะช่องว่างที่มีผลต่อการลงนามหรือใช้จริง'
     ]) }),
@@ -138,6 +144,21 @@
       context?.facts
     ].filter(Boolean).join(' '));
 
+    // Explicit correspondence drafting takes precedence over subject-matter
+    // engineering output. Do not infer this from 'หนังสือ' alone.
+    if (/^(?:กรุณา|โปรด|ช่วย)?\s*(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i.test(normalize(input))) {
+      return Object.freeze({ ...OUTPUTS.official_document, id: 'official_document', confidence: 0.99, reason: 'explicit-correspondence-draft' });
+    }
+
+    const engineeringPlan = window.GovPromptCore?.ENGINEERING_WORKFLOWS?.plan(input, context || {});
+    if (engineeringPlan) {
+      const typed = window.GovPromptCore.ENGINEERING_WORKFLOWS.output(engineeringPlan);
+      if (engineeringPlan.estimationRequested && !engineeringPlan.publicityRequested && !engineeringPlan.documentRequested && !engineeringPlan.tasks.some(t=>t.id==='T11') && window.GovPromptCore.isEngineeringEstimateIntent?.(input)) {
+        return Object.freeze({...OUTPUTS['construction-estimate'],id:'construction-estimate',confidence:1,reason:'construction-estimate-evidence-first'});
+      }
+      return typed;
+    }
+
     const explicitPrefix = inferExplicitPrefix(source);
     if (explicitPrefix) {
       const definition = OUTPUTS[explicitPrefix] || OUTPUTS.default;
@@ -160,14 +181,16 @@
       if (!best || candidate.score > best.score) best = candidate;
     }
 
-    const id = best?.id || inferFromModule(route?.moduleId);
+    const engineering = window.GovPromptCore?.isEngineeringEstimateIntent?.(input);
+    const constructionOutput = engineering && (!best || best.id === 'analysis');
+    const id = constructionOutput ? 'construction-estimate' : (best?.id || inferFromModule(route?.moduleId));
     const definition = OUTPUTS[id] || OUTPUTS.default;
     return Object.freeze({
       id,
       label: definition.label,
       format: definition.format,
       confidence: best ? Math.min(0.99, 0.74 + best.score / 500) : 0.62,
-      reason: best ? 'explicit-output-intent' : 'module-default',
+      reason: constructionOutput ? 'construction-estimate-evidence-first' : (best ? 'explicit-output-intent' : 'module-default'),
       instructions: definition.instructions,
       matched: Object.freeze(best?.matched || [])
     });

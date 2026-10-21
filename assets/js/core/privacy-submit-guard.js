@@ -11,7 +11,7 @@
     { label: 'เลขประจำตัวผู้เสียภาษี', pattern: /(?:เลขประจำตัวผู้เสียภาษี|tax\s*id)\s*[:：#-]?\s*\d(?:[\s-]*\d){9,14}/gi },
     { label: 'เลขบัญชี/พร้อมเพย์', pattern: /(?:เลขบัญชี|บัญชีธนาคาร|พร้อมเพย์)\s*[:：#-]?\s*[0-9\s-]{6,20}/gi },
     { label: 'ชื่อบุคคล', pattern: /(?:นาย(?!ก(?:องค์การ|อบจ|เทศบาล|เทศมนตรี|อปท|ฯ|\s))|นางสาว|นาง|ด\.ช\.|ด\.ญ\.|เด็กชาย|เด็กหญิง)\s*[ก-๙A-Za-z.'’-]+(?:\s+[ก-๙A-Za-z.'’-]+){0,2}/g },
-    { label: 'วันเดือนปีเกิด', pattern: /(?:วันเกิด|วันเดือนปีเกิด|เกิดวันที่)\s*[:：-]?\s*[^,;\n]{3,40}/gi },
+    { label: 'วันเดือนปีเกิด', pattern: /(?:วันเกิด(?!เหตุ|สิทธิ|หน้าที่|ข้อเท็จจริง|ความรับผิด)|วันเดือนปีเกิด|(?<!เหตุ\s*)เกิดวันที่)\s*[:：-]?\s*[^,;\n]{3,40}/gi },
     { label: 'ที่อยู่', pattern: /(?:ที่อยู่|บ้านเลขที่)\s*[:：-]?\s*[^,;\n]{3,120}/gi },
     { label: 'ทะเบียนรถ', pattern: /(?:ทะเบียนรถ|เลขทะเบียน)\s*[:：-]?\s*[ก-๙A-Za-z0-9 -]{2,20}/gi },
     { label: 'ข้อมูลรับรองสิทธิ์/รหัสลับ', pattern: /(?:password|passwd|api\s*key|secret|token|bearer|รหัสผ่าน|กุญแจ\s*api)\s*[:=：-]?\s*[^\s,;]+/gi },
@@ -101,8 +101,14 @@
       || resetAndTest(ACTIVE_STAGE_PATTERN, original);
     const isPublished = context.isPublished === true || (isProcurement && resetAndTest(PUBLIC_PROCUREMENT_PATTERN, original));
     const isDraftInternal = context.isPublished === false || resetAndTest(DRAFT_INTERNAL_PATTERN, original);
-    const hasPersonLevelMarker = resetAndTest(PERSON_LEVEL_MARKER_PATTERN, original)
-      || resetAndTest(PERSON_NAME_PATTERN, original);
+    // A question mentioning "เลขบัตรประชาชน" or personal tax data is not itself
+    // a person's record. Require an identifying value or person-linked amount.
+    // Actual IDs, named-person records and finance amounts remain protected.
+    const hasPersonLevelMarker = resetAndTest(PERSON_NAME_PATTERN, original)
+      || resetAndTest(NATIONAL_ID_PATTERN, original)
+      || resetAndTest(TAX_ID_PATTERN, original)
+      || (resetAndTest(PERSON_LEVEL_MARKER_PATTERN, original)
+        && /(?:เงินเดือน|ค่าจ้าง|ภาษี|ยอดค้าง|ยอดชำระ)[^\n]{0,65}\d[\d,.]*\s*บาท/i.test(original));
     const aggregateBudget = isFinance && resetAndTest(AGGREGATE_BUDGET_PATTERN, original) && !hasPersonLevelMarker;
 
     if (resetAndTest(CREDENTIAL_VALUE_PATTERN, original) || resetAndTest(PRIVATE_KEY_PATTERN, original)) {
@@ -187,6 +193,13 @@
       rule.pattern.lastIndex = 0;
       return rule.pattern.test(text);
     }).map(rule => rule.label));
+  }
+
+  // Whitespace normalization is not a privacy finding. Redaction, masking,
+  // sensitive-context and residual-risk signals still fail closed.
+  function hasSecurityRelevantChange(privacy, original) {
+    const normalizedWhitespace = String(original ?? '').replace(/[ \t]+/g, ' ').replace(/ *\n */g, '\n').trim();
+    return privacy.changed && privacy.safeText !== normalizedWhitespace;
   }
 
   function stopSubmit(event) {
@@ -322,7 +335,7 @@
       // EVERY detected PII/sensitive signal fails closed in capture phase.
       // The only exception is a domain-scoped Procurement/Finance SANITIZE result whose
       // raw identifiers have already been removed before downstream code can observe them.
-      const detected = reasons.length > 0 || Boolean(privacy.changed) || Boolean(privacy.blocked);
+      const detected = reasons.length > 0 || hasSecurityRelevantChange(privacy, normalized) || Boolean(privacy.blocked);
       if (detected) {
         clearAndBlock(event, input, reasons);
         return;
@@ -336,7 +349,7 @@
         ...(finalCheck.sensitiveContext || []),
         ...(finalCheck.residualRisks || [])
       ])];
-      if (finalCheck.changed || finalCheck.blocked || finalReasons.length > 0) {
+      if (hasSecurityRelevantChange(finalCheck, candidate) || finalCheck.blocked || finalReasons.length > 0) {
         clearAndBlock(event, input, finalReasons);
         return;
       }

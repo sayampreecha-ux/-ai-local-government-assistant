@@ -1,0 +1,1928 @@
+{
+  "total": 60,
+  "pass": 60,
+  "fail": 0,
+  "clipboardUnverified": 0,
+  "results": [
+    {
+      "device": "desktop",
+      "id": "boq-1",
+      "menu": "boq",
+      "question": "ถอดแบบถนน ค.ส.ล. และจัดทำ BOQ/ปร.4",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 15237,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "boq-2",
+      "menu": "boq",
+      "question": "ถอดปริมาณคอนกรีตจากแบบถนนเพื่อทำ BOQ",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 15241,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "boq-3",
+      "menu": "boq",
+      "question": "ถอดแบบอาคารสองชั้นพร้อมสูตรคำนวณและตำแหน่งอ้างอิง",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 14943,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "boq-4",
+      "menu": "boq",
+      "question": "ถอดแบบก่อสร้างแต่ไม่มีหน้าตัดและขนาดครบ",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 14916,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "boq-5",
+      "menu": "boq",
+      "question": "ถอดแบบและทำ BOQ เมื่อแบบกับ ปร.4 ขัดแย้ง",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 15256,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "estimate-1",
+      "menu": "estimate",
+      "question": "จัดทำราคากลางงานก่อสร้างถนน ค.ส.ล.",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 14938,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "estimate-2",
+      "menu": "estimate",
+      "question": "จัดทำราคากลางงานอาคารจาก BOQ และ ปร.5",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 15574,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "estimate-3",
+      "menu": "estimate",
+      "question": "ตรวจราคาวัสดุ ค่าแรง และ Factor F เพื่อประมาณราคา",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 17702,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "estimate-4",
+      "menu": "estimate",
+      "question": "ทำราคากลางเมื่อไม่มีราคาวัสดุทางการที่ยืนยันได้",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8744,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "estimate-5",
+      "menu": "estimate",
+      "question": "จัดทำราคากลางเมื่อ Factor F สองเอกสารไม่ตรงกัน",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 17689,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "drawing-1",
+      "menu": "drawing",
+      "question": "จัดทำแบบรูปรายการงานก่อสร้างถนน",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8469,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "drawing-2",
+      "menu": "drawing",
+      "question": "จัดทำรายการประกอบแบบอาคารสำนักงาน",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8480,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "drawing-3",
+      "menu": "drawing",
+      "question": "จัดทำข้อกำหนดทางเทคนิคงานระบายน้ำ",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8489,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "drawing-4",
+      "menu": "drawing",
+      "question": "จัดทำแบบรูปรายการเมื่อไม่มีผลสำรวจพื้นที่",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8504,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "drawing-5",
+      "menu": "drawing",
+      "question": "จัดทำรายการประกอบแบบโดยแยกจาก TOR งานก่อสร้าง",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 17734,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "audit-1",
+      "menu": "audit",
+      "question": "ตรวจแบบ BOQ และราคากลางถนน ค.ส.ล.",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 15517,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "audit-2",
+      "menu": "audit",
+      "question": "ตรวจ ปร.4 เทียบกับแบบก่อสร้างอาคาร",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 14931,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "audit-3",
+      "menu": "audit",
+      "question": "ตรวจ ปร.5 และ Factor F เทียบกับ ปร.4",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 18306,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "audit-4",
+      "menu": "audit",
+      "question": "ตรวจแบบและ BOQ เมื่อขาดแผ่นรายละเอียด",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 10156,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "audit-5",
+      "menu": "audit",
+      "question": "ตรวจราคากลางเมื่อราคาวัสดุในเอกสารขัดแย้ง",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8732,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "accept-1",
+      "menu": "accept",
+      "question": "ตรวจงานและตรวจรับก่อสร้างถนน ค.ส.ล.",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 9865,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "accept-2",
+      "menu": "accept",
+      "question": "จัดทำ checklist ตรวจรับงานอาคาร",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 9289,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "CHOICE HANDLED"
+    },
+    {
+      "device": "desktop",
+      "id": "accept-3",
+      "menu": "accept",
+      "question": "ตรวจรับงานคอนกรีตโดยผลทดสอบกำลังอัดยังไม่ออก",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 9887,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "accept-4",
+      "menu": "accept",
+      "question": "ตรวจรับงานที่ปริมาณจริงไม่ตรงแบบสัญญา",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8507,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "accept-5",
+      "menu": "accept",
+      "question": "ตรวจรับงานก่อสร้างโดยไม่มีหลักฐานหน้างาน",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 14913,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "diagnose-1",
+      "menu": "diagnose",
+      "question": "วิเคราะห์ปัญหาถนนคอนกรีตแตกร้าว",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 9803,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "diagnose-2",
+      "menu": "diagnose",
+      "question": "วิเคราะห์ปัญหาอาคารทรุดตัว",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 9807,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "diagnose-3",
+      "menu": "diagnose",
+      "question": "วิเคราะห์สาเหตุสะพานแตกร้าวและความเสี่ยง",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 9828,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "diagnose-4",
+      "menu": "diagnose",
+      "question": "วิเคราะห์ปัญหาโครงสร้างเมื่อไม่มีผลตรวจพื้นที่",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8482,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "desktop",
+      "id": "diagnose-5",
+      "menu": "diagnose",
+      "question": "วิเคราะห์ปัญหาถนนน้ำท่วมขังและแนวทางแก้ไข",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 9813,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "boq-1",
+      "menu": "boq",
+      "question": "ถอดแบบถนน ค.ส.ล. และจัดทำ BOQ/ปร.4",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 15237,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "boq-2",
+      "menu": "boq",
+      "question": "ถอดปริมาณคอนกรีตจากแบบถนนเพื่อทำ BOQ",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 15241,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "boq-3",
+      "menu": "boq",
+      "question": "ถอดแบบอาคารสองชั้นพร้อมสูตรคำนวณและตำแหน่งอ้างอิง",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 14943,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "boq-4",
+      "menu": "boq",
+      "question": "ถอดแบบก่อสร้างแต่ไม่มีหน้าตัดและขนาดครบ",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 14916,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "boq-5",
+      "menu": "boq",
+      "question": "ถอดแบบและทำ BOQ เมื่อแบบกับ ปร.4 ขัดแย้ง",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 15256,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "estimate-1",
+      "menu": "estimate",
+      "question": "จัดทำราคากลางงานก่อสร้างถนน ค.ส.ล.",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 14938,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "estimate-2",
+      "menu": "estimate",
+      "question": "จัดทำราคากลางงานอาคารจาก BOQ และ ปร.5",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 15574,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "estimate-3",
+      "menu": "estimate",
+      "question": "ตรวจราคาวัสดุ ค่าแรง และ Factor F เพื่อประมาณราคา",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 17702,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "estimate-4",
+      "menu": "estimate",
+      "question": "ทำราคากลางเมื่อไม่มีราคาวัสดุทางการที่ยืนยันได้",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8744,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "estimate-5",
+      "menu": "estimate",
+      "question": "จัดทำราคากลางเมื่อ Factor F สองเอกสารไม่ตรงกัน",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 17689,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "drawing-1",
+      "menu": "drawing",
+      "question": "จัดทำแบบรูปรายการงานก่อสร้างถนน",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8469,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "drawing-2",
+      "menu": "drawing",
+      "question": "จัดทำรายการประกอบแบบอาคารสำนักงาน",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8480,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "drawing-3",
+      "menu": "drawing",
+      "question": "จัดทำข้อกำหนดทางเทคนิคงานระบายน้ำ",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8489,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "drawing-4",
+      "menu": "drawing",
+      "question": "จัดทำแบบรูปรายการเมื่อไม่มีผลสำรวจพื้นที่",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8504,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "drawing-5",
+      "menu": "drawing",
+      "question": "จัดทำรายการประกอบแบบโดยแยกจาก TOR งานก่อสร้าง",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 17734,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "audit-1",
+      "menu": "audit",
+      "question": "ตรวจแบบ BOQ และราคากลางถนน ค.ส.ล.",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 15517,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "audit-2",
+      "menu": "audit",
+      "question": "ตรวจ ปร.4 เทียบกับแบบก่อสร้างอาคาร",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 14931,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "audit-3",
+      "menu": "audit",
+      "question": "ตรวจ ปร.5 และ Factor F เทียบกับ ปร.4",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 18306,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "audit-4",
+      "menu": "audit",
+      "question": "ตรวจแบบและ BOQ เมื่อขาดแผ่นรายละเอียด",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 10156,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "audit-5",
+      "menu": "audit",
+      "question": "ตรวจราคากลางเมื่อราคาวัสดุในเอกสารขัดแย้ง",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8732,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "accept-1",
+      "menu": "accept",
+      "question": "ตรวจงานและตรวจรับก่อสร้างถนน ค.ส.ล.",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 9865,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "accept-2",
+      "menu": "accept",
+      "question": "จัดทำ checklist ตรวจรับงานอาคาร",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 9289,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "CHOICE HANDLED"
+    },
+    {
+      "device": "mobile",
+      "id": "accept-3",
+      "menu": "accept",
+      "question": "ตรวจรับงานคอนกรีตโดยผลทดสอบกำลังอัดยังไม่ออก",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 9887,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "accept-4",
+      "menu": "accept",
+      "question": "ตรวจรับงานที่ปริมาณจริงไม่ตรงแบบสัญญา",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8507,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "accept-5",
+      "menu": "accept",
+      "question": "ตรวจรับงานก่อสร้างโดยไม่มีหลักฐานหน้างาน",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": true,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 14913,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "diagnose-1",
+      "menu": "diagnose",
+      "question": "วิเคราะห์ปัญหาถนนคอนกรีตแตกร้าว",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 9803,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "diagnose-2",
+      "menu": "diagnose",
+      "question": "วิเคราะห์ปัญหาอาคารทรุดตัว",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 9807,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "diagnose-3",
+      "menu": "diagnose",
+      "question": "วิเคราะห์สาเหตุสะพานแตกร้าวและความเสี่ยง",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 9828,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "diagnose-4",
+      "menu": "diagnose",
+      "question": "วิเคราะห์ปัญหาโครงสร้างเมื่อไม่มีผลตรวจพื้นที่",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 8482,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    },
+    {
+      "device": "mobile",
+      "id": "diagnose-5",
+      "menu": "diagnose",
+      "question": "วิเคราะห์ปัญหาถนนน้ำท่วมขังและแนวทางแก้ไข",
+      "status": "PASS",
+      "reason": "",
+      "route": "GP007",
+      "outputRoute": "GP007",
+      "qualityGates": {
+        "decisionRequired": true,
+        "multiConditionRequired": false,
+        "legalVersionRequired": false,
+        "evidenceRequired": true,
+        "allowedDecisionStatuses": [
+          "✅ ได้",
+          "❌ ไม่ได้",
+          "⚠️ ได้โดยมีเงื่อนไข",
+          "🔎 หลักฐานยังไม่พอที่จะฟันธง"
+        ]
+      },
+      "promptEvidence": {
+        "hasEngineeringMarker": true,
+        "hasHumanReview": true,
+        "hasDecisionLock": true,
+        "hasEvidenceText": true,
+        "hasPRWorkflow": false
+      },
+      "promptLength": 9813,
+      "clipboard": "PASS (writeText successful with verified payload)",
+      "guidedIntake": "NO CHOICE SHOWN"
+    }
+  ]
+}

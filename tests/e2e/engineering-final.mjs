@@ -6,11 +6,12 @@ import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {chromium} from 'playwright';
+import {engineeringLabels as labels,actionLabels} from '../helpers/engineering-menu.mjs';
 const root=resolve('dist');
 const dir=resolve('artifacts/engineering-final');await mkdir(dir,{recursive:true});
 const cases=JSON.parse(await readFile('tests/fixtures/engineering-final/cases.json','utf8'));
 const source=JSON.parse(await readFile('tests/fixtures/engineering-final/source.json','utf8'));
-const labels=['ถอดแบบและจัดทำ BOQ','แบบรูปรายการ / TOR งานก่อสร้าง','จัดทำราคากลางงานก่อสร้าง','ตรวจแบบ / ตรวจงาน / ตรวจรับ','วิเคราะห์ปัญหาถนน / อาคาร / โครงสร้าง','🔍 ตรวจสอบค่า K'];
+
 const server=createServer(async(req,res)=>{
  const path=resolve(root,'.'+(new URL(req.url,'http://localhost').pathname==='/'?'/index.html':decodeURIComponent(new URL(req.url,'http://localhost').pathname)));
  if(!path.startsWith(root+sep)){res.writeHead(403).end();return;}
@@ -33,31 +34,39 @@ async function submitAndWait(page,text){
  },previous,{timeout:30000});
  await previous?.dispose();
 }
-const results=[];let browser;
+const menuCases=[
+ {id:'MENU_DRAWING',action:'drawing',menuOnly:true,scenario:'จัดทำแบบรูปรายการงานก่อสร้างจากข้อมูลที่มี ห้ามเดาขนาดหรือเหล็กเสริม',expect:['ผู้ประกอบวิชาชีพ','ข้อจำกัด']},
+ {id:'MENU_REVIEW',action:'review',menuOnly:true,scenario:'ตรวจแบบ BOQ ปร.4 ปร.5 ราคากลาง Factor F และเงื่อนไขสัญญา',expect:['ผลกระทบ','UNVERIFIED']}
+];
+const results=[],menuResults=[];let browser;
 try{
  browser=await chromium.launch({headless:true});
  for(const [device,viewport] of [['desktop',{width:1440,height:900}],['mobile',{width:390,height:844}]]){
-  for(const c of cases){
+  for(const c of [...cases,...menuCases]){
    const context=await browser.newContext({viewport,isMobile:device==='mobile',hasTouch:device==='mobile',serviceWorkers:'block',permissions:['clipboard-read','clipboard-write']});
    const page=await context.newPage();const record={id:c.id,device,scope,commit,status:'FAIL',downstreamAI:'NOT VERIFIED',source:source.source};
    try{
     await page.goto(base,{waitUntil:'networkidle'});
     const group=page.locator('[data-category-id="engineering"]');
     const buttons=group.locator('.work-catalog-task');
-    await buttons.nth(5).waitFor({state:'attached'});
+    await group.getByRole('button',{name:actionLabels.k,exact:true}).waitFor({state:'attached'});
     assert.deepEqual(await buttons.allTextContents(),labels);
     await group.getByRole('button',{name:'งานช่างและวิศวกรรม',exact:true}).click();
     assert.ok(await buttons.first().isVisible());
     await group.getByRole('button',{name:'งานช่างและวิศวกรรม',exact:true}).click();
     assert.equal(await buttons.first().isVisible(),false);
     await group.getByRole('button',{name:'งานช่างและวิศวกรรม',exact:true}).click();
-    record.seed=await buttons.nth(c.button).getAttribute('data-prompt');
-    await buttons.nth(c.button).click();
+    const menuButton=group.getByRole('button',{name:c.action==='tor'?actionLabels.drawing:actionLabels[c.action],exact:true});
+    if(c.action==='tor'||c.action==='drawing'){
+     await menuButton.click();
+     const choice=page.getByRole('dialog').getByRole('button',{name:c.action==='tor'?actionLabels.tor:'จัดทำแบบรูปรายการ',exact:true});
+     record.seed=await choice.getAttribute('data-prompt');await choice.click();
+    }else{record.seed=await menuButton.getAttribute('data-prompt');await menuButton.click();}
     const summary=page.getByText('ดูคำสั่งที่ GovPrompt เตรียมไว้',{exact:true});
     const skip=page.locator('.guided-intake-message .answer-actions button').last();
     await summary.or(skip).first().waitFor({state:'visible',timeout:30000});
     if(await skip.isVisible()){
-     const answer=`โครงการ ${source.project} จังหวัดเชียงใหม่ วงเงินยังไม่ยืนยัน ต้องการ ${labels[c.button]} ${c.scenario} แหล่งโครงการจริง ${source.source} เอกสาร ${Object.values(source.documents).join(' ')} ยังไม่ได้แนบไฟล์ใน GovPrompt ให้ AI ปลายทางอ่านต้นฉบับก่อนวิเคราะห์`;
+     const answer=`โครงการ ${source.project} จังหวัดเชียงใหม่ วงเงินยังไม่ยืนยัน ต้องการ ${actionLabels[c.action]} ${c.scenario} แหล่งโครงการจริง ${source.source} เอกสาร ${Object.values(source.documents).join(' ')} ยังไม่ได้แนบไฟล์ใน GovPrompt ให้ AI ปลายทางอ่านต้นฉบับก่อนวิเคราะห์`;
      await submitAndWait(page,answer);
      await summary.or(skip).first().waitFor({state:'visible',timeout:30000});
      if(await skip.isVisible())await skip.click();
@@ -71,7 +80,7 @@ try{
     assert.ok(record.prompt.includes(c.scenario),'test scenario preserved');
     assert.ok(record.prompt.includes(record.seed),'selected menu seed preserved');
     for(const text of c.expect)assert.ok(record.prompt.includes(text),text);
-    if(c.button<3)for(const text of ['VERIFIED','PENDING','BLOCKED','Partial Decision Lock','Human Review'])assert.ok(record.prompt.includes(text),text);
+    if(['boq','tor','price'].includes(c.action))for(const text of ['VERIFIED','PENDING','BLOCKED','Partial Decision Lock','Human Review'])assert.ok(record.prompt.includes(text),text);
     // Read-only diagnostic: preserve the exact submitted prompt and the runtime routing decisions.
     record.route=await page.locator('.route-label').last().innerText();
     record.submittedQuestion=await page.locator('.message.user .message-body').last().textContent();
@@ -111,8 +120,10 @@ try{
     record.status='PASS';
    }catch(e){record.error=String(e.stack||e);}
    await page.screenshot({path:resolve(dir,`${device}-${c.id}.png`),fullPage:true}).catch(()=>{});
-   await writeFile(resolve(dir,`${device}-${c.id}.json`),JSON.stringify(record,null,2));results.push(record);console.log(c.id,device,record.status,record.error?.split('\n')[0]||'');await context.close();
+   await writeFile(resolve(dir,`${device}-${c.id}.json`),JSON.stringify(record,null,2));(c.menuOnly?menuResults:results).push(record);console.log(c.id,device,record.status,record.error?.split('\n')[0]||'');await context.close();
   }
  }
-}finally{await browser?.close();await new Promise(r=>server.close(r));await writeFile(resolve(dir,'results.json'),JSON.stringify({scope,source,results,downstreamAI:'NOT VERIFIED'},null,2));}
+}finally{await browser?.close();await new Promise(r=>server.close(r));await writeFile(resolve(dir,'results.json'),JSON.stringify({scope,source,results,menuResults,downstreamAI:'NOT VERIFIED'},null,2));}
 assert.equal(results.length,36);assert.equal(results.filter(r=>r.status!=='PASS').length,0);
+
+assert.equal(menuResults.length,4);assert.equal(menuResults.filter(r=>r.status!=='PASS').length,0);

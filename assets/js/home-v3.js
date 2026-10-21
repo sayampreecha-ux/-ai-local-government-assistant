@@ -380,6 +380,12 @@
       attachments: safeAttachments,
       outputFormatId: outputFormatSelect?.value || 'auto'
     });
+    // Preserve the user's original whitespace in the copyable question section.
+    const normalizedQuestion = text.replace(/\s+/g, ' ').trim();
+    const questionHeader = 'คำถามจากผู้ใช้\n' + normalizedQuestion + '\n';
+    const promptBundleWithOriginalQuestion = text !== normalizedQuestion && promptBundleBase.prompt.includes(questionHeader)
+      ? Object.freeze({...promptBundleBase, prompt: promptBundleBase.prompt.replace(questionHeader, 'คำถามจากผู้ใช้\n' + text + '\n')})
+      : promptBundleBase;
     const toolPlan = typeof core.createToolRoutingPlan === 'function'
       ? core.createToolRoutingPlan({ question: text, attachments: safeAttachments })
       : null;
@@ -388,12 +394,34 @@
       : '';
     const routedPromptBundle = toolRoutingBlock
       ? Object.freeze({
-          ...promptBundleBase,
-          prompt: `${promptBundleBase.prompt}\n\nแนวทางเลือกเครื่องมือ\n${toolRoutingBlock}`,
+          ...promptBundleWithOriginalQuestion,
+          prompt: `${promptBundleWithOriginalQuestion.prompt}\n\nแนวทางเลือกเครื่องมือ\n${toolRoutingBlock}`,
           toolRoutingPlan: toolPlan
         })
-      : promptBundleBase;
+      : promptBundleWithOriginalQuestion;
     let promptBundle = enrichNaturalPersonServiceTor(routedPromptBundle, text);
+    // Additive revenue guidance: only annotate matching revenue questions.
+    // Keep the original route, search behavior, and unrelated prompts unchanged.
+    const { revenueGuidance } = await import('../../src/revenue-guidance.js');
+    const revenue = revenueGuidance(text);
+    if (revenue) {
+      const revenueBlock = [
+        'งานจัดเก็บรายได้ท้องถิ่น — ข้อกำหนดเฉพาะ (guidance only)',
+        'ประเภทงาน: ' + revenue.domain,
+        'หมวดที่เกี่ยวข้อง: ' + revenue.relatedDomains.join(' / '),
+        'หลักฐานที่ต้องตรวจ: ' + revenue.missingEvidence.join(' / '),
+        'Revenue Safety Override: สำหรับคำถามด้านภาษี/หนี้ภาษี/ข้อมูลประเมิน ให้ใช้ HIGH risk และตรวจ Official Source, Legal Version, Evidence และ Decision Lock ก่อนสรุป แม้ Risk/Tool Routing เบื้องต้นเป็น LOW หรือ ai-only; ไม่เปลี่ยนเส้นทางงานหลักหรือการทำธุรกรรม',
+        'Evidence Gate: ยังไม่มีหลักฐานที่ตรวจยืนยันใน GovPrompt; AI ปลายทางต้องค้นและตรวจต้นฉบับเอง',
+        'Decision Lock: ห้ามรับรองการคำนวณภาษี อัตรา กำหนดเวลา หรือการทำธุรกรรมจนกว่าจะยืนยันข้อมูลครบ',
+        ...revenue.instructions
+      ].join('\n');
+      promptBundle = Object.freeze({
+        ...promptBundle,
+        prompt: promptBundle.prompt + '\n\n' + revenueBlock,
+        revenueGuidanceDomain: revenue.domain,
+        revenueMissingEvidence: revenue.missingEvidence
+      });
+    }
 
     const assistanceRoute = typeof core.detectAssistanceRoute === 'function'
       ? core.detectAssistanceRoute(text)
@@ -633,7 +661,9 @@
 
     article.className = 'message assistant'; content.className = 'assistant-content'; label.className = 'route-label'; card.className = 'answer-card'; section.className = 'answer-section'; actions.className = 'answer-actions'; mark.className = 'assistant-mark'; mark.setAttribute('aria-hidden', 'true'); mark.textContent = 'กพ';
     if (promptBundle.gp223) window.GovPromptCore.gp223HandoffPrompts.set(card, promptBundle.prompt);
-    label.textContent = `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
+    label.textContent = promptBundle.revenueGuidanceDomain
+      ? `งานจัดเก็บรายได้ อปท. · ${route.moduleId}`
+      : `${domainNames[route.transactionType] || domainNames.general} · ${route.moduleId}`;
     const isPrResult = Boolean(promptBundle?.prMode);
     const isMinutesResult = workflowRuntime?.meetingMinutes?.mode === 'draft-from-recorded-facts';
     if (isMinutesResult) {
@@ -655,6 +685,17 @@
         ? `GP จัดคำสั่งเฉพาะงานประชาสัมพันธ์ให้แล้ว พร้อมตรวจข้อเท็จจริง PDPA และรูปแบบสื่อ${workflowSummary}${presentationSummary}`
         : `ระบบจัดคำถาม ตรวจความเสี่ยง และเตรียม Prompt กำหนดวิธีค้นแหล่งราชการให้แล้ว — กดคัดลอกไปวางใน ChatGPT หรือ AI ที่คุณใช้${workflowSummary}${presentationSummary}`;
 
+    if (promptBundle.revenueGuidanceDomain) {
+      // Revenue is a topical context, not a replacement for the chosen output module.
+      // Show actionable evidence on the result page; the AI destination still verifies law.
+      const evidence = Array.isArray(promptBundle.revenueMissingEvidence)
+        ? promptBundle.revenueMissingEvidence : [];
+      description.textContent = 'แนวทางตรวจเบื้องต้น: ตรวจประเภท อปท. และอำนาจจัดเก็บก่อน ตรวจข้อบัญญัติ/กฎหมายฉบับใช้บังคับ แล้วตรวจหลักฐานเฉพาะเรื่องก่อนคำนวณหรือสั่งดำเนินการ';
+      const evidenceNote = document.createElement('p');
+      evidenceNote.className = 'revenue-result-evidence';
+      evidenceNote.textContent = 'หลักฐานที่ต้องตรวจ: ' + (evidence.length ? evidence.join(' · ') : 'ตรวจต้นฉบับทางการที่เกี่ยวข้อง');
+      section.append(evidenceNote);
+    }
     const v8Assessment = searchResult?.v8Assessment;
     if (isPrResult) status.textContent = '✅ พร้อมทำสื่อประชาสัมพันธ์ — ไม่ดึงกฎงานอื่นมาปน';
     else if (isMinutesResult) status.textContent = 'ร่างจากข้อมูลที่มี กรุณาตรวจสอบกับต้นฉบับก่อนรับรองรายงานการประชุม';

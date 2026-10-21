@@ -4,14 +4,14 @@ import test from 'node:test';
 
 const source = readFileSync('assets/js/ui/quick-action-guided-bridge-v1.js', 'utf8');
 
-test('home shows all thirteen categories in frequent-use order without another-work opener', () => {
+test('home preserves twelve core categories plus the revenue category without another-work opener', () => {
   const orderBlock = source.match(/const CATALOG_ORDER = Object\.freeze\(\[([\s\S]*?)\]\);/)?.[1] || '';
   const ids = [...orderBlock.matchAll(/'([^']+)'/g)].map(match => match[1]);
   assert.deepEqual(ids, [
-    'pr', 'records', 'audit', 'finance', 'planning', 'procurement',
+    'pr', 'records', 'audit', 'finance', 'revenue', 'planning', 'procurement',
     'hr', 'executive', 'engineering', 'health', 'education', 'council'
   ]);
-  assert.match(source, /13 หมวดงาน เรียงจากงานที่ใช้บ่อย/);
+  assert.match(source, /งานจัดเก็บรายได้มีตัวอย่างคำถาม 8 เรื่อง/);
   assert.match(source, /quickActions\.replaceChildren\(buildCatalog\(\)\)/);
   assert.doesNotMatch(source, /data-work-catalog-open|งานอื่น ๆ/);
 });
@@ -44,4 +44,34 @@ test('catalog is mobile and accessibility aware', () => {
   assert.match(source, /button\.type = 'button'/);
   assert.match(source, /@media\(max-width:620px\)/);
   assert.match(source, /work-catalog-heading/);
+});
+
+// Exercise the existing production verifier's catalog assertions without starting a browser.
+const productionVerifier = readFileSync('scripts/verify-public-health-home-production-e2e.mjs', 'utf8');
+const catalogAssertions = productionVerifier.slice(
+  productionVerifier.indexOf('const expectedHomeCategories ='), productionVerifier.indexOf('const frontend ='));
+const { assertHomeCategories, expectedHomeCategories } = new Function('assert',
+  catalogAssertions + '\nreturn { assertHomeCategories, expectedHomeCategories };')(assert);
+
+test('production catalog proof matches approved source IDs, names and order', () => {
+  const order = source.match(/const CATALOG_ORDER = Object\.freeze\(\[([\s\S]*?)\]\);/)[1];
+  const catalog = source.match(/const WORK_CATALOG = Object\.freeze\(\[([\s\S]*?)\n  \]\);/)[1];
+  const actual = new Function(
+    'const order=['+order+']; const catalog=['+catalog+']; return order.map(id => ({id, title:catalog.find(c => c.id===id).title}));')();
+  assertHomeCategories(actual);
+  assert.equal(actual.length, 13);
+  assert.ok(productionVerifier.includes("catalog.locator('.work-catalog-group:not([data-assistance-route])').evaluateAll"));
+  assert.ok(productionVerifier.includes('assertHomeCategories(homeCategories)'));
+  assert.match(source, /renderCategory\(categories\.get\('assistance'\), 0\)/);
+});
+
+test('production catalog proof rejects missing, extra, duplicate, reordered and renamed categories', () => {
+  const copy = () => expectedHomeCategories.map(category => ({...category}));
+  const missing = copy(); missing.splice(4,1);
+  const extra = copy(); extra.push({id:'unexpected', title:'Unexpected'});
+  const duplicate = copy(); duplicate[4] = {...duplicate[3]};
+  const reordered = copy(); [reordered[0],reordered[1]] = [reordered[1],reordered[0]];
+  const renamed = copy(); renamed[4].title += ' changed';
+  for (const [name, actual] of Object.entries({missing,extra,duplicate,reordered,renamed}))
+    assert.throws(() => assertHomeCategories(actual), {name:'AssertionError'}, name+' must block production proof');
 });

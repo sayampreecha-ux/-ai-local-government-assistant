@@ -125,7 +125,28 @@
     return Object.freeze(entries.filter(([, pattern]) => pattern.test(source)).map(([id]) => id));
   }
 
+  function revenueAuthorityCase(source) {
+    const text = normalizeText(source).toLocaleLowerCase();
+    return /ภาษีที่ดิน|สิ่งปลูกสร้าง|ภาษีป้าย|ประเมินภาษี|อุทธรณ์ภาษี|คัดค้านภาษี|ภาษีค้าง|เร่งรัดภาษี|เบี้ยปรับภาษี|เงินเพิ่มภาษี|แผนที่ภาษี|สำรวจทรัพย์สิน|ltax|แอลแท็กซ์|e-laas|อีลาส|หนังสือแจ้งภาษี|แบบฟอร์มภาษี/.test(text)
+      || /ภาษีผู้เข้าพัก|ภาษีโรงแรม|ภาษีจากผู้เข้าพัก|ค่าธรรมเนียม.{0,25}โรงแรม/.test(text)
+      || /น้ำมัน|ก๊าซ|ก๊าส|ยาสูบ/.test(text) && /ภาษี(?:จาก)?(?:น้ำมัน|ก๊าซ|ก๊าส|ยาสูบ)|รายได้|ข้อบัญญัติ|จัดเก็บ/.test(text)
+      || /บันทึกรายรับ/.test(text) && /ภาษี|เทศบาล|อบจ|อบต|อปท/.test(text);
+  }
+
+  function revenueTaskDisciplines(source) {
+    const original = allMatches(source, DISCIPLINES);
+    if (!revenueAuthorityCase(source)) return original;
+    const hasRealPersonnelIssue = /บุคลากร|ข้าราชการ|พนักงาน|ตำแหน่ง|วินัย|ลาป่วย|อัตรากำลัง|บรรจุ|แต่งตั้ง|เงินเดือน|เลื่อนระดับ/.test(source);
+    const hasRealEngineeringIssue = /ถนน|สะพาน|ก่อสร้าง|งานช่าง|วิศวกรรม|ประมาณราคา|หน้างาน/.test(source);
+    const filtered = original.filter(id =>
+      (id !== 'human-resources' || hasRealPersonnelIssue) &&
+      (id !== 'engineering' || hasRealEngineeringIssue));
+    const revenueDiscipline = /e-laas|อีลาส|บันทึกรายรับ|ภาษีค้าง|เร่งรัดภาษี|เบี้ยปรับภาษี|เงินเพิ่มภาษี/.test(source) ? 'finance' : 'legal';
+    return Object.freeze([...new Set([...filtered, revenueDiscipline])]);
+  }
+
   function classifyRiskLevel(source) {
+    if (revenueAuthorityCase(source)) return 'HIGH';
     if (DISCIPLINARY_CASE.test(source)) return 'HIGH';
     // Actionable government-vehicle decisions need legal/procurement review,
     // even when phrased without the words "law", "budget" or "procurement".
@@ -138,7 +159,7 @@
   function buildQualityGates(source, riskLevel) {
     const vehicleDecision = Boolean(window.GovPromptCore.isVehicleRegulationDecision?.(source));
     const disciplinaryCase = DISCIPLINARY_CASE.test(source);
-    const decisionRequired = disciplinaryCase || vehicleDecision || DECISION_TERMS.test(source);
+    const decisionRequired = disciplinaryCase || vehicleDecision || revenueAuthorityCase(source) || DECISION_TERMS.test(source);
     const multiConditionRequired = decisionRequired && (disciplinaryCase || vehicleDecision || MULTI_CONDITION_TERMS.test(source));
     const legalVersionRequired = riskLevel === 'HIGH' || LEGAL_VERSION_TERMS.test(source);
     const evidenceRequired = riskLevel === 'HIGH' || legalVersionRequired;
@@ -161,14 +182,20 @@
     const priorEvent = pick(/(?:ผ่านการสรรหา|ผ่านการคัดเลือก|ประกาศผล|ได้รับคำสั่ง|ได้รับแต่งตั้ง)[^,.\n]{0,80}/i);
     return Object.freeze({
       actor: pick(/(?:ข้าราชการ|พนักงานส่วนท้องถิ่น|ลูกจ้าง|ผู้บริหาร|ผู้ผ่านการสรรหา|ผู้สมัคร)[^,.\n]{0,80}/i),
-      organization: pick(/(?:องค์การบริหารส่วนจังหวัด|อบจ\.|องค์การบริหารส่วนตำบล|อบต\.|เทศบาล|อปท\.|หน่วยงาน)[^,.\n]{0,60}/i),
+      organization: pick(/(?:องค์การบริหารส่วนจังหวัด|อบจ\.|องค์การบริหารส่วนตำบล|อบต\.|เทศบาล|อปท\.)/i),
+      amount_context: pick(/(?:วงเงิน|งบประมาณ)\s*\d[\d\u2060]*(?:\s*บาท)?/i),
       status_or_prior_event: [status, priorEvent].filter(value => !value.startsWith('[')).join(' / ') || '[ให้ AI สกัดสถานะหรือเหตุการณ์ก่อนหน้า]',
       current_stage: normalizeText(context?.currentStage) || pick(/(?:รายงานตัวครั้งแรก|รายงานตัว|เลือก[^,.\n]{0,60}|รับตำแหน่ง|ก่อนสอบ|หลังสอบ)[^,.\n]{0,80}/i),
       disputed_action: pick(/(?:เดินทาง|รายงานตัว|เลือก|เบิก|จ่าย|แต่งตั้ง|ย้าย|โอน|รับโอน)[^,.\n]{0,100}/i),
       claim_or_power: pick(/(?:ค่าใช้จ่ายในการเดินทาง|ค่าเดินทาง|สิทธิ|ค่าใช้จ่าย|อำนาจ|เบิก|จ่าย)[^,.\n]{0,80}/i),
       legal_issue: pick(/(?:รับการคัดเลือก|ข้อ\s*\d+(?:\(\d+\))?|ถือเป็น|เข้าข่าย|มีอำนาจ)[^,.\n]{0,100}/i),
       applicable_rule: pick(/(?:พระราชบัญญัติ|กฎกระทรวง|ระเบียบ|ประกาศ|หนังสือ(?:สั่งการ|เวียน)?|มาตรา\s*\d+|ข้อ\s*\d+(?:\(\d+\))?)[^,.\n]{0,120}/i),
-      date_context: pick(/(?:พ\.ศ\.\s*)?25\d{2}|(?:พ\.ศ\.\s*)?26\d{2}|ปี\s*\d{2,4}|วันที่\s*\d{1,2}[^,.\n]{0,30}/i, '[ต้องระบุวันที่เกิดข้อเท็จจริง]')
+      date_context: (() => {
+        // Case citation years are not event dates. Prefer an explicitly described event date.
+        const eventFacts = facts.replace(/(?:คำวินิจฉัย|คำพิพากษา)[^\n,.]{0,80}?\d+\s*\/\s*25\d{2}/gi, '');
+        const match = eventFacts.match(/(?:วัน(?:เริ่มไต่สวน|ชี้มูล|รับสำนวน|เกิดเหตุ|พ้นราชการ)|(?:เหตุเกิด|เกิดเหตุ|พ้นราชการ)\s*วันที่|เมื่อวันที่|ตั้งแต่วันที่)\s*\d{1,2}[^,.\n]{0,30}|(?:เกิดเหตุ|เริ่มไต่สวน|ชี้มูล|รับสำนวน|พ้นราชการ|เหตุการณ์)[^\n,.]{0,25}?(?:พ\.ศ\.\s*)?25\d{2}|(?:พ\.ศ\.\s*)?25\d{2}\s*(?:เกิดเหตุ|เริ่มไต่สวน|ชี้มูล|รับสำนวน|พ้นราชการ)/i);
+        return (match?.[0] || '[ต้องระบุวันที่เกิดข้อเท็จจริง]').replace(/\u2060/g, ',');
+      })()
     });
   }
 
@@ -321,7 +348,7 @@
   function buildApplicableAuthorityCheck(question, context = {}, evidence = {}) {
     const source = normalizeForReasoning([question, context.facts, context.currentStage].filter(Boolean).join(' '));
     const precedentUsed = EXPLICIT_PRECEDENT_TERMS.test(source) || evidence.officialPrecedent === 'VERIFIED' || evidence.reliesOnPrecedent === true;
-    const full = DISCIPLINARY_CASE.test(source) || precedentUsed || detectInterpretationIssue(source) || OFFICIAL_DOCUMENT_DECISION_TERMS.test(source)
+    const full = revenueAuthorityCase(source) || DISCIPLINARY_CASE.test(source) || precedentUsed || detectInterpretationIssue(source) || OFFICIAL_DOCUMENT_DECISION_TERMS.test(source)
       || MULTI_CONDITION_TERMS.test(source)
       || /(?:การเงิน|การคลัง|สวัสดิการ|สิทธิประโยชน์|บุคคล|บุคลากร|ข้าราชการ|งบประมาณ)/i.test(source);
     const mode = full ? 'FULL' : LEGAL_VERSION_TERMS.test(source) ? 'RULE_VERSION' : 'NONE';
@@ -380,7 +407,7 @@
       '- ประเมินสถานะใหม่หลังค้น: VERIFIED=ปฐมภูมิครบ ตรงข้อเท็จจริง ยืนยันช่วงเวลาบังคับใช้; CONDITIONAL=ขึ้นกับเงื่อนไขสำคัญ; CONFLICT=ความขัดแย้งยังต้องวิเคราะห์; UNVERIFIED=ยังยืนยันต้นฉบับ/ฉบับที่ใช้/สถานะล่าสุดไม่ได้',
       '- พบเพียง FAQ/คู่มือ/บทความ ให้ UNVERIFIED และตามหาต้นฉบับต่อ; CONFLICT/UNVERIFIED ห้ามฟันธง ได้/ไม่ได้ โดยไม่มีคำเตือน; CONDITIONAL ต้องระบุเงื่อนไข; สถานะเริ่มต้นไม่ใช่ผลการตรวจจริง ห้ามอ้างว่าค้นแล้วหากยังไม่ค้น',
       '- หากภายหลังใช้คำพิพากษา หนังสือหารือ หรือแนววินิจฉัยเป็นเหตุหลัก ให้ยกระดับ FULL และตรวจทั้ง 6 ด้านก่อนตอบทุกครั้ง',
-      '- เก็บผลตรวจภายในแต่ละด้านพร้อมเหตุผลและแหล่งปฐมภูมิที่เปิดตรวจ (sourceIds/locator); คง Answer First แสดงเฉพาะข้อสรุป เหตุผล ฐานอำนาจ ความเสี่ยง และสิ่งที่ยังต้องตรวจ ไม่แสดง checklist ทั้งหมด'
+      '- เก็บผลการตรวจสอบภายในแต่ละด้านพร้อมเหตุผลและแหล่งปฐมภูมิที่เปิดตรวจ (sourceIds/locator); คง Answer First แสดงเฉพาะข้อสรุป เหตุผล ฐานอำนาจ ความเสี่ยง และสิ่งที่ยังต้องตรวจ ไม่แสดง checklist ทั้งหมด'
     ];
   }
 
@@ -469,11 +496,21 @@
       workflowStatus = 'BLOCKED_MISSING_SCOPE';
       nextAction = 'CLARIFY_DECISIVE_SCOPE';
     }
-    const officialDocumentLanguage = Object.freeze([
-      'หารือการพิจารณา', 'หารือแนวทางการปฏิบัติ', 'หลักเกณฑ์และแนวทาง',
-      'ซักซ้อมความเข้าใจ', 'การเบิกค่าใช้จ่าย', 'การเดินทางไปราชการ',
-      'การแต่งตั้ง', 'การรับการคัดเลือก'
-    ]);
+    const disciplinarySearch = DISCIPLINARY_CASE.test(source);
+    const officialDocumentLanguage = Object.freeze(disciplinarySearch
+      ? ['ป.ป.ช. ไต่สวนชี้มูลวินัย', 'ระยะเวลาไต่สวน', 'คำวินิจฉัยศาลรัฐธรรมนูญ', 'กฎหมายบริหารงานบุคคลท้องถิ่น']
+      : ['หารือการพิจารณา', 'หารือแนวทางการปฏิบัติ', 'หลักเกณฑ์และแนวทาง',
+        'ซักซ้อมความเข้าใจ', 'การเบิกค่าใช้จ่าย', 'การเดินทางไปราชการ',
+        'การแต่งตั้ง', 'การรับการคัดเลือก']);
+    const judgmentNumber = source.match(/(?:คำวินิจฉัย(?:ศาลรัฐธรรมนูญ)?(?:ที่)?|คำพิพากษา(?:ที่)?)\s*(\d+\s*\/\s*25\d{2})/i)?.[1] || '';
+    const organizationTerm = fingerprint.organization.startsWith('[') ? '' : fingerprint.organization;
+    const disciplinaryQuery = ['ป.ป.ช. ไต่สวนชี้มูลความผิดทางวินัย ระยะเวลาไต่สวน', judgmentNumber ? 'คำวินิจฉัย ' + judgmentNumber : '', organizationTerm].filter(Boolean).join(' ');
+    const disciplinaryQueries = [
+      [judgmentNumber ? 'คำวินิจฉัยศาลรัฐธรรมนูญที่ ' + judgmentNumber : 'ป.ป.ช. ระยะเวลาไต่สวนชี้มูลวินัย', 'site:ratchakitcha.soc.go.th'].join(' '),
+      'พ.ร.ป. ป้องกันและปราบปรามการทุจริต ระยะเวลาไต่สวน ขยายเวลา site:go.th',
+      ['ป.ป.ช. ชี้มูลวินัยเกินกำหนด อำนาจผู้บังคับบัญชา', organizationTerm, 'site:go.th'].filter(Boolean).join(' '),
+      [judgmentNumber ? 'คำวินิจฉัย ' + judgmentNumber : 'ป.ป.ช. วินัย', 'บทเฉพาะกาล ผลผูกพันทางวินัย พ้นราชการ site:go.th'].join(' ')
+    ];
     return Object.freeze({
       applicableAuthorityCheck,
       qualityStatus: applicableAuthorityCheck.qualityStatus,
@@ -506,15 +543,15 @@
       requiredPrecedentVerification: REQUIRED_PRECEDENT_VERIFICATION,
       evidenceState,
       searchConcepts: Object.freeze({
-        factLanguage: compactFacts || source,
-        legalLanguage: legalPhrase,
+        factLanguage: disciplinarySearch ? disciplinaryQuery : (compactFacts || source),
+        legalLanguage: disciplinarySearch ? disciplinaryQuery : legalPhrase,
         officialDocumentLanguage,
         sourceLanguage: normalizeText(context?.owningUnit || context?.organizationType || fingerprint.organization)
       }),
       retrievalLoop: Object.freeze(['SEARCH', 'EXTRACT_LEADS', 'FOLLOW_BEST_LEAD', 'UPDATE_SEARCH', 'VERIFY']),
       leadTypes: Object.freeze(['documentNumber', 'date', 'title', 'issuingAuthority', 'legalProvision', 'officialTerminology', 'citedDocument', 'indexOrCompilation', 'pageNumber']),
       hiddenDocumentRecovery: Object.freeze(['open-pdf-or-compilation', 'inspect-index-and-table-of-contents', 'navigate-relevant-pages', 'inspect-page-images', 'ocr-only-when-needed-and-supported']),
-      searchQueries: Object.freeze(needsScopeClarification ? [] : [
+      searchQueries: Object.freeze(needsScopeClarification ? [] : disciplinarySearch ? disciplinaryQueries : [
         `${compactFacts || source} หนังสือหารือ ตอบข้อหารือ แนววินิจฉัย ซักซ้อม`,
         `${legalPhrase} ข้อ มาตรา หลักเกณฑ์ การพิจารณา แนวทางปฏิบัติ site:go.th`,
         `รวมหนังสือหารือ ประมวลข้อหารือ สารบัญ ดัชนี คู่มือ FAQ แนววินิจฉัย ${legalPhrase} ${normalizeText(context?.owningUnit || '')} site:go.th`,
@@ -548,7 +585,7 @@
       standard: 'GovPrompt Prompt Standard v7.1',
       action: internalControlDocument ? 'draft' : firstMatch(source, ACTIONS, 'answer'),
       deliverable: internalControlDocument ? 'official-document' : firstMatch(source, DELIVERABLES, 'general-answer'),
-      disciplines: internalControlDocument ? ['audit'] : allMatches(source, DISCIPLINES),
+      disciplines: internalControlDocument ? ['audit'] : revenueTaskDisciplines(source),
       riskLevel,
       qualityGates,
       applicableAuthorityCheck,
@@ -574,15 +611,24 @@
   // the universal planner, authority resolver and backend remain unchanged.
   function constructionReviewPlan(question, basePlan) {
     const source = normalizeForReasoning(question);
+    const engineeringPlan = window.GovPromptCore.ENGINEERING_WORKFLOWS?.plan(question);
+    if (engineeringPlan && !engineeringPlan.estimationRequested) return basePlan;
+    // Technical review/acceptance outputs are not estimates merely because they
+    // mention a construction drawing or building. Keep explicit quantity/price
+    // audits on the existing A/B/C/D contract, including mixed-task requests.
+    const technicalDeliverable = /(?:ตรวจแบบ|ตรวจรับ|ควบคุมงาน|บันทึกหน้างาน|รายงานประจำวัน|ซ่อมบำรุง|บำรุงรักษา|แก้(?:ไข)?สัญญา)/.test(source);
+    const estimateDeliverable = /(?:ป\s*ร\s*\.?\s*[456]|\bboq\b|factor\s*f|ราคากลาง|ประมาณราคา|ตรวจปริมาณ|ถอดปริมาณ)/i.test(source);
+    if (technicalDeliverable && !estimateDeliverable) return basePlan;
     const review = /(?:ตรวจ|ตรวจสอบ|ตรวจทาน|เทียบ|ถอดปริมาณ|ประมาณราคา|คำนวณ|คิดราคาเกิน)/.test(source);
     const construction = /(?:ป\s*ร\s*\.?\s*[45]|factor\s*f|แบบก่อสร้าง|งานก่อสร้าง|ราคากลางก่อสร้าง)/i.test(source)
       || /(?:ถนน|คอนกรีต|หลังคา|ประปา|รางระบายน้ำ|ลานกีฬา|ทางลาด|อาคาร)/.test(source) && /(?:ปริมาณ|ราคากลาง|ประมาณราคา)/.test(source);
-    if (!review || !construction || /(?:ทำ|สร้าง|ร่าง|เขียน).*(?:ประชาสัมพันธ์|วิดีโอ|วีดีโอ|คลิป|โปสเตอร์|อินโฟกราฟิก)/.test(source)) return basePlan;
+    if (!(review && construction) && !engineeringEstimateIntent(question)) return basePlan;
+    if (/(?:ทำ|สร้าง|ร่าง|เขียน).*(?:ประชาสัมพันธ์|วิดีโอ|วีดีโอ|คลิป|โปสเตอร์|อินโฟกราฟิก)/.test(source)) return basePlan;
     const ratesOrConclusion = /(?:ราคา|ค่าแรง|วัสดุ|factor\s*f|มาตรฐาน|ผิด|เกิน|รับรอง|วินิจฉัย)/i.test(source);
     return Object.freeze({
       ...basePlan,
       action: 'verify',
-      deliverable: 'procurement',
+      deliverable: 'engineering-estimate',
       disciplines: Object.freeze(['engineering', 'procurement']),
       riskLevel: ratesOrConclusion || basePlan.riskLevel === 'HIGH' ? 'HIGH' : 'MEDIUM',
       evidenceMode: 'verify-applicable-primary-source',
@@ -608,7 +654,7 @@
       '- ราคาวัสดุและค่าแรงต้องตรงจังหวัด ช่วงเวลา หน่วย สเปก แหล่งราคา ภาษีและค่าขนส่งที่เกี่ยวข้อง แยกข้อมูลสมมุติจากอัตราราชการชัดเจน ห้ามนำ Factor F สมมุติ 1.1500 หรือ 1.2000 ไปอ้างเป็นอัตราราชการ',
       '- Risk Assessment / Partial Decision Lock: ON สำหรับการรับรองราคากลาง การเลือกอัตราราชการ ความถูกต้องตามแบบที่อ่านไม่ได้ และข้อกล่าวหาทางกฎหมายที่หลักฐานไม่ครบ แต่ให้ตรวจเลข สูตรและทำร่างข้อสังเกตที่มีหลักฐานได้ต่อ แยก BLOCKED/NOT TESTED รายประเด็น ห้ามเหมาว่าราคาต่างกันคือหน่วยงานคิดราคาเกิน',
       '- Human Review: วิศวกร/ผู้ประมาณราคาและคณะกรรมการที่มีอำนาจตรวจทานก่อนใช้จริง AI ห้ามรับรองราคากลางหรือวินิจฉัยความผิดแทนคณะกรรมการ',
-      '- Audit Trace: เก็บโจทย์ เวลาตรวจ ไฟล์/หน้า/ฉบับ สูตร หน่วย แหล่งทางการ URL/วันที่เข้าถึง ข้อสมมุติ ผลตรวจ และผู้ตรวจทานให้ย้อนตรวจได้',
+      '- Audit Trace: เก็บโจทย์ เวลาตรวจ ไฟล์/หน้า/ฉบับ สูตร หน่วย แหล่งทางการ URL/วันที่เข้าถึง ข้อสมมุติ ผลการตรวจสอบ และผู้ตรวจทานให้ย้อนตรวจได้',
       '- Self-check: นับรายการที่ได้รับกับรายการที่รายงานให้ครบ ตรวจผลต่างปริมาณสัมพันธ์กับผลต่างมูลค่า ยอดรวม ปร.4/ปร.5 และรายงาน Factor F ที่ไม่ตรงอ้างอิงทุกโครงการ แม้อัตราอ้างอิงเป็นสมมุติ; แยกข้อผิดพลาดอ่านเอกสารจากคำนวณและวิเคราะห์'
     ];
   }
@@ -620,12 +666,16 @@
     if (/(?:\+66|0)\d{8,9}\b/.test(source)) flags.push('พบหมายเลขโทรศัพท์ — ตรวจและปกปิดหากไม่จำเป็น');
     if (/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/.test(source)) flags.push('พบอีเมล — ตรวจและปกปิดหากไม่จำเป็น');
     if (/(?:เลขบัญชี|พร้อมเพย์|ข้อมูลสุขภาพ|ผลตรวจ|โรค|ข้อมูลลับ)/i.test(source)) flags.push('อาจมีข้อมูลอ่อนไหว/ข้อมูลลับ');
-    if (HIGH_RISK_TERMS.some(term => source.includes(term))) flags.push('งานความเสี่ยงสูง — ต้องตรวจแหล่งปฐมภูมิ ฉบับที่ใช้กับเหตุ และการเปลี่ยนแปลงภายหลังก่อนฟันธง');
+    if (revenueAuthorityCase(source) || HIGH_RISK_TERMS.some(term => source.includes(term))) flags.push('งานความเสี่ยงสูง — ต้องตรวจแหล่งปฐมภูมิ ฉบับที่ใช้กับเหตุ และการเปลี่ยนแปลงภายหลังก่อนฟันธง');
     if (DECISION_TERMS.test(source) && MULTI_CONDITION_TERMS.test(source)) flags.push('Decision Gate — ห้ามสรุปจากเงื่อนไขเพียงข้อเดียว');
     return Object.freeze([...new Set(flags)]);
   }
 
   function normalizeRoute(route) {
+    if (route?.primaryModule) {
+      const assistant = route.assistant || window.GovPromptCore.PROMPT_REGISTRY?.find(item => item.moduleId === route.primaryModule);
+      if (assistant) return Object.freeze({ ...route, moduleId: route.primaryModule, assistant });
+    }
     if (route?.moduleId && route?.assistant) return route;
     return Object.freeze({
       moduleId: GENERAL_ASSISTANT.moduleId,
@@ -644,7 +694,21 @@
     const attachmentNames = (Array.isArray(attachments) ? attachments : []).map(item => normalizeText(item?.name || item)).filter(Boolean);
     const riskFlags = detectRiskFlags([userQuestion, ...attachmentNames].join(' '));
     const relatedModules = Array.isArray(activeRoute.modules) && activeRoute.modules.length ? activeRoute.modules.join(', ') : activeRoute.moduleId;
-    const taskPlan = constructionReviewPlan(userQuestion, planUniversalTask(userQuestion, normalizedContext));
+    const engineeringPlan = window.GovPromptCore.ENGINEERING_WORKFLOWS?.plan(userQuestion, normalizedContext);
+    const typedOutput = engineeringPlan && window.GovPromptCore.ENGINEERING_WORKFLOWS.output(engineeringPlan);
+    const correspondenceDraft = /^(?:กรุณา|โปรด|ช่วย)?\s*(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i.test(userQuestion);
+    const initialTaskPlan = constructionReviewPlan(userQuestion, planUniversalTask(userQuestion, normalizedContext));
+    // For engineering drawings, inspection, acceptance and physical diagnostics, retain
+    // their own deliverables rather than imposing the estimate-only A/B/C/D contract.
+    const engineeringWorkflow = !correspondenceDraft && (Boolean(engineeringPlan) || activeRoute.moduleId === 'GP007'
+      && /(?:แบบรูปรายการ|รายการประกอบแบบ|ข้อกำหนดทางเทคนิค|ตรวจแบบ|ตรวจงาน|ตรวจรับ|ตรวจราคากลาง|วิเคราะห์ปัญหา|วิเคราะห์สาเหตุ|วิเคราะห์ความเสียหาย|แตกร้าว|ทรุดตัว|น้ำท่วมขัง|ถอดแบบ|ถอดปริมาณ|ประมาณราคา|ราคากลาง|boq)/i.test(userQuestion));
+    const taskPlan = correspondenceDraft
+      ? Object.freeze({ ...initialTaskPlan, action: 'draft', deliverable: 'official-document' })
+      : engineeringWorkflow
+      ? Object.freeze({ ...initialTaskPlan, engineeringWorkflow: true, evidenceMode:'verify-applicable-primary-source',
+          ...(typedOutput ? { action: typedOutput.action, deliverable: typedOutput.id, riskLevel: engineeringPlan.drawing ? 'HIGH' : (initialTaskPlan.riskLevel === 'LOW' ? 'MEDIUM' : initialTaskPlan.riskLevel) } : {}),
+          qualityGates: Object.freeze({ ...initialTaskPlan.qualityGates, evidenceRequired: true, decisionRequired: true, legalVersionRequired: initialTaskPlan.qualityGates.legalVersionRequired || Boolean(engineeringPlan && (engineeringPlan.drawing || engineeringPlan.estimationRequested || engineeringPlan.tasks.some(t=>t.id==='T11'))) }) })
+      : initialTaskPlan;
     const gates = taskPlan.qualityGates;
     const casePrecedentGate = buildCasePrecedentGate(userQuestion, { ...normalizedContext, hasAttachments: attachments.length > 0 }, taskPlan.riskLevel);
     const operationalSummary = taskPlan.action === 'summarize'
@@ -652,6 +716,17 @@
     const outputPlan = typeof window.GovPromptCore.routeOutput === 'function'
       ? window.GovPromptCore.routeOutput(userQuestion, activeRoute, normalizedContext)
       : Object.freeze({ id: 'default', label: 'คำตอบพร้อมใช้', format: 'answer-first', instructions: Object.freeze([]), confidence: 0.5, reason: 'fallback' });
+    const effectiveOutputPlan = taskPlan.constructionReview ? Object.freeze({
+      id: 'construction-estimate',
+      label: 'ตารางประมาณราคา ปร.4/ปร.5 และรายงานตรวจสอบ',
+      format: 'engineering-estimate',
+      reason: 'construction-estimate-evidence-first',
+      instructions: Object.freeze([
+        'แสดงตาราง C Factor F ก่อนตาราง A ตรวจปริมาณและผลต่าง ตาราง B สูตรคำนวณ ปร.4 รายการต่อรายการ และตาราง D ข้อจำกัดและ Human Review',
+        'แยกค่าในเอกสารกับอัตราราชการที่ยืนยันได้ พร้อมหน่วย สูตร แหล่งข้อมูล และ UNVERIFIED'
+      ])
+    }) : outputPlan;
+    const resolvedOutputPlan = !correspondenceDraft && typedOutput && (!taskPlan.constructionReview || engineeringPlan.publicityRequested || engineeringPlan.documentRequested || engineeringPlan.tasks.some(t=>t.id==='T11')) ? typedOutput : effectiveOutputPlan;
     const presentationPreset = typeof window.GovPromptCore.resolveOutputFormatPreset === 'function'
       ? window.GovPromptCore.resolveOutputFormatPreset(outputFormatId)
       : null;
@@ -673,10 +748,10 @@
     const isVideoCreation = /(?:วิดีโอ|วีดีโอ|คลิป|video|storyboard|บทพากย์)/i.test(String(userQuestion || ''))
       && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|ประชาสัมพันธ์|แนะนำ)/i.test(String(userQuestion || ''));
     const isCreationAction = /^(?:create|draft|plan|summarize)$/.test(String(taskPlan.action || ''));
-    const isPrCreation = isPrVideoIntent
+    const isPrCreation = !engineeringPlan && (isPrVideoIntent
       || isVideoCreation
       || (isCreationAction && (taskPlan.deliverable === 'public-content' || taskPlan.deliverable === 'speech'))
-      || (isPrMediaText && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|วางข้อความ|ทำโพสต์)/i.test(String(userQuestion || '')));
+      || (isPrMediaText && /(?:ทำ|สร้าง|ร่าง|เขียน|จัดทำ|ออกแบบ|วางข้อความ|ทำโพสต์)/i.test(String(userQuestion || ''))));
     const isPrRoute = activeRoute?.moduleId === 'GP012'
       || /ประชาสัมพันธ์/.test(String(activeRoute?.label || activeRoute?.title || activeRoute?.assistant?.title || ''))
       || isPrMediaText;
@@ -758,7 +833,7 @@
         riskFlags,
         route: activeRoute,
         taskPlan,
-        outputPlan,
+        outputPlan: resolvedOutputPlan,
         outputFormatId: presentationPreset?.id || 'auto',
         presentationPreset,
         governancePlan,
@@ -819,6 +894,7 @@
       `1. เจตนาหลักของงาน: ${taskPlan.action}`,
       `2. ชิ้นงานที่ควรส่งมอบ: ${taskPlan.deliverable}`,
       `3. สาขางานที่เกี่ยวข้องจากเนื้อหา: ${taskPlan.disciplines.length ? taskPlan.disciplines.join(', ') : 'general-government'}`,
+      ...((taskPlan.constructionReview || taskPlan.engineeringWorkflow) ? ['- Primary Workflow สำหรับงานนี้: gov.engineering; Supporting Workflow: gov.procurement (เฉพาะขั้นตอนจัดซื้อจัดจ้าง)', '- Evidence Gate: ต้องตรวจแบบ เอกสาร และหลักฐานหน้างานตามที่มีจริง; ห้ามสมมุติว่าตรวจแล้ว', '- Decision Lock: คงข้อสรุปด้านความปลอดภัย การรับรองแบบและการตรวจรับที่หลักฐานไม่ครบเป็น UNVERIFIED', '- Human Review: ให้วิศวกรผู้มีหน้าที่และคณะกรรมการที่มีอำนาจตรวจทานก่อนรับรองหรืออนุมัติ'] : []),
       `4. ระดับความเสี่ยง: ${taskPlan.riskLevel}`,
       `5. วิธีใช้หลักฐาน: ${taskPlan.evidenceMode}`,
       '6. แยกให้ได้ว่าอะไรคือ “คำตอบ/ชิ้นงานที่ผู้ใช้ต้องการ” กับอะไรคือ “ข้อมูลสนับสนุนที่ระบบควรตรวจ”',
@@ -852,7 +928,14 @@
       ...applicableAuthorityInstructions(taskPlan.applicableAuthorityCheck),
       ...disciplinaryInstructions(userQuestion),
       ...(taskPlan.applicableAuthorityCheck.required || gates.evidenceRequired ? crossReferenceAuthorityInstructions() : []),
-      ...(casePrecedentGate.required ? [
+      ...(taskPlan.constructionReview ? [
+        '', 'Construction Official Authority Retrieval — ใช้ Evidence/Version/Decision Lock เดิม',
+        '- ให้ AI ปลายทางค้นต้นฉบับกรมบัญชีกลางและหน่วยงานเจ้าของหลักเกณฑ์เกี่ยวกับราคาวัสดุ ค่าแรง Factor F และราคากลางงานก่อสร้าง ตรวจเลขหนังสือ วันมีผล ฉบับแก้ไข/ยกเลิก เงื่อนไขจังหวัดและประเภทงาน',
+        '- ค้นหนังสือหารือ/แนววินิจฉัยเฉพาะเมื่อเกิดข้อพิพาทหรือประเด็นตีความกฎหมายจริง ห้ามใช้คำค้นสิทธิบุคคล การเดินทาง หรือการแต่งตั้งกับงานประมาณราคาปกติ',
+        '- เก็บ Source/Authority/Version/Evidence, contrary evidence และ Audit Trace; หากยังยืนยันไม่ได้ให้ UNVERIFIED และ Decision Lock เฉพาะการรับรองอัตรา/ข้อกฎหมาย โดยยังคำนวณเลขจากเอกสารที่อ่านได้',
+        '- การคำนวณถูกต้องไม่เท่ากับอนุมัติราคากลาง ผู้มีอำนาจต้องตรวจรับรอง'
+      ] : []),
+      ...(casePrecedentGate.required && !taskPlan.constructionReview ? [
         '', 'GOVPROMPT — OFFICIAL AUTHORITY RETRIEVAL GATE',
         `- retrievalGateVersion=${casePrecedentGate.retrievalGateVersion}; stateModel=Official Precedent Gate v${casePrecedentGate.gateVersion}; interpretation_issue=true`,
         `- currentRule=${casePrecedentGate.currentRule}; officialPrecedent=${casePrecedentGate.officialPrecedent}; searchStatus=${casePrecedentGate.searchStatus}; caseMatch=${casePrecedentGate.caseMatch}; legalVersion=${casePrecedentGate.legalVersion}`,
@@ -909,8 +992,8 @@
       `- เอกสารแนบ: ${attachmentNames.length ? attachmentNames.join(', ') : '[ไม่มี/ยังไม่ได้แนบ]'}`,
       `- ผลลัพธ์ที่ต้องการ: ${normalizedContext.desiredOutput || userQuestion}`,
       '', presentationPreset ? 'ชิ้นงานหลักที่ Output Router เลือก' : 'รูปแบบผลลัพธ์ที่ GovPrompt เลือกให้อัตโนมัติ',
-      `- ประเภท: ${outputPlan.label}`, `- รูปแบบ: ${outputPlan.format}`, `- เหตุผลการเลือก: ${outputPlan.reason}`,
-      ...(outputPlan.instructions || []).map((item, index) => `${index + 1}. ${item}`),
+      `- ประเภท: ${resolvedOutputPlan.label}`, `- รูปแบบ: ${resolvedOutputPlan.format}`, `- เหตุผลการเลือก: ${resolvedOutputPlan.reason}`,
+      ...(resolvedOutputPlan.instructions || []).map((item, index) => `${index + 1}. ${item}`),
       ...(presentationBlock ? ['', 'รูปแบบการนำเสนอที่ผู้ใช้เลือก', ...presentationBlock.split('\n')] : []),
       '', 'ขอบเขต AI Agent Governance',
       `- ระดับที่ผู้ใช้ร้องขอโดยพฤติกรรม: ${governancePlan.requestedLevel}`,
@@ -940,7 +1023,7 @@
       '', 'สถานะความเสี่ยงเบื้องต้นจาก GovPrompt',
       riskFlags.length ? riskFlags.map(flag => `- ${flag}`).join('\n') : (taskPlan.riskLevel === 'HIGH' ? '- งานความเสี่ยงสูง: ต้องตรวจฐานอำนาจ หลักฐาน และเงื่อนไขก่อนฟันธง' : taskPlan.riskLevel === 'MEDIUM' ? '- งานความเสี่ยงปานกลาง: ต้องตรวจข้อเท็จจริงและเอกสารประกอบ' : '- ไม่พบสัญญาณความเสี่ยงจากข้อความเบื้องต้น แต่ยังต้องตรวจทานก่อนใช้จริง'),
       '', 'ข้อกำหนดผลลัพธ์',
-      `- ส่งผลลัพธ์หลักในรูปแบบ “${outputPlan.label}” ตามที่ Output Router เลือก เว้นแต่ผู้ใช้สั่งรูปแบบอื่นชัดเจน`,
+      `- ส่งผลลัพธ์หลักในรูปแบบ “${resolvedOutputPlan.label}” ตามที่ Output Router เลือก เว้นแต่ผู้ใช้สั่งรูปแบบอื่นชัดเจน`,
       ...(presentationPreset ? [`- จัดการนำเสนอชิ้นงานด้วย “${presentationPreset.label}” ตามที่ผู้ใช้เลือก โดยไม่ลดทอนโครงสร้างบังคับของชิ้นงานหลัก`] : []),
       '- ใช้ภาษาไทยชัดเจน กระชับ และเหมาะกับการปฏิบัติราชการ',
       '- อ้างแหล่งที่มาต่อข้อความสำคัญเมื่อสามารถตรวจสอบต้นฉบับได้',
@@ -962,7 +1045,7 @@
       riskFlags,
       route: activeRoute,
       taskPlan,
-      outputPlan,
+      outputPlan: resolvedOutputPlan,
       outputFormatId: presentationPreset?.id || 'auto',
       presentationPreset,
       governancePlan,
@@ -988,4 +1071,47 @@
   window.GovPromptCore.OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION = OFFICIAL_AUTHORITY_RETRIEVAL_GATE_VERSION;
   window.GovPromptCore.PROMPT_STANDARD_VERSION = '7.9.1';
   window.GovPromptCore.createGovernmentPrompt = createGovernmentPrompt;
+  // Scope the actual transaction route to engineering estimate requests only.
+  // Preserve all other routing decisions, especially procurement TOR and legal work.
+  const engineeringEstimateIntent = value => {
+    const source = String(value || '').trim();
+    const construction = /(?:งานก่อสร้าง|แบบก่อสร้าง|ถนน|อาคาร|คอนกรีต|รางระบายน้ำ|ประปา|ปร\.?4|ปร\.?5|ป\s*ร\s*\.?[45]|ถอดแบบ|ถอดปริมาณ|factor\s*f|ตรวจสอบปริมาณงาน)/i.test(source);
+    const estimate = /(?:ถอดแบบ|ถอดปริมาณ|จัดทำราคากลาง|คำนวณราคากลาง|ประมาณราคา|จัดทำ\s*boq|ตรวจสอบปริมาณงาน|ตรวจสอบราคาวัสดุ|factor\s*f)/i.test(source);
+    const excluded = /(?:\bTOR\b|ทีโออาร์|ขอบเขตของงาน|จัดซื้อ|ประกวดราคา|ร่างสัญญา|จัดทำประกาศ|คำวินิจฉัย|วิเคราะห์ข้อกฎหมาย|ประชาสัมพันธ์|อินโฟกราฟิก|โปสเตอร์|วิดีโอ|วีดีโอ)/i.test(source);
+    return construction && estimate && !excluded;
+  };
+  const engineeringRoute = result => {
+    if (!result || result.primaryModule === 'GP007') return result;
+    const assistant = window.GovPromptCore.PROMPT_REGISTRY?.find(item => item.moduleId === 'GP007');
+    return Object.freeze({
+      ...result,
+      primaryModule: 'GP007',
+      moduleId: 'GP007',
+      transactionType: 'engineering',
+      assistant: assistant || result.assistant,
+      modules: Object.freeze(['GP007', ...(result.modules || []).filter(id => id !== 'GP007')].slice(0, 3)),
+      confidence: 0.995,
+      fallback: false,
+      ambiguous: false,
+      reason: 'engineering-estimate-primary-workflow'
+    });
+  };
+  const priorEngineeringRouteRequest = window.GovPromptCore.routeRequest;
+  window.GovPromptCore.routeRequest = function routeEngineeringEstimate(request, options = {}) {
+    const base = priorEngineeringRouteRequest(request, options);
+    const technicalDrawingSeparateFromTor = /(?:รายการประกอบแบบ|แบบรูปรายการ|ข้อกำหนดทางเทคนิค).{0,35}(?:แยกจาก|ไม่ใช่|มิใช่|ต่างจาก)\s*(?:tor|ทีโออาร์|ขอบเขตของงาน)/i.test(String(request || ''));
+    return engineeringEstimateIntent(request) || technicalDrawingSeparateFromTor ? engineeringRoute(base) : base;
+  };
+  const priorEngineeringRouteTransaction = window.GovPromptCore.routeTransaction;
+  if (typeof priorEngineeringRouteTransaction === 'function') {
+    window.GovPromptCore.routeTransaction = function transactionEngineeringEstimate(context, options = {}) {
+      const base = priorEngineeringRouteTransaction(context, options);
+      const facts = base?.context || context || {};
+      const source = [facts.facts, facts.desiredOutput, facts.documents, facts.currentStage].filter(Boolean).join(' ');
+      if (!engineeringEstimateIntent(source)) return base;
+      const routed = engineeringRoute({ ...base, primaryModule: base.moduleId });
+      return Object.freeze({ ...routed, shouldRedirect: Boolean(routed.currentModuleId && routed.currentModuleId !== 'GP007') });
+    };
+  }
+  window.GovPromptCore.isEngineeringEstimateIntent = engineeringEstimateIntent;
 })();

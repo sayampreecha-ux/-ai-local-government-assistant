@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { committedIndex, committedAsset, RELEASE_VERSIONS as RELEASE } from './release-versions.mjs';
 
 const frontend = process.env.GOVPROMPT_FRONTEND_URL || 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/index.html';
 const canonicalHome = 'https://sayampreecha-ux.github.io/-ai-local-government-assistant/';
@@ -11,10 +12,10 @@ const sitemapUrl = page('sitemap.xml');
 const llmsUrl = page('llms.txt');
 const adminUrl = page('admin.html');
 const serviceWorkerUrl = page('service-worker.js');
-const quickActionBridgeUrl = page('assets/js/ui/quick-action-guided-bridge-v1.js?v=1.3.17');
-const RELEASE = Object.freeze({ home:'6.4.25', homeCss:'2.6.17', serviceWorker:'3.6.14', mic:'2.4.3', budgetInputRuntime:'1.6.0', budgetOfficialSourceRuntime:'2.1.0', documentStudio:'1.0.0', caseList:'1.0.0' });
-const WORKFLOW_RUNTIME_VERSION = '5.7.3';
-const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.7.3';
+// Expected asset versions come from the approved checkout, never from live production.
+const quickActionBridgeUrl = page(committedAsset('assets/js/ui/quick-action-guided-bridge-v1.js').path);
+const WORKFLOW_RUNTIME_VERSION = '5.7.5';
+const WORKFLOW_RUNTIME_BRIDGE_VERSION = '5.7.5';
 const WORKFLOW_UI_VERSION = '1.3';
 
 const runtimeSourceFiles = Object.freeze([
@@ -33,8 +34,8 @@ const budgetBrowserAssets = Object.freeze([
   'assets/js/core/official-source-registry.js'
 ]);
 
-const [localIndex, localHomeSource, localPrivacyGuard, localSubmitGuard, localServiceWorker, localRuntimeBridge, localHomeCss, localDocumentStudio, localCaseListBootstrap, localCaseListUi, ...rest] = await Promise.all([
-  readFile(new URL('../index.html', import.meta.url),'utf8'),
+const [localIndex, localHomeSource, localPrivacyGuard, localSubmitGuard, localServiceWorker, localRuntimeBridge, localHomeCss, localDocumentStudio, localCaseListBootstrap, localCaseListUi, localQuickActionBridge, ...rest] = await Promise.all([
+  Promise.resolve(committedIndex),
   readFile(new URL('../assets/js/home-v3.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/core/privacy-guard.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/core/privacy-submit-guard.js', import.meta.url),'utf8'),
@@ -44,6 +45,7 @@ const [localIndex, localHomeSource, localPrivacyGuard, localSubmitGuard, localSe
   readFile(new URL('../assets/js/core/document-studio-v1.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/ui/case-list-bootstrap-v1.js', import.meta.url),'utf8'),
   readFile(new URL('../assets/js/ui/case-list-ui-v1.js', import.meta.url),'utf8'),
+  readFile(new URL('../assets/js/ui/quick-action-guided-bridge-v1.js', import.meta.url),'utf8'),
   ...runtimeSourceFiles.map(file => readFile(new URL(`../src/${file}`, import.meta.url),'utf8')),
   ...budgetBrowserAssets.map(file => readFile(new URL(`../${file}`, import.meta.url),'utf8'))
 ]);
@@ -76,7 +78,7 @@ const { response:indexResponse, text:index } = await fetchText(frontend);
 const quickActionBridge = await fetchText(quickActionBridgeUrl);
 assert.equal(index.includes(expectedPrivacyGuard),true);
 assert.equal(index.includes(expectedSubmitGuard),true);
-assert.equal(index.includes(expectedHome),true);
+assert.equal(index.includes(expectedHome),true,`Home release mismatch: expected ${expectedHome}; observed ${index.match(/assets\/js\/home-v3\.js\?v=[^"'\s<]+/)?.[0] || '[missing]'} at ${indexResponse.url}`);
 assert.equal(index.includes(expectedMic),true);
 assert.equal(index.includes(expectedDocumentStudio),true);
 assert.match(index,/Public Beta|Internal Pilot/);
@@ -87,7 +89,7 @@ assert.match(index,/official-source-registry\.js\?v=2\.4\.0/);
 assert.match(index,new RegExp(`service-worker\\.js\\?v=${RELEASE.serviceWorker.replaceAll('.','\\.')}`));
 assert.match(index,new RegExp(`document-studio-v1\\.js\\?v=${RELEASE.documentStudio.replaceAll('.','\\.')}`));
 assert.match(index,/aria-label="ผู้ช่วยงานราชการ 13 หมวด"/);
-assert.match(quickActionBridge.text,/13 หมวดงาน เรียงจากงานที่ใช้บ่อย/);
+assert.equal(quickActionBridge.text.replace(/\r\n/g,'\n'),localQuickActionBridge.replace(/\r\n/g,'\n'),'production quick-action bridge differs from committed release candidate');
 assert.match(quickActionBridge.text,/label: 'ร่างงบประมาณ'/);
 assert.match(quickActionBridge.text,/label: 'จัดหน้าเอกสาร'/);
 assert.match(index,/https:\/\/www\.facebook\.com\/GovPromptThailandAI/);

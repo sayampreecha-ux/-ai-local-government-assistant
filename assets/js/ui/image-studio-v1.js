@@ -1,5 +1,5 @@
-// Match creative image nouns, not engineering แบบรูป or สภาพ inside ordinary words.
-const IMAGE_CREATIVE_INTENT = /(?:(?:ทำ|สร้าง|ออกแบบ|จัดทำ|ปรับ|แต่ง|รีดีไซน์).{0,24}(?:(?<!ส)ภาพ|(?<!แบบ)รูป|โปสเตอร์|การ์ด|อินโฟกราฟิก)|(?:(?<!ส)ภาพ|(?<!แบบ)รูป|โปสเตอร์|การ์ด).{0,28}(?:ประชาสัมพันธ์|เกษียณ|ยินดี|ต้อนรับ|เชิดชู|วันสำคัญ|รับสมัคร|เชิญ|ให้สวย|สวยที่สุด|ภูมิฐาน|อบอุ่น|ทางการ))/i;
+// Match creative image nouns, not engineering แบบรูป/รูปรายการ/รูปแบบ or สภาพ inside ordinary words.
+const IMAGE_CREATIVE_INTENT = /(?:(?:ทำ|สร้าง|ออกแบบ|จัดทำ|ปรับ|แต่ง|รีดีไซน์).{0,24}(?:(?<!ส)ภาพ|(?<!แบบ)รูป(?!รายการ|แบบ)|โปสเตอร์|การ์ด|อินโฟกราฟิก)|(?:(?<!ส)ภาพ|(?<!แบบ)รูป(?!รายการ|แบบ)|โปสเตอร์|การ์ด).{0,28}(?:ประชาสัมพันธ์|เกษียณ|ยินดี|ต้อนรับ|เชิดชู|วันสำคัญ|รับสมัคร|เชิญ|ให้สวย|สวยที่สุด|ภูมิฐาน|อบอุ่น|ทางการ))/i;
 const FINANCE_DECISION = /(?:เบิก|เบิกจ่าย|ค่าใช้จ่าย|จ่าย|ใช้เงิน|ใช้งบ).{0,80}(?:ได้ไหม|ได้หรือไม่|ได้มั้ย|หรือไม่)/i;
 const IMAGE_FILE = /(?:image\/|\.(?:png|jpe?g|webp|heic|heif|gif)$)/i;
 
@@ -11,6 +11,12 @@ function normalize(value) {
 
 export function isImageCreativeIntent(value) {
   const source = normalize(value);
+  // Technical drawing/takeoff requests can contain "สร้างจากแบบรูป", which is
+  // not a request to create an image. Keep explicit image-creation requests eligible.
+  const engineeringTakeoff = /(?:ถอดแบบ|ถอดปริมาณ|จัดทำ\s*boq|ปร\.?4|ปร\.?5|งานก่อสร้าง)/i.test(source);
+  const explicitCreative = /(?:ทำ|สร้าง|ออกแบบ|จัดทำ|ปรับ|แต่ง|รีดีไซน์).{0,24}(?:ภาพประชาสัมพันธ์|รูปภาพ|โปสเตอร์|การ์ด|อินโฟกราฟิก)|(?:ภาพ|รูป).{0,28}(?:ให้สวย|สวยที่สุด|ประชาสัมพันธ์)/i.test(source);
+  const engineeringDrawing = /(?:จัดทำ|ตรวจ|ปรับปรุง).{0,20}(?:แบบรูปรายการ|รายการประกอบแบบ|ข้อกำหนดทางเทคนิค|แบบก่อสร้าง|แบบแปลน)/i.test(source);
+  if ((engineeringTakeoff || engineeringDrawing) && !explicitCreative) return false;
   return Boolean(source && !FINANCE_DECISION.test(source) && IMAGE_CREATIVE_INTENT.test(source));
 }
 
