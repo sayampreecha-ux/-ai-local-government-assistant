@@ -134,7 +134,7 @@
   }
 
   function revenueTaskDisciplines(source) {
-    const original = allMatches(source, DISCIPLINES);
+    const original = allMatches(source.replace(/ข้อมูล(?:ส่วน)?บุคคล/g, 'ข้อมูลความเป็นส่วนตัว'), DISCIPLINES);
     if (!revenueAuthorityCase(source)) return original;
     const hasRealPersonnelIssue = /บุคลากร|ข้าราชการ|พนักงาน|ตำแหน่ง|วินัย|ลาป่วย|อัตรากำลัง|บรรจุ|แต่งตั้ง|เงินเดือน|เลื่อนระดับ/.test(source);
     const hasRealEngineeringIssue = /ถนน|สะพาน|ก่อสร้าง|งานช่าง|วิศวกรรม|ประมาณราคา|หน้างาน/.test(source);
@@ -612,7 +612,7 @@
   function constructionReviewPlan(question, basePlan) {
     const source = normalizeForReasoning(question);
     const engineeringPlan = window.GovPromptCore.ENGINEERING_WORKFLOWS?.plan(question);
-    if (engineeringPlan && !engineeringPlan.estimationRequested) return basePlan;
+    if (engineeringPlan && (!engineeringPlan.estimationRequested || engineeringPlan.primaryDraft)) return basePlan;
     // Technical review/acceptance outputs are not estimates merely because they
     // mention a construction drawing or building. Keep explicit quantity/price
     // audits on the existing A/B/C/D contract, including mixed-task requests.
@@ -697,6 +697,7 @@
     const engineeringPlan = window.GovPromptCore.ENGINEERING_WORKFLOWS?.plan(userQuestion, normalizedContext);
     const typedOutput = engineeringPlan && window.GovPromptCore.ENGINEERING_WORKFLOWS.output(engineeringPlan);
     const correspondenceDraft = /^(?:กรุณา|โปรด|ช่วย)?\s*(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i.test(userQuestion);
+    const councilAgendaDraft = /^(?:ช่วย)?(?:ร่าง|จัดทำ|ทำ)\s*(?:ระเบียบ)?วาระ(?:การ)?ประชุมสภา/i.test(userQuestion);
     const initialTaskPlan = constructionReviewPlan(userQuestion, planUniversalTask(userQuestion, normalizedContext));
     // For engineering drawings, inspection, acceptance and physical diagnostics, retain
     // their own deliverables rather than imposing the estimate-only A/B/C/D contract.
@@ -704,6 +705,8 @@
       && /(?:แบบรูปรายการ|รายการประกอบแบบ|ข้อกำหนดทางเทคนิค|ตรวจแบบ|ตรวจงาน|ตรวจรับ|ตรวจราคากลาง|วิเคราะห์ปัญหา|วิเคราะห์สาเหตุ|วิเคราะห์ความเสียหาย|แตกร้าว|ทรุดตัว|น้ำท่วมขัง|ถอดแบบ|ถอดปริมาณ|ประมาณราคา|ราคากลาง|boq)/i.test(userQuestion));
     const taskPlan = correspondenceDraft
       ? Object.freeze({ ...initialTaskPlan, action: 'draft', deliverable: 'official-document' })
+      : councilAgendaDraft
+      ? Object.freeze({ ...initialTaskPlan, action: 'draft', deliverable: 'council-agenda' })
       : engineeringWorkflow
       ? Object.freeze({ ...initialTaskPlan, engineeringWorkflow: true, evidenceMode:'verify-applicable-primary-source',
           ...(typedOutput ? { action: typedOutput.action, deliverable: typedOutput.id, riskLevel: engineeringPlan.drawing ? 'HIGH' : (initialTaskPlan.riskLevel === 'LOW' ? 'MEDIUM' : initialTaskPlan.riskLevel) } : {}),
@@ -883,7 +886,7 @@
       'คุณเป็น Government AI Copilot สำหรับงานราชการไทยแบบครอบคลุม เป้าหมายคือทำงานที่ผู้ใช้ต้องการให้สำเร็จอย่างถูกต้อง ตรวจสอบได้ และพร้อมใช้ โดย Router เป็นเพียงคำแนะนำ ไม่ใช่ข้อจำกัดของความสามารถ',
       'Answer First: ส่งคำตอบหรือชิ้นงานที่ใช้ตัดสินใจ/ใช้งานต่อได้ก่อน แล้วจึงให้เหตุผล หลักฐาน ความเสี่ยง หรือขั้นตอนเท่าที่จำเป็น',
       '', 'คำถามจากผู้ใช้', userQuestion, '',
-      window.GovPromptCore?.buildHealthFundingInstructions?.([userQuestion, normalizedContext?.facts || ''].join('\n')) || '',
+      window.GovPromptCore?.buildHealthFundingInstructions?.([userQuestion, normalizedContext?.facts || ''].join('\n'), { fundingSource: normalizedContext.fundingSource }) || '',
       ...(isPrCreation ? [
         'GovPrompt PR Media Mode — พร้อมนำไปใช้',
         'เป้าหมาย: จัดทำสื่อประชาสัมพันธ์จากข้อเท็จจริงที่ผู้ใช้ให้ โดยไม่ดึงกฎ TOR พัสดุ การเงิน บุคคล หรือกฎหมายมาปน เว้นแต่ผู้ใช้ถามเรื่องนั้นโดยตรง',

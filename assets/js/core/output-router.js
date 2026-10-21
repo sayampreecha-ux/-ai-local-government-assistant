@@ -150,10 +150,14 @@
       return Object.freeze({ ...OUTPUTS.official_document, id: 'official_document', confidence: 0.99, reason: 'explicit-correspondence-draft' });
     }
 
+    if (/^(?:ช่วย)?(?:ร่าง|จัดทำ|ทำ)\s*(?:ระเบียบ)?วาระ(?:การ)?ประชุมสภา/i.test(normalize(input))) {
+      return Object.freeze({ id: 'council-agenda', label: 'ร่างระเบียบวาระประชุมสภาท้องถิ่น', format: 'council-agenda', confidence: 1,
+        instructions: Object.freeze(['จัดทำร่างระเบียบวาระประชุมสภา แยกหัวข้อวาระและเรื่องเสนอ ใช้ [ระบุ...] สำหรับวันเวลา สถานที่ และข้อมูลที่ยังไม่มี ห้ามแต่งญัตติหรือมติ', 'ตรวจข้อกำหนดการประชุมและเอกสารประกอบจากต้นฉบับที่ใช้บังคับก่อนใช้จริง คง Human Review']) });
+    }
     const engineeringPlan = window.GovPromptCore?.ENGINEERING_WORKFLOWS?.plan(input, context || {});
     if (engineeringPlan) {
       const typed = window.GovPromptCore.ENGINEERING_WORKFLOWS.output(engineeringPlan);
-      if (engineeringPlan.estimationRequested && !engineeringPlan.publicityRequested && !engineeringPlan.documentRequested && !engineeringPlan.tasks.some(t=>t.id==='T11') && window.GovPromptCore.isEngineeringEstimateIntent?.(input)) {
+      if (engineeringPlan.estimationRequested && !engineeringPlan.primaryDraft && !engineeringPlan.publicityRequested && !engineeringPlan.documentRequested && !engineeringPlan.tasks.some(t=>t.id==='T11') && window.GovPromptCore.isEngineeringEstimateIntent?.(input)) {
         return Object.freeze({...OUTPUTS['construction-estimate'],id:'construction-estimate',confidence:1,reason:'construction-estimate-evidence-first'});
       }
       return typed;

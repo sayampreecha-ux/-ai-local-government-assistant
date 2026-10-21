@@ -82,7 +82,7 @@
     const councilMeeting = /(?:สภาท้องถิ่น|ประชุมสภา|รายงาน(?:การ)?ประชุม\s*สภา|มติสภา|ญัตติ|ประธานสภา|สมาชิกสภา|องค์ประชุม|สมัยประชุม)/i.test(source);
     if (/(?:เบิก|การเงิน|คลัง|ฎีกา|ค่าใช้จ่าย|เงินสะสม|เงินบำรุง|โบนัส|งบประมาณ)/i.test(source)) domains.push('finance');
     if (/(?:พัสดุ|จัดซื้อ|จัดจ้าง|tor|ราคากลาง|สัญญา|ผู้รับจ้าง|ผู้ยื่น|ตรวจรับ|e-bidding)/i.test(source)) domains.push('procurement');
-    if (/(?:บุคคล|บรรจุ|แต่งตั้ง|เลื่อนเงินเดือน|เลื่อนระดับ|ทดลองงาน|คุณสมบัติปลัด|วินัย|พนักงาน|ข้าราชการ|อัตรากำลัง)/i.test(source)) domains.push('hr');
+    if (/(?:บุคคล|บรรจุ|แต่งตั้ง|เลื่อนเงินเดือน|เลื่อนระดับ|ทดลองงาน|คุณสมบัติปลัด|วินัย|พนักงาน|ข้าราชการ|อัตรากำลัง)/i.test(source.replace(/ข้อมูล(?:ส่วน)?บุคคล/g, 'ข้อมูลความเป็นส่วนตัว'))) domains.push('hr');
     if (/(?:หนังสือราชการ|หนังสือ|บันทึกข้อความ|บันทึก|สารบรรณ|ร่างหนังสือ|คำสั่ง|ประกาศ)/i.test(source) || (meetingMinutes && !councilMeeting)) domains.push('records');
     if (/(?:กฎหมาย|ระเบียบ|อำนาจ|ข้อหารือ|คำพิพากษา|มาตรา|สิทธิ|หนังสือเวียน|บทเฉพาะกาล|หลักเกณฑ์)/i.test(source)) domains.push('legal');
     if (/(?:รพ\.สต|รพสต|สอน\.(?:เฉลิมพระเกียรติ(?:ฯ)?)?|สถานีอนามัย|สาธารณสุข|สุขภาพ|เงินบำรุง|ผู้ป่วย|อสม\.?|ยา|เวชภัณฑ์|เบาหวาน)/i.test(source)) domains.push('health');
@@ -93,16 +93,19 @@
   }
 
   // Instruction policy, not a verified legal ruling or an authorization to spend.
-  function extractHealthFundingContext(question = '', { healthContext = false } = {}) {
+  function extractHealthFundingContext(question = '', { healthContext = false, fundingSource = '' } = {}) {
     const text = String(question).normalize('NFC');
     const isHealth = healthContext || /(?:เงินบำรุง|โรงพยาบาล|รพ\.?สต\.?|รพสต|โรงพยาบาลส่งเสริมสุขภาพตำบล|สอน\.(?:เฉลิมพระเกียรติ(?:ฯ)?)?|สถานีอนามัย|หน่วยบริการ(?:สาธารณสุข)?|สาธารณสุข|ส่งเสริมสุขภาพ|อาหารปลอดภัย)/i.test(text);
     if (!isHealth) return Object.freeze({ healthContext: false, sourceOfFunds: 'not-applicable', facilityType: 'unknown', projectIntent: false });
-    let sourceOfFunds = 'unknown';
-    if (/เงินบำรุง/i.test(text)) sourceOfFunds = 'maintenanceFund';
-    else if (/(?:งบประมาณ(?:รายจ่าย)?|งบ)(?:\s*ของ)?\s*(?:อปท\.?|อบจ\.?|อบต\.?|เทศบาล|องค์กรปกครองส่วนท้องถิ่น)/i.test(text)) sourceOfFunds = 'localGovernmentBudget';
-    else if (/เงินอุดหนุน/i.test(text)) sourceOfFunds = 'grant';
-    else if (/กองทุน/i.test(text)) sourceOfFunds = 'fund';
-    else if (/เงินเฉพาะ(?:กิจ)?|เงินอื่น|แหล่งเงินอื่น/i.test(text)) sourceOfFunds = 'other';
+    const fundingText = [text, fundingSource].join(' ').replace(/(?:ไม่ใช้|ไม่ใช่|ไม่ได้ใช้)\s*(?:เงินบำรุง|เงินอุดหนุน|กองทุน)/g, '');
+    const sources = [
+      ['maintenanceFund', /เงินบำรุง|\bmaintenanceFund\b/i],
+      ['localGovernmentBudget', /(?:งบประมาณ(?:รายจ่าย)?|งบ)(?:\s*ของ)?\s*(?:อปท\.?|อบจ\.?|อบต\.?|เทศบาล|องค์กรปกครองส่วนท้องถิ่น)|\blocalGovernmentBudget\b/i],
+      ['grant', /เงินอุดหนุน|\bgrant\b/i], ['fund', /กองทุน|\bfund\b/i],
+      ['other', /เงินเฉพาะ(?:กิจ)?|เงินอื่น|แหล่งเงินอื่น|\bother\b/i]
+    ].filter(([, pattern]) => pattern.test(fundingText)).map(([id]) => id);
+    const sourceOfFunds = sources.length > 1 || /หลายแหล่งเงิน|\bmixed\b/.test(fundingText)
+      ? 'mixed' : sources[0] || 'unknown';
     const facilityType = /รพ\.?สต\.?|รพสต|โรงพยาบาลส่งเสริมสุขภาพตำบล|สอน\.(?:เฉลิมพระเกียรติ(?:ฯ)?)?|สถานีอนามัย|หน่วยบริการ(?:สาธารณสุข)?/i.test(text)
       ? 'healthServiceUnit'
       : /โรงพยาบาล/i.test(text) ? 'hospital' : 'unknown';
@@ -113,7 +116,9 @@
   function buildHealthFundingInstructions(question = '', options = {}) {
     const ctx = extractHealthFundingContext(question, options);
     if (!ctx.healthContext) return '';
-    const sourceLine = ctx.sourceOfFunds === 'maintenanceFund'
+    const sourceLine = ctx.sourceOfFunds === 'mixed'
+      ? 'SOURCE STATE: sourceOfFunds=mixed — พบหลายแหล่งเงินหรือข้อมูลขัดแย้ง แยกรายการและตรวจแต่ละแหล่งก่อนฟันธง ห้ามเลือกกฎเงินบำรุงอัตโนมัติ'
+      : ctx.sourceOfFunds === 'maintenanceFund'
       ? 'SOURCE STATE: sourceOfFunds=maintenanceFund (VERIFIED FROM USER TEXT) — ห้ามแสดงว่าแหล่งเงินยังไม่ระบุและห้ามถามแหล่งเงินซ้ำ'
       : ctx.sourceOfFunds === 'localGovernmentBudget'
         ? 'SOURCE STATE: sourceOfFunds=localGovernmentBudget (VERIFIED FROM USER TEXT) — หยุด Maintenance Fund Workflow'
@@ -204,6 +209,31 @@ EVIDENCE GATE: คง Official Source / Authority / Version / Evidence / Decisio
     return Object.freeze({ version: PROMPT_QUALITY_STANDARD.version, domains, lines: Object.freeze(lines) });
   }
 
+  function qualityInstructionsToAppend(result, quality) {
+    // Only avoid appending obligations already owned by the ordinary generated
+    // core sections. Never edit the assembled prompt, user text or domain rules.
+    // Unknown/custom formats retain the full response contract.
+    const prompt = String(result.prompt || '');
+    if (result.prMode || result.gp223 || result.taskPlan?.standard !== 'GovPrompt Prompt Standard v7.1'
+      || !prompt.startsWith('บทบาท\nคุณเป็น Government AI Copilot สำหรับงานราชการไทยแบบครอบคลุม')) return quality.lines;
+    const userStart = prompt.indexOf('\nคำถามจากผู้ใช้\n');
+    const principlesStart = prompt.lastIndexOf('\nหลักการวิเคราะห์ที่ต้องปฏิบัติ\n');
+    const checksStart = prompt.lastIndexOf('\nSelf-check ก่อนตอบ\n');
+    const governanceStart = prompt.lastIndexOf('\nขอบเขต AI Agent Governance\n', principlesStart);
+    if (userStart < 0 || principlesStart < userStart || checksStart < principlesStart || governanceStart < userStart) return quality.lines;
+    const role = prompt.slice(0, userStart);
+    const principles = prompt.slice(principlesStart, checksStart);
+    const governance = prompt.slice(governanceStart, principlesStart);
+    const covered = new Set();
+    if (role.includes('Answer First: ส่งคำตอบหรือชิ้นงานที่ใช้ตัดสินใจ/ใช้งานต่อได้ก่อน แล้วจึงให้เหตุผล หลักฐาน ความเสี่ยง หรือขั้นตอนเท่าที่จำเป็น')) covered.add(0);
+    if (principles.includes('5. แยกข้อเท็จจริง สิ่งที่ยืนยันแล้ว ข้อวิเคราะห์ ความเสี่ยง และสิ่งที่ยังต้องตรวจให้ชัดเมื่อมีผลต่อการตัดสินใจ')) covered.add(4);
+    if (principles.includes('4. หากข้อมูลสำคัญไม่ครบ ให้ใช้ [ระบุ...] เฉพาะช่องที่จำเป็นในงานร่าง และถามเพิ่มเฉพาะข้อมูลที่เปลี่ยนผลลัพธ์จริง')) covered.add(5);
+    if (governance.includes('- ห้าม AI อนุมัติ ลงนาม สั่งจ่าย ลงมติ หรือตัดสินแทนผู้มีอำนาจตามกฎหมาย')
+      && governance.includes('- หากคำขอมีผลต่อระบบจริง ให้หยุดที่ Draft/Recommendation เว้นแต่มี Human Approval, ขอบเขตชัด, rollback, audit trail และยืนยันฐานอำนาจครบ')) covered.add(7);
+    const redundant = new Set([...covered].map(index => `${index + 1}. ${PROMPT_QUALITY_STANDARD.universal[index]}`));
+    return quality.lines.filter(line => !redundant.has(line));
+  }
+
   function installPromptQualityStandard() {
     const core = window.GovPromptCore;
     const base = core?.createGovernmentPrompt;
@@ -212,7 +242,7 @@ EVIDENCE GATE: คง Official Source / Authority / Version / Evidence / Decisio
     const wrapped = function createGovernmentPromptWithQualityStandard(input = {}) {
       const result = base(input);
       const quality = buildPromptQualityInstructions(input?.question || '');
-      return Object.freeze({ ...result, prompt: `${result.prompt}\n${quality.lines.join('\n')}`, qualityStandard: quality });
+      return Object.freeze({ ...result, prompt: `${result.prompt}\n${qualityInstructionsToAppend(result, quality).join('\n')}`, qualityStandard: quality });
     };
     Object.defineProperty(wrapped, '__qualityStandardV72', { value: true });
     core.createGovernmentPrompt = wrapped;
