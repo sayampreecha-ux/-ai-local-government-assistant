@@ -209,6 +209,31 @@ EVIDENCE GATE: คง Official Source / Authority / Version / Evidence / Decisio
     return Object.freeze({ version: PROMPT_QUALITY_STANDARD.version, domains, lines: Object.freeze(lines) });
   }
 
+  function qualityInstructionsToAppend(result, quality) {
+    // Only avoid appending obligations already owned by the ordinary generated
+    // core sections. Never edit the assembled prompt, user text or domain rules.
+    // Unknown/custom formats retain the full response contract.
+    const prompt = String(result.prompt || '');
+    if (result.prMode || result.gp223 || result.taskPlan?.standard !== 'GovPrompt Prompt Standard v7.1'
+      || !prompt.startsWith('บทบาท\nคุณเป็น Government AI Copilot สำหรับงานราชการไทยแบบครอบคลุม')) return quality.lines;
+    const userStart = prompt.indexOf('\nคำถามจากผู้ใช้\n');
+    const principlesStart = prompt.lastIndexOf('\nหลักการวิเคราะห์ที่ต้องปฏิบัติ\n');
+    const checksStart = prompt.lastIndexOf('\nSelf-check ก่อนตอบ\n');
+    const governanceStart = prompt.lastIndexOf('\nขอบเขต AI Agent Governance\n', principlesStart);
+    if (userStart < 0 || principlesStart < userStart || checksStart < principlesStart || governanceStart < userStart) return quality.lines;
+    const role = prompt.slice(0, userStart);
+    const principles = prompt.slice(principlesStart, checksStart);
+    const governance = prompt.slice(governanceStart, principlesStart);
+    const covered = new Set();
+    if (role.includes('Answer First: ส่งคำตอบหรือชิ้นงานที่ใช้ตัดสินใจ/ใช้งานต่อได้ก่อน แล้วจึงให้เหตุผล หลักฐาน ความเสี่ยง หรือขั้นตอนเท่าที่จำเป็น')) covered.add(0);
+    if (principles.includes('5. แยกข้อเท็จจริง สิ่งที่ยืนยันแล้ว ข้อวิเคราะห์ ความเสี่ยง และสิ่งที่ยังต้องตรวจให้ชัดเมื่อมีผลต่อการตัดสินใจ')) covered.add(4);
+    if (principles.includes('4. หากข้อมูลสำคัญไม่ครบ ให้ใช้ [ระบุ...] เฉพาะช่องที่จำเป็นในงานร่าง และถามเพิ่มเฉพาะข้อมูลที่เปลี่ยนผลลัพธ์จริง')) covered.add(5);
+    if (governance.includes('- ห้าม AI อนุมัติ ลงนาม สั่งจ่าย ลงมติ หรือตัดสินแทนผู้มีอำนาจตามกฎหมาย')
+      && governance.includes('- หากคำขอมีผลต่อระบบจริง ให้หยุดที่ Draft/Recommendation เว้นแต่มี Human Approval, ขอบเขตชัด, rollback, audit trail และยืนยันฐานอำนาจครบ')) covered.add(7);
+    const redundant = new Set([...covered].map(index => `${index + 1}. ${PROMPT_QUALITY_STANDARD.universal[index]}`));
+    return quality.lines.filter(line => !redundant.has(line));
+  }
+
   function installPromptQualityStandard() {
     const core = window.GovPromptCore;
     const base = core?.createGovernmentPrompt;
@@ -217,7 +242,7 @@ EVIDENCE GATE: คง Official Source / Authority / Version / Evidence / Decisio
     const wrapped = function createGovernmentPromptWithQualityStandard(input = {}) {
       const result = base(input);
       const quality = buildPromptQualityInstructions(input?.question || '');
-      return Object.freeze({ ...result, prompt: `${result.prompt}\n${quality.lines.join('\n')}`, qualityStandard: quality });
+      return Object.freeze({ ...result, prompt: `${result.prompt}\n${qualityInstructionsToAppend(result, quality).join('\n')}`, qualityStandard: quality });
     };
     Object.defineProperty(wrapped, '__qualityStandardV72', { value: true });
     core.createGovernmentPrompt = wrapped;
