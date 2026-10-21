@@ -52,11 +52,11 @@ try{
     // The category is initially collapsed: ARIA role selectors exclude hidden tasks.
     await group.locator('[data-gp-k-audit]').waitFor({state:'attached'});
     assert.deepEqual(await buttons.allTextContents(),labels);
-    await group.getByRole('button',{name:'งานช่างและวิศวกรรม',exact:true}).click();
+    await group.locator('button.work-catalog-category-toggle').click();
     assert.ok(await buttons.first().isVisible());
-    await group.getByRole('button',{name:'งานช่างและวิศวกรรม',exact:true}).click();
+    await group.locator('button.work-catalog-category-toggle').click();
     assert.equal(await buttons.first().isVisible(),false);
-    await group.getByRole('button',{name:'งานช่างและวิศวกรรม',exact:true}).click();
+    await group.locator('button.work-catalog-category-toggle').click();
     const menuButton=group.getByRole('button',{name:c.action==='tor'?actionLabels.drawing:actionLabels[c.action],exact:true});
     if(c.action==='tor'||c.action==='drawing'){
      await menuButton.click();
