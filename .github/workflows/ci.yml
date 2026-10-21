@@ -9,6 +9,42 @@ permissions:
   contents: read
 
 jobs:
+  production-release-acceptance:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Wait for deployed bytes to match this approved build
+        shell: bash
+        run: |
+          mkdir -p artifacts/production-diagnosis
+          for attempt in {1..30}; do
+            if node scripts/verify-production-release-assets.mjs > artifacts/production-diagnosis/deployed-assets.json; then exit 0; fi
+            if [ "$attempt" -lt 30 ]; then sleep 15; fi
+          done
+          exit 1
+      - name: Verify actual Production UI and clipboard at 390px and 1365px
+        env:
+          GOVPROMPT_ACCEPTANCE_URL: https://sayampreecha-ux.github.io/-ai-local-government-assistant/
+        run: node tests/e2e/production-diagnosis-acceptance.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-release-acceptance
+          path: artifacts/production-diagnosis/
+          if-no-files-found: warn
+          retention-days: 7
   production-diagnosis-acceptance:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -63,6 +99,9 @@ jobs:
             # Feature-branch main sync: compare with its pinned main parent,
             # not the outdated feature head that predates accepted main changes.
             BASE_REF="$(git rev-parse HEAD^2)"
+          elif [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            # Keep feature pushes on the same pinned main lineage as PR checks.
+            BASE_REF="$(git merge-base HEAD refs/remotes/origin/main)"
           else
             BASE_REF="${{ github.event.before }}"
             if ! git cat-file -e "$BASE_REF^{commit}" 2>/dev/null; then
@@ -129,6 +168,9 @@ jobs:
             # Feature-branch main sync: compare with its pinned main parent,
             # not the outdated feature head that predates accepted main changes.
             BASE_REF="$(git rev-parse HEAD^2)"
+          elif [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            # Keep feature pushes on the same pinned main lineage as PR checks.
+            BASE_REF="$(git merge-base HEAD refs/remotes/origin/main)"
           else
             BASE_REF="${{ github.event.before }}"
             git cat-file -e "$BASE_REF^{commit}" 2>/dev/null || BASE_REF="HEAD^"

@@ -1,4 +1,4 @@
-// Built branch acceptance, not production or downstream AI certification.
+// Built branch by default; an explicit URL verifies the deployed UI, never downstream AI.
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
@@ -7,6 +7,9 @@ import {execFileSync} from 'node:child_process';
 import {chromium} from 'playwright';
 const root=resolve('dist'),out=resolve('artifacts/production-diagnosis');await mkdir(out,{recursive:true});
 const source=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+const productionURL=process.env.GOVPROMPT_ACCEPTANCE_URL;
+if(productionURL)assert.equal(productionURL,'https://sayampreecha-ux.github.io/-ai-local-government-assistant/','only the authorized production URL');
+const scope=productionURL?'production; UI + clipboard + 13-domain smoke':'built branch; UI + clipboard + 13-domain smoke';
 const cases=[
  ['TOR04','ร่าง TOR งานก่อสร้างถนน พร้อมตรวจความสอดคล้องกับ BOQ และรายการประมาณราคา','tor'],
  ['DRAW01','จัดทำแบบรูปรายการงานก่อสร้างอาคาร ไม่ขอประมาณราคา ไม่ขอ TOR','technical-drawing'],
@@ -40,12 +43,14 @@ const blocked=[
  'จัดซื้อจัดจ้างอยู่ระหว่างพิจารณา บริษัททดสอบ ราคาเสนอ 500000 บาท'
 ];
 const server=createServer(async(req,res)=>{const path=resolve(root,'.'+(new URL(req.url,'http://localhost').pathname==='/'?'/index.html':decodeURIComponent(new URL(req.url,'http://localhost').pathname)));if(!path.startsWith(root+sep)){res.writeHead(403).end();return;}try{res.writeHead(200,{'content-type':({'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml'})[extname(path)]||'application/octet-stream'}).end(await readFile(path));}catch{res.writeHead(404).end();}});
-await new Promise(r=>server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${server.address().port}`;
+if(!productionURL)await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const base=productionURL?.replace(/\/$/,'')||`http://127.0.0.1:${server.address().port}`;
+const homePath=new URL(base+'/index.html').pathname;
 const results=[];let browser;
 async function startNew(page){
  if(!page.url().startsWith(base))await page.goto(base+'/?gpv=20261001-2',{waitUntil:'networkidle'});
  else {
-  const stableHome=page.waitForURL(url=>url.pathname==='/index.html' && url.searchParams.get('gpv')==='20261001-2' && !url.searchParams.has('view'),{waitUntil:'networkidle'});
+  const stableHome=page.waitForURL(url=>url.pathname===homePath && url.searchParams.get('gpv')==='20261001-2' && !url.searchParams.has('view'),{waitUntil:'networkidle'});
   await page.getByRole('button',{name:'เริ่มงานใหม่',exact:true}).click();await stableHome;
  }
  await page.waitForLoadState('networkidle');
@@ -55,7 +60,7 @@ try{
  browser=await chromium.launch({headless:true});
  for(const [device,width] of [['mobile',390],['desktop',1365]]){
   const context=await browser.newContext({viewport:{width,height:900},serviceWorkers:'block',permissions:['clipboard-read','clipboard-write'],locale:'th-TH'});
-  // No external data requests or downstream AI during this branch test.
+  // Only the tested site may load; no downstream AI or external data requests.
   await context.route('**/*',route=>route.request().url().startsWith(base)?route.continue():route.abort());
   const page=await context.newPage();let previousQuestion='';
   for(const [id,q,format] of cases){const row={id,device,width,source,status:'FAIL',downstreamAI:'NOT VERIFIED'};
@@ -81,5 +86,5 @@ try{
   for(const [n,q] of blocked.entries()){const row={id:'BLOCK-'+n,device,source,status:'FAIL'};try{await startNew(page);await page.getByRole('textbox',{name:'ข้อความถึง GovPrompt'}).fill(q);await page.getByRole('button',{name:'ส่งข้อความ',exact:true}).click();await page.locator('#privacySubmitWarning').waitFor({state:'visible'});assert.equal(await page.getByRole('textbox',{name:'ข้อความถึง GovPrompt'}).inputValue(),'');assert.equal(await page.locator('.answer-card').count(),0);row.reason=await page.locator('#privacySubmitWarning').textContent();row.status='PASS';}catch(e){row.error=String(e.stack||e);}results.push(row);console.log(device,row.id,row.status);}
   await context.close();
  }
-}finally{await browser?.close();await new Promise(r=>server.close(r));await writeFile(resolve(out,'results.json'),JSON.stringify({source,scope:'built branch; UI + clipboard + 13-domain smoke',downstreamAI:'NOT VERIFIED',results},null,2));}
+}finally{await browser?.close();if(server.listening)await new Promise(r=>server.close(r));await writeFile(resolve(out,'results.json'),JSON.stringify({source,scope,url:productionURL||base,downstreamAI:'NOT VERIFIED',results},null,2));}
 assert.equal(results.length,(cases.length+blocked.length)*2);assert.equal(results.filter(x=>x.status!=='PASS').length,0,'branch UI acceptance failures');

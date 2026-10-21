@@ -8,6 +8,7 @@ import { buildWorkflowRuntimeView, buildWorkflowPromptBlock } from '../assets/js
 test('P0 baseline pins exact tested merge main parent, never stale event base', () => {
   const workflow=readFileSync('.github/workflows/ci.yml','utf8');
   assert.equal((workflow.match(/BASE_REF="\$\(git rev-parse HEAD\^1\)"/g)||[]).length,2);
+  assert.equal((workflow.match(/BASE_REF="\$\(git merge-base HEAD refs\/remotes\/origin\/main\)"/g)||[]).length,2,'feature pushes retain the reviewed main baseline instead of a previous feature output');
   assert.doesNotMatch(workflow,/BASE_REF="\$\{\{ github\.event\.pull_request\.base\.sha \}\}"/);
   assert.match(workflow,/deltaUtf8Bytes>0/);
   assert.match(workflow,/sha256Equal:base\.sha256===item\.sha256/);
