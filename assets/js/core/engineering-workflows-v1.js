@@ -138,7 +138,11 @@
     const p = plan(args.question,args.context);
     const result = create.call(this, p ? {...args, route:engineeringRoute(args.route || core.routeRequest(args.question))} : args);
     if (!p) return result;
-    return Object.freeze({...result, prompt:result.prompt+'\n\n'+block(p), engineeringPlan:p});
+    const intendedOutput = output(p);
+    // Preserve the core result while correcting the serialized engineering deliverable.
+    // A TOR with a separately requested checklist is composite; TOR with reference BOQ remains TOR.
+    return Object.freeze({...result, outputPlan:intendedOutput,
+      prompt:result.prompt+'\n\n'+block(p)+'\nPrimary engineering output: '+intendedOutput.id+' — '+intendedOutput.instructions.join('; '), engineeringPlan:p});
   };
   core.ENGINEERING_WORKFLOWS = Object.freeze({definitions:Object.freeze(definitions),plan,output,block,calculate});
 })();
