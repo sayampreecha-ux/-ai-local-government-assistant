@@ -48,6 +48,7 @@ try{for(const d of devices){
    const response=await page.goto(base,{waitUntil:'load'});assert.equal(response.status(),200);await page.locator('#promptInput').waitFor({state:'visible'});
    if(c.menu){
     await page.getByText('งานช่างและวิศวกรรม',{exact:true}).click();await page.getByRole('button',{name:'จัดทำแบบรูปรายการงานก่อสร้าง',exact:true}).click();
+    await page.getByRole('dialog').getByRole('button',{name:'จัดทำแบบรูปรายการ',exact:true}).click();
     await page.locator('.guided-intake-message').waitFor({state:'visible'});
     assert.equal(await page.getByText('ร่าง TOR ให้เริ่มง่าย — บอก GP 3 เรื่อง',{exact:true}).count(),0);
     assert.equal(await page.locator('.guided-intake-message li').count(),1,'drawing asks one question in main chat');

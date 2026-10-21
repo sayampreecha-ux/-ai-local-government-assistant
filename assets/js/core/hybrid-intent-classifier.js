@@ -99,7 +99,8 @@
     ]) }),
     Object.freeze({ moduleId: 'GP013', confidence: 0.99, patterns: Object.freeze([
       /(?:ญัตติ|มติสภา|ประชุมสภา|สมัยประชุม|องค์ประชุม|ประธานสภา|สมาชิกสภา|สภาท้องถิ่น)/,
-      /(?:สภา).{0,20}(?:อนุมัติ|เห็นชอบ|พิจารณา|ลงมติ|โครงการ|งบประมาณ|เงินบำรุง)/
+      // สภาพ (condition) is not สภา (council).
+      /(?:สภา(?!พ)).{0,20}(?:อนุมัติ|เห็นชอบ|พิจารณา|ลงมติ|โครงการ|งบประมาณ|เงินบำรุง)/
     ]) }),
     // Explicit procurement verbs/processes outrank the subject being purchased for.
     Object.freeze({ moduleId: 'GP003', confidence: 0.99, patterns: Object.freeze([

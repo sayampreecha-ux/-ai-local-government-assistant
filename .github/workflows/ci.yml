@@ -3,6 +3,7 @@ name: GovPrompt P0 verification
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -31,6 +32,13 @@ jobs:
             # Baseline is the tested synthetic merge commit's pinned main parent.
             # Event base.sha can be older than the main included in HEAD.
             BASE_REF="$(git rev-parse HEAD^1)"
+          elif [ "${{ github.ref }}" != "refs/heads/main" ] &&
+               [ "$(git rev-list --parents -n 1 HEAD | wc -w)" -eq 3 ] &&
+               [ "$(git rev-parse HEAD^1)" = "${{ github.event.before }}" ] &&
+               git merge-base --is-ancestor HEAD^2 refs/remotes/origin/main; then
+            # Feature-branch main sync: compare with its pinned main parent,
+            # not the outdated feature head that predates accepted main changes.
+            BASE_REF="$(git rev-parse HEAD^2)"
           else
             BASE_REF="${{ github.event.before }}"
             if ! git cat-file -e "$BASE_REF^{commit}" 2>/dev/null; then
@@ -64,6 +72,15 @@ jobs:
       - name: Install Chromium for mobile browser verification
         run: |
           pnpm exec playwright install --with-deps chromium
+      - name: Engineering six-action real browser handoff (18 cases, desktop/mobile)
+        run: node tests/e2e/engineering-final.mjs
+      - name: Preserve engineering final browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engineering-final-evidence
+          path: artifacts/engineering-final/
+          if-no-files-found: warn
       - name: Verify mobile workflow runtime and privacy boundary
         run: node scripts/verify-workflow-mobile-e2e.mjs
       - name: Verify FAT discipline and regression cases in real desktop and mobile UI
@@ -81,6 +98,13 @@ jobs:
             # Baseline is the tested synthetic merge commit's pinned main parent.
             # Event base.sha can be older than the main included in HEAD.
             BASE_REF="$(git rev-parse HEAD^1)"
+          elif [ "${{ github.ref }}" != "refs/heads/main" ] &&
+               [ "$(git rev-list --parents -n 1 HEAD | wc -w)" -eq 3 ] &&
+               [ "$(git rev-parse HEAD^1)" = "${{ github.event.before }}" ] &&
+               git merge-base --is-ancestor HEAD^2 refs/remotes/origin/main; then
+            # Feature-branch main sync: compare with its pinned main parent,
+            # not the outdated feature head that predates accepted main changes.
+            BASE_REF="$(git rev-parse HEAD^2)"
           else
             BASE_REF="${{ github.event.before }}"
             git cat-file -e "$BASE_REF^{commit}" 2>/dev/null || BASE_REF="HEAD^"
