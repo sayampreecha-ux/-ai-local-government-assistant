@@ -747,6 +747,25 @@
 
     specialistLink.href = route.assistant.path; specialistLink.textContent = `เปิดแบบฟอร์ม ${route.moduleId}`;
     actions.append(openChatGPT, copyButton);
+    const localMemoIntent = /(?:จัดทำ|ร่าง|ทำ|เขียน).{0,35}บันทึกข้อความ/.test(originalRequest);
+    if (localMemoIntent && !promptBundle.gp223) {
+      const localButton = document.createElement('button');
+      localButton.type = 'button';
+      localButton.textContent = '⬇️ สร้างร่าง Word ไม่ใช้ AI';
+      localButton.addEventListener('click', async () => {
+        localButton.disabled = true;
+        try {
+          const download = window.GovPromptDocumentStudio?.downloadLocalMemorandum;
+          if (typeof download !== 'function') throw new Error('ตัวสร้างเอกสารยังไม่พร้อม');
+          const result = await download(originalRequest);
+          window.GovPrompt?.toast(result.missing.length
+            ? 'ดาวน์โหลดร่างแล้ว — ยังมีข้อมูล [รอตรวจสอบ] กรุณาตรวจและแก้ใน Word'
+            : 'ดาวน์โหลดร่างแล้ว — ต้องให้เจ้าหน้าที่ตรวจทานก่อนใช้ราชการ');
+        } catch (error) { window.GovPrompt?.toast(error?.message || 'สร้างร่างไม่สำเร็จ'); }
+        finally { localButton.disabled = false; }
+      });
+      actions.append(localButton);
+    }
     if (!promptBundle.gp223) actions.append(specialistLink);
     appendBudgetResult(section, actions, budgetSourceRuntime);
     if (!promptBundle.gp223) appendSearchDetails(section, searchResult);
