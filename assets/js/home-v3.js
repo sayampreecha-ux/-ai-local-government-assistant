@@ -641,7 +641,27 @@
     section.append(box);
   }
 
-  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime }) {
+  function completeDocumentHandoff(prompt, originalRequest) {
+    const documentIntent = /(?:จัดทำ|ร่าง|ทำ|เขียน).{0,30}(?:บันทึกข้อความ|หนังสือราชการ)/i.test(originalRequest);
+    if (!documentIntent) return prompt;
+    const format = /บันทึกข้อความ/.test(originalRequest)
+      ? 'บันทึกข้อความ: ส่วนราชการ ที่ วันที่ เรื่อง เรียน เรื่องเดิม ข้อเท็จจริง ข้อพิจารณา ข้อเสนอ'
+      : 'หนังสือราชการตามชนิดที่ขอ อย่าเปลี่ยนเป็นบันทึกข้อความ';
+    const completion = '\n\n[GP_DOCUMENT_HANDOFF_V1]\n' + [
+      'ส่งชิ้นงานฉบับเต็มก่อนคำอธิบาย ไม่หยุดที่แผน ตัวอย่าง หรือพรอมต์ให้ AI อื่น',
+      format,
+      'ข้อมูลขาดใส่ [รอตรวจสอบ] คง Evidence Gate และ Decision Lock ให้เจ้าหน้าที่ตรวจทานก่อนลงนาม',
+      'แยกข้อเท็จจริง ข้อเสนอ และสิ่งรอตรวจสอบ ห้ามเติมว่าได้พิจารณา ตรวจสอบ เหมาะสม หรืออนุมัติแล้วหากไม่มีหลักฐาน ไม่ขอใช้งบเพิ่มไม่ใช่ยืนยันว่าไม่มีผลกระทบงบประมาณ แยกรายการตรวจทานไว้นอกเอกสารเสนอให้ลงนาม',
+      'ถ้ามีเครื่องมือให้แนบ Word .docx ที่แก้ไขได้ หากไม่มีเครื่องมือหรือหมดโควตา ให้ส่งเนื้อหาฉบับเต็มพร้อมคัดลอกลง Word และแจ้งว่าไม่ได้สร้างไฟล์ ห้ามทำลิงก์ดาวน์โหลดปลอมหรือใช้ไฟล์อื่นปลอมเป็น .docx',
+      'ไม่บังคับซื้อบริการหรือเรียก API เพิ่ม ระบุส่วนที่ยังไม่สำเร็จและข้อที่ต้องตรวจสอบตามจริง'
+    ].join('\n');
+    return prompt.endsWith(completion) ? prompt : prompt + completion;
+  }
+
+  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime, originalRequest = '' }) {
+    if (workflowRuntime && !promptBundle.gp223) {
+      promptBundle = { ...promptBundle, prompt: completeDocumentHandoff(promptBundle.prompt, originalRequest) };
+    }
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
@@ -768,7 +788,7 @@
     }
     await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 250));
     document.getElementById('thinkingMessage')?.remove();
-    addRouteResult(prepared); saveHistory(text, prepared.route); clearAttachments();
+    addRouteResult({ ...prepared, originalRequest: text }); saveHistory(text, prepared.route); clearAttachments();
     if (prepared.promptBundle.gp223) document.documentElement.classList.add('result-intake');
     document.querySelector('.result-page-header strong').textContent = 'ผลลัพธ์พร้อมใช้งาน';
     window.scrollTo({ top: 0, behavior: 'instant' });

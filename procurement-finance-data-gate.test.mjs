@@ -111,3 +111,29 @@ test('government confidential and trade-secret payloads are BLOCK', async t => {
     assert.ok(result.riskCodes.includes('TRADE_SECRET'));
   });
 });
+
+// Synthetic names only: preserve directives while retaining actual-value masking.
+for (const input of [
+  'ไม่ได้ให้ฐานกฎหมายหรือชื่อผู้ลงนาม ห้ามแต่งเพิ่ม',
+  'ผู้ลงนามยังไม่ทราบ ให้ใส่ [รอตรวจสอบ]',
+  'ตรวจอำนาจผู้ลงนามก่อนเสนอ Human Review',
+  'ชื่อผู้ลงนาม [รอตรวจสอบ] ห้ามสมมุติ',
+  'ลายมือชื่อ ไม่ต้องเติมข้อมูลเอง'
+]) {
+  test('signature category instruction remains intact: ' + input, () => {
+    assert.equal(evaluate(input, { domain: 'finance' }).sanitizedText, input);
+  });
+}
+for (const input of [
+  'ผู้ลงนาม: สมมุติ ทดสอบ',
+  'ผู้ลงนาม สมมุติ ทดสอบ',
+  'ลงชื่อ นายสมมุติ ทดสอบ',
+  'ลายมือชื่อ：Synthetic Tester'
+]) {
+  test('supplied synthetic signature value remains masked: ' + input, () => {
+    const result = evaluate(input + '\nห้ามแต่งเพิ่ม', { domain: 'finance' });
+    assert.equal(result.decision, 'SANITIZE');
+    assert.doesNotMatch(result.sanitizedText, /สมมุติ|Synthetic|Tester/);
+    assert.ok(result.sanitizedText.includes('ห้ามแต่งเพิ่ม'));
+  });
+}
