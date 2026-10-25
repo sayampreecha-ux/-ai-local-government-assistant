@@ -262,7 +262,7 @@ function makeDocx(doc) {
     doc.actionItems.forEach(item => paragraphs.push(p(`• ${item.task}${item.owner ? ` | ผู้รับผิดชอบ: ${item.owner}` : ''}${item.due ? ` | กำหนด: ${item.due}` : ''}`)));
   }
   const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${paragraphs.join('')}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134"/></w:sectPr></w:body></w:document>`;
-  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:rPr><w:sz w:val="32"/><w:lang w:val="th-TH"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:rPr><w:b/><w:sz w:val="40"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:rPr><w:b/><w:sz w:val="34"/></w:rPr></w:style></w:styles>`;
+  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:rPr><w:rFonts w:ascii="Sarabun" w:hAnsi="Sarabun" w:eastAsia="Sarabun" w:cs="Sarabun"/><w:sz w:val="32"/><w:lang w:val="th-TH"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:rPr><w:b/><w:sz w:val="40"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:rPr><w:b/><w:sz w:val="34"/></w:rPr></w:style></w:styles>`;
   return createZip([
     { name: '[Content_Types].xml', data: `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/></Types>` },
     { name: '_rels/.rels', data: `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>` },
@@ -533,4 +533,14 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && !document.getElementById('gpDocumentStudio')?.hidden) closeStudio();
 });
 
-window.GovPromptDocumentStudio = Object.freeze({ open: openStudio });
+async function downloadLocalMemorandum(input) {
+  if (hasSensitive(input)) throw new Error('ตรวจพบข้อมูลเสี่ยง กรุณาปกปิดก่อนสร้างร่าง');
+  const { makeLocalMemoDraft } = await import('./local-memorandum-v1.mjs');
+  const draft = makeLocalMemoDraft(input);
+  const docx = makeDocx(draft);
+  triggerDownload(new Blob([await docx.arrayBuffer()], {
+    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  }), 'draft-memorandum-review-required.docx');
+  return { missing: draft.missing, reviewRequired: true };
+}
+window.GovPromptDocumentStudio = Object.freeze({ open: openStudio, downloadLocalMemorandum });

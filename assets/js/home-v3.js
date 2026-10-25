@@ -747,6 +747,37 @@
 
     specialistLink.href = route.assistant.path; specialistLink.textContent = `เปิดแบบฟอร์ม ${route.moduleId}`;
     actions.append(openChatGPT, copyButton);
+    const localMemoIntent = /(?:จัดทำ|ร่าง|ทำ|เขียน).{0,35}บันทึกข้อความ/.test(originalRequest);
+    if (localMemoIntent && !/ไม่(?:ต้อง|ให้).{0,12}(?:จัดทำ|ร่าง|ทำ|เขียน)/.test(originalRequest) && !promptBundle.gp223) {
+      const localButton = document.createElement('button');
+      localButton.type = 'button';
+      localButton.textContent = '⬇️ สร้างร่าง Word ไม่ใช้ AI';
+      localButton.addEventListener('click', async () => {
+        localButton.disabled = true;
+        try {
+          const download = window.GovPromptDocumentStudio?.downloadLocalMemorandum;
+          if (typeof download !== 'function') throw new Error('ตัวสร้างเอกสารยังไม่พร้อม');
+          const { makeLocalMemoDraft } = await import('./core/local-memorandum-v1.mjs');
+          const draft = makeLocalMemoDraft(originalRequest);
+          let review = card.querySelector('.local-memo-review');
+          if (review) review.remove();
+          review = document.createElement('section'); review.className = 'local-memo-review';
+          const note = document.createElement('p');
+          note.textContent = 'ร่างอัตโนมัติไม่ใช้ AI — รองรับช่องชื่อ: ค่า และข้อความหลายบรรทัด หากไม่มีช่องจะเก็บข้อความเดิมให้ตรวจ ไม่อนุมานข้อมูลเอง ข้อมูลที่รอตรวจ: ' + draft.missing.join(', ');
+          const preview = document.createElement('pre'); preview.style.whiteSpace = 'pre-wrap';
+          preview.textContent = [draft.title,...draft.sections.flatMap(s=>[s.heading,...s.paragraphs])].filter(Boolean).join('\n');
+          const label = document.createElement('label'); const consent = document.createElement('input'); consent.type = 'checkbox';
+          label.append(consent,document.createTextNode(' ฉันตรวจทานร่างและข้อมูลที่ยังขาดแล้ว ก่อนนำไปใช้ราชการต้องยืนยันข้อเท็จจริงและอำนาจผู้ลงนาม'));
+          const save = document.createElement('button'); save.type='button'; save.textContent='ดาวน์โหลดร่าง DOCX'; save.disabled=true;
+          consent.addEventListener('change',()=>{save.disabled=!consent.checked;});
+          save.addEventListener('click',async()=>{save.disabled=true;try{await download(originalRequest);}catch(e){note.textContent=e.message;}finally{save.disabled=!consent.checked;}});
+          review.append(note,preview,label,save); card.append(review);
+
+        } catch (error) { window.GovPrompt?.toast(error?.message || 'สร้างร่างไม่สำเร็จ'); }
+        finally { localButton.disabled = false; }
+      });
+      actions.append(localButton);
+    }
     if (!promptBundle.gp223) actions.append(specialistLink);
     appendBudgetResult(section, actions, budgetSourceRuntime);
     if (!promptBundle.gp223) appendSearchDetails(section, searchResult);
