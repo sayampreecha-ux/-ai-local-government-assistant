@@ -17,7 +17,7 @@ function api() {
 test('short TOR request is stopped for three critical intake questions', () => {
   const tool = api();
   const result = tool.assessQuery('ร่างtor', { transactionType: 'procurement' });
-  assert.equal(tool.version, '1.2.3');
+  assert.equal(tool.version, '1.2.4');
   assert.match(source, /window\.setTimeout\(\(\) => form\.requestSubmit\(\), 0\)/);
   assert.equal(result.ready, false);
   assert.equal(result.intent, 'procurement');
