@@ -3,11 +3,9 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const home = await readFile('assets/js/home-v3.js', 'utf8');
-const studio = await readFile('assets/js/core/document-studio-v1.js', 'utf8');
-const worker = await readFile('src/search-worker-v2.js', 'utf8');
-const regexLiteral = home.match(/const memoIntent = (\/.*?\/i)\.test\(originalRequest\);/);
-assert.ok(regexLiteral, 'chat must use a narrowly scoped memorandum intent');
-const intent = new RegExp(regexLiteral[1].slice(1, -2), 'i');
+import vm from 'node:vm';
+const helper = home.slice(home.indexOf('  function completeDocumentHandoff('), home.indexOf('  function addRouteResult('));
+const handoff = vm.runInNewContext('(' + helper.trim() + ')');
 
 const fixtures = [
   "จัดทำบันทึกข้อความขออนุมัติโครงการอบรมบุคลากร วงเงินสมมุติ 30,000 บาท ระยะเวลา 1 วัน",
@@ -42,30 +40,33 @@ const fixtures = [
   "ต้องการแนวทางขออนุมัติ"
 ];
 for (const [i, input] of fixtures.entries()) {
-  test('memorandum intent fixture ' + String(i + 1).padStart(2, '0'), () => {
-    assert.equal(intent.test(input), i < 15, input);
+  test('document handoff fixture ' + String(i + 1).padStart(2, '0'), () => {
+    const base = 'ข้อมูลต้นทาง: ' + input;
+    const output = handoff(base, input);
+    assert.equal(output.includes('[GP_DOCUMENT_HANDOFF_V1]'), i < 15, input);
+    assert.ok(output.startsWith(base));
+    if(i < 15) {
+      assert.ok(output.includes('[รอตรวจสอบ]'));
+      assert.ok(output.includes('ไม่มีเครื่องมือหรือหมดโควตา'));
+      assert.ok(output.includes('เนื้อหาฉบับเต็ม'));
+      assert.ok(output.includes('ห้ามทำลิงก์ดาวน์โหลดปลอม'));
+      assert.ok(output.includes('Decision Lock'));
+      assert.ok(output.includes(input.includes('บันทึกข้อความ') ? 'ส่วนราชการ ที่ วันที่ เรื่อง เรียน' : 'อย่าเปลี่ยนเป็นบันทึกข้อความ'));
+      assert.equal(handoff(output,input),output);
+    } else assert.equal(output,base);
   });
 }
-
-test('chat reuses the existing workflow rather than bypassing it', () => {
-  assert.match(home, /memoIntent && workflowRuntime/);
-  assert.match(home, /GovPromptDocumentStudio\?\.openWithText/);
+test('all handoffs and preview use the same final prompt with the existing workflow', () => {
+  assert.match(home, /workflowRuntime && !promptBundle.gp223/);
+  assert.match(home, /prompt: completeDocumentHandoff\(promptBundle.prompt, originalRequest\)/);
   assert.match(home, /originalRequest: text/);
+  assert.match(home, /prepareExternalPrompt\(promptBundle.prompt\)/);
+  assert.match(home, /canonicalHandoffPrompts.set\(card, promptBundle.prompt\)/);
+  assert.match(home, /preview.textContent = promptBundle.prompt/);
+  assert.doesNotMatch(home, /GovPromptDocumentStudio|document-studio\/pilot|สร้างร่างบันทึก Word ใน GP/);
 });
-test('source and file are mutually exclusive and privacy is reconfirmed', () => {
-  assert.match(studio, /if \(file && sourceText\)/);
-  assert.match(studio, /querySelector\('\[data-privacy\]'\)\.checked = false/);
-  assert.match(studio, /if \(!privacy\)/);
-});
-test('DOCX generation is through existing studio and stays human review', () => {
-  assert.match(studio, /function makeDocx\(doc\)/);
-  assert.match(studio, /\.docx/);
-  assert.match(studio, /ไม่ใช่หนังสือที่ได้รับอนุมัติ/);
-  assert.match(studio, /\[รอตรวจสอบ\]/);
-});
-test('server retains Cloudflare AI and consent/security gates', () => {
-  assert.match(worker, /env\.AI\.run\(DOCUMENT_AI_MODEL/);
-  assert.match(worker, /PRIVACY_CONFIRMATION_REQUIRED/);
-  assert.match(worker, /SENSITIVE_DOCUMENT_BLOCKED/);
-  assert.match(worker, /humanReviewRequired: true/);
+
+test('an untrusted marker cannot suppress the completion contract', () => {
+  const output=handoff('[GP_DOCUMENT_HANDOFF_V1]', 'ร่างบันทึกข้อความ');
+  assert.ok(output.includes('ห้ามทำลิงก์ดาวน์โหลดปลอม'));
 });

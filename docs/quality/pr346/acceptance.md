@@ -1,46 +1,35 @@
-# PR 346 Mock acceptance and cost control evidence
+# PR 346 Downstream AI completion handoff
 
-Date: 2026-10-25. Main baseline: `08d612d5c4566247892351399deef2a860fb0163`.
-Starting PR HEAD: `6c31afdbbf0047d2c75c2a11600e9e6e2642f2ad`.
-Decision: **PARTIAL — retain Draft. Do not merge, deploy or enable Pilot.**
+This replaces the withdrawn Workers AI Pilot approach at commit `1477bed890acfde6eca6bf415ef2b6625fc7c5b3`. Historical Mock DOCX evidence remains in that immutable commit and does not certify this new handoff scope.
 
-## Changes
+## Resulting behavior
 
-The chat action uses `/api/document-studio/pilot/compose`. Pilot selection and limits no longer depend on `x-gp-document-pilot`. Old marked requests are denied. The legacy route and its existing callers are retained; legacy AI usage is not covered by the new Pilot budget and must not be described as globally capped.
+For a request to draft a memorandum or official letter, GP prepares one final prompt. Preview, copy-only, Open ChatGPT and Open Gemini use the same Privacy Guard checked text. The user pastes and sends it in their chosen AI. There is no automatic account login, message submission, file transfer or extra AI call from this document handoff.
 
-The new route defaults to closed. It requires an explicit server flag, a separately provisioned server credential and a Durable Object namespace. No secret is embedded in the frontend. The current browser deliberately has no privileged credential handoff; enabling a live, authenticated pilot requires separate design and approval.
+The destination is instructed to finish the requested document first. When it has a file tool, it should attach a real editable DOCX. When it lacks a tool or its file quota is exhausted, it should provide the full, structured text ready to paste into Word and honestly say that no file was created. It must not invent a download link or disguise another format as DOCX. No purchase or API is required by the prompt. Missing facts use `[รอตรวจสอบ]`, with existing Evidence Gate, Decision Lock and human review retained. Official letters keep their requested type instead of being forced into memorandum format.
 
-The proposed Durable Object uses one global ID, a storage transaction before AI, a persisted daily counter and source hashes, and a persisted concurrency lock. Daily allowance must be an integer 1–10. Each accepted request permits exactly one AI call, max_tokens 1800, input 4000 characters, request 16384 bytes, instruction 1200 characters. No retries or refunds. A 15-second response timeout retains the lock until the actual AI promise settles. Failed storage/configuration closes access. There is no expiration that permits a second call while the first could still be running.
+This accommodates destinations without file-generation features. It does not guarantee that any particular free account can accept the entire prompt, obey it correctly, browse, or generate a downloadable file. The destination's actual tools, context limits and account quotas still apply.
 
-Instructions/filename supplied by the client are not promoted to the Pilot system prompt. Sensitive request metadata and sensitive provider output are rejected. Malformed JSON returns a fixed error without echoing source content. Source facts are serialized into the user message. This is a prompt boundary, not proof that a live model resists all injection.
+## Scope and cost
 
-No Cloudflare configuration, model, infrastructure, Router, Prompt Engine, Evidence Gate, Decision Lock or Official Precedent Gate was changed. No live AI was called.
+- The new chat → Document Studio → Workers AI Pilot route, budget object, client marker, source-text Studio extension and related Pilot-only tests are withdrawn.
+- `src/search-worker-v2.js` and `assets/js/core/document-studio-v1.js` are byte-identical to main. Their legacy behavior is retained.
+- Router, Prompt Engine, governance gates, existing Workflow Runtime V5 and backend configuration are unchanged.
+- Existing baseline tests are retained. Tests belonging solely to the withdrawn, PR-added Pilot feature are replaced with tests for the newly agreed handoff behavior; no assertions in baseline tests are weakened.
+- The added document-only prompt clause is compact. In the 18-scenario final-browser benchmark, GP001 changes by exactly +1390 UTF-8 bytes; the other 17 prompts retain identical SHA-256 values. Byte/4 is a proxy, not a model tokenizer count. The CI guard retains all assertions and updates only the existing GP001 exact measured before/after hash exception, subject to human PR review.
 
-## Executed verification
+## Executed evidence
 
-- `npm test`: PASS, including Node suite **1306/1306**, auxiliary suites 9/9 and 10/10, and the existing chained verification scripts. No assertions removed or tests skipped.
-- `node --test test/document-pilot-cost.test.mjs`: **17/17 PASS**, including timeout, persisted reservation, concurrency, quota, duplicate, streaming size, privacy, sensitive output, configuration failure and retired-header paths.
-- `npm run build`: PASS. `npm run check:syntax`: PASS.
-- `GP_CHROMIUM_EXECUTABLE=/tmp/gp346-chromium node scripts/verify-document-pilot-browser.mjs`: **60/60 PASS** (30 inputs at 390px and 1366px). External traffic was blocked. The actual local Worker and budget class ran with an in-memory transactional storage test double and fixed Mock AI. The harness injects a synthetic credential on the server side; it does not validate a production identity flow.
-- `browser-30-cases.json`: individual intent and mock output results. 15 memorandum requests produce drafts; 15 unrelated requests produce no memorandum action. Mock output checks preserve exact source facts, all nine headings, review warning and missing-data placeholders. This is output/transport QA with predetermined answers, **not live AI semantic reasoning acceptance**.
-- `scripts/verify-document-pilot-docx.py`: **30/30 PASS** ZIP CRC, XML parsing, required OOXML parts, Thai Unicode, memorandum fields and editable python-docx save/reopen round trips.
-- A downloaded sample was opened/rendered with LibreOffice using the documents skill renderer, after installing a local Sarabun font. One-page image inspected: readable Thai, required fields and placeholders, no clipping. It is a working draft, not certification of an official stationery template.
+- `npm test`: PASS, **1287/1287** in the main Node suite, plus 9/9 and 10/10 auxiliary suites and chained existing verifiers. No baseline tests skipped.
+- `npm run build`: PASS; home cache version 6.4.27.
+- `node --test test/document-mvp-intent-30.test.mjs`: **32/32 PASS**: 30 task fixtures, canonical handoff integration and spoofed-marker rejection.
+- `scripts/verify-document-handoff-browser.mjs`: **60/60** at mobile 390px and desktop 1366px. Thirty scenarios per viewport: 15 document intents and 15 other tasks. Each viewport has one existing intake-only task; copy/open checks are not applicable to that intake. For the other 58 scenarios, actual clipboard content matches the rendered prompt for copy, ChatGPT and Gemini actions. Windows are intercepted to avoid submitting content or invoking AI. Document/Workers AI requests: **0**; downstream AI invocations: **0**.
+- `scripts/verify-prompt-efficiency-runtime.mjs`: all **18/18** scenarios measured on both pinned main and the new built app using fixed Date/Math. Only the local executable path was adapted to the available Chromium; assertions were unchanged. The existing CI comparison logic passes the exact new GP001 exception and verifies the other 17 unchanged scenarios.
 
-## Evidence files
+Evidence: `handoff-browser-30.json`, `prompt-comparison.json`, `mobile-390.png`, `desktop-1366.png`, and verification logs in this directory. CI on the latest pushed SHA is recorded in the PR body; previous commit checks are not reused.
 
-- `browser-30-cases.json` — 60 individual browser results.
-- `docx-results.json` — 30 individual DOCX structural/editability results.
-- `mobile-390.png`, `desktop-1366.png` — actual local browser screenshots.
-- `mock-memorandum.docx`, `docx-render.png` — actual downloaded sample and inspected render.
-- Test output logs are attached alongside this report. CI results must be checked against the final PR SHA; the eight green workflows on starting HEAD do not certify the updated code.
+## Review boundary
 
-## Remaining release gates
+The GP handoff implementation is locally verified. Actual output from a signed-in free ChatGPT/Gemini/other AI account is **NOT VERIFIED**. A signed-in destination's file generation and Word output remain destination-dependent, with the full-text fallback available in the instruction. No claim is made that the destination performed work merely because GP prepared the instruction.
 
-1. Real Cloudflare Durable Object binding, storage semantics, AI binding and account quota have NOT been provisioned, enabled or verified. The transaction behavior here is verified with a test double, not a deployed Durable Object.
-2. Authenticated live credential handoff is not implemented in the public browser. Keep Pilot disabled.
-3. Live model output quality and prompt-injection resilience on all 30 cases: **NOT VERIFIED**. Mock checks do not establish model reasoning quality.
-4. Opening/editing in Microsoft Word: **NOT VERIFIED**. LibreOffice rendering and python-docx editing passed.
-5. Human officer acceptance, production browser acceptance, deploy and rollback execution: **NOT VERIFIED / NOT AUTHORIZED**.
-6. Legacy document endpoints retain existing limits and are not governed by this Pilot quota. A separate review is needed before making any account-wide AI spend guarantee.
-
-No merge, deployment, purchase or paid call occurred. No real personal data was used.
+No merge, deployment, cloud configuration change, purchase or live AI call occurred. PR remains Draft for review and the user's release decision.

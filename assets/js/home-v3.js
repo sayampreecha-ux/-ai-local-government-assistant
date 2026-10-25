@@ -641,7 +641,26 @@
     section.append(box);
   }
 
+  function completeDocumentHandoff(prompt, originalRequest) {
+    const documentIntent = /(?:จัดทำ|ร่าง|ทำ|เขียน).{0,30}(?:บันทึกข้อความ|หนังสือราชการ)/i.test(originalRequest);
+    if (!documentIntent) return prompt;
+    const format = /บันทึกข้อความ/.test(originalRequest)
+      ? 'บันทึกข้อความ: ส่วนราชการ ที่ วันที่ เรื่อง เรียน เรื่องเดิม ข้อเท็จจริง ข้อพิจารณา ข้อเสนอ'
+      : 'หนังสือราชการตามชนิดที่ขอ อย่าเปลี่ยนเป็นบันทึกข้อความ';
+    const completion = '\n\n[GP_DOCUMENT_HANDOFF_V1]\n' + [
+      'ส่งชิ้นงานฉบับเต็มก่อนคำอธิบาย ไม่หยุดที่แผน ตัวอย่าง หรือพรอมต์ให้ AI อื่น',
+      format,
+      'ข้อมูลขาดใส่ [รอตรวจสอบ] คง Evidence Gate และ Decision Lock ให้เจ้าหน้าที่ตรวจทานก่อนลงนาม',
+      'ถ้ามีเครื่องมือให้แนบ Word .docx ที่แก้ไขได้ หากไม่มีเครื่องมือหรือหมดโควตา ให้ส่งเนื้อหาฉบับเต็มพร้อมคัดลอกลง Word และแจ้งว่าไม่ได้สร้างไฟล์ ห้ามทำลิงก์ดาวน์โหลดปลอมหรือใช้ไฟล์อื่นปลอมเป็น .docx',
+      'ไม่บังคับซื้อบริการหรือเรียก API เพิ่ม ระบุส่วนที่ยังไม่สำเร็จและข้อที่ต้องตรวจสอบตามจริง'
+    ].join('\n');
+    return prompt.endsWith(completion) ? prompt : prompt + completion;
+  }
+
   function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime, originalRequest = '' }) {
+    if (workflowRuntime && !promptBundle.gp223) {
+      promptBundle = { ...promptBundle, prompt: completeDocumentHandoff(promptBundle.prompt, originalRequest) };
+    }
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
@@ -727,18 +746,6 @@
 
     specialistLink.href = route.assistant.path; specialistLink.textContent = `เปิดแบบฟอร์ม ${route.moduleId}`;
     actions.append(openChatGPT, copyButton);
-    const memoIntent = /(?:จัดทำ|ร่าง|ทำ|เขียน).{0,30}(?:บันทึกข้อความ|หนังสือราชการ)/i.test(originalRequest);
-    if (memoIntent && workflowRuntime && !promptBundle.gp223) {
-      const draftButton = document.createElement('button');
-      draftButton.type = 'button';
-      draftButton.textContent = 'สร้างร่างบันทึก Word ใน GP';
-      draftButton.addEventListener('click', () => {
-        const open = window.GovPromptDocumentStudio?.openWithText;
-        if (typeof open !== 'function') { window.GovPrompt?.toast('Document Studio ยังไม่พร้อม'); return; }
-        open(originalRequest);
-      });
-      actions.append(draftButton);
-    }
     if (!promptBundle.gp223) actions.append(specialistLink);
     appendBudgetResult(section, actions, budgetSourceRuntime);
     if (!promptBundle.gp223) appendSearchDetails(section, searchResult);

@@ -1,0 +1,40 @@
+✔ document handoff fixture 01 (1.269729ms)
+✔ document handoff fixture 02 (0.149045ms)
+✔ document handoff fixture 03 (0.087702ms)
+✔ document handoff fixture 04 (0.102735ms)
+✔ document handoff fixture 05 (0.111408ms)
+✔ document handoff fixture 06 (0.084217ms)
+✔ document handoff fixture 07 (0.798381ms)
+✔ document handoff fixture 08 (0.090616ms)
+✔ document handoff fixture 09 (0.095163ms)
+✔ document handoff fixture 10 (0.146089ms)
+✔ document handoff fixture 11 (0.178719ms)
+✔ document handoff fixture 12 (0.070837ms)
+✔ document handoff fixture 13 (0.076705ms)
+✔ document handoff fixture 14 (0.07316ms)
+✔ document handoff fixture 15 (0.045439ms)
+✔ document handoff fixture 16 (0.066219ms)
+✔ document handoff fixture 17 (0.044587ms)
+✔ document handoff fixture 18 (0.043366ms)
+✔ document handoff fixture 19 (0.035854ms)
+✔ document handoff fixture 20 (0.036024ms)
+✔ document handoff fixture 21 (0.028243ms)
+✔ document handoff fixture 22 (0.067441ms)
+✔ document handoff fixture 23 (0.037145ms)
+✔ document handoff fixture 24 (0.038969ms)
+✔ document handoff fixture 25 (0.027501ms)
+✔ document handoff fixture 26 (0.143045ms)
+✔ document handoff fixture 27 (0.03356ms)
+✔ document handoff fixture 28 (0.038028ms)
+✔ document handoff fixture 29 (0.040551ms)
+✔ document handoff fixture 30 (0.02674ms)
+✔ all handoffs and preview use the same final prompt with the existing workflow (0.404127ms)
+✔ an untrusted marker cannot suppress the completion contract (0.076966ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 105.034668
