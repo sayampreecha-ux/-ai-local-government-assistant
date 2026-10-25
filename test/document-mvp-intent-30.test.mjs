@@ -63,7 +63,7 @@ test('all handoffs and preview use the same final prompt with the existing workf
   assert.match(home, /prepareExternalPrompt\(promptBundle.prompt\)/);
   assert.match(home, /canonicalHandoffPrompts.set\(card, promptBundle.prompt\)/);
   assert.match(home, /preview.textContent = promptBundle.prompt/);
-  assert.doesNotMatch(home, /GovPromptDocumentStudio|document-studio\/pilot|สร้างร่างบันทึก Word ใน GP/);
+  assert.doesNotMatch(home, /document-studio\/compose|document-studio\/pilot|สร้างร่างบันทึก Word ใน GP/);
 });
 
 test('an untrusted marker cannot suppress the completion contract', () => {
@@ -77,3 +77,5 @@ test('document contract separates proposals from unsupported completed actions a
   assert.ok(output.includes('ไม่ขอใช้งบเพิ่มไม่ใช่ยืนยันว่าไม่มีผลกระทบงบประมาณ'));
   assert.ok(output.includes('แยกรายการตรวจทานไว้นอกเอกสารเสนอให้ลงนาม'));
 });
+
+test('local download requires explicit review and never invokes compose',()=>{assert.match(home,/consent.checked/);assert.match(home,/save.disabled=true/);assert.match(home,/makeLocalMemoDraft/);assert.doesNotMatch(home,/fetch\([^)]*compose/);});

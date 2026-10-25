@@ -1,0 +1,48 @@
+✔ factual preservation 1 (3.157195ms)
+✔ factual preservation 2 (0.617043ms)
+✔ factual preservation 3 (1.51633ms)
+✔ factual preservation 4 (0.2646ms)
+✔ factual preservation 5 (0.217371ms)
+✔ factual preservation 6 (0.166395ms)
+✔ factual preservation 7 (0.333194ms)
+✔ factual preservation 8 (0.194345ms)
+✔ factual preservation 9 (0.345505ms)
+✔ factual preservation 10 (0.409349ms)
+✔ factual preservation 11 (0.180183ms)
+✔ factual preservation 12 (0.105639ms)
+✔ factual preservation 13 (0.139955ms)
+✔ factual preservation 14 (0.167867ms)
+✔ factual preservation 15 (0.141361ms)
+✔ factual preservation 16 (0.074852ms)
+✔ factual preservation 17 (0.064614ms)
+✔ factual preservation 18 (0.055931ms)
+✔ factual preservation 19 (0.442622ms)
+✔ factual preservation 20 (0.092945ms)
+✔ factual preservation 21 (0.232699ms)
+✔ factual preservation 22 (0.089405ms)
+✔ factual preservation 23 (0.062024ms)
+✔ factual preservation 24 (0.057241ms)
+✔ factual preservation 25 (0.05529ms)
+✔ factual preservation 26 (0.055453ms)
+✔ factual preservation 27 (0.095316ms)
+✔ factual preservation 28 (0.055023ms)
+✔ factual preservation 29 (0.161661ms)
+✔ factual preservation 30 (0.096953ms)
+✔ negative ignore previous instructions (0.256586ms)
+✔ negative <script>alert(1)</script> (0.058377ms)
+✔ negative เลขบัตรประชาชน 1234567890123 (0.113376ms)
+✔ negative email test@example.invalid (0.069376ms)
+✔ negative ได้รับอนุมัติแล้ว (0.112142ms)
+✔ duplicate fails instead of silently overriding (0.537245ms)
+✔ unstructured prose preserved without guessed fields (0.108961ms)
+✔ non-draft rejected ไม่ต้องร่างบันทึกข้อความ (0.372592ms)
+✔ non-draft rejected ตรวจบันทึกข้อความ (0.061845ms)
+✔ non-draft rejected เขียน TOR (0.067309ms)
+ℹ tests 40
+ℹ suites 0
+ℹ pass 40
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 180.460548

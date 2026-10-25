@@ -1,0 +1,486 @@
+{
+  "rows": [
+    {
+      "id": 1,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 2,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 3,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 4,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 5,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 6,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 7,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 8,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 9,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 10,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 11,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 12,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 13,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 14,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 15,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 16,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 17,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 18,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 19,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 20,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 21,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 22,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 23,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 24,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 25,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 26,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 27,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 28,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 29,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 30,
+      "width": 390,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 1,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 2,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 3,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 4,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 5,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 6,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 7,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 8,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 9,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 10,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 11,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 12,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 13,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 14,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 15,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 16,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 17,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 18,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 19,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 20,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 21,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 22,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 23,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 24,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 25,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 26,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 27,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 28,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 29,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    },
+    {
+      "id": 30,
+      "width": 1366,
+      "intent": "PASS",
+      "factualPreservation": "PASS",
+      "humanReview": "PASS",
+      "download": "PASS"
+    }
+  ],
+  "externalRequests": [],
+  "liveAiCalls": 0
+}

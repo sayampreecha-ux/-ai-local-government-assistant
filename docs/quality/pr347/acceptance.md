@@ -1,0 +1,12 @@
+# PR 347 acceptance
+Baseline main 87c1bc2a5584272f123a3edaf82d139569119423. Original PR head 4533643841ccdae482e378fbf58b4bee075b1097.
+
+Deterministic labelled-field parser supports newline, fullwidth colon, inline semicolon, and multiline field values. Duplicate labels fail closed. Unstructured requests preserve their original text for human review; this is NOT universal Thai language understanding. All absent fields remain [รอตรวจสอบ]. No law, approval or missing fact is generated. Checklist stays in UI, outside signed document. Preview and review checkbox precede download. Existing DOCX generator reused with explicit Sarabun font in its Normal style for Thai rendering.
+
+Executed local npm test: 1373/1373 main Node tests, 9/9 and 10/10 auxiliary suites plus chained verifiers PASS. Build PASS. 30 distinct field-preservation fixtures cover multiline, inline, missing-unit and fullwidth delimiters, with exact field equality assertions. 40 focused checks passed. Additional negatives cover injection, identifiers, email, approval claims, duplicate labels and non-draft intent. Static parser tests are factual mapping checks, not model semantic QA.
+
+Playwright actual 390px + 1366px: 30 downloads each, field values preserved in preview, explicit review checkbox gates downloads, no page errors. Oversized input error and synthetic ID block exercised on both widths. All external requests intercepted; no AI endpoint requests observed. See browser-results.json for individual rows. 60 actual downloaded DOCX ZIP/XML and edit/save/reopen checks PASS. Representative full and missing-field render inspected; Microsoft Word application NOT VERIFIED. Live AI invocations zero.
+
+Existing handoff test's obsolete blanket ban on referencing Document Studio replaced with a ban on compose/Pilot calls; added review/disabled-download assertions. Assertion count increased, no tests skipped. Asset version assertion updated to exact shipped 1.0.2. Router, Prompt Engine, Workflow V5, evidence/authority gates and Worker unchanged.
+
+Limits: finite labelled grammar; unknown prose is not inferred into fields. Fail-closed sensitive/claim patterns can reject instructional or negated mentions; no claim of exhaustive PDPA recognition or all injection variants. Officers must check facts, legal authority, signature and unit format. No merge/deploy authorization; keep Draft. Final immutable SHA and CI results recorded in PR after push.

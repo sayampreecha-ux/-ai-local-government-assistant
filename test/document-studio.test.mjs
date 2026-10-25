@@ -57,7 +57,7 @@ test('wrangler binds Workers AI and both Pages paths ship the browser module', a
   assert.match(build, /Document Studio release script missing/);
   assert.match(RELEASE_VERSIONS.serviceWorker, /^\d+\.\d+\.\d+$/);
   assert.ok(build.includes("import { RELEASE_VERSIONS } from './release-versions.mjs'"));
-  assert.match(index, /document-studio-v1\.js\?v=1\.0\.1/);
+  assert.match(index, /document-studio-v1\.js\?v=1\.0\.2/);
   assert.match(catalog, /label: 'จัดหน้าเอกสาร'/);
   assert.match(index, /service-worker\.js\?v=\d+\.\d+\.\d+/);
 });

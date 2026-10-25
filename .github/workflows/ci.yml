@@ -152,6 +152,7 @@ jobs:
         run: node tests/e2e/gp001-browser-acceptance.mjs
       - name: Document handoff and all-category release acceptance with no live AI
         run: |
+          node scripts/verify-local-memo-browser.mjs
           node scripts/verify-document-handoff-browser.mjs
           node scripts/verify-pr346-release-browser.mjs
           node scripts/verify-pr346-docx.mjs
@@ -161,7 +162,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: document-release-evidence
-          path: artifacts/pr346-release/
+          path: |
+            artifacts/pr346-release/
+            artifacts/pr347/
           if-no-files-found: error
       - name: Measure final copyable browser prompt for all GP domains
         run: node scripts/verify-prompt-efficiency-runtime.mjs
