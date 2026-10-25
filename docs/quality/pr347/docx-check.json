@@ -1,7 +1,10 @@
 {
   "files": 60,
   "zipXML": "PASS",
-  "requiredThaiFields": "PASS",
+  "relationships": "PASS - all internal targets resolve",
+  "exactSuppliedFacts": "PASS",
+  "providedSignerAndMissingPlaceholders": "PASS",
+  "controlNotesExcluded": "PASS",
   "editSaveReopen": "PASS",
   "microsoftWord": "NOT VERIFIED"
 }

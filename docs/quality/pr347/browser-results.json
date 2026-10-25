@@ -481,6 +481,13 @@
       "download": "PASS"
     }
   ],
+  "uiNegativePathsPerViewport": [
+    "claim error",
+    "duplicate-field error",
+    "non-memo button absent",
+    "oversize error",
+    "PII blocked"
+  ],
   "externalRequests": [],
   "liveAiCalls": 0
 }
