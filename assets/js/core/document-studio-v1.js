@@ -533,4 +533,14 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && !document.getElementById('gpDocumentStudio')?.hidden) closeStudio();
 });
 
-window.GovPromptDocumentStudio = Object.freeze({ open: openStudio });
+async function downloadLocalMemorandum(input) {
+  if (hasSensitive(input)) throw new Error('ตรวจพบข้อมูลเสี่ยง กรุณาปกปิดก่อนสร้างร่าง');
+  const { makeLocalMemoDraft } = await import('./local-memorandum-v1.mjs');
+  const draft = makeLocalMemoDraft(input);
+  const docx = makeDocx(draft);
+  triggerDownload(new Blob([await docx.arrayBuffer()], {
+    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  }), 'draft-memorandum-review-required.docx');
+  return { missing: draft.missing, reviewRequired: true };
+}
+window.GovPromptDocumentStudio = Object.freeze({ open: openStudio, downloadLocalMemorandum });
