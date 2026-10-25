@@ -146,9 +146,9 @@ async function extractFile(file) {
 
 async function composeDocument({ mode, text, instruction, filename, pilot = false }) {
   if (hasSensitive(text)) throw new Error('ตรวจพบข้อมูลอ่อนไหว/ข้อมูลลับ กรุณาปกปิดก่อนให้ AI จัดเอกสาร');
-  const response = await fetch(endpoint('/api/document-studio/compose'), {
+  const response = await fetch(endpoint(pilot ? '/api/document-studio/pilot/compose' : '/api/document-studio/compose'), {
     method: 'POST',
-    headers: { 'content-type': 'application/json', ...(pilot ? { 'x-gp-document-pilot': '1' } : {}) },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       mode,
       text: String(text || '').slice(0, MAX_LOCAL_TEXT),

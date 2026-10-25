@@ -1,3 +1,6 @@
+import { handlePilotCompose, DocumentPilotBudget } from './document-pilot-budget.js';
+export { DocumentPilotBudget };
+
 import baseWorker from './search-worker.js';
 
 const FRONTEND_ORIGIN = 'https://sayampreecha-ux.github.io';
@@ -381,9 +384,8 @@ async function composeWithAi(env, { mode, text, instruction, filename }) {
 async function handleDocumentCompose(request, env) {
   const requestId = request.headers.get('cf-ray') || crypto.randomUUID();
   const guard = corsGuard(request, requestId); if (guard) return guard;
-  // Pilot is opt-in and fail-closed: no AI spend from the new chat-to-document flow
-  // until an owner explicitly enables the feature after configuring cost controls.
-  if (request.headers.get('x-gp-document-pilot') === '1' && env?.GP_DOCUMENT_PILOT_ENABLED !== 'true') {
+  // Retire the client-selected Pilot marker. New Pilot uses its own server-gated route.
+  if (request.headers.has('x-gp-document-pilot')) {
     return json({ ok: false, error: 'DOCUMENT_PILOT_DISABLED', message: 'โหมดทดลองปิดอยู่เพื่อควบคุมค่าใช้จ่าย AI', requestId }, 503);
   }
   const limited = await rateLimit(request, env, 'public-web:/api/document-studio/compose');
@@ -394,7 +396,6 @@ async function handleDocumentCompose(request, env) {
   if (parsed.body?.privacyConfirmed !== true) return json({ ok: false, error: 'PRIVACY_CONFIRMATION_REQUIRED', requestId }, 428);
   const mode = ['report', 'meeting', 'slides'].includes(parsed.body?.mode) ? parsed.body.mode : 'report';
   const text = String(parsed.body?.text || '').slice(0, MAX_DOCUMENT_TEXT_CHARS);
-  if (request.headers.get('x-gp-document-pilot') === '1' && text.length > 4000) return json({ ok: false, error: 'PILOT_TEXT_TOO_LONG', requestId }, 413);
   const instruction = clean(parsed.body?.instruction, 1200);
   const filename = fileNameSafe(parsed.body?.filename || 'document');
   if (!text.trim()) return json({ ok: false, error: 'DOCUMENT_TEXT_REQUIRED', requestId }, 400);
@@ -425,6 +426,12 @@ export default {
     if (url.pathname === '/api/official-search') return handleOfficialSearch(request, env);
     if (url.pathname === '/api/official-document') return handleOfficialDocument(request, env);
     if (url.pathname === '/api/document-studio/convert') return handleDocumentConvert(request, env);
+    if (url.pathname === '/api/document-studio/pilot/compose') {
+      const guard = corsGuard(request, crypto.randomUUID());
+      if (guard) return guard;
+      const response = await handlePilotCompose(request, env);
+      return new Response(response.body, { status: response.status, headers: { ...JSON_HEADERS } });
+    }
     if (url.pathname === '/api/document-studio/compose') return handleDocumentCompose(request, env);
     return baseWorker.fetch(request, env, ctx);
   }

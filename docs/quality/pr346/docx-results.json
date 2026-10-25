@@ -1,0 +1,242 @@
+[
+  {
+    "file": "memo-1366-1.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-1366-10.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-1366-11.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-1366-12.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-1366-13.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-1366-14.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-1366-15.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-1366-2.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-1366-3.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-1366-4.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-1366-5.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-1366-6.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-1366-7.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-1366-8.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-1366-9.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-1.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-10.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-11.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-12.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-13.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-14.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-15.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-2.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-3.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-4.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-5.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-6.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-7.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-8.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  },
+  {
+    "file": "memo-390-9.docx",
+    "zip": "PASS",
+    "ooxml": "PASS",
+    "thaiUnicode": "PASS",
+    "editableRoundTrip": "PASS",
+    "microsoftWord": "NOT VERIFIED"
+  }
+]
