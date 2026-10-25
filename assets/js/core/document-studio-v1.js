@@ -433,6 +433,7 @@ function buildOverlay() {
     <section class="gp-docstudio-card" role="dialog" aria-modal="true" aria-labelledby="gpDocStudioTitle">
       <div class="gp-docstudio-head"><div><h2 id="gpDocStudioTitle">📄 Document Studio</h2><p class="sub">แนบไฟล์ → GP อ่าน → AI จัดโครงสร้าง → ดาวน์โหลด Word / PDF / PowerPoint</p></div><button class="gp-docstudio-close" type="button" data-close aria-label="ปิด">×</button></div>
       <div class="gp-docstudio-grid">
+        <label class="wide">ข้อความต้นทางสำหรับร่าง (ใช้ข้อมูลจำลอง/สาธารณะเท่านั้น)<textarea data-source-text placeholder="กรอกข้อเท็จจริงที่ตรวจสอบได้ ห้ามข้อมูลบุคคลหรือข้อมูลลับ"></textarea></label>
         <label class="wide">เอกสาร<input type="file" data-file accept=".pdf,.docx,.xlsx,.xls,.xlsm,.xlsb,.csv,.txt,.md,.html,.htm,.xml,.odt,.ods,.numbers,.jpg,.jpeg,.png,.webp,.svg,.gif,.bmp,.pptx"></label>
         <label>รูปแบบ<select data-mode><option value="report">รายงานทั่วไป</option><option value="meeting">สรุปรายงานประชุม</option><option value="slides">สไลด์นำเสนอ</option></select></label>
         <label>ชื่อไฟล์ผลลัพธ์<input type="text" data-output-name placeholder="govprompt-document"></label>
@@ -475,18 +476,19 @@ async function runStudio(overlay) {
   const preview = overlay.querySelector('[data-preview]');
   const downloads = overlay.querySelector('[data-downloads]');
   const run = overlay.querySelector('[data-run]');
-  if (!file) { status.hidden = false; status.textContent = 'กรุณาเลือกไฟล์ก่อน'; return; }
+  const sourceText = overlay.querySelector('[data-source-text]')?.value.trim() || '';
+  if (!file && !sourceText) { status.hidden = false; status.textContent = 'กรุณาระบุข้อความต้นทางหรือเลือกไฟล์'; return; }
   if (!privacy) { status.hidden = false; status.textContent = 'กรุณายืนยัน Privacy Checkpoint ก่อนส่งเอกสารไปประมวลผล'; return; }
   run.disabled = true; downloads.hidden = true; preview.hidden = true; status.hidden = false;
   try {
-    status.textContent = `1/3 กำลังอ่าน ${file.name}…`;
-    const extracted = await extractFile(file);
+    status.textContent = file ? `1/3 กำลังอ่าน ${file.name}…` : '1/3 กำลังตรวจข้อความต้นทาง…';
+    const extracted = file ? await extractFile(file) : { text: sourceText, provider: 'ข้อความที่ผู้ใช้ตรวจแล้ว', truncated: false };
     if (!extracted.text.trim()) throw new Error('ไม่พบข้อความที่อ่านได้จากเอกสาร');
     if (hasSensitive(extracted.text)) throw new Error('ตรวจพบข้อมูลอ่อนไหว/ข้อมูลลับ กรุณาปกปิดก่อนใช้ Document Studio');
     status.textContent = `2/3 อ่านเอกสารแล้ว${extracted.truncated ? ' (เนื้อหายาว จึงจำกัดส่วนที่ใช้วิเคราะห์)' : ''}\nกำลังให้ AI จัดเป็น ${MODE_LABELS[mode]}…`;
-    const composed = await composeDocument({ mode, text: extracted.text, instruction, filename: file.name });
-    currentDoc = normalizeDoc(composed, safeFileBase(file.name));
-    currentBase = safeFileBase(overlay.querySelector('[data-output-name]')?.value || file.name);
+    const composed = await composeDocument({ mode, text: extracted.text, instruction, filename: file?.name || 'official-memorandum-draft' });
+    currentDoc = normalizeDoc(composed, safeFileBase(file?.name || 'official-memorandum-draft'));
+    currentBase = safeFileBase(overlay.querySelector('[data-output-name]')?.value || file?.name || 'official-memorandum-draft');
     preview.textContent = textFromDoc(currentDoc);
     preview.hidden = false; downloads.hidden = false;
     status.textContent = `3/3 เสร็จแล้ว ✅ อ่านด้วย ${extracted.provider} และจัดโครงสร้างด้วย Workers AI\nตรวจทานข้อเท็จจริงก่อนนำไปใช้ราชการ`;
@@ -533,4 +535,15 @@ document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && !document.getElementById('gpDocumentStudio')?.hidden) closeStudio();
 });
 
-window.GovPromptDocumentStudio = Object.freeze({ open: openStudio });
+function openWithText(text) {
+  const safeText = String(text || '').slice(0, 12000);
+  if (!safeText || hasSensitive(safeText)) { window.GovPrompt?.toast('ข้อมูลว่างหรือพบข้อมูลเสี่ยง กรุณาปกปิดข้อมูลก่อน'); return false; }
+  openStudio();
+  const overlay = document.getElementById('gpDocumentStudio');
+  overlay.querySelector('[data-source-text]').value = safeText;
+  overlay.querySelector('[data-output-name]').value = 'draft-official-memorandum';
+  overlay.querySelector('[data-instruction]').value = 'จัดทำร่างบันทึกข้อความราชการจากข้อเท็จจริงที่ผู้ใช้ให้เท่านั้น ระบุส่วนราชการ ที่ เรื่อง เรียน เรื่องเดิม ข้อเท็จจริง ข้อพิจารณา และข้อเสนอ โดยใส่ [รอตรวจสอบ] เมื่อไม่มีหลักฐาน ห้ามสมมุติข้อกฎหมายหรือวันลงนาม ต้องให้เจ้าหน้าที่ตรวจทานก่อนใช้';
+  overlay.querySelector('[data-source-text]').focus();
+  return true;
+}
+window.GovPromptDocumentStudio = Object.freeze({ open: openStudio, openWithText });
