@@ -641,7 +641,7 @@
     section.append(box);
   }
 
-  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime }) {
+  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime, originalRequest = '' }) {
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
@@ -727,6 +727,18 @@
 
     specialistLink.href = route.assistant.path; specialistLink.textContent = `เปิดแบบฟอร์ม ${route.moduleId}`;
     actions.append(openChatGPT, copyButton);
+    const memoIntent = /(?:จัดทำ|ร่าง|ทำ|เขียน).{0,30}(?:บันทึกข้อความ|หนังสือราชการ)/i.test(originalRequest);
+    if (memoIntent && workflowRuntime && !promptBundle.gp223) {
+      const draftButton = document.createElement('button');
+      draftButton.type = 'button';
+      draftButton.textContent = 'สร้างร่างบันทึก Word ใน GP';
+      draftButton.addEventListener('click', () => {
+        const open = window.GovPromptDocumentStudio?.openWithText;
+        if (typeof open !== 'function') { window.GovPrompt?.toast('Document Studio ยังไม่พร้อม'); return; }
+        open(originalRequest);
+      });
+      actions.append(draftButton);
+    }
     if (!promptBundle.gp223) actions.append(specialistLink);
     appendBudgetResult(section, actions, budgetSourceRuntime);
     if (!promptBundle.gp223) appendSearchDetails(section, searchResult);
@@ -768,7 +780,7 @@
     }
     await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 250));
     document.getElementById('thinkingMessage')?.remove();
-    addRouteResult(prepared); saveHistory(text, prepared.route); clearAttachments();
+    addRouteResult({ ...prepared, originalRequest: text }); saveHistory(text, prepared.route); clearAttachments();
     if (prepared.promptBundle.gp223) document.documentElement.classList.add('result-intake');
     document.querySelector('.result-page-header strong').textContent = 'ผลลัพธ์พร้อมใช้งาน';
     window.scrollTo({ top: 0, behavior: 'instant' });
