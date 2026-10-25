@@ -26,7 +26,7 @@ const JSON_HEADERS = Object.freeze({
   'referrer-policy': 'no-referrer', 'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
   'permissions-policy': 'camera=(), microphone=(), geolocation=()', 'x-govprompt-security': SECURITY_POLICY_VERSION,
   'access-control-allow-origin': FRONTEND_ORIGIN, 'access-control-allow-methods': 'POST, OPTIONS',
-  'access-control-allow-headers': 'authorization, content-type', 'access-control-expose-headers': 'x-govprompt-security',
+  'access-control-allow-headers': 'authorization, content-type, x-gp-document-pilot', 'access-control-expose-headers': 'x-govprompt-security',
   'access-control-max-age': '600', 'vary': 'Origin'
 });
 
