@@ -658,7 +658,7 @@
     return prompt.endsWith(completion) ? prompt : prompt + completion;
   }
 
-  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime, originalRequest = '' }) {
+  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime, originalRequest = '', documentSource = originalRequest }) {
     if (workflowRuntime && !promptBundle.gp223) {
       promptBundle = { ...promptBundle, prompt: completeDocumentHandoff(promptBundle.prompt, originalRequest) };
     }
@@ -757,21 +757,50 @@
         try {
           const download = window.GovPromptDocumentStudio?.downloadLocalMemorandum;
           if (typeof download !== 'function') throw new Error('ตัวสร้างเอกสารยังไม่พร้อม');
-          const { makeLocalMemoDraft } = await import('./core/local-memorandum-v1.mjs');
-          const draft = makeLocalMemoDraft(originalRequest);
+          const { makeLocalMemoDraft, makeLocalMemoFromFields, labels, PLACEHOLDER } = await import('./core/local-memorandum-v1.mjs');
+          if (documentSource === null) throw new Error('ข้อมูลต้นทางถูกปรับโดย Privacy Guard กรุณาส่งข้อมูลที่ปกปิดแล้วอีกครั้งก่อนสร้าง Word');
+          const draft = makeLocalMemoDraft(documentSource);
           let review = card.querySelector('.local-memo-review');
           if (review) review.remove();
           review = document.createElement('section'); review.className = 'local-memo-review';
           const note = document.createElement('p');
           note.textContent = 'ร่างอัตโนมัติไม่ใช้ AI — รองรับช่องชื่อ: ค่า และข้อความหลายบรรทัด หากไม่มีช่องจะเก็บข้อความเดิมให้ตรวจ ไม่อนุมานข้อมูลเอง ข้อมูลที่รอตรวจ: ' + draft.missing.join(', ');
-          const preview = document.createElement('pre'); preview.style.whiteSpace = 'pre-wrap';
-          preview.textContent = [draft.title,...draft.sections.flatMap(s=>[s.heading,...s.paragraphs])].filter(Boolean).join('\n');
+          review.style.cssText = 'min-width:0;max-width:100%;padding:16px;overflow-wrap:anywhere';
+          const fields = document.createElement('div');
+          const editors = new Map();
+          const preview = document.createElement('pre');
+          preview.style.cssText = 'white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;min-width:0';
           const label = document.createElement('label'); const consent = document.createElement('input'); consent.type = 'checkbox';
+          label.style.display = 'block';
           label.append(consent,document.createTextNode(' ฉันตรวจทานร่างและข้อมูลที่ยังขาดแล้ว ก่อนนำไปใช้ราชการต้องยืนยันข้อเท็จจริงและอำนาจผู้ลงนาม'));
           const save = document.createElement('button'); save.type='button'; save.textContent='ดาวน์โหลดร่าง DOCX'; save.disabled=true;
-          consent.addEventListener('change',()=>{save.disabled=!consent.checked;});
-          save.addEventListener('click',async()=>{save.disabled=true;try{await download(originalRequest);}catch(e){note.textContent=e.message;}finally{save.disabled=!consent.checked;}});
-          review.append(note,preview,label,save); card.append(review);
+          save.style.cssText = 'max-width:100%;white-space:normal';
+          const readFields = () => Object.fromEntries([...editors].map(([key,editor])=>[key,editor.value]));
+          let valid = true;
+          function updatePreview() {
+            consent.checked = false; save.disabled = true;
+            try {
+              const edited = makeLocalMemoFromFields(readFields());
+              preview.textContent = [edited.title,...edited.sections.flatMap(s=>[s.heading,...s.paragraphs])].filter(Boolean).join('\n');
+              note.textContent = 'ร่างอัตโนมัติไม่ใช้ AI — แก้ไขช่องข้อมูลก่อนตรวจทาน ไม่อนุมานภาษาพูดเป็นข้อเท็จจริง ข้อมูลที่รอตรวจ: ' + (edited.missing.join(', ') || 'ไม่มีช่องว่าง — ยังต้องตรวจข้อเท็จจริงและอำนาจผู้ลงนาม');
+              valid = true;
+            } catch(e) { valid = false; note.textContent = e.message; preview.textContent = 'ยังสร้างร่างไม่ได้ กรุณาแก้ข้อมูลที่แจ้ง'; }
+          }
+          for (const key of labels) {
+            const fieldLabel = document.createElement('label'); fieldLabel.textContent = key;
+            fieldLabel.style.cssText = 'display:block;min-width:0;margin:10px 0';
+            const editor = document.createElement('textarea'); editor.setAttribute('aria-label',key); editor.dataset.memoField = key;
+            editor.rows = ['เรื่องเดิม','ข้อเท็จจริง','ข้อพิจารณา','ข้อเสนอ'].includes(key) ? 3 : 1;
+            editor.value = draft.values[key] || PLACEHOLDER;
+            editor.style.cssText = 'display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;font:inherit;white-space:pre-wrap;overflow-wrap:anywhere';
+            editors.set(key,editor); editor.addEventListener('input',updatePreview); fieldLabel.append(editor); fields.append(fieldLabel);
+          }
+          consent.addEventListener('change',()=>{save.disabled=!consent.checked || !valid;});
+          save.addEventListener('click',async()=>{save.disabled=true;try{await download(readFields());}catch(e){valid=false;consent.checked=false;note.textContent=e.message;}finally{save.disabled=!consent.checked || !valid;}});
+          const sourceDetails = document.createElement('details'); const sourceTitle = document.createElement('summary'); sourceTitle.textContent = 'ข้อมูลต้นทางสำหรับตรวจเทียบ (ไม่รวมในเอกสาร)';
+          const sourceText = document.createElement('pre'); sourceText.textContent = documentSource; sourceText.style.cssText = 'white-space:pre-wrap;overflow-wrap:anywhere'; sourceDetails.append(sourceTitle,sourceText);
+          review.append(note,fields,preview,sourceDetails,label,save); card.append(review);
+          updatePreview();
 
         } catch (error) { window.GovPrompt?.toast(error?.message || 'สร้างร่างไม่สำเร็จ'); }
         finally { localButton.disabled = false; }
@@ -798,7 +827,7 @@
     attachments = []; if (attachmentStatus) attachmentStatus.textContent = ''; if (attachmentInput) attachmentInput.value = ''; if (cameraInput) cameraInput.value = '';
   }
 
-  async function submitPrompt(text) {
+  async function submitPrompt(text, userSource = null) {
     const intake = window.GovPromptCore.prepareGP223IntakeTurn({ text, state: gp223IntakeState, attachments });
     gp223IntakeState = intake.state;
     window.GovPromptCore.gp223IntakeState = intake.state;
@@ -819,7 +848,7 @@
     }
     await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 250));
     document.getElementById('thinkingMessage')?.remove();
-    addRouteResult({ ...prepared, originalRequest: text }); saveHistory(text, prepared.route); clearAttachments();
+    addRouteResult({ ...prepared, originalRequest: text, documentSource: userSource?.unavailable ? null : userSource ? [userSource.original,...userSource.answers].join('\n\n') : text }); saveHistory(text, prepared.route); clearAttachments();
     if (prepared.promptBundle.gp223) document.documentElement.classList.add('result-intake');
     document.querySelector('.result-page-header strong').textContent = 'ผลลัพธ์พร้อมใช้งาน';
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -832,7 +861,8 @@
       document.documentElement.classList.remove('result-intake');
       conversation.querySelectorAll('.guided-intake-message').forEach(message => message.remove());
     }
-    input.value = ''; resizeInput(); submitPrompt(text);
+    const userSource = window.GovPromptGuidedIntake?.takeDocumentSource(text);
+    input.value = ''; resizeInput(); submitPrompt(text, userSource);
   });
 
   input.addEventListener('input', resizeInput);

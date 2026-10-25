@@ -1,13 +1,13 @@
 (() => {
   'use strict';
 
-  const VERSION = '1.2.3';
+  const VERSION = '1.2.4';
   const MAX_QUESTIONS = 3;
   const UNKNOWN_PATTERN = /(?:ไม่ทราบ|ยังไม่ทราบ|ยังไม่กำหนด|ยังไม่มีข้อมูล)/i;
   const CREATE_PATTERN = /(?:^|\s)(?:ร่าง|จัดทำ|ทำ|สร้าง|เขียน|เตรียม|ออกแบบ|จัดซื้อ|จัดจ้าง|จัดอบรม)(?:\s|$|[^ก-๙a-z0-9])/i;
   const GENERIC_PATTERNS = Object.freeze([
     /^ร่าง\s*tor$/i, /^tor$/i, /^ทำโครงการ$/i, /^โครงการ$/i, /^อบรม$/i, /^จัดอบรม$/i,
-    /^ร่างหนังสือ(?:ราชการ)?$/i, /^หนังสือราชการ$/i, /^เบิกจ่าย$/i, /^วิเคราะห์กฎหมาย$/i,
+    /^ร่างบันทึกข้อความ$/i, /^ร่างหนังสือ(?:ราชการ)?$/i, /^หนังสือราชการ$/i, /^เบิกจ่าย$/i, /^วิเคราะห์กฎหมาย$/i,
     /^กฎหมาย$/i, /^ร่างงบประมาณ$/i, /^จัดทำร่างงบประมาณ$/i, /^ทำโพสต์$/i, /^ประชาสัมพันธ์$/i
   ]);
 
@@ -184,7 +184,7 @@
         missingFields: Object.freeze(needsScope ? ['contractWork'] : []),
         questions: Object.freeze(needsScope ? ['จะจ้างเหมางานอะไร? บอกลักษณะงานสั้น ๆ ได้เลย'] : []) });
     }
-    if (!options.force && !shouldGuide(value)) return Object.freeze({ ready: true, intent, route: activeRoute, missingFields: Object.freeze([]), questions: Object.freeze([]) });
+    if (!options.force && !options.continuing && !shouldGuide(value)) return Object.freeze({ ready: true, intent, route: activeRoute, missingFields: Object.freeze([]), questions: Object.freeze([]) });
     const unknown = new Set((acknowledgedUnknown || []).map(String));
     const isIndividualContractorTor = intent === 'procurement' && /จ้างเหมาบริการบุคคลธรรมดา|จ้างเหมาบริการ.*บุคคลธรรมดา/i.test(value);
     const profile = isIndividualContractorTor ? PROFILES.individualContractor : (PROFILES[intent] || PROFILES.general);
@@ -196,6 +196,14 @@
       missingFields: Object.freeze(missing.map(item => item.key)),
       questions: Object.freeze(missing.map(item => item.question))
     });
+  }
+
+  // Memory-only provenance for the next exact submission; never parse system prose as facts.
+  let documentSubmission = null;
+  function takeDocumentSource(text) {
+    const submission = documentSubmission;
+    documentSubmission = null;
+    return !submission ? null : submission.text === text ? submission.source : Object.freeze({ unavailable: true });
   }
 
   function install() {
@@ -250,6 +258,10 @@
     function finalizePending() {
       if (!pending) return;
       const finalText = combinedText();
+      documentSubmission = {
+        text: finalText,
+        source: Object.freeze({ original: pending.original, answers: Object.freeze([...pending.answers]), unknown: Object.freeze([...pending.unknown]) })
+      };
       pending = null;
       bypass = true;
       window.setTimeout(() => { bypass = false; }, 1200);
@@ -260,7 +272,7 @@
 
     form.addEventListener('submit', event => {
       if (bypass) { bypass = false; return; }
-      const text = normalize(input.value);
+      const text = String(input.value || '').trim();
       if (!text) return;
 
       if (pending) {
@@ -268,7 +280,7 @@
         pending.answers.push(text);
         if (UNKNOWN_PATTERN.test(text) && text.length <= 120) pending.lastMissing.forEach(field => pending.unknown.add(field));
         input.value = ''; input.dispatchEvent(new Event('input', { bubbles: true }));
-        const assessment = assessQuery(combinedText(), null, [...pending.unknown]);
+        const assessment = assessQuery(combinedText(), null, [...pending.unknown], { continuing: inferIntent(pending.original) === 'records' });
         if (assessment.ready || pending.rounds >= 2) { finalizePending(); return; }
         pending.rounds += 1; pending.lastMissing = assessment.missingFields;
         appendQuestionCard(assessment, pending.original);
@@ -285,11 +297,11 @@
       appendQuestionCard(assessment, text);
     }, true);
 
-    document.getElementById('newChat')?.addEventListener('click', () => { pending = null; bypass = false; });
+    document.getElementById('newChat')?.addEventListener('click', () => { pending = null; bypass = false; documentSubmission = null; });
     return true;
   }
 
-  const api = Object.freeze({ version: VERSION, inferIntent, isTorRequest, assessQuery, shouldGuide, install });
+  const api = Object.freeze({ version: VERSION, inferIntent, isTorRequest, assessQuery, shouldGuide, install, takeDocumentSource });
   window.GovPromptGuidedIntake = api;
   install();
 })();

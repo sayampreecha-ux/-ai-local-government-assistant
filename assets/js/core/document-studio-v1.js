@@ -534,9 +534,9 @@ document.addEventListener('keydown', event => {
 });
 
 async function downloadLocalMemorandum(input) {
-  if (hasSensitive(input)) throw new Error('ตรวจพบข้อมูลเสี่ยง กรุณาปกปิดก่อนสร้างร่าง');
-  const { makeLocalMemoDraft } = await import('./local-memorandum-v1.mjs');
-  const draft = makeLocalMemoDraft(input);
+  if (hasSensitive(typeof input === 'string' ? input : JSON.stringify(input))) throw new Error('ตรวจพบข้อมูลเสี่ยง กรุณาปกปิดก่อนสร้างร่าง');
+  const { makeLocalMemoDraft, makeLocalMemoFromFields } = await import('./local-memorandum-v1.mjs');
+  const draft = typeof input === 'string' ? makeLocalMemoDraft(input) : makeLocalMemoFromFields(input);
   const docx = makeDocx(draft);
   triggerDownload(new Blob([await docx.arrayBuffer()], {
     type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
