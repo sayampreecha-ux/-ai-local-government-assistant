@@ -144,11 +144,11 @@ async function extractFile(file) {
   return convertViaWorker(file);
 }
 
-async function composeDocument({ mode, text, instruction, filename }) {
+async function composeDocument({ mode, text, instruction, filename, pilot = false }) {
   if (hasSensitive(text)) throw new Error('ตรวจพบข้อมูลอ่อนไหว/ข้อมูลลับ กรุณาปกปิดก่อนให้ AI จัดเอกสาร');
   const response = await fetch(endpoint('/api/document-studio/compose'), {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...(pilot ? { 'x-gp-document-pilot': '1' } : {}) },
     body: JSON.stringify({
       mode,
       text: String(text || '').slice(0, MAX_LOCAL_TEXT),
@@ -455,11 +455,13 @@ function buildOverlay() {
 
 let currentDoc = null;
 let currentBase = 'govprompt-document';
+let chatDocumentPilot = false;
 
 function openStudio() {
   const overlay = buildOverlay();
   overlay.hidden = false;
   currentDoc = null;
+  chatDocumentPilot = false;
   overlay.querySelector('[data-downloads]').hidden = true;
   overlay.querySelector('[data-preview]').hidden = true;
   overlay.querySelector('[data-status]').hidden = true;
@@ -492,7 +494,7 @@ async function runStudio(overlay) {
     if (!extracted.text.trim()) throw new Error('ไม่พบข้อความที่อ่านได้จากเอกสาร');
     if (hasSensitive(extracted.text)) throw new Error('ตรวจพบข้อมูลอ่อนไหว/ข้อมูลลับ กรุณาปกปิดก่อนใช้ Document Studio');
     status.textContent = `2/3 อ่านเอกสารแล้ว${extracted.truncated ? ' (เนื้อหายาว จึงจำกัดส่วนที่ใช้วิเคราะห์)' : ''}\nกำลังให้ AI จัดเป็น ${MODE_LABELS[mode]}…`;
-    const composed = await composeDocument({ mode, text: extracted.text, instruction, filename: file?.name || 'official-memorandum-draft' });
+    const composed = await composeDocument({ mode, text: extracted.text, instruction, filename: file?.name || 'official-memorandum-draft', pilot: chatDocumentPilot });
     currentDoc = normalizeDoc(composed, safeFileBase(file?.name || 'official-memorandum-draft'));
     currentBase = safeFileBase(overlay.querySelector('[data-output-name]')?.value || file?.name || 'official-memorandum-draft');
     preview.textContent = 'ร่างเพื่อให้เจ้าหน้าที่ตรวจทาน — ไม่ใช่หนังสือที่ได้รับอนุมัติ\n\n' + textFromDoc(currentDoc);
@@ -545,6 +547,7 @@ function openWithText(text) {
   const safeText = String(text || '').slice(0, 12000);
   if (!safeText || hasSensitive(safeText)) { window.GovPrompt?.toast('ข้อมูลว่างหรือพบข้อมูลเสี่ยง กรุณาปกปิดข้อมูลก่อน'); return false; }
   openStudio();
+  chatDocumentPilot = true;
   const overlay = document.getElementById('gpDocumentStudio');
   overlay.querySelector('[data-file]').value = '';
   overlay.querySelector('[data-source-text]').value = safeText;
