@@ -409,7 +409,7 @@ function installStyles() {
   style.id = 'gp-document-studio-style';
   style.textContent = `
     .gp-docstudio{position:fixed;inset:0;z-index:10000;background:rgba(10,20,16,.55);display:grid;place-items:center;padding:16px}
-    .gp-docstudio[hidden]{display:none}.gp-docstudio-card{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:20px;padding:20px;box-shadow:0 24px 70px rgba(0,0,0,.25)}
+    .gp-docstudio[hidden],.gp-docstudio [hidden]{display:none}.gp-docstudio-card{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:20px;padding:20px;box-shadow:0 24px 70px rgba(0,0,0,.25)}
     .gp-docstudio-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.gp-docstudio h2{margin:0;color:#12372a}.gp-docstudio .sub{margin:.3rem 0 1rem;color:#4b6258}
     .gp-docstudio-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.gp-docstudio label{font-weight:800;color:#12372a}.gp-docstudio input,.gp-docstudio select,.gp-docstudio textarea{width:100%;box-sizing:border-box;margin-top:6px;padding:10px 12px;border:1px solid #cbd8d2;border-radius:12px;font:inherit}
     .gp-docstudio textarea{min-height:90px;resize:vertical}.gp-docstudio .wide{grid-column:1/-1}.gp-docstudio-privacy{display:flex!important;gap:8px;align-items:flex-start;font-weight:600!important;color:#394b43!important}.gp-docstudio-privacy input{width:auto;margin-top:3px}

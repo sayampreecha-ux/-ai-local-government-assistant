@@ -51,7 +51,8 @@
   const PHONE_PATTERN = /(?:\+66|0)\s*\d(?:[\s-]*\d){7,8}\b/g;
   const EMAIL_PATTERN = /[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g;
   const ADDRESS_PATTERN = /(?:ที่อยู่|บ้านเลขที่)\s*[:：-]?\s*[^,;\n]{3,120}/gi;
-  const SIGNATURE_PATTERN = /(?:ลงชื่อ|ลายมือชื่อ|ผู้ลงนาม)\s*[:：-]?\s*(?:นาย|นาง|นางสาว)?\s*[ก-๙A-Za-z.'’-]+(?:\s+[ก-๙A-Za-z.'’-]+){0,2}/gi;
+  // Preserve category-only directives; mask supplied signer values within their line.
+  const SIGNATURE_PATTERN = /(?:ลงชื่อ|ลายมือชื่อ|ผู้ลงนาม)(?:[ \t]*[:：-][ \t]*|[ \t]*(?:นางสาว|นาย|นาง)[ \t]*|[ \t]+(?!(?:ห้าม|ไม่|ยัง|ต้อง|ควร|ก่อน|หลัง|และ|หรือ|รอ|ระบุ|ตรวจ)))[ก-๙A-Za-z.'’-]+(?:[ \t]+[ก-๙A-Za-z.'’-]+){0,2}/gi;
   const PERSONAL_FINANCE_PATTERN = /(?:เงินเดือน|ค่าจ้างรายบุคคล|payroll|ภาษี(?:เงินได้)?(?:ของ)?|ภ\.ง\.ด\.)/i;
   const PERSON_LEVEL_MARKER_PATTERN = /(?:รายบุคคล|พนักงานรายนี้|เจ้าหน้าที่รายนี้|ของ\s*(?:นาย|นาง|นางสาว)\s+|เลขประจำตัวผู้เสียภาษี|เลขบัตรประชาชน)/i;
   const AGGREGATE_BUDGET_PATTERN = /(?:งบประมาณ|วงเงิน)[\s\S]{0,100}(?:เบิกจ่าย|ใช้ไป|คงเหลือ|เหลือ|รวม)|(?:เบิกจ่าย|ใช้ไป)[\s\S]{0,100}(?:คงเหลือ|เหลือ)/i;
@@ -70,11 +71,11 @@
     let safeText = String(input ?? '');
     const labels = [];
     const rules = [
+      { label: 'ลายมือชื่อ/ผู้ลงนาม', pattern: SIGNATURE_PATTERN, replacement: '[ปกปิดผู้ลงนาม]' },
       { label: 'ชื่อบุคคล', pattern: PERSON_NAME_PATTERN, replacement: '[ปกปิดชื่อบุคคล]' },
       { label: 'หมายเลขโทรศัพท์', pattern: PHONE_PATTERN, replacement: '[ปกปิดเบอร์โทร]' },
       { label: 'อีเมล', pattern: EMAIL_PATTERN, replacement: '[ปกปิดอีเมล]' },
-      { label: 'ที่อยู่', pattern: ADDRESS_PATTERN, replacement: 'ที่อยู่ [ปกปิด]' },
-      { label: 'ลายมือชื่อ/ผู้ลงนาม', pattern: SIGNATURE_PATTERN, replacement: '[ปกปิดผู้ลงนาม]' }
+      { label: 'ที่อยู่', pattern: ADDRESS_PATTERN, replacement: 'ที่อยู่ [ปกปิด]' }
     ];
     rules.forEach(rule => {
       rule.pattern.lastIndex = 0;

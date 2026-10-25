@@ -1,113 +1,132 @@
 {
-  "measurement": "Actual final copyable browser prompt, fixed Date/Math; bytes are not model-tokenizer counts",
+  "baseline": "08d612d5c4566247892351399deef2a860fb0163",
+  "measurement": "Browser final copyable prompt, UTF8 bytes, not provider tokens",
   "rows": [
     {
       "scenario": "GP001",
       "before": "a244f6fb2565f7ec7627e20d33c7d3ce5093d959214610960bc116d00ca6bd97",
-      "after": "f8e96c3d64017f0942d63641811cbabc42dbc3af8454d046af5384222f356fb0",
-      "deltaUtf8Bytes": 1390
+      "after": "f0b4b79213dc07e707703d15b02115dcf9d3ea8585626cc0c31ff4ee43555dd1",
+      "deltaUtf8Bytes": 1975,
+      "status": "REVIEWED DOCUMENT CONTRACT"
     },
     {
       "scenario": "GP002",
       "before": "2b9659d68c48427a0538646774d30b79faf8c56a5d9f0a4243e827ce93aaec40",
       "after": "2b9659d68c48427a0538646774d30b79faf8c56a5d9f0a4243e827ce93aaec40",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "GP003",
       "before": "8cc739c6f2a0fd2ebc5f4790f578bf7d3bada71572525122eb4bac206b25659c",
       "after": "8cc739c6f2a0fd2ebc5f4790f578bf7d3bada71572525122eb4bac206b25659c",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "GP004",
       "before": "e721e6ec0d66690b34997496fc022079263cf0679195fa34770ac3f083842375",
       "after": "e721e6ec0d66690b34997496fc022079263cf0679195fa34770ac3f083842375",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "GP005",
       "before": "86a4b2a88e3d0a4ea9755578f6075a8a83e2985513bab14c306076f388365649",
       "after": "86a4b2a88e3d0a4ea9755578f6075a8a83e2985513bab14c306076f388365649",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "GP006",
       "before": "a17b5e1ba71575ac07fbed58f55a5a4f809bceb4721a37bc515fff1ac0eaefca",
       "after": "a17b5e1ba71575ac07fbed58f55a5a4f809bceb4721a37bc515fff1ac0eaefca",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "GP007",
       "before": "28f87f965e395b487c207ff46d935cfb2beba44cc04bcc7010796c8f5f0e6923",
       "after": "28f87f965e395b487c207ff46d935cfb2beba44cc04bcc7010796c8f5f0e6923",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "GP008",
       "before": "4646ad48d2f289e8976448422d9973065e9cbfe6584adeb54ebc5d5e1e469f6b",
       "after": "4646ad48d2f289e8976448422d9973065e9cbfe6584adeb54ebc5d5e1e469f6b",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "GP009",
       "before": "bc48d1a51892a912cff062526116dbe41bf2c4ecd8ef0f08ba35fdb073fea504",
       "after": "bc48d1a51892a912cff062526116dbe41bf2c4ecd8ef0f08ba35fdb073fea504",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "GP010",
       "before": "72059f089526ae35a91773e557d139f8f592bd580524531ab72482a8db950f09",
       "after": "72059f089526ae35a91773e557d139f8f592bd580524531ab72482a8db950f09",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "GP011",
       "before": "86db0a30d198efd6abe8a5c22aa17b05a2b066acb74e3549b51591d6febff257",
       "after": "86db0a30d198efd6abe8a5c22aa17b05a2b066acb74e3549b51591d6febff257",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "GP012",
       "before": "f2ec7c8ce7194f0321109575b75b65c2deb01c8c8e5b3bf25fbcafd7b25f899d",
       "after": "f2ec7c8ce7194f0321109575b75b65c2deb01c8c8e5b3bf25fbcafd7b25f899d",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "GP013",
       "before": "b58fe87be21069c855ae09411f2ebec050d7608a355da1e7709dfec66d116f34",
       "after": "b58fe87be21069c855ae09411f2ebec050d7608a355da1e7709dfec66d116f34",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "HIGH-RISK-FINANCE",
       "before": "12c1f26b2d7281a988534dc687650e8dd27111ae073c61764f6fc8a11c85a546",
       "after": "12c1f26b2d7281a988534dc687650e8dd27111ae073c61764f6fc8a11c85a546",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "HIGH-RISK-LEGAL",
       "before": "05f588279f6ed2048c0f0d5f7b09ddd89296472cf9e2eb1d234f05727e6b2ab4",
       "after": "05f588279f6ed2048c0f0d5f7b09ddd89296472cf9e2eb1d234f05727e6b2ab4",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "HIGH-RISK-PROCUREMENT",
       "before": "99830c9886ded6b42c7d127717f1cd242db93f5ec771d4f75edeb6b20847f3aa",
       "after": "99830c9886ded6b42c7d127717f1cd242db93f5ec771d4f75edeb6b20847f3aa",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "RUNTIME-REVENUE",
       "before": "d37b100adb4effddd83249ed1eaec4c6177b43e2a05d9095f23d70c4f47b5461",
       "after": "d37b100adb4effddd83249ed1eaec4c6177b43e2a05d9095f23d70c4f47b5461",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     },
     {
       "scenario": "RUNTIME-GP223",
       "before": "0ddf415611cb76662f8a1803712e83d54263bf68926c87d328508507be1c794b",
       "after": "0ddf415611cb76662f8a1803712e83d54263bf68926c87d328508507be1c794b",
-      "deltaUtf8Bytes": 0
+      "deltaUtf8Bytes": 0,
+      "status": "UNCHANGED"
     }
   ]
 }

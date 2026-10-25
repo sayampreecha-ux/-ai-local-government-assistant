@@ -70,3 +70,10 @@ test('an untrusted marker cannot suppress the completion contract', () => {
   const output=handoff('[GP_DOCUMENT_HANDOFF_V1]', 'ร่างบันทึกข้อความ');
   assert.ok(output.includes('ห้ามทำลิงก์ดาวน์โหลดปลอม'));
 });
+
+test('document contract separates proposals from unsupported completed actions and the review checklist', () => {
+  const output = handoff('ข้อมูลจำลอง', 'ร่างบันทึกข้อความขอใช้ห้องประชุม');
+  assert.ok(output.includes('ห้ามเติมว่าได้พิจารณา ตรวจสอบ เหมาะสม หรืออนุมัติแล้วหากไม่มีหลักฐาน'));
+  assert.ok(output.includes('ไม่ขอใช้งบเพิ่มไม่ใช่ยืนยันว่าไม่มีผลกระทบงบประมาณ'));
+  assert.ok(output.includes('แยกรายการตรวจทานไว้นอกเอกสารเสนอให้ลงนาม'));
+});

@@ -1,0 +1,27 @@
+{
+  "results": [
+    {
+      "width": 390,
+      "privacyBeforeRequest": "PASS",
+      "mockCompose": "PASS",
+      "reviewPreview": "PASS",
+      "realDocxDownload": "PASS",
+      "sensitiveInput": "PASS",
+      "providerFailure": "PASS",
+      "semanticOutput": "NOT VERIFIED - predetermined fixture"
+    },
+    {
+      "width": 1366,
+      "privacyBeforeRequest": "PASS",
+      "mockCompose": "PASS",
+      "reviewPreview": "PASS",
+      "realDocxDownload": "PASS",
+      "sensitiveInput": "PASS",
+      "providerFailure": "PASS",
+      "semanticOutput": "NOT VERIFIED - predetermined fixture"
+    }
+  ],
+  "mockCalls": 4,
+  "liveCalls": 0,
+  "downstreamAiInvocations": 0
+}

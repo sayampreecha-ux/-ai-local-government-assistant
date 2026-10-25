@@ -1,0 +1,13 @@
+{
+  "sha256": "d4c8d4ac5f32b785a60214e27414b964999660b38ff26306a98b2fe4d62202ec",
+  "zipCRC": "PASS",
+  "allXML": "PASS",
+  "requiredOOXML": "PASS",
+  "editableSaveReopen": "PASS",
+  "thaiRequiredFields": "PASS",
+  "placeholders": "PASS",
+  "render": "PASS - 1 page visually inspected",
+  "microsoftWord": "NOT VERIFIED",
+  "source": "unchanged Document Studio makeDocx, predetermined synthetic fixture",
+  "aiCalls": 0
+}
