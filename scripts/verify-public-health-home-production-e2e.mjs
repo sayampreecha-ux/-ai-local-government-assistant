@@ -101,7 +101,7 @@ if (await page.locator('.guided-intake-message').count()) {
   await page.locator('#promptInput').fill('ยังไม่ทราบข้อมูลส่วนที่เหลือ');
   await page.locator('.send-button').click();
 }
-await page.locator('.guided-intake-message').waitFor({ state: 'detached', timeout: 15_000 });
+await page.waitForFunction(() => document.querySelectorAll('.guided-intake-message').length === 0, undefined, { timeout: 15_000 });
 await page.locator('.answer-card').waitFor({ state: 'visible', timeout: 15_000 });
 assert.equal(await page.locator('.composer-region').isVisible(), false, 'intake input must close after the result is ready');
 await page.locator('.result-back').click();
