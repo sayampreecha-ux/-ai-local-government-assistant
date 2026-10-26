@@ -38,3 +38,12 @@ Obtain source PDFs and inspect every page of ว56, ว66, ว75, ว217; create
 **C56 original PDF reviewed:** https://hr.customs.go.th/data_files/267e1dccccc8bbe7f969a298837b569d.pdf (9 PDF pages). Letter pp.1–2; categories S1 fraud, S2 laws/regulations, S3 theft/loss, S4 fire, S5 accidents, plus investigation record/report formats SL1 and SL2 in text. These are baseline checklist prompts, not authority to adjudicate.
 
 **Remaining blockers:** Verify official alterations/replacements/current applicability of C66/C56 and complete source pages for C75/C217, compare original regulation plus 2559 amendments and any newer versions. Independent human legal review required. The release gate JSON intentionally retains `all_tables_verified:false` meaning *current operative tables*, even though `original_tables_inspected:true`. Do not change the numeric lock just because the historical source was found.
+
+## Supplementary source discovery / legal version blocker
+- **C141 (กค 0410.2/ว 141, 6 December 2012)**: Ministry of Finance clarification of allocation guidance, listed on Department of Mental Health internal audit index alongside C66: https://audit.dmh.go.th/books/reds.asp?id=16 . **LISTING CONFIRMED; PDF CONTENT AND OPERATIVE EFFECT NOT VERIFIED**. Must inspect before applying C66 rates.
+- **C75 original**: Department of National Parks hosts PDF https://readcard.dnp.go.th/km/docs/6412.pdf . Search index exposes letter content, but direct PDF fetch returned 502 in this session: **INDEX TEXT ONLY, NOT FULL PAGE VERIFIED**.
+- **C66 alternative official PDF**: https://km.moc.go.th/th/file/get/file/20240328d41d8cd98f00b204e9800998ecf8427e155151.pdf indexed by search but direct open returned 404 in this session. Existing eight-page original from OIC remains the inspected copy.
+- **C217**: listed at https://qsds.go.th/newaudit/นโยบายการปฏิบัติงาน/ความรับผิดทางละเมิดของ/ ; full text and update status **NOT VERIFIED**.
+- **LGA-specific source**: DLA มท 0804.4/ว 637 ลงวันที่ 27 มีนาคม 2552 identified by municipality manual https://takbaicity.go.th/storage/uploads/69-รวม%20คู่มือละเมิด.pdf; source text **NOT VERIFIED**. Check local-government applicability before action workflow.
+
+**Decision:** this supplement is a source-discovery update, not clearance for runtime calculation, merge, deployment, legal citation or production acceptance.
