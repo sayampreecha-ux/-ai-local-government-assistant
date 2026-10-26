@@ -21,3 +21,20 @@
 
 ## Required completion gate
 Obtain source PDFs and inspect every page of ว56, ว66, ว75, ว217; create indexed table inventory (case subtype, individual roles, exceptions, note, page, source checksum, amendment check); human legal reviewer signs source/version review. No computed administrative allocation absent this gate.
+
+## Verified historical-source addendum — 26 October 2026
+
+**C66 original PDF inspected visually:** https://infocenter.oic.go.th/upload/cms/1768213152_8393.pdf (8 PDF pages; letter pp. 1–2, annex pp. 1–6). IMPORTANT: **historical annex transcription, NOT confirmation that no newer circular overrides it**. No numeric auto-calculation is authorized.
+
+| C66 annex page (PDF index) | Subject | Verified source structure |
+|---|---|---|
+| 1 (2) | Procurement overpriced: incorrect method, inflated reference price, wrong BOQ quantity, qualifying bidder | Committee, procurement officer, supervisor, approver columns, variants and notes |
+| 2 (3) | Incorrect inspection/acceptance, goods not per contract, late-delivery penalty | Inspector, controlling officer, procurement unit, supervisors with exception notes |
+| 3 (4) | Improper spending and unauthorized disbursement | Financial officer and supervisory roles, fact-condition variants |
+| 4 (5) | Financial/property fraud: receipt misappropriation, false disbursement, forged vouchers | Principal fraudster and officers/management; multiple alternative conditions |
+| 5 (6) | Fraud continued: altered cheque/receipts; explanatory notes | Distinct role-based variants, no universal rate |
+| 6 (7) | Vehicle accidents | Historical driver-share guideline 100% for traffic breach alone, 75% where external contributing circumstances exist, 50% where opposing party shares fault. Each depends on conditions and section 8 assessment; not automatic liability. |
+
+**C56 original PDF reviewed:** https://hr.customs.go.th/data_files/267e1dccccc8bbe7f969a298837b569d.pdf (9 PDF pages). Letter pp.1–2; categories S1 fraud, S2 laws/regulations, S3 theft/loss, S4 fire, S5 accidents, plus investigation record/report formats SL1 and SL2 in text. These are baseline checklist prompts, not authority to adjudicate.
+
+**Remaining blockers:** Verify official alterations/replacements/current applicability of C66/C56 and complete source pages for C75/C217, compare original regulation plus 2559 amendments and any newer versions. Independent human legal review required. The release gate JSON intentionally retains `all_tables_verified:false` meaning *current operative tables*, even though `original_tables_inspected:true`. Do not change the numeric lock just because the historical source was found.
