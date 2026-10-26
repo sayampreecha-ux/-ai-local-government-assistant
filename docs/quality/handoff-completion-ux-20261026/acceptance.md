@@ -5,12 +5,12 @@ Main baseline: `9008733dcdc9f34bf4d98c8276b26c3209acf9ba`. Immutable final HEAD 
 ## Change
 Home hides the bounded zero-AI memorandum button with both hidden and display:none; its source, editor, generator and every legacy test assertion remain. The legacy browser test first asserts the entry is hidden, then explicitly reveals that component only inside the test to retain its editor/review/DOCX coverage. Budget and other document exports are untouched.
 
-The existing correspondence completion adapter gains source completeness, Legal Version Gate, Human Review, authority boundary and final checks. One generic completion suffix is added only to bounded creation intents for reports, TOR/BOQ, tables, Excel and slides. General questions and explicit non-creation requests get no suffix; suffix assembly is idempotent. Existing Router, prompt engine, workflow/evidence/decision gates, privacy policies, document generators, Worker and configuration remain unchanged.
+The existing correspondence completion adapter gains source completeness, Legal Version Gate, Human Review, authority boundary and final checks. One generic completion suffix is added only to bounded creation intents for reports, TOR/BOQ, tables, Excel and slides. General questions, advice/how-to questions and explicit non-creation requests get no suffix; suffix assembly is idempotent. Existing Router, prompt engine, workflow/evidence/decision gates, privacy policies, document generators, Worker and configuration remain unchanged.
 
 Handoff headings identify the content as a prompt rather than a completed document. Preview, clipboard and both destination actions use the same existing guarded canonical path. Destination opening is intercepted in tests and URLs verified; no prompt is submitted to an AI service.
 
 ## Executed checks
-- Full npm test: 1424/1424 plus auxiliary 9/9 and 10/10; all verifier chain steps PASS, fail/skipped=0. Build PASS.
+- Full npm test: 1429/1429 plus auxiliary 9/9 and 10/10; all verifier chain steps PASS, fail/skipped=0. Build PASS.
 - Completion scope: all 30 fixtures checked at function level, plus idempotence, forged marker, hidden-entry and heading assertions. This is prompt-contract QA, not AI semantic QA.
 - Branch dist Playwright: 30 scenarios at 390px and 30 at 1366px. 28 per viewport complete Preview=Copy=ChatGPT=Gemini with source-text preservation, hidden memo action, no review panel, no page errors and no horizontal overflow.
 - Two per viewport are expected existing Privacy Guard blocks: #11 ผลตรวจสอบ is classified as health context (known conservative false positive); #17 the injection payload ends in secret and is classified as confidential context. Their actual routing/completion/handoff is NOT VERIFIED, not counted as successful handoffs. Guard remains unchanged. Synthetic ID is also blocked in an additional negative path per viewport.

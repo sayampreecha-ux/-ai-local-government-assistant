@@ -15,3 +15,4 @@ for(const [i,[input,expected]]of cases.entries())test('completion scope '+(i+1),
 test('untrusted generic marker cannot suppress completion',()=>assert.match(handoff('[GP_DELIVERABLE_HANDOFF_V1]','สร้าง Excel ข้อมูลจำลอง'),/ห้ามทำลิงก์ดาวน์โหลดปลอม/));
 test('memo UI entry is hidden without deleting generator or review code',()=>{assert.match(home,/localButton.hidden = true/);assert.match(home,/localButton.style.display = 'none'/);assert.match(home,/makeLocalMemoFromFields/);assert.match(home,/consent.checked/);});
 test('handoff heading identifies prompt rather than completed artifact',()=>{assert.match(readFileSync('assets/js/ui/status-copy.js','utf8'),/คำสั่งพร้อมส่งต่อ AI — ยังไม่ใช่เอกสารฉบับสมบูรณ์/);});
+for(const input of ['ขอวิธีจัดทำ TOR','ขอคำแนะนำในการทำ Excel','ขอทราบว่า PowerPoint คืออะไร','ช่วยอธิบายวิธีร่างบันทึกข้อความ','แนะนำขั้นตอนสร้างตาราง'])test('advice question is not a file order: '+input,()=>assert.equal(handoff('ฐานเดิม',input),'ฐานเดิม'));
