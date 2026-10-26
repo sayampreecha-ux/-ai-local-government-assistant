@@ -47,3 +47,18 @@ Obtain source PDFs and inspect every page of ว56, ว66, ว75, ว217; create
 - **LGA-specific source**: DLA มท 0804.4/ว 637 ลงวันที่ 27 มีนาคม 2552 identified by municipality manual https://takbaicity.go.th/storage/uploads/69-รวม%20คู่มือละเมิด.pdf; source text **NOT VERIFIED**. Check local-government applicability before action workflow.
 
 **Decision:** this supplement is a source-discovery update, not clearance for runtime calculation, merge, deployment, legal citation or production acceptance.
+
+## 2026-10-26 verified original C75 — 3-page source
+Official PDF: https://alro.go.th/uploads/org/central_admin/download/article/article_20160601111930.pdf
+Screenshots individually inspected: PDF pp.1–3. Document กค 0406.2/ว 75 dated 30 October 2550.
+
+| Claim ID | Source pinpoint | Finding in original | Status |
+|---|---|---|---|
+| C75-1 | p.2 clause 1 | Guidance calls for appointment without delay (normally ≤15 days from knowledge of damage), prompt completion normally ≤60 days from appointment, and permitted extension up to 30 days with reasons recorded | ORIGINAL VERIFIED; later legal-version check required |
+| C75-2 | p.2 clause 2 | Guidance calls for follow-up action normally ≤15 days after receiving inquiry and submission to Finance within 7 days from adjudicatory order, subject to applicable reporting exceptions | ORIGINAL VERIFIED; confirm any subsequent modification |
+| C75-3 | p.2 clause 3 | Committee should allow concerned officials or injured persons sufficient fair opportunity to explain and present evidence | ORIGINAL VERIFIED; apply current regulation and fair procedure |
+
+C75's wording is administrative guidance: do not infer automatic loss of jurisdiction or claim prescribed legal limitation from these indicative time periods. Original refers to then-applicable regulation and reporting rules which may have changed.
+
+**C217** indexed as PDF at https://readcard.dnp.go.th/km/docs/6412.pdf but direct source open returns 502. Do not mark all pages verified.
+**C141** agency official listing https://audit.dmh.go.th/books/reds.asp?id=16 shows later 2555 clarification. Detailed text remains unread; C66 automatic percentages stay prohibited.
