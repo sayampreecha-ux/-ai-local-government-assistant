@@ -23,3 +23,25 @@ for(const [input,category] of cases)test('intake '+input,()=>{
  assert.equal(a.compensationOrder,null);
  assert.equal(a.decision,'HUMAN_REVIEW_REQUIRED');
 });
+
+import {draftTortHandoff} from '../../src/tort-liability-intake.js';
+test('one-shot handoff stays safe for all 30 existing cases',()=>{
+ for(const [input,category] of cases){
+   const x=draftTortHandoff(input);
+   assert.equal(x.category,category);
+   assert.equal(x.readyForOfficialUse,false);
+   assert.equal(x.allocationPercent,null);
+   assert.equal(x.compensationOrder,null);
+   assert.equal(x.deliverables,7);
+   assert.match(x.prompt,/NOT VERIFIED/);
+   assert.match(x.prompt,/ว66/);
+   assert.match(x.prompt,/คำถามพยาน/);
+   assert.match(x.prompt,/ตรวจโดยเจ้าหน้าที่/);
+ }
+});
+test('long user input is bounded and empty input yields missing-facts marker',()=>{
+ const long='รถชน'.repeat(3000);
+ const r=draftTortHandoff(long);
+ assert.ok(r.prompt.length<5000);
+ assert.match(draftTortHandoff(' ').prompt,/ยังไม่ได้ให้ข้อเท็จจริง/);
+});
