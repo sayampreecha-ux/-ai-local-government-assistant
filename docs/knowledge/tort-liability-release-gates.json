@@ -52,9 +52,11 @@
     {
       "id": "C75",
       "title": "กค 0406.2/ว 75",
-      "status": "OFFICIAL_INDEX_ONLY",
-      "full_text_verified": false,
-      "source_url": "https://qsds.go.th/newaudit/นโยบายการปฏิบัติงาน/ความรับผิดทางละเมิดของ/"
+      "status": "ORIGINAL_THREE_PAGES_VISUALLY_INSPECTED_CURRENT_VERSION_NOT_VERIFIED",
+      "full_text_verified": true,
+      "source_url": "https://alro.go.th/uploads/org/central_admin/download/article/article_20160601111930.pdf",
+      "original_pages_inspected": 3,
+      "current_version_verified": false
     },
     {
       "id": "C217",
