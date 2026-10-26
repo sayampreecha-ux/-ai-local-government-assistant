@@ -52,7 +52,7 @@
     if (!resultRoute || document.querySelector('.result-page-header')) return;
     const header = document.createElement('div');
     header.className = 'result-page-header';
-    header.innerHTML = '<a href="index.html" class="result-back">← เลือกงานอื่น</a><div><span>GOVPROMPT</span><strong>ผลลัพธ์พร้อมใช้งาน</strong></div>';
+    header.innerHTML = '<a href="index.html" class="result-back">← เลือกงานอื่น</a><div><span>GOVPROMPT</span><strong>คำสั่งพร้อมส่งต่อ AI</strong></div>';
     conversation.before(header);
   }
 
@@ -642,8 +642,22 @@
   }
 
   function completeDocumentHandoff(prompt, originalRequest) {
-    const documentIntent = /(?:จัดทำ|ร่าง|ทำ|เขียน).{0,30}(?:บันทึกข้อความ|หนังสือราชการ)/i.test(originalRequest);
-    if (!documentIntent) return prompt;
+    const request = String(originalRequest || '').trim();
+    // Bounded creation intents only: ordinary questions and explicit refusals stay unchanged.
+    if (/^(?:ทำไม|เพราะอะไร|เหตุใด)/.test(request) || /ไม่(?:ต้อง|ให้)\s*(?:จัดทำ|ร่าง|สร้าง|เขียน|ทำ)(?!ไม)/.test(request)) return prompt;
+    const documentIntent = /(?:จัดทำ|ร่าง|ทำ|เขียน).{0,30}(?:บันทึกข้อความ|หนังสือราชการ)/i.test(request);
+    const deliverableIntent = /(?:จัดทำ|ร่าง|สร้าง|เขียน|ทำ(?!ไม)|ออกแบบ|เตรียม|ขอ).{0,35}(?:รายงาน|TOR\b|BOQ\b|ตาราง|Excel\b|XLSX\b|PowerPoint\b|PPTX\b|สไลด์)/i.test(request);
+    if (!documentIntent && !deliverableIntent) return prompt;
+    if (!documentIntent) {
+      const completion = '\n\n[GP_DELIVERABLE_HANDOFF_V1]\n' + [
+        'ลงมือส่งชิ้นงานฉบับเต็มตามชนิดที่ผู้ใช้ขอทันที ไม่หยุดที่แผน เค้าโครง คำแนะนำ หรือเสนอว่าจะทำให้ ใช้ภาษาและรูปแบบงานราชการไทย',
+        'ใช้ข้อมูลต้นทางครบและตรง ห้ามแต่งบุคคล เลขเอกสาร วันเวลา จำนวนเงิน กฎหมาย มติ หรือการอนุมัติ ข้อมูลขาดใส่ [รอตรวจสอบ] ทำส่วนที่ปลอดภัยให้จบ ถามเฉพาะข้อมูลสำคัญที่เปลี่ยนผลจริง',
+        'เมื่อเครื่องมือรองรับให้สร้างและแนบไฟล์จริงที่แก้ไขได้ DOCX/XLSX/PPTX ตามงาน หรือ PDF เมื่อร้องขอ หากไม่มีเครื่องมือหรือหมดโควตา ส่งเนื้อหาฉบับเต็ม ตารางหรือทุกสไลด์ที่คัดลอกใช้ได้ แจ้งส่วนที่ยังไม่สำเร็จ ห้ามทำลิงก์ดาวน์โหลดปลอม ไม่บังคับซื้อบริการหรือเรียก API เพิ่ม',
+        'แยกรายการตรวจทาน ข้อมูลรอตรวจสอบ และคำอธิบายออกจากเนื้อหาเสนอให้ลงนาม คง Evidence Gate, Legal Version Gate, Decision Lock และ Human Review ตามความเสี่ยง ไม่ถามอนุมัติซ้ำเมื่อข้อมูลและสิทธิเพียงพอ แต่ห้ามใช้อำนาจอนุมัติราชการแทนมนุษย์',
+        'ก่อนส่งตรวจความครบถ้วน ความสอดคล้อง ภาษา ตัวเลข และรูปแบบ'
+      ].join('\n');
+      return prompt.endsWith(completion) ? prompt : prompt + completion;
+    }
     const format = /บันทึกข้อความ/.test(originalRequest)
       ? 'บันทึกข้อความ: ส่วนราชการ ที่ วันที่ เรื่อง เรียน เรื่องเดิม ข้อเท็จจริง ข้อพิจารณา ข้อเสนอ'
       : 'หนังสือราชการตามชนิดที่ขอ อย่าเปลี่ยนเป็นบันทึกข้อความ';
@@ -653,7 +667,8 @@
       'ข้อมูลขาดใส่ [รอตรวจสอบ] คง Evidence Gate และ Decision Lock ให้เจ้าหน้าที่ตรวจทานก่อนลงนาม',
       'แยกข้อเท็จจริง ข้อเสนอ และสิ่งรอตรวจสอบ ห้ามเติมว่าได้พิจารณา ตรวจสอบ เหมาะสม หรืออนุมัติแล้วหากไม่มีหลักฐาน ไม่ขอใช้งบเพิ่มไม่ใช่ยืนยันว่าไม่มีผลกระทบงบประมาณ แยกรายการตรวจทานไว้นอกเอกสารเสนอให้ลงนาม',
       'ถ้ามีเครื่องมือให้แนบ Word .docx ที่แก้ไขได้ หากไม่มีเครื่องมือหรือหมดโควตา ให้ส่งเนื้อหาฉบับเต็มพร้อมคัดลอกลง Word และแจ้งว่าไม่ได้สร้างไฟล์ ห้ามทำลิงก์ดาวน์โหลดปลอมหรือใช้ไฟล์อื่นปลอมเป็น .docx',
-      'ไม่บังคับซื้อบริการหรือเรียก API เพิ่ม ระบุส่วนที่ยังไม่สำเร็จและข้อที่ต้องตรวจสอบตามจริง'
+      'ไม่บังคับซื้อบริการหรือเรียก API เพิ่ม ระบุส่วนที่ยังไม่สำเร็จและข้อที่ต้องตรวจสอบตามจริง',
+      'ใช้ข้อมูลต้นทางครบและตรง จัดรูปแบบราชการไทย ห้ามแต่งบุคคล เลขเอกสาร วันเวลา จำนวนเงิน กฎหมาย หรือมติ คง Legal Version Gate และ Human Review ทำส่วนที่ปลอดภัยให้จบ ถามเฉพาะข้อมูลสำคัญ ไม่ถามอนุมัติซ้ำเมื่อข้อมูลและสิทธิเพียงพอ ห้ามใช้อำนาจอนุมัติราชการแทนมนุษย์ ก่อนส่งตรวจความครบถ้วน ความสอดคล้อง ภาษา ตัวเลข และรูปแบบ'
     ].join('\n');
     return prompt.endsWith(completion) ? prompt : prompt + completion;
   }
@@ -752,6 +767,9 @@
       const localButton = document.createElement('button');
       localButton.type = 'button';
       localButton.textContent = '⬇️ สร้างร่าง Word ไม่ใช้ AI';
+      // Retain the reviewed V1 implementation; public Home uses the AI handoff only.
+      localButton.hidden = true;
+      localButton.style.display = 'none';
       localButton.addEventListener('click', async () => {
         localButton.disabled = true;
         try {
@@ -850,7 +868,7 @@
     document.getElementById('thinkingMessage')?.remove();
     addRouteResult({ ...prepared, originalRequest: text, documentSource: userSource?.unavailable ? null : userSource ? [userSource.original,...userSource.answers].join('\n\n') : text }); saveHistory(text, prepared.route); clearAttachments();
     if (prepared.promptBundle.gp223) document.documentElement.classList.add('result-intake');
-    document.querySelector('.result-page-header strong').textContent = 'ผลลัพธ์พร้อมใช้งาน';
+    document.querySelector('.result-page-header strong').textContent = prepared.budgetSourceRuntime ? 'ผลลัพธ์พร้อมใช้งาน' : 'คำสั่งพร้อมส่งต่อ AI';
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
 

@@ -100,7 +100,7 @@ test('efficiency review accepts only exact documented improvements and rejects d
   const predicate=workflow.match(/const isReviewedChange=row => ([^;]+);/)[1];
   const check=vm.runInNewContext('const reviewedChanges='+declaration+'; row => '+predicate);
   const changes=JSON.parse(declaration);
-  assert.deepEqual(changes.map(x=>x.scenario),["GP001", "GP002", "GP003", "GP004", "GP005", "GP006", "GP007", "GP008", "GP009", "GP010", "GP011", "GP013", "HIGH-RISK-FINANCE", "HIGH-RISK-LEGAL", "HIGH-RISK-PROCUREMENT", "RUNTIME-REVENUE"]);
+  assert.deepEqual(changes.map(x=>x.scenario),["GP001", "GP002", "GP003", "GP004", "GP005", "GP006", "GP007", "GP008", "GP009", "GP010", "GP011", "GP013", "HIGH-RISK-FINANCE", "HIGH-RISK-LEGAL", "HIGH-RISK-PROCUREMENT", "RUNTIME-REVENUE", "GP001"]);
   for(const item of changes) {
     const row={scenario:item.scenario,before:{sha256:item.before},after:{sha256:item.after},deltaUtf8Bytes:item.deltaUtf8Bytes};
     assert.equal(check(row),true);
