@@ -62,6 +62,14 @@
       "status": "OFFICIAL_INDEX_ONLY",
       "full_text_verified": false,
       "source_url": "https://qsds.go.th/newaudit/นโยบายการปฏิบัติงาน/ความรับผิดทางละเมิดของ/"
+    },
+    {
+      "id": "C141",
+      "title": "กค 0410.2/ว 141 ลงวันที่ 6 ธันวาคม 2555 ซักซ้อมแนวทางกำหนดสัดส่วนความรับผิด",
+      "status": "OFFICIAL_INDEX_ONLY",
+      "full_text_verified": false,
+      "current_version_verified": false,
+      "source_url": "https://audit.dmh.go.th/books/reds.asp?id=16"
     }
   ],
   "release_gates": {
@@ -70,7 +78,8 @@
     "c66_all_tables": false,
     "runtime_integration": false,
     "human_approval": false,
-    "browser_prod": false
+    "browser_prod": false,
+    "c141_review": false
   },
   "notes": "No numeric liability percentages authorized. This file is read-only staging evidence and never adjudicates rights."
 }
