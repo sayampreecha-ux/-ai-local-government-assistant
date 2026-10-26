@@ -611,6 +611,13 @@
   // the universal planner, authority resolver and backend remain unchanged.
   function constructionReviewPlan(question, basePlan) {
     const source = normalizeForReasoning(question);
+    // A dimensional volume calculation is not a BOQ/price audit. Remove only
+    // explicit exclusions when checking for a separately requested estimate.
+    const requestedScope = source.replace(/(?:ไม่ต้อง(?:คำนวณ|ทำ)?|ไม่เอา|ไม่รวม|ห้าม(?:คำนวณ|ทำ)?)\s*(?:factor\s*f|boq|ปร\.?\s*[456]|ราคากลาง|ประมาณราคา)/gi, '');
+    const volumeOnly = /ปริมาตร|ตารางปริมาณงาน/.test(source)
+      && /(?:ยาว|กว้าง|หนา)/.test(source)
+      && !/(?:boq|ปร\.?\s*[456]|factor\s*f|ราคากลาง|ประมาณราคา|ตรวจ(?:สอบ|ทาน)?ราคา|เทียบราคา)/i.test(requestedScope);
+    if (volumeOnly) return basePlan;
     const engineeringPlan = window.GovPromptCore.ENGINEERING_WORKFLOWS?.plan(question);
     if (engineeringPlan && (!engineeringPlan.estimationRequested || engineeringPlan.primaryDraft)) return basePlan;
     // Technical review/acceptance outputs are not estimates merely because they
