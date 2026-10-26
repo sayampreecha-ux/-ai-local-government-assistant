@@ -53,6 +53,11 @@ for (const [i, input] of fixtures.entries()) {
       assert.ok(output.includes('Decision Lock'));
       assert.ok(output.includes(input.includes('บันทึกข้อความ') ? 'ส่วนราชการ ที่ วันที่ เรื่อง เรียน' : 'อย่าเปลี่ยนเป็นบันทึกข้อความ'));
       assert.equal(handoff(output,input),output);
+    } else if ([17,21,23,25,26].includes(i)) {
+      assert.ok(output.includes('[GP_DELIVERABLE_HANDOFF_V1]'));
+      assert.ok(output.includes('ชิ้นงานฉบับเต็ม'));
+      assert.ok(output.includes('ห้ามทำลิงก์ดาวน์โหลดปลอม'));
+      assert.equal(handoff(output,input),output);
     } else assert.equal(output,base);
   });
 }

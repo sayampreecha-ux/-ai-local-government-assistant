@@ -347,7 +347,7 @@
       actions.setAttribute('aria-label', 'เลือกวิธีนำคำสั่งไปใช้ต่อ');
     }
     const heading = card.querySelector('.answer-section > h3');
-    if (heading) heading.textContent = isDocumentFormattingQuestion(findQuestion(card)) ? 'คำสั่งจัดหน้าเอกสารพร้อมแล้ว — ทำต่อใน ChatGPT' : 'คำสั่งพร้อมแล้ว — ทำต่อใน ChatGPT';
+    if (heading && !card.querySelector('.budget-runtime-result')) heading.textContent = 'คำสั่งพร้อมส่งต่อ AI — ยังไม่ใช่เอกสารฉบับสมบูรณ์';
     addSimpleHandoffGuide(card, heading);
     const description = [...card.querySelectorAll('.answer-section > p')].find(p => p.textContent.includes('ระบบจัดคำถามไปที่')); description?.remove();
     const routeLabel = card.parentElement?.querySelector('.route-label'); if (routeLabel) routeLabel.textContent = findDomain(card);
