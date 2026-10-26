@@ -1,0 +1,16 @@
+{
+  "module": "tort-liability",
+  "release_status": "BLOCKED_LEGAL_SOURCE_VERIFICATION",
+  "reviewed_on": "2026-10-26",
+  "source_records": [
+    {"id":"ACT2539","title":"พระราชบัญญัติความรับผิดทางละเมิดของเจ้าหน้าที่ พ.ศ. 2539","status":"PARTIAL_TEXT_REVIEWED","current_version_verified":false,"source_url":"https://www.offo.or.th/sites/default/files/files/regulations/add/ph.r.b._khwaamrabphidthaanglaemidkhngecchaahnaathii_ph.s._2539_0.pdf"},
+    {"id":"REG2539","title":"ระเบียบสำนักนายกรัฐมนตรีฯ พ.ศ. 2539","status":"LISTED","current_version_verified":false,"source_url":"https://www.dgr.go.th/law/th/newsAll/318/4806"},
+    {"id":"REG2559","title":"ระเบียบสำนักนายกรัฐมนตรีฯ ฉบับที่ 2 พ.ศ. 2559","status":"TEXT_INSPECTED","current_version_verified":false,"verified_amendments":["12","12/1","18","repeal 19"],"source_url":"https://www.admincourt.go.th/law/law-about/55950824-9456-11f0-ac78-3e879acfe27a"},
+    {"id":"C56","title":"กค 0406.7/ว 56","status":"OFFICIAL_INDEX_ONLY","full_text_verified":false,"source_url":"https://qsds.go.th/newaudit/นโยบายการปฏิบัติงาน/ความรับผิดทางละเมิดของ/"},
+    {"id":"C66","title":"กค 0406.2/ว 66","status":"OFFICIAL_INDEX_ONLY","full_text_verified":false,"all_tables_verified":false,"approved_percentages":[],"source_url":"https://infocenter.oic.go.th/สำนักงานคลังจังหวัดหนองบัวลำภู/topic-detail.php?conid=6021060"},
+    {"id":"C75","title":"กค 0406.2/ว 75","status":"OFFICIAL_INDEX_ONLY","full_text_verified":false,"source_url":"https://qsds.go.th/newaudit/นโยบายการปฏิบัติงาน/ความรับผิดทางละเมิดของ/"},
+    {"id":"C217","title":"กค 0410.2/ว 217","status":"OFFICIAL_INDEX_ONLY","full_text_verified":false,"source_url":"https://qsds.go.th/newaudit/นโยบายการปฏิบัติงาน/ความรับผิดทางละเมิดของ/"}
+  ],
+  "release_gates": {"legal_version":false,"source_to_claim":false,"c66_all_tables":false,"runtime_integration":false,"human_approval":false,"browser_prod":false},
+  "notes": "No numeric liability percentages authorized. This file is read-only staging evidence and never adjudicates rights."
+}
