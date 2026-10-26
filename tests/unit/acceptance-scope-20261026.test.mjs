@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {readFileSync} from 'node:fs';
+const sandbox={window:{GovPromptCore:{}},document:{readyState:'complete',querySelector(){return null},addEventListener(){}},location:{pathname:'/index.html'},URL,console};
+for(const file of ['shared-context','prompt-registry','transaction-router','output-router','prompt-orchestrator','engineering-workflows-v1','privacy-guard']) vm.runInNewContext(readFileSync(`assets/js/core/${file}.js`,'utf8'),sandbox);
+const core=sandbox.window.GovPromptCore;
+for(const q of ['ทำโปสเตอร์กิจกรรมชุมชน ไม่ใส่ชื่อนายก ไม่ใส่รูปบุคคล','เขียนข่าว ไม่ใส่ชื่อนายก','ตรวจความเชื่อมโยงแผนและงบ']) test('nonpersonal task: '+q,()=>{const r=core.sanitizeExternalContent(q);assert.equal(r.blocked,false);assert.equal(r.safeText,q);assert.equal(r.redactions.length,0)});
+for(const q of ['นายสมมุติ ทดสอบ','นายกิตติ ทดสอบ','ไม่ใส่ชื่อนายสมมุติ ทดสอบ','ไม่ใส่ชื่อนายก สมมุติ','ทำโปสเตอร์ ไม่ใส่ชื่อนายก ไม่ใส่รูปบุคคล นายสมมุติ ทดสอบ','เลขบัตรประชาชน 1234567890123','HN: TEST123','ข้อมูลความเชื่อทางศาสนาของบุคคล','ตรวจความเชื่อมโยงแผนและงบ พร้อมข้อมูลศาสนา','ผลตรวจเลือด']) test('privacy protection: '+q,()=>{const r=core.sanitizeExternalContent(q);assert.ok(r.blocked||r.redactions.length>0)});
+for(const q of ['จัดทำตารางปริมาณงานคอนกรีตจำลอง แผ่นพื้นยาว 10 เมตร กว้าง 4 เมตร หนา 0.15 เมตร คำนวณปริมาตรตามข้อมูลเท่านั้น ไม่รวมเหล็กหรือเผื่อสูญเสีย ขอ XLSX','คำนวณปริมาตรคอนกรีต ยาว 10 กว้าง 5 หนา 0.15 เมตร ไม่ต้องคำนวณ Factor F']) test('volume scope: '+q,()=>{const r=core.createGovernmentPrompt({question:q,context:core.createSharedContext({facts:q,desiredOutput:q})});assert.ok(r.prompt.includes(q));assert.ok(!r.prompt.includes('ผลลัพธ์บังคับแยก 4 ส่วนสำหรับทุกโครงการ'));assert.match(r.prompt,/Human (?:Review|Approval)/);});
+test('mixed volume and BOQ audit retains evidence contract',()=>{const q='คำนวณปริมาตรคอนกรีต ยาว 10 กว้าง 5 หนา 0.15 และตรวจสอบ BOQ ปร.4 ราคากลาง Factor F';const r=core.createGovernmentPrompt({question:q});assert.ok(r.prompt.includes('ผลลัพธ์บังคับแยก 4 ส่วนสำหรับทุกโครงการ'));});

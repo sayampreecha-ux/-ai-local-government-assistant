@@ -88,7 +88,7 @@ assert.match(index,new RegExp(`assets/js/mic\\.js\\?v=${RELEASE.mic.replaceAll('
 assert.match(index,/official-source-registry\.js\?v=2\.4\.0/);
 assert.match(index,new RegExp(`service-worker\\.js\\?v=${RELEASE.serviceWorker.replaceAll('.','\\.')}`));
 assert.match(index,new RegExp(`document-studio-v1\\.js\\?v=${RELEASE.documentStudio.replaceAll('.','\\.')}`));
-assert.match(index,/aria-label="ผู้ช่วยงานราชการ 13 หมวด"/);
+assert.match(index,/aria-label="ผู้ช่วยงานราชการตามหมวดงาน"/);
 assert.equal(quickActionBridge.text.replace(/\r\n/g,'\n'),localQuickActionBridge.replace(/\r\n/g,'\n'),'production quick-action bridge differs from committed release candidate');
 assert.match(quickActionBridge.text,/label: 'ร่างงบประมาณ'/);
 assert.match(quickActionBridge.text,/label: 'จัดหน้าเอกสาร'/);
