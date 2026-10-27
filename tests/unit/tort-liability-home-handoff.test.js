@@ -73,3 +73,12 @@ test('legal accuracy: self-certified reviewed checkboxes prohibited',()=>{
  const v=handoff('BASE','สอบละเมิดเจ้าหน้าที่');
  for(const token of ['[ ]','ห้าม AI ทำเครื่องหมาย [x]','NOT VERIFIED','แหล่งต้นฉบับ'])assert.ok(v.includes(token),token);
 });
+
+test('round3: committee appointment template can never self-activate',()=>{
+ const v=handoff('BASE','สอบละเมิดรถราชการชนคู่กรณี');
+ for(const token of ['ไม่มีผลใช้บังคับทุกกรณี','ห้ามเขียนว่า คำสั่งฉบับนี้จะมีผลบังคับใช้เมื่อ','ออกคำสั่งใหม่ตามกระบวนการจริง'])assert.ok(v.includes(token),token);
+});
+test('round3: no invented local-government office, specific signatory or organizational structure',()=>{
+ const v=handoff('BASE','สอบละเมิดรถราชการชนคู่กรณี');
+ for(const token of ['ห้ามสร้างชื่อสำนัก กอง ฝ่าย งาน','[รอตรวจสอบส่วนราชการ]','[รอตรวจสอบผู้มีอำนาจ]'])assert.ok(v.includes(token),token);
+});
