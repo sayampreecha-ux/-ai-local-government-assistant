@@ -81,7 +81,7 @@ try {
     await tort.evaluate(el => el.click());
     const seeded = await page.locator('#promptInput').inputValue();
     assert.match(seeded,/สอบละเมิดของเจ้าหน้าที่ อปท./);
-    assert.match(seeded,/Decision Lock ว66\\/ว141/);
+    assert.ok(seeded.includes('Decision Lock ว66/ว141'));
     assert.equal(await page.locator('#conversation .message').count(),before,'click must not auto-submit');
     await page.locator('#promptInput').fill(seeded + ' ข้อเท็จจริงเพิ่มเติมจากผู้ใช้');
     assert.ok((await page.locator('#promptInput').inputValue()).endsWith('ข้อเท็จจริงเพิ่มเติมจากผู้ใช้'));
