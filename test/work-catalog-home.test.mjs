@@ -29,7 +29,7 @@ test('one-page catalog covers core local-government domains', () => {
 
 test('catalog selections open the dedicated result route without bypassing the Home runner', () => {
   assert.match(source, /button\.dataset\.prompt = task\.prompt/);
-  assert.match(source, /openResultPage\(prompt, \{ trustedInternal: true \}\)/);
+  assert.match(source, /openResultPage\(prompt, \{ trustedInternal: true, tortIntent: button\.dataset\.tortIntent === 'true'/);
   assert.match(source, /sessionStorage\.setItem\(RESULT_PROMPT_KEY, value\)/);
   assert.match(source, /window\.location\.assign\(target\.toString\(\)\)/);
   assert.doesNotMatch(source, /submitPrompt\s*\(/);
@@ -80,7 +80,7 @@ test('production catalog proof rejects missing, extra, duplicate, reordered and 
 test('single legal-category tort Level-1 button preserves HR discipline entry and 13 categories', () => {
   const audit = source.split("id: 'audit', title: 'กฎหมาย ระเบียบ และตรวจสอบ'")[1]?.split("\n      ])\n    })")[0] || '';
   const hr = source.split("id: 'hr', title: 'งานบุคคล'")[1]?.split("id: 'engineering'")[0] || '';
-  assert.match(audit, /label: '⚖️ งานความรับผิดทางละเมิด', prompt:/);
+  assert.match(audit, /label: '⚖️ งานความรับผิดทางละเมิด', tortIntent: true, prompt:/);
   assert.doesNotMatch(audit, /fillOnly: true/);
   assert.equal((source.match(/label: '⚖️ งานความรับผิดทางละเมิด'/g) || []).length, 1);
   assert.match(hr, /label: 'วินัยและการดำเนินการทางบุคคล'/);
@@ -91,7 +91,7 @@ test('single legal-category tort Level-1 button preserves HR discipline entry an
   assert.match(audit, /Decision Lock ว66\/ว141/);
   assert.match(audit, /ปกปิดข้อมูลส่วนบุคคล/);
   assert.match(source, /button\.dataset\.prompt = task\.prompt/);
-  assert.match(source, /openResultPage\(prompt, \{ trustedInternal: true \}\)/);
+  assert.match(source, /openResultPage\(prompt, \{ trustedInternal: true, tortIntent: button\.dataset\.tortIntent === 'true'/);
 });
 
 test('tort action reuses live Level-1 handoff guard without changing the composer', () => {
