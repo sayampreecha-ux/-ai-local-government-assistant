@@ -21,6 +21,11 @@ for(const size of cases){
    for(const expected of ['GP_TORT_LEVEL1_HANDOFF_V1','ว66/ว141','NOT VERIFIED','ร่างเอกสาร 7 ส่วน']){
      if(!body.includes(expected))throw Error('Missing browser output: '+expected);
    }
+   await page.getByRole('button',{name:'คัดลอกไปใช้กับ AI'}).first().click();
+   const clip=await page.evaluate(()=>navigator.clipboard.readText());
+   for(const required of ['GP_TORT_LEVEL1_HANDOFF_V1','ว66/ว141','NOT VERIFIED']){
+     if(!clip.includes(required))throw Error('Clipboard missing: '+required);
+   }
    if(errors.length)throw Error('Browser console: '+errors.join(' | '));
    console.log('PASS browser tort',size.name);
  }catch(err){failed++;console.error('FAIL browser tort',size.name,err.message)}
