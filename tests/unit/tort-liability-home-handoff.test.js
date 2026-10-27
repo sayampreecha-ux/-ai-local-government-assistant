@@ -82,3 +82,20 @@ test('round3: no invented local-government office, specific signatory or organiz
  const v=handoff('BASE','สอบละเมิดรถราชการชนคู่กรณี');
  for(const token of ['ห้ามสร้างชื่อสำนัก กอง ฝ่าย งาน','[รอตรวจสอบส่วนราชการ]','[รอตรวจสอบผู้มีอำนาจ]'])assert.ok(v.includes(token),token);
 });
+
+test('round4 P0: blank investigation template forbids fictitious committee acts',()=>{
+ const v=handoff('BASE','สอบละเมิดรถราชการชนคู่กรณี');
+ for(const x of ['ร่างรายงานฉบับนี้เป็นแบบฟอร์มเตรียมการ','ยังไม่มีการแต่งตั้งคณะกรรมการหรือดำเนินการสอบสวน','คณะกรรมการได้ประชุมแล้ว','รวบรวมพยานหลักฐานเสร็จสิ้นแล้ว','[ยังไม่ได้ดำเนินการ]'])assert.ok(v.includes(x),x);
+});
+test('round4 P0: draft appointment is non-operative and authority not presumed',()=>{
+ const v=handoff('BASE','สอบละเมิดรถราชการชนคู่กรณี');
+ for(const x of ['ห้ามใช้ถ้อยคำ จึงแต่งตั้งคณะกรรมการ','ทั้งนี้ ตั้งแต่บัดนี้เป็นต้นไป','ห้ามยืนยันว่าผู้มีอำนาจคือนายก อบจ.','[รอตรวจสอบโดยนิติกร]','ห้ามกำหนดจำนวนกรรมการ'])assert.ok(v.includes(x),x);
+});
+test('round4 P0: no fabricated ministerial regulation or section 10 appointment authority',()=>{
+ const v=handoff('BASE','สอบละเมิดเจ้าหน้าที่');
+ for(const x of ['ห้ามอ้างมาตรา 10','ฐานแต่งตั้งคณะกรรมการลอย ๆ','Source-to-Claim','ข้อ 12/1','ห้ามสร้างชื่อระเบียบกระทรวงมหาดไทย'])assert.ok(v.includes(x),x);
+});
+test('round4 P1: no example parts or unsupported 30-day period',()=>{
+ const v=handoff('BASE','รถราชการชนคู่กรณี');
+ for(const x of ['แม้มีป้าย UNVERIFIED','กันชน ไฟหน้า ตัวถัง','[รอตรวจสอบรายการความเสียหาย]','ห้ามกำหนดเวลา 30 วัน'])assert.ok(v.includes(x),x);
+});
