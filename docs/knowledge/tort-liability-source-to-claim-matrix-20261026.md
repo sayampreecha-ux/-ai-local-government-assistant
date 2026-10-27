@@ -97,3 +97,15 @@ Primary gazette PDF (Administrative Court host): https://media-api.admincourt.go
 - Do not encode municipal reporting hierarchy, referral threshold, or signature authority from excerpts alone; explicitly retain [รอตรวจสอบ] in outbound draft documents.
 
 Cross-check note: No unverified assertion that no post-2559 amendment exists. The gazetted 2559 articles 3/4/5/6 are textually verified (clauses 12, 12/1, 18 and repeal of 19), but the consolidated current version, applicability to อบจ. and reporting instructions require reviewer signoff.
+
+## 2026-10-27 MI785 original-copy and annex verification
+Supersedes the earlier MI785 "attachment not inspected" status ONLY; not release approval.
+Official PAO-hosted scanned compilation: https://pathumpao.go.th/wp-content/uploads/2024/07/1.16-%E0%B8%84%E0%B8%B9%E0%B9%88%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%9B%E0%B8%8F%E0%B8%B4%E0%B8%9A%E0%B8%B1%E0%B8%95%E0%B8%B4%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B8%84%E0%B8%A7%E0%B8%B2%E0%B8%A1%E0%B8%A3%E0%B8%B1%E0%B8%9A%E0%B8%9C%E0%B8%B4.pdf
+Downloaded 32,087,555 bytes, 79 PDF pages; visually inspected PDF pages 46–50 (printed 42–46), containing the actual circular and both attachments, not merely a manual summary.
+| Claim | Pinpoint | Observed evidence | Limit |
+|---|---|---|---|
+| Identity and PAO coverage | PDF46, letter heading and introductory paragraph | Ministry of Interior, มท0804.4/ว785, 8 February2564; names อบจ., municipalities and อบต.; references ว6086 of9 October2563 | Historical text verified, current amendments not certified |
+| Reporting framework | PDF46 items1–2 | Applies attached Finance2562 reporting-exemption announcement to local-government losses and third-party cases; exempt third-party cases still use attached report | No automatic exemption/routing decision |
+| Attachment1 | PDF47–48, gazette printed pp3–4,13 January2563 | Complete two-page Finance2562 announcement; definitions, conditions, reporting provisions and signature inspected | No numerical threshold or percentages activated |
+| Attachment2 | PDF49–50 | Report form plus eight explanatory entries, including local unit, damage, date, facts, committee opinion, executive decision and certifier | Missing facts stay placeholders; no automated legal finding |
+This closes MI785 ORIGINAL_COPY_AND_ANNEX_ACCESS only. Legal current-version/authority review and Human Approval remain pending. Preserve C217/2559 reconciliation and Level2 C66/C141 Decision Lock. Source gate JSON remains conservative; it must not be read as a current certificate.
