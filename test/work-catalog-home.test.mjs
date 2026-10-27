@@ -85,7 +85,9 @@ test('single legal-category tort Level-1 button preserves HR discipline entry an
   assert.equal((source.match(/label: '⚖️ งานความรับผิดทางละเมิด'/g) || []).length, 1);
   assert.match(hr, /label: 'วินัยและการดำเนินการทางบุคคล'/);
   assert.doesNotMatch(hr, /label: '⚖️ งานความรับผิดทางละเมิด'/);
-  assert.match(audit, /สอบละเมิดของเจ้าหน้าที่ อปท./);
+  assert.match(audit, /งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. \(ทุกประเภทเหตุ\)/);
+  assert.match(audit, /โปรดให้ผู้ใช้เล่าเหตุการณ์จริง/);
+  assert.doesNotMatch(audit, /กรณีรถราชการชนหรือเสียหายระหว่าง/);
   assert.match(audit, /ร่างเอกสารงานละเมิดระดับ 1 ทั้ง 7 ส่วน/);
   assert.match(audit, /UNVERIFIED/);
   assert.match(audit, /Decision Lock ว66\/ว141/);
