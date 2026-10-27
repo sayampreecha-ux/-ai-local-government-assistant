@@ -75,3 +75,17 @@ test('production catalog proof rejects missing, extra, duplicate, reordered and 
   for (const [name, actual] of Object.entries({missing,extra,duplicate,reordered,renamed}))
     assert.throws(() => assertHomeCategories(actual), {name:'AssertionError'}, name+' must block production proof');
 });
+
+test('HR discipline/tort menu uses existing choice flow without adding a category', () => {
+  assert.match(source, /label: '⚖️ วินัย \/ ละเมิด'/);
+  assert.match(source, /label: 'งานวินัย'/);
+  assert.match(source, /label: 'งานความรับผิดทางละเมิด'/);
+  const hrBlock = source.split("id: 'hr', title: 'งานบุคคล'")[1]?.split("id: 'engineering'")[0] || '';
+  assert.match(hrBlock, /choices: Object\.freeze\(\[/);
+  assert.match(hrBlock, /NOT VERIFIED/);
+  assert.match(hrBlock, /ว66\/ว141/);
+  assert.match(hrBlock, /ร่างเอกสาร 7 ส่วน/);
+  assert.match(source, /function openTaskChoices\(button\)/);
+  assert.match(source, /button\.dataset\.taskChoices = JSON\.stringify\(task\.choices\)/);
+  assert.match(source, /openResultPage\(prompt, \{ trustedInternal: true \}\)/);
+});
