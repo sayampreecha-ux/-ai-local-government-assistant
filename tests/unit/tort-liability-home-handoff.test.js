@@ -27,3 +27,28 @@ test('unrelated domain unchanged',()=>assert.equal(handoff('BASE','ร่าง�
 test('home actually invokes new handoff before rendering card',()=>{
  assert.match(src.slice(end,end+700),/promptBundle\.prompt, originalRequest/);
 });
+
+test('regression: simulated assertions cannot become verified facts',()=>{
+ const v=handoff('BASE','สอบละเมิดรถราชการชนคู่กรณี ข้อมูลจำลอง');
+ for(const token of ['UNVERIFIED','Verified Facts','[รอตรวจสอบ]','ข้อกล่าวหา'])assert.ok(v.includes(token),token);
+});
+test('regression: prohibit invented component damage and unauthenticated evidence',()=>{
+ const v=handoff('BASE','รถราชการชนคู่กรณี');
+ for(const token of ['ชิ้นส่วนรถ','ใบอนุญาตใช้รถ','บันทึกตำรวจ','ห้ามแต่ง'])assert.ok(v.includes(token),token);
+});
+test('regression: prohibit pretending an inquiry already happened',()=>{
+ const v=handoff('BASE','สอบละเมิดเจ้าหน้าที่');
+ for(const token of ['ยังไม่ได้สอบสวน','คณะกรรมการได้สอบสวนแล้ว','ลายมือชื่อ'])assert.ok(v.includes(token),token);
+});
+test('regression: prohibit automatic legal duty and negligence findings',()=>{
+ const v=handoff('BASE','สอบละเมิดเจ้าหน้าที่');
+ for(const token of ['การกระทำในการปฏิบัติหน้าที่ตามกฎหมาย','ประมาทเลินเล่ออย่างร้ายแรง','ผู้มีอำนาจแต่งตั้ง'])assert.ok(v.includes(token),token);
+});
+test('regression: prohibit fabricated regulatory titles or accrued limitation start',()=>{
+ const v=handoff('BASE','สอบละเมิดเจ้าหน้าที่');
+ for(const token of ['ห้ามตั้งชื่อระเบียบขึ้นเอง','วันเริ่มนับอายุความ','NOT VERIFIED'])assert.ok(v.includes(token),token);
+});
+test('regression: preserve seven deliverables, decision lock, human and PDPA gate',()=>{
+ const v=handoff('BASE','สอบละเมิดเจ้าหน้าที่');
+ for(const token of ['ร่างเอกสาร 7 ส่วน','ว66/ว141','Human Review','HUMAN REVIEW CHECKLIST','ปกปิดข้อมูลส่วนบุคคล'])assert.ok(v.includes(token),token);
+});
