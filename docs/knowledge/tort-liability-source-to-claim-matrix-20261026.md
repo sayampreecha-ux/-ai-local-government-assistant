@@ -90,3 +90,10 @@ Primary gazette PDF (Administrative Court host): https://media-api.admincourt.go
 | Old clause 19 | Amendment article 6, gazette p.2: **repeals** clause 19 | Never cite former clause 19 as current | Text verified for 2559; later version check still needed |
 
 **Gate discipline:** Legal Version Gate is NOT VERIFIED for the whole Level-1 system because this crosswalk proves the 2559 amendment's contents, **not** absence of later changes or agency-specific chain of command. The tort handoff must use draft placeholders for committee appointment and deadlines until qualified human legal review. C66/C141 percentages remain locked.
+
+## 2026-10-27 Local-government source discovery (new Level-1 scope blocker)
+- Ministry of Interior circular **มท 0804.4/ว 785 dated 8 February 2021 (2564)**, titled guidance for local-government official tort-liability reporting, listed with PDF attachment on a municipal government website: https://sanklangcm.go.th/article-detail/335/ . **OFFICIAL MUNICIPAL INDEX FOUND, FULL TEXT/APPENDICES AND CURRENT STATUS NOT VERIFIED.** This is more recent than the historical local-government references and must be evaluated before certifying the อบจ. Level-1 reporting/referral workflow.
+- DLA circular **มท 0804.4/ว 1370 dated 14 July 2009 (2552)** referenced in official local-government practice manuals, but primary text/current effect remains **NOT VERIFIED**. Source discovery examples: https://khonbureetai.go.th/wp-content/uploads/2020/01/คู่มือปฏิบัติงานองค์กรปกครองส่วนท้องถิ่น.pdf .
+- Do not encode municipal reporting hierarchy, referral threshold, or signature authority from excerpts alone; explicitly retain [รอตรวจสอบ] in outbound draft documents.
+
+Cross-check note: No unverified assertion that no post-2559 amendment exists. The gazetted 2559 articles 3/4/5/6 are textually verified (clauses 12, 12/1, 18 and repeal of 19), but the consolidated current version, applicability to อบจ. and reporting instructions require reviewer signoff.
