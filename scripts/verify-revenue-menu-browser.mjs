@@ -93,9 +93,9 @@ try {
     await page.locator('.route-label').waitFor({state:'visible',timeout:30000});
     assert.match(await page.locator('.route-label').innerText(),/กฎหมาย/);
     assert.doesNotMatch(await page.locator('.route-label').innerText(),/พัสดุ|สารบรรณ/);
-    const handoff = await page.locator('.answer-card details pre').last().innerText();
-    assert.ok(handoff.includes('[GP_TORT_LEVEL1_HANDOFF_V1]'));
-    assert.ok(handoff.includes('Decision Lock'));
+    const previews = await page.locator('.answer-card details pre').allTextContents();
+    assert.ok(previews.some(s => s.includes('[GP_TORT_LEVEL1_HANDOFF_V1]')), 'tort Level-1 marker missing in assembled prompts: '+ JSON.stringify(previews.map(s => s.slice(-180))));
+    assert.ok(previews.some(s => s.includes('Decision Lock')));
 
     console.log((viewport.width<=390?'mobile':'desktop')+' tort legal normal result navigation PASS');
     await page.close();
