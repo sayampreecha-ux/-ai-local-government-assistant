@@ -94,6 +94,24 @@
       ],
       "annexes_inspected": 2,
       "original_listing_url": "https://sanklangcm.go.th/article-detail/335/"
+    },
+    {
+      "id": "OCS1175_2568",
+      "title": "สำนักงานคณะกรรมการกฤษฎีกา เรื่องเสร็จที่ 1175/2568 กรณี อบจ.เพชรบูรณ์",
+      "status": "OFFICIAL_ORIGINAL_OPINION_SCOPED_READ_CURRENT_APPLICABILITY_REQUIRES_HUMAN_REVIEW",
+      "source_url": "https://comment.ocs.go.th/main/download/1759717674/pdf/%E0%B9%80%E0%B8%A3%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%AA%E0%B8%A3%E0%B9%87%E0%B8%88%E0%B8%97%E0%B8%B5%E0%B9%88_1175-2568",
+      "source_pages": 8,
+      "pages_visually_reviewed": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "current_version_verified": false,
+      "auto_authority_allowed": false,
+      "caution": "Case-specific opinion; does not automatically validate PAO signatory, committee appointment or liability conclusions."
     }
   ],
   "release_gates": {
@@ -106,5 +124,5 @@
     "c141_review": false,
     "local_government_reporting": false
   },
-  "notes": "MI785 historical primary+annexes and C217 originals inspected; current-version and human approval gates still locked. No automatic referral thresholds or numeric liability percentages authorized."
+  "notes": "MI785 historical primary+annexes and C217 originals inspected; current-version and human approval gates still locked. No automatic referral thresholds or numeric liability percentages authorized. OCS 1175/2568 fact-bound PAO opinion inspected; no change to legal_version, authority, human_approval or percentage locks."
 }
