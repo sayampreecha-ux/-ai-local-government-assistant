@@ -610,7 +610,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     if (dialog?.open && dialog.contains(button)) dialog.close();
-    openResultPage(prompt, { trustedInternal: true, tortIntent: button.dataset.tortIntent === 'true' });
+    openResultPage(prompt, { trustedInternal: true, tortIntent: button.dataset.tortIntent === 'true', forceIntake: button.dataset.tortIntent === 'true' ? false : true });
   }, true);
 
   addCatalogStyles();
