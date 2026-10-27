@@ -80,11 +80,20 @@
     {
       "id": "MI785",
       "title": "มท 0804.4/ว 785 ลงวันที่ 8 กุมภาพันธ์ 2564 แนวทางรายงานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.",
-      "status": "OFFICIAL_MUNICIPAL_INDEX_CONFIRMED_PRIMARY_ATTACHMENT_NOT_INSPECTED",
-      "full_text_verified": false,
+      "status": "OFFICIAL_PAO_HOSTED_ORIGINAL_AND_TWO_ANNEXES_VISUALLY_INSPECTED_CURRENT_VERSION_NOT_VERIFIED",
+      "full_text_verified": true,
       "current_version_verified": false,
-      "source_url": "https://sanklangcm.go.th/article-detail/335/",
-      "caution": "Secondary presentations describe reporting thresholds; no numerical threshold or routing may enter runtime until authoritative original, annexes, later amendments, and human legal approval are verified."
+      "source_url": "https://pathumpao.go.th/wp-content/uploads/2024/07/1.16-%E0%B8%84%E0%B8%B9%E0%B9%88%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%9B%E0%B8%8F%E0%B8%B4%E0%B8%9A%E0%B8%B1%E0%B8%95%E0%B8%B4%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B8%84%E0%B8%A7%E0%B8%B2%E0%B8%A1%E0%B8%A3%E0%B8%B1%E0%B8%9A%E0%B8%9C%E0%B8%B4.pdf",
+      "caution": "Historical 2564 letter and two annexes located in official PAO-hosted 79-page compiled PDF, pages 46–50; not proof of unchanged current status, reporting threshold, PAO signatory authority or referral exception. All runtime decisions and local-government gate remain locked pending later amendment review and human approval.",
+      "source_page_indices": [
+        46,
+        47,
+        48,
+        49,
+        50
+      ],
+      "annexes_inspected": 2,
+      "original_listing_url": "https://sanklangcm.go.th/article-detail/335/"
     }
   ],
   "release_gates": {
@@ -97,5 +106,5 @@
     "c141_review": false,
     "local_government_reporting": false
   },
-  "notes": "C217 original 3 pages now inspected; all current-version and human approval gates remain locked. No numeric liability percentages authorized. Read-only staging evidence."
+  "notes": "MI785 historical primary+annexes and C217 originals inspected; current-version and human approval gates still locked. No automatic referral thresholds or numeric liability percentages authorized."
 }
