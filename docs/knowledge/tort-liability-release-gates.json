@@ -61,10 +61,13 @@
     {
       "id": "C217",
       "title": "กค 0410.2/ว 217",
-      "status": "OFFICIAL_CGD_INDEX_AND_GOVERNMENT_HOSTED_PDF_DISCOVERED_TEXT_NOT_FULLY_REVIEWED",
-      "full_text_verified": false,
-      "source_url": "https://readcard.dnp.go.th/km/docs/6412.pdf",
-      "official_registry_url": "https://www.cgd.go.th/cs/internet/internet/%28%E0%B8%AA%E0%B8%A3%E0%B8%9E%29%E0%B8%AB%E0%B8%99%E0%B8%B1%E0%B8%87%E0%B8%AA%E0%B8%B7%E0%B8%AD%E0%B9%80%E0%B8%A7%E0%B8%B5%E0%B8%A2%E0%B8%99.html?adv_search=&date_end=&date_start=&keyword=&page=1&page_locale=th_TH&perpage=500"
+      "status": "ORIGINAL_THREE_PAGES_VISUALLY_INSPECTED_CURRENT_VERSION_NOT_VERIFIED",
+      "full_text_verified": true,
+      "source_url": "https://alro.go.th/uploads/org/central_admin/download/article/article_20160601111958.pdf",
+      "official_registry_url": "https://www.cgd.go.th/cs/internet/internet/%28%E0%B8%AA%E0%B8%A3%E0%B8%9E%29%E0%B8%AB%E0%B8%99%E0%B8%B1%E0%B8%87%E0%B8%AA%E0%B8%B7%E0%B8%AD%E0%B9%80%E0%B8%A7%E0%B8%B5%E0%B8%A2%E0%B8%99.html?adv_search=&date_end=&date_start=&keyword=&page=1&page_locale=th_TH&perpage=500",
+      "original_pages_inspected": 3,
+      "current_version_verified": false,
+      "caution": "Historical item 1 cites original regulation clause 12; 2559 amendment changed clause 12 and inserted 12/1; do not apply old appointment rule mechanically."
     },
     {
       "id": "C141",
@@ -84,5 +87,5 @@
     "browser_prod": false,
     "c141_review": false
   },
-  "notes": "No numeric liability percentages authorized. This file is read-only staging evidence and never adjudicates rights."
+  "notes": "C217 original 3 pages now inspected; all current-version and human approval gates remain locked. No numeric liability percentages authorized. Read-only staging evidence."
 }
