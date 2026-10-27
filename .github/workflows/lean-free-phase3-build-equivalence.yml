@@ -1,0 +1,66 @@
+name: Lean Free Phase 3 Build Equivalence
+on:
+  pull_request:
+    paths:
+      - 'scripts/build-static.mjs'
+      - '.github/workflows/lean-free-phase3-build-equivalence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare-dist:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Check out PR source
+        uses: actions/checkout@v4
+        with:
+          path: after
+          persist-credentials: false
+      - name: Check out immutable PR base
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: before
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build both independent revisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "before_sha=${{ github.event.pull_request.base.sha }}" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "after_sha=${{ github.event.pull_request.head.sha }}" | tee -a "$GITHUB_STEP_SUMMARY"
+          for revision in before after; do
+            echo "::group::Build $revision"
+            (cd "$revision" && npm ci --ignore-scripts && npm run build)
+            echo "::endgroup::"
+          done
+      - name: Generate SHA-256 manifests and compare every output byte
+        shell: bash
+        run: |
+          set -euo pipefail
+          for revision in before after; do
+            (
+              cd "$revision/dist"
+              find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum
+            ) > "$revision.sha256"
+            wc -l "$revision.sha256" | tee -a "$GITHUB_STEP_SUMMARY"
+          done
+          diff -u before.sha256 after.sha256 | tee equivalence.diff
+          echo "Byte-for-byte build equivalence PASS" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Upload independent build evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lean-free-phase3-build-evidence
+          retention-days: 30
+          path: |
+            before.sha256
+            after.sha256
+            equivalence.diff
+          if-no-files-found: warn
