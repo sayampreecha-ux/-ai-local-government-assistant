@@ -12,6 +12,7 @@
   const resultPromptKey = 'govprompt.resultPrompt.v1';
   const resultForceIntakeKey = 'govprompt.forceGuidedIntake.v1';
   const resultTrustedInternalKey = 'govprompt.resultPromptTrustedInternal.v1';
+  const resultTortIntentKey = 'govprompt.resultTortIntent.v1';
   let resultRoute = new URLSearchParams(window.location.search).get('view') === 'result';
 
   function enterResultPage() {
@@ -352,11 +353,11 @@
     ].join('\n');
     return Object.freeze({ ...promptBundle, prompt: promptBundle.prompt + block, serviceContractNaturalPerson: true });
   }
-  async function preparePrompt(text, workflowId, caseFacts = text) {
+  async function preparePrompt(text, workflowId, caseFacts = text, explicitTort = false) {
     const core = requireCore();
     const safeAttachments = sanitizedAttachmentMetadata(core);
     // GP223 must return before ANY shared retrieval or budget/workflow search path.
-    if (core.isGP223Request({ question: text, workflowId })) {
+    if (!explicitTort && core.isGP223Request({ question: text, workflowId })) {
       if (typeof core.createGP223WorkflowPlan !== 'function') throw new Error('GP223 workflow is unavailable');
       const context = core.createSharedContext({ facts: caseFacts, desiredOutput: text,
         documents: safeAttachments.map(file => file.name).join(', '), specialFlags: ['GP223'] });
@@ -370,9 +371,10 @@
     // Install the scoped vehicle guardrail before routing or building quality gates.
     // This import does not access the network for legal research.
     await import('./core/vehicle-regulation-routing-guardrail-v1.js?v=1.0.0');
-    const workflowRuntimePromise = prepareWorkflowRuntime(text);
+    const workflowRuntimePromise = explicitTort ? Promise.resolve({ view: null, status: 'tort-intake' }) : prepareWorkflowRuntime(text);
     const context = core.createSharedContext({ facts: text, desiredOutput: text, documents: safeAttachments.map(file => file.name).join(', ') });
-    const route = core.routeTransaction(context);
+    const detectedRoute = core.routeTransaction(context);
+    const route = explicitTort ? Object.freeze({ ...detectedRoute, transactionType: 'legal' }) : detectedRoute;
     const promptBundleBase = core.createGovernmentPrompt({
       question: text,
       route,
@@ -436,7 +438,7 @@
 
     // Vehicle regulation 2569: scoped enhancement to the existing procurement workflow.
     // Keep all legal verification in the user's destination AI, not GP's live search.
-    const vehicleRequest = Boolean(core.isVehicleRegulationRequest?.(text));
+    const vehicleRequest = !explicitTort && Boolean(core.isVehicleRegulationRequest?.(text));
     if (vehicleRequest && !promptBundle.gp223) {
       const vehicleInstructions = [
         'งานยานพาหนะองค์กรปกครองส่วนท้องถิ่น พ.ศ. 2569 — วิเคราะห์ในหมวดพัสดุและทรัพย์สินเดิม',
@@ -878,7 +880,8 @@
   }
 
   async function submitPrompt(text, userSource = null) {
-    const intake = window.GovPromptCore.prepareGP223IntakeTurn({ text, state: gp223IntakeState, attachments });
+    const explicitTort = form.dataset.tortIntent === 'true';
+    const intake = explicitTort ? { question: text, workflowId: null, caseFacts: text, state: null } : window.GovPromptCore.prepareGP223IntakeTurn({ text, state: gp223IntakeState, attachments });
     gp223IntakeState = intake.state;
     window.GovPromptCore.gp223IntakeState = intake.state;
     enterResultPage();
@@ -888,7 +891,7 @@
     addUserMessage(text); addThinking();
     conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
     let prepared;
-    try { prepared = await preparePrompt(intake.question, intake.workflowId, intake.caseFacts); }
+    try { prepared = await preparePrompt(intake.question, intake.workflowId, intake.caseFacts, explicitTort); }
     catch {
       document.getElementById('thinkingMessage')?.remove();
       window.GovPrompt?.toast('ระบบวิเคราะห์หรือค้นข้อมูลยังไม่พร้อม กรุณาลองใหม่อีกครั้ง');
@@ -999,21 +1002,37 @@
     let pendingPrompt = '';
     let forceGuidedIntake = false;
     let trustedInternalPrompt = false;
+    let tortIntent = false;
     try {
       pendingPrompt = sessionStorage.getItem(resultPromptKey) || '';
       forceGuidedIntake = sessionStorage.getItem(resultForceIntakeKey) === 'true';
       trustedInternalPrompt = sessionStorage.getItem(resultTrustedInternalKey) === 'true';
+      tortIntent = sessionStorage.getItem(resultTortIntentKey) === 'true';
       sessionStorage.removeItem(resultPromptKey);
       sessionStorage.removeItem(resultForceIntakeKey);
       sessionStorage.removeItem(resultTrustedInternalKey);
+      sessionStorage.removeItem(resultTortIntentKey);
     } catch {}
     if (pendingPrompt) {
       if (forceGuidedIntake) form.dataset.forceGuidedIntake = 'true';
       if (trustedInternalPrompt) form.dataset.trustedInternalPrompt = 'true';
+      if (tortIntent) {
+        form.dataset.tortIntent = 'true';
+        const guidance = document.createElement('section');
+        guidance.className = 'guided-intake-message';
+        guidance.dataset.tortIntake = 'true';
+        const title = document.createElement('strong');
+        title.textContent = '⚖️ ข้อเท็จจริงสำหรับงานความรับผิดทางละเมิด';
+        const note = document.createElement('p');
+        note.textContent = 'ตรวจทานและแก้ไขคำถามด้านล่างก่อนกดส่ง: วันเวลาและสถานที่เกิดเหตุ ผู้เกี่ยวข้อง หน้าที่ที่ได้รับมอบหมาย ความเสียหาย หลักฐาน/คำสั่งที่มี และข้อมูลที่ยังรอตรวจสอบ; ห้ามใส่ข้อมูลส่วนบุคคลเกินจำเป็น';
+        guidance.append(title, note);
+        conversation.append(guidance);
+      }
       input.value = pendingPrompt;
       input.placeholder = 'พิมพ์ข้อมูลเพิ่มเติมที่จำเป็น...';
       input.dispatchEvent(new Event('input', { bubbles: true }));
-      form.requestSubmit();
+      if (!tortIntent) form.requestSubmit();
+      else input.focus();
     }
     else {
       document.documentElement.classList.remove('result-intake');
