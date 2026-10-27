@@ -80,9 +80,8 @@ test('production catalog proof rejects missing, extra, duplicate, reordered and 
 test('single legal-category tort Level-1 button preserves HR discipline entry and 13 categories', () => {
   const audit = source.split("id: 'audit', title: 'กฎหมาย ระเบียบ และตรวจสอบ'")[1]?.split("\n      ])\n    })")[0] || '';
   const hr = source.split("id: 'hr', title: 'งานบุคคล'")[1]?.split("id: 'engineering'")[0] || '';
-  assert.match(audit, /label: '⚖️ งานความรับผิดทางละเมิด', fillOnly: true/);
-  assert.match(source, /button\.dataset\.revenuePrompt = task\.prompt/);
-  assert.match(source, /input\.value = task\.prompt/);
+  assert.match(audit, /label: '⚖️ งานความรับผิดทางละเมิด', prompt:/);
+  assert.doesNotMatch(audit, /fillOnly: true/);
   assert.equal((source.match(/label: '⚖️ งานความรับผิดทางละเมิด'/g) || []).length, 1);
   assert.match(hr, /label: 'วินัยและการดำเนินการทางบุคคล'/);
   assert.doesNotMatch(hr, /label: '⚖️ งานความรับผิดทางละเมิด'/);
