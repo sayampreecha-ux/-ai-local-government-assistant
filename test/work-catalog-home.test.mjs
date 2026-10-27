@@ -76,8 +76,9 @@ test('production catalog proof rejects missing, extra, duplicate, reordered and 
     assert.throws(() => assertHomeCategories(actual), {name:'AssertionError'}, name+' must block production proof');
 });
 
+
 test('single legal-category tort Level-1 button preserves HR discipline entry and 13 categories', () => {
-  const audit = source.split("id: 'audit', title: 'กฎหมาย ระเบียบ และตรวจสอบ'")[1]?.split("\\n      ])\\n    })")[0] || '';
+  const audit = source.split("id: 'audit', title: 'กฎหมาย ระเบียบ และตรวจสอบ'")[1]?.split("\n      ])\n    })")[0] || '';
   const hr = source.split("id: 'hr', title: 'งานบุคคล'")[1]?.split("id: 'engineering'")[0] || '';
   assert.match(audit, /label: '⚖️ งานความรับผิดทางละเมิด'/);
   assert.equal((source.match(/label: '⚖️ งานความรับผิดทางละเมิด'/g) || []).length, 1);
@@ -86,17 +87,17 @@ test('single legal-category tort Level-1 button preserves HR discipline entry an
   assert.match(audit, /สอบละเมิดของเจ้าหน้าที่ อปท./);
   assert.match(audit, /ร่างเอกสารงานละเมิดระดับ 1 ทั้ง 7 ส่วน/);
   assert.match(audit, /UNVERIFIED/);
-  assert.match(audit, /Decision Lock ว66\\/ว141/);
+  assert.match(audit, /Decision Lock ว66\/ว141/);
   assert.match(audit, /ปกปิดข้อมูลส่วนบุคคล/);
-  assert.match(source, /button\\.dataset\\.prompt = task\\.prompt/);
-  assert.match(source, /openResultPage\\(prompt, \\{ trustedInternal: true \\}\\)/);
+  assert.match(source, /button\.dataset\.prompt = task\.prompt/);
+  assert.match(source, /openResultPage\(prompt, \{ trustedInternal: true \}\)/);
 });
 
 test('tort action reuses live Level-1 handoff guard without changing the composer', () => {
   const home = readFileSync('assets/js/home-v3.js', 'utf8');
-  assert.match(home, /function completeTortLevel1Handoff\\(prompt, request\\)/);
+  assert.match(home, /function completeTortLevel1Handoff\(prompt, request\)/);
   assert.match(home, /GP_TORT_LEVEL1_HANDOFF_V1/);
   assert.match(home, /ห้ามออกคำสั่งเรียกชดใช้/);
-  assert.match(home, /ว66\\/ว141/);
-  assert.match(home, /promptBundle\\.prompt, originalRequest/);
+  assert.match(home, /ว66\/ว141/);
+  assert.match(home, /promptBundle\.prompt, originalRequest/);
 });
