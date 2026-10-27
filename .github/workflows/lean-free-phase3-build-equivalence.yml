@@ -30,6 +30,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Enable pnpm
+        run: corepack enable
       - name: Build both independent revisions
         shell: bash
         run: |
@@ -38,7 +40,7 @@ jobs:
           echo "after_sha=${{ github.event.pull_request.head.sha }}" | tee -a "$GITHUB_STEP_SUMMARY"
           for revision in before after; do
             echo "::group::Build $revision"
-            (cd "$revision" && npm ci --ignore-scripts && npm run build)
+            (cd "$revision" && corepack pnpm install --no-frozen-lockfile --ignore-scripts && corepack pnpm run build)
             echo "::endgroup::"
           done
       - name: Generate SHA-256 manifests and compare every output byte
