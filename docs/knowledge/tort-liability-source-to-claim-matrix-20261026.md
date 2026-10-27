@@ -62,3 +62,18 @@ C75's wording is administrative guidance: do not infer automatic loss of jurisdi
 
 **C217** indexed as PDF at https://readcard.dnp.go.th/km/docs/6412.pdf but direct source open returns 502. Do not mark all pages verified.
 **C141** agency official listing https://audit.dmh.go.th/books/reds.asp?id=16 shows later 2555 clarification. Detailed text remains unread; C66 automatic percentages stay prohibited.
+
+
+## 2026-10-27 direct original verification: C217 (three pages)
+
+Official agency source: https://alro.go.th/uploads/org/central_admin/download/article/article_20160601111958.pdf (กรมบัญชีกลาง ที่ กค 0410.2/ว 217 ลงวันที่ 16 มิถุนายน 2551). All three PDF pages inspected visually (source screenshots). This **replaces** the prior inaccessible C217 link readcard.dnp.go.th/km/docs/6412.pdf for source discovery; it does not establish that later amendments do not exist.
+
+| Claim ID | Original page | Claim supported by the 2551 letter | Governance status |
+|---|---|---|---|
+| C217-1 | p.2, item 1 | Where appointing head is interested or implicated, refer upward for appointment, with historical cross-reference to regulation clause 12 | HISTORICAL SOURCE VERIFIED; **do not automatically apply** the old clause 12 because 2559 amendment replaced clause 12 and added 12/1 |
+| C217-2 | p.2, item 2 | An interested member of the investigative committee should abstain and disclose the issue to the committee, referencing administrative procedure fairness | HISTORICAL SOURCE VERIFIED; current legal application/version check required |
+| C217-3 | p.2, item 3 | Investigation should observe the appointment deadline diligently, with justified extensions only where necessary | HISTORICAL GUIDANCE VERIFIED; no automated statutory deadline conclusion |
+| C217-4 | p.3, item 4 | Person concerned should be informed of allegations and afforded sufficient fair opportunity to rebut and present evidence, referring to original regulation clause 15 | HISTORICAL GUIDANCE VERIFIED; no automatic adverse adjudication |
+
+Source note: p.1 states circular number/date and background; p.2 lists items 1–3; p.3 lists item 4. **Legal Version Gate remains false** until the current consolidated regulation, later circulars and local-government applicability are verified by legal reviewer. C66/C141 rates remain LOCKED.
+
