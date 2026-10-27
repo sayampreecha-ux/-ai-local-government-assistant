@@ -77,3 +77,16 @@ Official agency source: https://alro.go.th/uploads/org/central_admin/download/ar
 
 Source note: p.1 states circular number/date and background; p.2 lists items 1–3; p.3 lists item 4. **Legal Version Gate remains false** until the current consolidated regulation, later circulars and local-government applicability are verified by legal reviewer. C66/C141 rates remain LOCKED.
 
+
+## 2026-10-27 pinpoint reconciliation: C217 versus 2559 gazetted amendment
+
+Primary gazette PDF (Administrative Court host): https://media-api.admincourt.go.th/v1/file/view/37970 — 2 pages visually inspected on 27 October 2026.
+
+| Question | Operative text in the 2559 amendment | Effect on historic C217 guidance | Release status |
+|---|---|---|---|
+| Who supervises the appointment decision? | Amendment article 3, gazette p.1: **replaces** regulation clause 12; appointing authority under original clauses 8/10/11 reports the appointment or decision not to appoint to its supervisor/regulator, who may require correction and ultimately appoint or replace committee | Do **not** use C217 item 1's reference to the *former* clause 12 as the present rule | HISTORIC CONFLICT RESOLVED for 2559 text; later amendments and local authority mapping NOT VERIFIED |
+| Head of agency may have caused damage | Amendment article 4, gazette p.1: adds clause **12/1**, assigning appointment authority to supervisor/regulator of that agency head | Apply 12/1 rather than mechanically relying on C217 item 1 where the agency head is implicated | Text verified; who is that superior/regulator for a specific อปท. needs official authority verification and human legal review |
+| Finance consideration/decision | Amendment article 5, gazette p.2: **replaces** clause 18, which explicitly covers local government units in the covered Finance-review procedure | Do not use superseded clause 18 wording; no automatic recourse order | Text verified; applicability, exceptions, referral and current amendments NOT VERIFIED |
+| Old clause 19 | Amendment article 6, gazette p.2: **repeals** clause 19 | Never cite former clause 19 as current | Text verified for 2559; later version check still needed |
+
+**Gate discipline:** Legal Version Gate is NOT VERIFIED for the whole Level-1 system because this crosswalk proves the 2559 amendment's contents, **not** absence of later changes or agency-specific chain of command. The tort handoff must use draft placeholders for committee appointment and deadlines until qualified human legal review. C66/C141 percentages remain locked.
