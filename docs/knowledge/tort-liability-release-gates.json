@@ -76,6 +76,15 @@
       "full_text_verified": false,
       "current_version_verified": false,
       "source_url": "https://audit.dmh.go.th/books/reds.asp?id=16"
+    },
+    {
+      "id": "MI785",
+      "title": "มท 0804.4/ว 785 ลงวันที่ 8 กุมภาพันธ์ 2564 แนวทางรายงานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.",
+      "status": "OFFICIAL_MUNICIPAL_INDEX_CONFIRMED_PRIMARY_ATTACHMENT_NOT_INSPECTED",
+      "full_text_verified": false,
+      "current_version_verified": false,
+      "source_url": "https://sanklangcm.go.th/article-detail/335/",
+      "caution": "Secondary presentations describe reporting thresholds; no numerical threshold or routing may enter runtime until authoritative original, annexes, later amendments, and human legal approval are verified."
     }
   ],
   "release_gates": {
@@ -85,7 +94,8 @@
     "runtime_integration": false,
     "human_approval": false,
     "browser_prod": false,
-    "c141_review": false
+    "c141_review": false,
+    "local_government_reporting": false
   },
   "notes": "C217 original 3 pages now inspected; all current-version and human approval gates remain locked. No numeric liability percentages authorized. Read-only staging evidence."
 }
