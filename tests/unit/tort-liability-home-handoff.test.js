@@ -57,7 +57,7 @@ test('legal accuracy: exact official PMO regulation title and no shorter wrong t
  const v=handoff('BASE','สอบละเมิดเจ้าหน้าที่');
  assert.ok(v.includes('ระเบียบสำนักนายกรัฐมนตรีว่าด้วยหลักเกณฑ์การปฏิบัติเกี่ยวกับความรับผิดทางละเมิดของเจ้าหน้าที่ พ.ศ. 2539'));
  assert.ok(v.includes('ห้ามเรียกว่า ระเบียบนายกรัฐมนตรี'));
- assert.ok(v.includes('ไม่ได้ตรวจฉบับปัจจุบันแล้ว'));
+ assert.ok(v.includes('การให้ชื่อตรงไม่ใช่การรับรองว่าได้ตรวจฉบับปัจจุบันแล้ว'));
 });
 test('legal accuracy: no blanket clause 8/9 and PAO appointing authority assumptions',()=>{
  const v=handoff('BASE','สอบละเมิดเจ้าหน้าที่');
