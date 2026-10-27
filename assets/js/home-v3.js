@@ -647,7 +647,7 @@
     if (/^(?:ทำไม|เพราะอะไร|เหตุใด)/.test(request) || /ไม่(?:ต้อง|ให้)\s*(?:จัดทำ|ร่าง|สร้าง|เขียน|ทำ)(?!ไม)/.test(request)) return prompt;
     if (/^(?:ช่วย)?(?:อธิบาย|แนะนำ|สอบถาม|ขอ(?:ทราบ|คำแนะนำ|แนวทาง|วิธี|อธิบาย))/.test(request)) return prompt;
     const documentIntent = /(?:จัดทำ|ร่าง|ทำ|เขียน).{0,30}(?:บันทึกข้อความ|หนังสือราชการ)/i.test(request);
-    const deliverableIntent = /(?:จัดทำ|ร่าง|สร้าง|เขียน|ทำ(?!ไม)|ออกแบบ|เตรียม|ขอ).{0,35}(?:รายงาน|TOR\b|BOQ\b|ตาราง|Excel\b|XLSX\b|PowerPoint\b|PPTX\b|สไลด์)/i.test(request);
+    const deliverableIntent = /(?:จัดทำ|ร่าง|สร้าง|เขียน|ทำ(?!ไม)|ออกแบบ|เตรียม|ขอ).{0,35}(?:ความเห็น|แผน|กำหนดการ|รายงาน|TOR\b|BOQ\b|ตาราง|Excel\b|XLSX\b|PowerPoint\b|PPTX\b|สไลด์)/i.test(request);
     if (!documentIntent && !deliverableIntent) return prompt;
     if (!documentIntent) {
       const completion = '\n\n[GP_DELIVERABLE_HANDOFF_V1]\n' + [
