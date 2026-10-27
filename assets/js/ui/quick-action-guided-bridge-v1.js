@@ -190,7 +190,7 @@
         Object.freeze({ label: 'ตรวจความเสี่ยงทุจริต', prompt: 'ช่วยวิเคราะห์ความเสี่ยงทุจริต จุดควบคุม หลักฐาน และแนวทางป้องกันสำหรับงานนี้' }),
         Object.freeze({ label: 'ตรวจความครบถ้วนเอกสาร', prompt: 'ช่วยทำ checklist ตรวจความครบถ้วนของเอกสารและหลักฐานก่อนเสนอหรืออนุมัติ' }),
         Object.freeze({ label: 'ประเมินความเสี่ยง / ควบคุมภายใน', prompt: 'ช่วยประเมินความเสี่ยงและออกแบบมาตรการควบคุมภายในสำหรับกระบวนงานนี้' }),
-        Object.freeze({ label: '⚖️ งานความรับผิดทางละเมิด', prompt: 'สอบละเมิดของเจ้าหน้าที่ อปท. กรณีรถราชการชนหรือเสียหายระหว่างที่ได้รับแจ้งว่าปฏิบัติงาน: จัดทำร่างเอกสารงานละเมิดระดับ 1 ทั้ง 7 ส่วน โดยแยกข้อมูลจำลองหรือคำแจ้งเหตุเป็น UNVERIFIED ระบุข้อมูลที่ขาดเป็น [รอตรวจสอบ] ตรวจ Official Source → Authority → Version → Evidence → Human Review ห้ามสมมุติการสอบสวนหรือแต่งตั้ง ห้ามให้ร่างคำสั่งมีผลอัตโนมัติ ห้ามสมมุติชื่อหน่วยงานและชิ้นส่วนรถ ตรวจอำนาจแต่งตั้งก่อนใช้จริง ปกปิดข้อมูลส่วนบุคคล และคง Decision Lock ว66/ว141 ห้ามวินิจฉัยความผิด กำหนดสัดส่วนความรับผิด หรือออกคำสั่งเรียกชดใช้โดยอัตโนมัติ' }),
+        Object.freeze({ label: '⚖️ งานความรับผิดทางละเมิด', tortIntent: true, prompt: 'สอบละเมิดของเจ้าหน้าที่ อปท. กรณีรถราชการชนหรือเสียหายระหว่างที่ได้รับแจ้งว่าปฏิบัติงาน: จัดทำร่างเอกสารงานละเมิดระดับ 1 ทั้ง 7 ส่วน โดยแยกข้อมูลจำลองหรือคำแจ้งเหตุเป็น UNVERIFIED ระบุข้อมูลที่ขาดเป็น [รอตรวจสอบ] ตรวจ Official Source → Authority → Version → Evidence → Human Review ห้ามสมมุติการสอบสวนหรือแต่งตั้ง ห้ามให้ร่างคำสั่งมีผลอัตโนมัติ ห้ามสมมุติชื่อหน่วยงานและชิ้นส่วนรถ ตรวจอำนาจแต่งตั้งก่อนใช้จริง ปกปิดข้อมูลส่วนบุคคล และคง Decision Lock ว66/ว141 ห้ามวินิจฉัยความผิด กำหนดสัดส่วนความรับผิด หรือออกคำสั่งเรียกชดใช้โดยอัตโนมัติ' }),
         Object.freeze({ label: 'ตรวจ PDPA / ข้อมูลส่วนบุคคล', prompt: 'ช่วยตรวจว่าเรื่องนี้มีข้อมูลส่วนบุคคลอะไรที่ไม่จำเป็น ความเสี่ยง PDPA และควรปกปิดหรือจัดการอย่างไร' })
       ])
     })
@@ -289,6 +289,7 @@
   const RESULT_PROMPT_KEY = 'govprompt.resultPrompt.v1';
   const RESULT_FORCE_INTAKE_KEY = 'govprompt.forceGuidedIntake.v1';
   const RESULT_TRUSTED_INTERNAL_KEY = 'govprompt.resultPromptTrustedInternal.v1';
+  const RESULT_TORT_INTENT_KEY = 'govprompt.resultTortIntent.v1';
 
   function openResultPage(prompt, options = {}) {
     const value = String(prompt || '').trim();
@@ -297,6 +298,7 @@
       sessionStorage.setItem(RESULT_PROMPT_KEY, value);
       sessionStorage.setItem(RESULT_FORCE_INTAKE_KEY, options.forceIntake === false ? 'false' : 'true');
       sessionStorage.setItem(RESULT_TRUSTED_INTERNAL_KEY, options.trustedInternal === true ? 'true' : 'false');
+      sessionStorage.setItem(RESULT_TORT_INTENT_KEY, options.tortIntent === true ? 'true' : 'false');
       const target = new URL(window.location.href);
       target.searchParams.set('view', 'result');
       target.searchParams.set('run', String(Date.now()));
@@ -381,6 +383,7 @@
           });
         } else {
           button.dataset.prompt = task.prompt;
+          if (task.tortIntent) button.dataset.tortIntent = 'true';
         }
         if (Array.isArray(task.choices) && task.choices.length) {
           button.dataset.taskChoices = JSON.stringify(task.choices);
@@ -607,7 +610,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     if (dialog?.open && dialog.contains(button)) dialog.close();
-    openResultPage(prompt, { trustedInternal: true });
+    openResultPage(prompt, { trustedInternal: true, tortIntent: button.dataset.tortIntent === 'true' });
   }, true);
 
   addCatalogStyles();
