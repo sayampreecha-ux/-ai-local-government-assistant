@@ -109,3 +109,20 @@ Downloaded 32,087,555 bytes, 79 PDF pages; visually inspected PDF pages 46–50 
 | Attachment1 | PDF47–48, gazette printed pp3–4,13 January2563 | Complete two-page Finance2562 announcement; definitions, conditions, reporting provisions and signature inspected | No numerical threshold or percentages activated |
 | Attachment2 | PDF49–50 | Report form plus eight explanatory entries, including local unit, damage, date, facts, committee opinion, executive decision and certifier | Missing facts stay placeholders; no automated legal finding |
 This closes MI785 ORIGINAL_COPY_AND_ANNEX_ACCESS only. Legal current-version/authority review and Human Approval remain pending. Preserve C217/2559 reconciliation and Level2 C66/C141 Decision Lock. Source gate JSON remains conservative; it must not be read as a current certificate.
+
+## 2026-10-27 OCS legal opinion 1175/2568 — PAO-specific precedent
+
+Primary official source (Office of the Council of State), opinion 1175/2568, 8 PDF pages:
+https://comment.ocs.go.th/main/download/1759717674/pdf/%E0%B9%80%E0%B8%A3%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%AA%E0%B8%A3%E0%B9%87%E0%B8%88%E0%B8%97%E0%B8%B5%E0%B9%88_1175-2568
+Official index: https://comment.ocs.go.th/main/search/?p=18&q=%E0%B8%A5%E0%B8%B0%E0%B9%80%E0%B8%A1%E0%B8%B4%E0%B8%94
+
+Official PDF page images inspected (0-index pages 0,3,4,5,6,7). **This is a fact-bound interpretive opinion, not a generally operative regulation or automatic PAO authorization.** The question concerned an earlier Phetchabun PAO administrative order and self-review by its issuing PAO executive, enforcement, limitation and who appoints a committee if alleged wrongdoing caused a limitation problem.
+
+| Claim | Official pinpoint | Finding / safe restriction |
+|---|---|---|
+| OCS1175-1 | PDF pp.4–6 (printed pp.5–7) | Whether a PAO executive issuing a recourse order may decide review of that order requires impartiality analysis; distinguish a purely ministerial implementation of the governor's unchanged determination from discretionary reconsideration. Do not conclude that a PAO executive is always automatically disqualified. |
+| OCS1175-2 | PDF pp.5–7 (printed pp.6–8) | Legal-opinion discussion addresses administrative enforcement of an operative recourse order, including limitations; not a universal rule that collection is always permitted. |
+| OCS1175-3 | PDF p.6–7 (printed pp.7–8) | Limitation question was analyzed against the specific earlier enforceable administrative order, and the opinion indicated no need to revisit limitation in its facts. Never infer a general limitation start date from this example. |
+| OCS1175-4 | PDF p.7 (printed p.8) | Under its conclusion, because collection under the existing order could proceed, it found no reason to appoint a new tort-investigation committee for the hypothesized limitation loss. This is NOT blanket authority to omit committees in new cases. |
+
+**Level-1 gate effect:** Add fact-bound PAO authority and conflict-of-interest checks; draft orders remain human-reviewed. The opinion does **not** certify current consolidated amendment status, PAO signatory mapping for a different fact pattern, external-AI acceptance or release authorization. Existing Legal Version, Authority, Human Approval and Level-2 percentage locks remain false. Do not treat this historical legal-opinion interpretation as a substitute for binding legal text.
