@@ -65,6 +65,28 @@ try {
     // The normal form is still the only send path. Selecting a revenue task
     // never bypasses the user's explicit submit action.
     assert.equal(await page.locator('#chatForm button[type="submit"]').count(),1);
+    // Tort liability button: focused real-browser behavior, no additional UI or API.
+    const legal = page.locator('.work-catalog-group[data-category-id="audit"]');
+    await legal.locator('.work-catalog-category-toggle').click();
+    const tort = legal.locator('.work-catalog-task', {hasText:'⚖️ งานความรับผิดทางละเมิด'});
+    assert.equal(await tort.count(),1,'exactly one tort action under legal category');
+    assert.equal(await page.locator('.work-catalog-task', {hasText:'⚖️ งานความรับผิดทางละเมิด'}).count(),1);
+    const before = await page.locator('#conversation .message').count();
+    // An existing user edit must not be destroyed by menu selection.
+    await page.locator('#promptInput').fill('คำถามฉบับที่ผู้ใช้แก้ไว้');
+    page.once('dialog', dialog => dialog.dismiss());
+    await tort.evaluate(el => el.click());
+    assert.equal(await page.locator('#promptInput').inputValue(),'คำถามฉบับที่ผู้ใช้แก้ไว้');
+    page.once('dialog', dialog => dialog.accept());
+    await tort.evaluate(el => el.click());
+    const seeded = await page.locator('#promptInput').inputValue();
+    assert.match(seeded,/สอบละเมิดของเจ้าหน้าที่ อปท./);
+    assert.match(seeded,/Decision Lock ว66\\/ว141/);
+    assert.equal(await page.locator('#conversation .message').count(),before,'click must not auto-submit');
+    await page.locator('#promptInput').fill(seeded + ' ข้อเท็จจริงเพิ่มเติมจากผู้ใช้');
+    assert.ok((await page.locator('#promptInput').inputValue()).endsWith('ข้อเท็จจริงเพิ่มเติมจากผู้ใช้'));
+    assert.equal(await page.locator('#conversation .message').count(),before,'editing must not auto-submit');
+    console.log((viewport.width<=390?'mobile':'desktop')+' tort fill-only editable confirmation/no-autosubmit PASS');
     await page.close();
   }
   console.log('Revenue eight-menu Chromium mobile/desktop E2E PASS');
