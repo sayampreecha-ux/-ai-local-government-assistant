@@ -99,3 +99,9 @@ test('round4 P1: no example parts or unsupported 30-day period',()=>{
  const v=handoff('BASE','รถราชการชนคู่กรณี');
  for(const x of ['แม้มีป้าย UNVERIFIED','กันชน ไฟหน้า ตัวถัง','[รอตรวจสอบรายการความเสียหาย]','ห้ามกำหนดเวลา 30 วัน'])assert.ok(v.includes(x),x);
 });
+
+// Regression from observed external answer: clause 9 was mislabelled as joint appointment.
+test('authority mapping covers cross-agency reporting, joint appointment and third-party injury separately',()=>{
+ const v=handoff('BASE','สอบละเมิดรถราชการชนคู่กรณี');
+ for(const x of ['ห้ามสรุปว่าข้อ 9 เป็นฐานแต่งตั้งร่วม','ข้อ 10 เรื่องอำนาจแต่งตั้งร่วม','ข้อ 11 เรื่องความเสียหายแก่หลายหน่วยงาน','ข้อ 31 เรื่องบุคคลภายนอก','ข้อ 30 นิยามหน่วยงานในหมวด 2 ไม่รวมราชการส่วนท้องถิ่น','ห้ามนำข้อ 31 ไปใช้กับ อบจ. โดยตรงหรือโดยอัตโนมัติ','ห้ามถือว่ารถคู่กรณีเป็นรถของหน่วยงานรัฐหรือเป็นรถเอกชน'])assert.ok(v.includes(x),x);
+});
