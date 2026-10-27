@@ -1,7 +1,7 @@
 {
   "module": "tort-liability",
   "release_status": "BLOCKED_LEGAL_SOURCE_VERIFICATION",
-  "reviewed_on": "2026-10-26",
+  "reviewed_on": "2026-10-27",
   "source_records": [
     {
       "id": "ACT2539",
@@ -61,9 +61,10 @@
     {
       "id": "C217",
       "title": "กค 0410.2/ว 217",
-      "status": "OFFICIAL_INDEX_ONLY",
+      "status": "OFFICIAL_CGD_INDEX_AND_GOVERNMENT_HOSTED_PDF_DISCOVERED_TEXT_NOT_FULLY_REVIEWED",
       "full_text_verified": false,
-      "source_url": "https://qsds.go.th/newaudit/นโยบายการปฏิบัติงาน/ความรับผิดทางละเมิดของ/"
+      "source_url": "https://readcard.dnp.go.th/km/docs/6412.pdf",
+      "official_registry_url": "https://www.cgd.go.th/cs/internet/internet/%28%E0%B8%AA%E0%B8%A3%E0%B8%9E%29%E0%B8%AB%E0%B8%99%E0%B8%B1%E0%B8%87%E0%B8%AA%E0%B8%B7%E0%B8%AD%E0%B9%80%E0%B8%A7%E0%B8%B5%E0%B8%A2%E0%B8%99.html?adv_search=&date_end=&date_start=&keyword=&page=1&page_locale=th_TH&perpage=500"
     },
     {
       "id": "C141",
