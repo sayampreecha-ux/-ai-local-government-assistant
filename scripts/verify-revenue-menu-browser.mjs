@@ -80,6 +80,23 @@ try {
     assert.equal(new URL(page.url()).searchParams.get('view'),'result');
     await page.locator('body').waitFor({state:'visible'});
     assert.ok((await page.locator('body').innerText()).length > 30,'result page must render');
+    const intakeGuide = page.locator('[data-tort-intake="true"]');
+    await intakeGuide.waitFor({state:'visible'});
+    assert.match(await intakeGuide.innerText(),/วันเวลาและสถานที่เกิดเหตุ/);
+    assert.equal(await page.locator('#chatForm').getAttribute('data-tort-intent'),'true');
+    const seeded = await page.locator('#promptInput').inputValue();
+    assert.match(seeded,/สอบละเมิดของเจ้าหน้าที่ อปท./);
+    assert.equal(await page.locator('#conversation .message').count(),0,'tort must not auto-submit');
+    await page.locator('#promptInput').fill(seeded + '\\nข้อมูลเพิ่มเติมจากผู้ใช้: ยังไม่ทราบวันเวลา');
+    assert.match(await page.locator('#promptInput').inputValue(),/ยังไม่ทราบวันเวลา/);
+    await page.locator('#chatForm').evaluate(form => form.requestSubmit());
+    await page.locator('.route-label').waitFor({state:'visible',timeout:30000});
+    assert.match(await page.locator('.route-label').innerText(),/กฎหมาย/);
+    assert.doesNotMatch(await page.locator('.route-label').innerText(),/พัสดุ|สารบรรณ/);
+    const handoff = await page.locator('.answer-card details pre').last().innerText();
+    assert.ok(handoff.includes('[GP_TORT_LEVEL1_HANDOFF_V1]'));
+    assert.ok(handoff.includes('Decision Lock'));
+
     console.log((viewport.width<=390?'mobile':'desktop')+' tort legal normal result navigation PASS');
     await page.close();
   }
