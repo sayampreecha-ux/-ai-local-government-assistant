@@ -52,3 +52,24 @@ test('regression: preserve seven deliverables, decision lock, human and PDPA gat
  const v=handoff('BASE','สอบละเมิดเจ้าหน้าที่');
  for(const token of ['ร่างเอกสาร 7 ส่วน','ว66/ว141','Human Review','HUMAN REVIEW CHECKLIST','ปกปิดข้อมูลส่วนบุคคล'])assert.ok(v.includes(token),token);
 });
+
+test('legal accuracy: exact official PMO regulation title and no shorter wrong title',()=>{
+ const v=handoff('BASE','สอบละเมิดเจ้าหน้าที่');
+ assert.ok(v.includes('ระเบียบสำนักนายกรัฐมนตรีว่าด้วยหลักเกณฑ์การปฏิบัติเกี่ยวกับความรับผิดทางละเมิดของเจ้าหน้าที่ พ.ศ. 2539'));
+ assert.ok(v.includes('ห้ามเรียกว่า ระเบียบนายกรัฐมนตรี'));
+ assert.ok(v.includes('ไม่ได้ตรวจฉบับปัจจุบันแล้ว'));
+});
+test('legal accuracy: no blanket clause 8/9 and PAO appointing authority assumptions',()=>{
+ const v=handoff('BASE','สอบละเมิดเจ้าหน้าที่');
+ for(const token of ['ห้ามอ้างข้อ 8 และข้อ 9 คู่กัน','ข้อ 12/1','[รอตรวจสอบโดยนิติกร]','ห้ามร่างคำสั่งในรูปพร้อมลงนาม'])assert.ok(v.includes(token),token);
+});
+test('legal accuracy: unverified incident uses notification not established finding',()=>{
+ const v=handoff('BASE','สอบละเมิดเจ้าหน้าที่');
+ assert.ok(v.includes('ได้รับรายงานเบื้องต้นว่า'));
+ assert.ok(v.includes('ห้ามใช้ ปรากฏข้อเท็จจริงว่า'));
+ assert.ok(v.includes('ปรากฏข้อเท็จจริงเบื้องต้นว่า'));
+});
+test('legal accuracy: self-certified reviewed checkboxes prohibited',()=>{
+ const v=handoff('BASE','สอบละเมิดเจ้าหน้าที่');
+ for(const token of ['[ ]','ห้าม AI ทำเครื่องหมาย [x]','NOT VERIFIED','แหล่งต้นฉบับ'])assert.ok(v.includes(token),token);
+});
