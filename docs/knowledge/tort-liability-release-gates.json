@@ -124,5 +124,27 @@
     "c141_review": false,
     "local_government_reporting": false
   },
-  "notes": "MI785 historical primary+annexes and C217 originals inspected; current-version and human approval gates still locked. No automatic referral thresholds or numeric liability percentages authorized. OCS 1175/2568 fact-bound PAO opinion inspected; no change to legal_version, authority, human_approval or percentage locks."
+  "notes": "MI785 historical primary+annexes and C217 originals inspected; current-version and human approval gates still locked. No automatic referral thresholds or numeric liability percentages authorized. OCS 1175/2568 fact-bound PAO opinion inspected; no change to legal_version, authority, human_approval or percentage locks.",
+  "verified_automated_acceptance": {
+    "evidence_basis": "GitHub Actions for PR head a34d3b689e3f0f028cfe5aed4392e5a41b85b38e",
+    "workflow_total": 12,
+    "workflow_success": 12,
+    "focused_tort_tests": "PASS",
+    "branch_browser_mobile_desktop": "PASS",
+    "copy_handoff": "PASS_IN_BRANCH_BROWSER",
+    "production_browser": "NOT_VERIFIED",
+    "downstream_free_ai_seven_documents": "NOT_VERIFIED",
+    "internal_seven_part_draft": "PASS_INTERNAL_ONLY",
+    "scope": "STAGING_CODE_AND_BROWSER_ONLY_NOT_LEGAL_OR_PRODUCTION_ACCEPTANCE"
+  },
+  "human_review_package": {
+    "status": "AWAITING_NAMED_APPROVER",
+    "requires": [
+      "final current-version official law validation",
+      "PAO appointing/reporting authority decision for intended case types",
+      "independent full-document evaluation from externally pasted free-AI prompt",
+      "explicit human release approval"
+    ],
+    "release_decision": "DRAFT_DO_NOT_MERGE_OR_DEPLOY"
+  }
 }
