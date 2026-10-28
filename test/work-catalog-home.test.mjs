@@ -166,3 +166,12 @@ test('tort handoff includes a complete official retrieval question and preserves
     assert.ok(contract.includes(term), 'missing tort handoff term: ' + term);
   }
 });
+
+test('official source planning receives the legal module from the active transaction route', () => {
+  const home = readFileSync('assets/js/home-v3.js', 'utf8');
+  const connector = readFileSync('assets/js/core/official-search-connector.js', 'utf8');
+  assert.match(home, /officialSearchConnector\.search\(text, \{ module: route\?\.moduleId, count: 10, requireFreshness: true \}\)/);
+  assert.match(connector, /GP002: 'กฎหมาย ระเบียบ หนังสือสั่งการ ฐานอำนาจ/);
+  assert.match(connector, /originalQuery,/);
+  assert.match(connector, /routedModules: module \? \[module\] : \[\]/);
+});
