@@ -374,7 +374,17 @@
     const workflowRuntimePromise = explicitTort ? Promise.resolve({ view: null, status: 'tort-intake' }) : prepareWorkflowRuntime(text);
     const context = core.createSharedContext({ facts: text, desiredOutput: text, documents: safeAttachments.map(file => file.name).join(', ') });
     const detectedRoute = core.routeTransaction(context);
-    const route = explicitTort ? Object.freeze({ ...detectedRoute, transactionType: 'legal' }) : detectedRoute;
+    const route = explicitTort ? Object.freeze({
+      ...detectedRoute,
+      moduleId: 'GP002',
+      assistant: core.PROMPT_REGISTRY.find(item => item.moduleId === 'GP002'),
+      transactionType: 'legal',
+      modules: Object.freeze(['GP002']),
+      shouldRedirect: false,
+      fallback: false,
+      ambiguous: false,
+      reason: 'explicit-legal-tort-quick-action'
+    }) : detectedRoute;
     const promptBundleBase = core.createGovernmentPrompt({
       question: text,
       route,
@@ -479,7 +489,7 @@
     const decisionTask = !isMinutesDraft && (Boolean(assistanceRoute?.decisionTask) || Boolean(v8?.isDecisionQuestion?.(text)) || ['legal','procurement','finance','human-resources','internal-audit'].includes(String(route?.transactionType || '').toLowerCase()) || kAuditTask);
     if (!promptBundle.vehicleRegulation2569 && decisionTask && typeof core.officialSearchConnector?.search === 'function') {
       try {
-        searchResult = Object.freeze(await core.officialSearchConnector.search(text, { count: 10, requireFreshness: true }));
+        searchResult = Object.freeze(await core.officialSearchConnector.search(text, { module: route?.moduleId, count: 10, requireFreshness: true }));
       } catch {
         searchResult = Object.freeze({ mode: 'search-error', results: [], evidence: { primaryResults: [], conclusionEligible: false }, warning: 'การค้นแหล่งราชการสดขัดข้อง — ยังไม่ควรฟันธง' });
       }
@@ -652,6 +662,7 @@
       'ช่วยจัดทำงานละเมิดระดับ 1 เท่านั้น แยกข้อมูลจำลอง/คำแจ้งเหตุ/ข้อกล่าวหา/หลักฐานที่ได้รับจริง/ข้อเท็จจริงที่พิสูจน์ได้ออกจากกัน ข้อความจากผู้ใช้หรือโจทย์จำลองไม่ถือว่าเป็น Verified Facts ให้ระบุ UNVERIFIED เสมอจนกว่าจะมีหลักฐานตรวจยืนยัน',
       'ห้ามแต่งหรือคาดเดาชิ้นส่วนรถที่เสียหาย รายการทรัพย์สิน ผู้ขับ พยาน ชื่อ ทะเบียน วันเวลา สถานที่ จำนวนเงิน ใบอนุญาตใช้รถ บันทึกตำรวจ และเอกสารใดที่ผู้ใช้ไม่ได้ให้โดยชัดแจ้ง ข้อมูลที่ไม่มีให้ใส่ [รอตรวจสอบ] เท่านั้น',
       'จำแนกเหตุและจัดบัญชีหลักฐาน ระบุประเด็นสอบข้อเท็จจริงและคำถามพยาน',
+      'RETRIEVAL QUERY — ใช้คำค้นสมบูรณ์ไม่ตัดกลางคำ: ความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. กรณีรถราชการเกิดอุบัติเหตุหรือเสียหายระหว่างปฏิบัติราชการ การสอบข้อเท็จจริง การซ่อมรถราชการ ความเสียหายของรถคู่กรณี และอำนาจแต่งตั้งคณะกรรมการ ตรวจต้นฉบับกฎหมายและหนังสือสั่งการที่มีผลใช้บังคับก่อนอ้างอิง; รักษาลักษณะเหตุที่ผู้ใช้ระบุ เช่น ชนท้าย โดยไม่เปลี่ยนเป็นเฉี่ยวชน ห้ามสรุปฐานกฎหมายหรือผลการสอบสวนเอง',
       'ร่างเอกสาร 7 ส่วน: รายงานเหตุ, บัญชีหลักฐาน, คำถามพยาน, บันทึกเสนอ, ร่างคำสั่งแต่งตั้งกรรมการเฉพาะเมื่ออำนาจยืนยันแล้ว, ร่างรายงานสอบสวน, ตารางความเสียหายไม่ระบุร้อยละ',
       'SAFETY ACCEPTANCE ส่วนที่ 4: เมื่อฐานอำนาจยัง UNVERIFIED/CONFLICT ห้ามเสนอให้ลงนามหรืออนุมัติร่างคำสั่งแต่งตั้งทันที ให้ใช้ข้อเสนอ: จึงเรียนมาเพื่อโปรดพิจารณามอบหมายให้หน่วยงานที่เกี่ยวข้องและนิติกรตรวจสอบข้อเท็จจริง หลักเกณฑ์ที่ใช้บังคับ และอำนาจในการแต่งตั้งคณะกรรมการ ก่อนเสนอการดำเนินการตามขั้นตอนของกฎหมายต่อไป',
       'SAFETY ACCEPTANCE ส่วนที่ 5: หาก Authority Gate ยังไม่ VERIFIED ให้แสดงหัวข้อ แบบข้อมูลประกอบการพิจารณาจัดทำคำสั่งแต่งตั้งคณะกรรมการ — ยังไม่ใช่คำสั่ง เท่านั้น โดยมีเฉพาะเหตุแจ้ง ความเสียหายที่รอตรวจ ฐานกฎหมายและผู้มีอำนาจที่ต้องตรวจ ประเด็นสอบสวน และข้อมูลบุคคลที่ต้องตรวจ ห้ามแสดงรูปแบบคำสั่ง เลขคำสั่ง คำขึ้นต้นว่า จึงแต่งตั้ง หรือ ให้แต่งตั้ง ข้อความ สั่ง ณ วันที่ หรือ ทั้งนี้ ตั้งแต่บัดนี้เป็นต้นไป ช่องลงนาม รายชื่อ/จำนวนกรรมการที่สมมติ หรือกำหนดเวลาสอบสวนที่ยังไม่มีหลักฐาน',
