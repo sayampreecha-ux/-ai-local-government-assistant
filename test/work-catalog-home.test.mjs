@@ -29,7 +29,7 @@ test('one-page catalog covers core local-government domains', () => {
 
 test('catalog selections open the dedicated result route without bypassing the Home runner', () => {
   assert.match(source, /button\.dataset\.prompt = task\.prompt/);
-  assert.match(source, /openResultPage\(prompt, \{ trustedInternal: true, tortIntent: button\.dataset\.tortIntent === 'true'/);
+  assert.match(source, /openResultPage\(button\.dataset\.tortIntent === 'true' \? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท\.' : prompt/);
   assert.match(source, /sessionStorage\.setItem\(RESULT_PROMPT_KEY, value\)/);
   assert.match(source, /window\.location\.assign\(target\.toString\(\)\)/);
   assert.doesNotMatch(source, /submitPrompt\s*\(/);
@@ -93,7 +93,7 @@ test('single legal-category tort Level-1 button preserves HR discipline entry an
   assert.match(audit, /Decision Lock ว66\/ว141/);
   assert.match(audit, /ปกปิดข้อมูลส่วนบุคคล/);
   assert.match(source, /button\.dataset\.prompt = task\.prompt/);
-  assert.match(source, /openResultPage\(prompt, \{ trustedInternal: true, tortIntent: button\.dataset\.tortIntent === 'true'/);
+  assert.match(source, /openResultPage\(button\.dataset\.tortIntent === 'true' \? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท\.' : prompt/);
 });
 
 test('tort action reuses live Level-1 handoff guard without changing the composer', () => {
