@@ -104,3 +104,29 @@ test('tort action reuses live Level-1 handoff guard without changing the compose
   assert.match(home, /ว66\/ว141/);
   assert.match(home, /promptBundle\.prompt, originalRequest/);
 });
+
+
+test('tort Level-1 safety acceptance locks unverified appointment, inquiry and false file claims', () => {
+  const home = readFileSync('assets/js/home-v3.js', 'utf8');
+  const start = home.indexOf('function completeTortLevel1Handoff(');
+  const end = home.indexOf('function completeDocumentHandoff(', start);
+  assert.ok(start >= 0 && end > start);
+  const contract = home.slice(start, end);
+  for (const required of [
+    'SAFETY ACCEPTANCE ส่วนที่ 4',
+    'ก่อนเสนอการดำเนินการตามขั้นตอนของกฎหมายต่อไป',
+    'SAFETY ACCEPTANCE ส่วนที่ 5',
+    'แบบข้อมูลประกอบการพิจารณาจัดทำคำสั่งแต่งตั้งคณะกรรมการ',
+    'Authority Gate ยังไม่ VERIFIED',
+    'ห้ามแสดงรูปแบบคำสั่ง',
+    'SAFETY ACCEPTANCE ส่วนที่ 6',
+    '[ยังไม่ได้ดำเนินการ]',
+    'FALSE FILE COMPLETION GUARD',
+    'ไฟล์/ลิงก์ที่ตรวจสอบได้',
+    'FINAL NEGATIVE REVIEW',
+    'Decision Lock:',
+    'Human Review',
+  ]) assert.ok(contract.includes(required), 'missing tort safety contract: '+required);
+  assert.match(home, /input\.value = tortIntent \? '' : pendingPrompt/);
+  assert.match(home, /explicitTortIntent \? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท\./);
+});
