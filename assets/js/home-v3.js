@@ -706,11 +706,11 @@
     return prompt.endsWith(completion) ? prompt : prompt + completion;
   }
 
-  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime, originalRequest = '', documentSource = originalRequest }) {
+  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime, originalRequest = '', documentSource = originalRequest, explicitTortIntent = false }) {
     if (workflowRuntime && !promptBundle.gp223) {
       promptBundle = { ...promptBundle, prompt: completeDocumentHandoff(promptBundle.prompt, originalRequest) };
     }
-    promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, form.dataset.tortIntent === 'true' ? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. ' + originalRequest : originalRequest) };
+    promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, explicitTortIntent ? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. ' + originalRequest : originalRequest) };
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
@@ -901,7 +901,7 @@
     }
     await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 250));
     document.getElementById('thinkingMessage')?.remove();
-    addRouteResult({ ...prepared, originalRequest: text, documentSource: userSource?.unavailable ? null : userSource ? [userSource.original,...userSource.answers].join('\n\n') : text }); saveHistory(text, prepared.route); clearAttachments();
+    addRouteResult({ ...prepared, originalRequest: text, explicitTortIntent: explicitTort, documentSource: userSource?.unavailable ? null : userSource ? [userSource.original,...userSource.answers].join('\n\n') : text }); saveHistory(text, prepared.route); clearAttachments();
     if (prepared.promptBundle.gp223) document.documentElement.classList.add('result-intake');
     document.querySelector('.result-page-header strong').textContent = prepared.budgetSourceRuntime ? 'ผลลัพธ์พร้อมใช้งาน' : 'คำสั่งพร้อมส่งต่อ AI';
     window.scrollTo({ top: 0, behavior: 'instant' });
