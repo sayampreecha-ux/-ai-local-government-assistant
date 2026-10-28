@@ -3,6 +3,13 @@ on:
   push:
     branches:
       - docs/tort-liability-evidence-register-20261026
+  pull_request:
+    paths:
+      - 'assets/js/home-v3.js'
+      - 'assets/js/core/output-router.js'
+      - 'assets/js/core/official-search-connector.js'
+      - 'test/work-catalog-home.test.mjs'
+      - 'scripts/verify-tort-browser-level1.mjs'
   workflow_dispatch:
 jobs:
   tort-browser:
