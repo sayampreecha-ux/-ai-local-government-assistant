@@ -374,7 +374,17 @@
     const workflowRuntimePromise = explicitTort ? Promise.resolve({ view: null, status: 'tort-intake' }) : prepareWorkflowRuntime(text);
     const context = core.createSharedContext({ facts: text, desiredOutput: text, documents: safeAttachments.map(file => file.name).join(', ') });
     const detectedRoute = core.routeTransaction(context);
-    const route = explicitTort ? Object.freeze({ ...detectedRoute, transactionType: 'legal' }) : detectedRoute;
+    const route = explicitTort ? Object.freeze({
+      ...detectedRoute,
+      moduleId: 'GP002',
+      assistant: core.PROMPT_REGISTRY.find(item => item.moduleId === 'GP002'),
+      transactionType: 'legal',
+      modules: Object.freeze(['GP002']),
+      shouldRedirect: false,
+      fallback: false,
+      ambiguous: false,
+      reason: 'explicit-legal-tort-quick-action'
+    }) : detectedRoute;
     const promptBundleBase = core.createGovernmentPrompt({
       question: text,
       route,
