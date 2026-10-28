@@ -881,7 +881,7 @@
 
   async function submitPrompt(text, userSource = null) {
     const explicitTort = form.dataset.tortIntent === 'true';
-    const intake = explicitTort ? { question: text, workflowId: null, caseFacts: text, state: null } : window.GovPromptCore.prepareGP223IntakeTurn({ text, state: gp223IntakeState, attachments });
+    const intake = explicitTort ? { question: 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.\nข้อมูลแจ้งเหตุ (UNVERIFIED): ' + text, workflowId: null, caseFacts: text, state: null } : window.GovPromptCore.prepareGP223IntakeTurn({ text, state: gp223IntakeState, attachments });
     gp223IntakeState = intake.state;
     window.GovPromptCore.gp223IntakeState = intake.state;
     enterResultPage();
@@ -1024,12 +1024,12 @@
         const title = document.createElement('strong');
         title.textContent = '⚖️ ข้อเท็จจริงสำหรับงานความรับผิดทางละเมิด';
         const note = document.createElement('p');
-        note.textContent = 'ตรวจทานและแก้ไขคำถามด้านล่างก่อนกดส่ง: วันเวลาและสถานที่เกิดเหตุ ผู้เกี่ยวข้อง หน้าที่ที่ได้รับมอบหมาย ความเสียหาย หลักฐาน/คำสั่งที่มี และข้อมูลที่ยังรอตรวจสอบ; ห้ามใส่ข้อมูลส่วนบุคคลเกินจำเป็น';
+        note.textContent = 'เล่าเหตุการณ์ที่เกิดขึ้น แล้ว GovPrompt จะช่วยเตรียมเอกสารงานละเมิดให้';
         guidance.append(title, note);
         conversation.append(guidance);
       }
-      input.value = pendingPrompt;
-      input.placeholder = 'พิมพ์ข้อมูลเพิ่มเติมที่จำเป็น...';
+      input.value = tortIntent ? '' : pendingPrompt;
+      input.placeholder = tortIntent ? 'เช่น ทรัพย์สินราชการเสียหาย ประชาชนได้รับความเสียหาย หรือเกิดเหตุระหว่างการปฏิบัติงาน' : 'พิมพ์ข้อมูลเพิ่มเติมที่จำเป็น...';
       input.dispatchEvent(new Event('input', { bubbles: true }));
       if (!tortIntent) form.requestSubmit();
       else input.focus();
