@@ -706,11 +706,11 @@
     return prompt.endsWith(completion) ? prompt : prompt + completion;
   }
 
-  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime, originalRequest = '', documentSource = originalRequest }) {
+  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime, originalRequest = '', documentSource = originalRequest, explicitTortIntent = false }) {
     if (workflowRuntime && !promptBundle.gp223) {
       promptBundle = { ...promptBundle, prompt: completeDocumentHandoff(promptBundle.prompt, originalRequest) };
     }
-    promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, originalRequest) };
+    promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, explicitTortIntent ? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. ' + originalRequest : originalRequest) };
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
@@ -881,7 +881,7 @@
 
   async function submitPrompt(text, userSource = null) {
     const explicitTort = form.dataset.tortIntent === 'true';
-    const intake = explicitTort ? { question: text, workflowId: null, caseFacts: text, state: null } : window.GovPromptCore.prepareGP223IntakeTurn({ text, state: gp223IntakeState, attachments });
+    const intake = explicitTort ? { question: 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.\nข้อมูลแจ้งเหตุ (UNVERIFIED): ' + text, workflowId: null, caseFacts: text, state: null } : window.GovPromptCore.prepareGP223IntakeTurn({ text, state: gp223IntakeState, attachments });
     gp223IntakeState = intake.state;
     window.GovPromptCore.gp223IntakeState = intake.state;
     enterResultPage();
@@ -901,7 +901,7 @@
     }
     await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 250));
     document.getElementById('thinkingMessage')?.remove();
-    addRouteResult({ ...prepared, originalRequest: text, documentSource: userSource?.unavailable ? null : userSource ? [userSource.original,...userSource.answers].join('\n\n') : text }); saveHistory(text, prepared.route); clearAttachments();
+    addRouteResult({ ...prepared, originalRequest: text, explicitTortIntent: explicitTort, documentSource: userSource?.unavailable ? null : userSource ? [userSource.original,...userSource.answers].join('\n\n') : text }); saveHistory(text, prepared.route); clearAttachments();
     if (prepared.promptBundle.gp223) document.documentElement.classList.add('result-intake');
     document.querySelector('.result-page-header strong').textContent = prepared.budgetSourceRuntime ? 'ผลลัพธ์พร้อมใช้งาน' : 'คำสั่งพร้อมส่งต่อ AI';
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -1024,12 +1024,12 @@
         const title = document.createElement('strong');
         title.textContent = '⚖️ ข้อเท็จจริงสำหรับงานความรับผิดทางละเมิด';
         const note = document.createElement('p');
-        note.textContent = 'ตรวจทานและแก้ไขคำถามด้านล่างก่อนกดส่ง: วันเวลาและสถานที่เกิดเหตุ ผู้เกี่ยวข้อง หน้าที่ที่ได้รับมอบหมาย ความเสียหาย หลักฐาน/คำสั่งที่มี และข้อมูลที่ยังรอตรวจสอบ; ห้ามใส่ข้อมูลส่วนบุคคลเกินจำเป็น';
+        note.textContent = 'เล่าเหตุการณ์ที่เกิดขึ้น แล้ว GovPrompt จะช่วยเตรียมเอกสารงานละเมิดให้';
         guidance.append(title, note);
         conversation.append(guidance);
       }
-      input.value = pendingPrompt;
-      input.placeholder = 'พิมพ์ข้อมูลเพิ่มเติมที่จำเป็น...';
+      input.value = tortIntent ? '' : pendingPrompt;
+      input.placeholder = tortIntent ? 'เช่น ทรัพย์สินราชการเสียหาย ประชาชนได้รับความเสียหาย หรือเกิดเหตุระหว่างการปฏิบัติงาน' : 'พิมพ์ข้อมูลเพิ่มเติมที่จำเป็น...';
       input.dispatchEvent(new Event('input', { bubbles: true }));
       if (!tortIntent) form.requestSubmit();
       else input.focus();

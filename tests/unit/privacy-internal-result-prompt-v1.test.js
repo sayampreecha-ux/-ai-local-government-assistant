@@ -91,7 +91,7 @@ test('catalog handoff marks static prompts trusted but keeps user-authored PR to
   ]);
 
   assert.match(bridge, /RESULT_TRUSTED_INTERNAL_KEY = 'govprompt\.resultPromptTrustedInternal\.v1'/);
-  assert.match(bridge, /openResultPage\(prompt, \{ trustedInternal: true, tortIntent: button\.dataset\.tortIntent === 'true'/);
+  assert.match(bridge, /openResultPage\(button\.dataset\.tortIntent === 'true' \? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท\.' : prompt, \{ trustedInternal: true, tortIntent: button\.dataset\.tortIntent === 'true'/);
   assert.match(bridge, /openResultPage\(prompt, \{ forceIntake: false \}\);/);
   assert.match(home, /trustedInternalPrompt = sessionStorage\.getItem\(resultTrustedInternalKey\) === 'true'/);
   assert.match(home, /form\.dataset\.trustedInternalPrompt = 'true'/);

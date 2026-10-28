@@ -82,13 +82,13 @@ try {
     assert.ok((await page.locator('body').innerText()).length > 30,'result page must render');
     const intakeGuide = page.locator('[data-tort-intake="true"]');
     await intakeGuide.waitFor({state:'visible'});
-    assert.match(await intakeGuide.innerText(),/วันเวลาและสถานที่เกิดเหตุ/);
+    assert.match(await intakeGuide.innerText(),/เล่าเหตุการณ์ที่เกิดขึ้น/);
     assert.equal(await page.locator('#chatForm').getAttribute('data-tort-intent'),'true');
     const seeded = await page.locator('#promptInput').inputValue();
-    assert.match(seeded,/งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท./);
+    assert.equal(seeded,'','tort incident composer must start blank');
     assert.doesNotMatch(seeded,/กรณีรถราชการชนหรือเสียหายระหว่าง/);
     assert.equal(await page.locator('#conversation .message').count(),0,'tort must not auto-submit');
-    await page.locator('#promptInput').fill(seeded + '\\nข้อมูลเพิ่มเติมจากผู้ใช้: ยังไม่ทราบวันเวลา');
+    await page.locator('#promptInput').fill('ประชาชนแจ้งว่าได้รับความเสียหายจากการปฏิบัติงาน ยังไม่ทราบวันเวลา');
     assert.match(await page.locator('#promptInput').inputValue(),/ยังไม่ทราบวันเวลา/);
     await page.locator('#chatForm').evaluate(form => form.requestSubmit());
     await page.locator('.route-label').waitFor({state:'visible',timeout:30000});
@@ -97,6 +97,8 @@ try {
     const previews = await page.locator('.answer-card details pre').allTextContents();
     assert.ok(previews.some(s => s.includes('[GP_TORT_LEVEL1_HANDOFF_V1]')), 'tort Level-1 marker missing in assembled prompts: '+ JSON.stringify(previews.map(s => s.slice(-180))));
     assert.ok(previews.some(s => s.includes('Decision Lock')));
+    assert.ok(previews.some(s => s.includes('UNVERIFIED')));
+    assert.ok(previews.some(s => s.includes('ประชาชนแจ้งว่าได้รับความเสียหาย')));
 
     console.log((viewport.width<=390?'mobile':'desktop')+' tort legal normal result navigation PASS');
     await page.close();
