@@ -147,3 +147,22 @@ test('explicit tort quick action pins the full legal module route, not only tran
   assert.match(home, /const route = explicitTort \?/);
   assert.match(home, /: detectedRoute;/);
 });
+
+test('explicit tort output is a seven-part document without changing generic legal analysis', () => {
+  const output = readFileSync('assets/js/core/output-router.js', 'utf8');
+  assert.match(output, /route\?\.reason === 'explicit-legal-tort-quick-action'/);
+  assert.match(output, /id: 'tort-level1-document'/);
+  assert.match(output, /format: 'official-document'/);
+  assert.match(output, /Authority UNVERIFIED/);
+  assert.match(output, /if \(\['GP002', 'GP003'/);
+});
+
+test('tort handoff includes a complete official retrieval question and preserves reported rear-end collision', () => {
+  const home = readFileSync('assets/js/home-v3.js', 'utf8');
+  const start = home.indexOf('function completeTortLevel1Handoff(');
+  const end = home.indexOf('function completeDocumentHandoff(', start);
+  const contract = home.slice(start, end);
+  for (const term of ['RETRIEVAL QUERY', 'การสอบข้อเท็จจริง', 'การซ่อมรถราชการ', 'ความเสียหายของรถคู่กรณี', 'อำนาจแต่งตั้งคณะกรรมการ', 'ชนท้าย', 'เฉี่ยวชน', 'Decision Lock']) {
+    assert.ok(contract.includes(term), 'missing tort handoff term: ' + term);
+  }
+});
