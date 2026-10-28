@@ -489,7 +489,7 @@
     const decisionTask = !isMinutesDraft && (Boolean(assistanceRoute?.decisionTask) || Boolean(v8?.isDecisionQuestion?.(text)) || ['legal','procurement','finance','human-resources','internal-audit'].includes(String(route?.transactionType || '').toLowerCase()) || kAuditTask);
     if (!promptBundle.vehicleRegulation2569 && decisionTask && typeof core.officialSearchConnector?.search === 'function') {
       try {
-        searchResult = Object.freeze(await core.officialSearchConnector.search(text, { count: 10, requireFreshness: true }));
+        searchResult = Object.freeze(await core.officialSearchConnector.search(text, { module: route?.moduleId, count: 10, requireFreshness: true }));
       } catch {
         searchResult = Object.freeze({ mode: 'search-error', results: [], evidence: { primaryResults: [], conclusionEligible: false }, warning: 'การค้นแหล่งราชการสดขัดข้อง — ยังไม่ควรฟันธง' });
       }
