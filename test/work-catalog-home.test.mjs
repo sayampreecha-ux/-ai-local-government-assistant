@@ -130,3 +130,20 @@ test('tort Level-1 safety acceptance locks unverified appointment, inquiry and f
   assert.match(home, /input\.value = tortIntent \? '' : pendingPrompt/);
   assert.match(home, /explicitTortIntent \? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท\./);
 });
+
+
+test('explicit tort quick action pins the full legal module route, not only transaction type', () => {
+  const home = readFileSync('assets/js/home-v3.js', 'utf8');
+  const routeBlock = home.match(/const route = explicitTort \? Object\.freeze\(\{([\s\S]*?)\}\) : detectedRoute;/)?.[1] || '';
+  assert.ok(routeBlock, 'explicit tort route override missing');
+  for (const expected of [
+    "moduleId: 'GP002'",
+    "moduleId === 'GP002'",
+    "transactionType: 'legal'",
+    "modules: Object.freeze(['GP002'])",
+    "reason: 'explicit-legal-tort-quick-action'"
+  ]) assert.ok(routeBlock.includes(expected), 'missing explicit legal route property: ' + expected);
+  assert.match(home, /const detectedRoute = core\.routeTransaction\(context\)/);
+  assert.match(home, /const route = explicitTort \?/);
+  assert.match(home, /: detectedRoute;/);
+});
