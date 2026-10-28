@@ -61,32 +61,26 @@ await bundle({
   logLevel: "silent"
 });
 
+function injectScriptAfter(html, anchor, script, missingAnchorMessage) {
+  if (html.includes(script)) return html;
+  if (!html.includes(anchor)) throw new Error(missingAnchorMessage);
+  return html.replace(anchor, `${anchor}${script}`);
+}
+
 const distIndexPath = join(output, "index.html");
 let distIndex = await readFile(distIndexPath, "utf8");
 const hybridScriptMatch = distIndex.match(/<script src="assets\/js\/core\/hybrid-intent-classifier\.js\?v=[^"]+" defer><\/script>/);
 const hybridScript = hybridScriptMatch?.[0] || '';
 const hotfixScript = '<script src="assets/js/core/router-real-query-hotfix.js?v=2.4.5" defer></script>';
-if (!distIndex.includes(hotfixScript)) {
-  if (!hybridScript) throw new Error("Hybrid intent router script marker not found in dist/index.html");
-  distIndex = distIndex.replace(hybridScript, `${hybridScript}${hotfixScript}`);
-}
+distIndex = injectScriptAfter(distIndex, hybridScript, hotfixScript, "Hybrid intent router script marker not found in dist/index.html");
 
 const officialSearchScript = '<script src="assets/js/core/official-search-connector.js?v=2.4.2" defer></script>';
 const evidenceFirstV8Script = '<script src="assets/js/core/evidence-first-v8.js?v=8.0.0" defer></script>';
-if (!distIndex.includes(evidenceFirstV8Script)) {
-  if (!distIndex.includes(officialSearchScript)) throw new Error("Official search connector script marker not found for Evidence-First v8 injection");
-  distIndex = distIndex.replace(officialSearchScript, `${officialSearchScript}${evidenceFirstV8Script}`);
-}
+distIndex = injectScriptAfter(distIndex, officialSearchScript, evidenceFirstV8Script, "Official search connector script marker not found for Evidence-First v8 injection");
 const outcomeSearchScript = '<script src="assets/js/core/outcome-first-search-policy.js?v=1.0.0" defer></script>';
-if (!distIndex.includes(outcomeSearchScript)) {
-  if (!distIndex.includes(officialSearchScript)) throw new Error("Official search connector script marker not found in dist/index.html");
-  distIndex = distIndex.replace(officialSearchScript, `${officialSearchScript}${outcomeSearchScript}`);
-}
+distIndex = injectScriptAfter(distIndex, officialSearchScript, outcomeSearchScript, "Official search connector script marker not found in dist/index.html");
 const searchTimeoutScript = `<script src="assets/js/core/official-search-timeout-guard-v1.js?v=${RELEASE_VERSIONS.searchTimeoutGuard}" defer></script>`;
-if (!distIndex.includes(searchTimeoutScript)) {
-  if (!distIndex.includes(outcomeSearchScript)) throw new Error("Outcome-first search policy marker not found in dist/index.html");
-  distIndex = distIndex.replace(outcomeSearchScript, `${outcomeSearchScript}${searchTimeoutScript}`);
-}
+distIndex = injectScriptAfter(distIndex, outcomeSearchScript, searchTimeoutScript, "Outcome-first search policy marker not found in dist/index.html");
 
 const documentStudioScript = `<script type="module" src="assets/js/core/document-studio-v1.js?v=${RELEASE_VERSIONS.documentStudio}"></script>`;
 if (!distIndex.includes(documentStudioScript)) {
@@ -116,10 +110,7 @@ distIndex = distIndex
 
 const normalizedHomeScript = `<script src="assets/js/home-v3.js?v=${RELEASE_VERSIONS.home}" defer></script>`;
 const budgetWatchdogScript = `<script src="assets/js/core/budget-ui-failclosed-watchdog-v1.js?v=${RELEASE_VERSIONS.budgetUiWatchdog}" defer></script>`;
-if (!distIndex.includes(budgetWatchdogScript)) {
-  if (!distIndex.includes(normalizedHomeScript)) throw new Error("Home script marker not found for Budget UI watchdog injection");
-  distIndex = distIndex.replace(normalizedHomeScript, `${normalizedHomeScript}${budgetWatchdogScript}`);
-}
+distIndex = injectScriptAfter(distIndex, normalizedHomeScript, budgetWatchdogScript, "Home script marker not found for Budget UI watchdog injection");
 await writeFile(distIndexPath, distIndex);
 
 const distHomePath = join(output, "assets/js/home-v3.js");
