@@ -710,7 +710,7 @@
     if (workflowRuntime && !promptBundle.gp223) {
       promptBundle = { ...promptBundle, prompt: completeDocumentHandoff(promptBundle.prompt, originalRequest) };
     }
-    promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, originalRequest) };
+    promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, form.dataset.tortIntent === 'true' ? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. ' + originalRequest : originalRequest) };
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
