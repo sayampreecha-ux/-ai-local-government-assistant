@@ -710,7 +710,11 @@
     // their own deliverables rather than imposing the estimate-only A/B/C/D contract.
     const engineeringWorkflow = !correspondenceDraft && (Boolean(engineeringPlan) || activeRoute.moduleId === 'GP007'
       && /(?:แบบรูปรายการ|รายการประกอบแบบ|ข้อกำหนดทางเทคนิค|ตรวจแบบ|ตรวจงาน|ตรวจรับ|ตรวจราคากลาง|วิเคราะห์ปัญหา|วิเคราะห์สาเหตุ|วิเคราะห์ความเสียหาย|แตกร้าว|ทรุดตัว|น้ำท่วมขัง|ถอดแบบ|ถอดปริมาณ|ประมาณราคา|ราคากลาง|boq)/i.test(userQuestion));
-    const taskPlan = correspondenceDraft
+    // An explicitly selected tort draft must keep its seven-part deliverable,
+    // even when the user's incident text contains no drafting keywords.
+    const taskPlan = activeRoute.reason === 'explicit-legal-tort-quick-action' && activeRoute.moduleId === 'GP002'
+      ? Object.freeze({ ...initialTaskPlan, action: 'draft', deliverable: 'tort-level1-document' })
+      : correspondenceDraft
       ? Object.freeze({ ...initialTaskPlan, action: 'draft', deliverable: 'official-document' })
       : councilAgendaDraft
       ? Object.freeze({ ...initialTaskPlan, action: 'draft', deliverable: 'council-agenda' })

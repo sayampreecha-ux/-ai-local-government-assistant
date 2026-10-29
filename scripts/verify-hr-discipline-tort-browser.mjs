@@ -47,9 +47,9 @@ try {
     const home = async () => {
       if (page.url().includes('view=result')) {
         await page.getByRole('button', { name: 'เริ่มงานใหม่', exact: true }).click();
-        await page.waitForURL(url => !url.searchParams.has('view'));
-      } else await page.goto(base, { waitUntil: 'networkidle' });
-      await page.waitForLoadState('networkidle');
+        await page.waitForURL(url => !url.searchParams.has('view'), { waitUntil: 'domcontentloaded' });
+      } else await page.goto(base, { waitUntil: 'domcontentloaded' });
+      await page.waitForFunction(() => document.querySelectorAll('.work-catalog-category-toggle').length === 14 && document.getElementById('chatForm')?.dataset.privacySubmitGuard === '3');
     };
     const category = id => page.locator(`.work-catalog-category-toggle[aria-controls="work-catalog-tasks-${id}"]`);
     const openHR = async () => { await category('hr').click(); await page.getByRole('button', { name: '⚖️ วินัย / ละเมิด', exact: true }).click(); };
@@ -79,7 +79,7 @@ try {
       assert.equal(await page.locator('#promptInput').inputValue(), '');
       assert.equal(await page.locator('.answer-card').count(), 0, 'no automatic submission');
       await page.goBack();
-      await page.waitForLoadState('networkidle');
+      await page.waitForFunction(() => document.querySelectorAll('.work-catalog-category-toggle').length === 14);
       assert.equal(await category('hr').count(), 1, 'browser Back returns to catalog');
       return { ids, layout: await layout() };
     });
@@ -92,6 +92,7 @@ try {
       assert.equal(r.route, 'งานบุคคล');
       assert.match(r.specialistHref, /gp006/i);
       assert.match(r.prompt, /Primary workflow: gov.hr/);
+      assert.match(r.prompt, /หมวดเบื้องต้น: GP006|หมวดที่ระบบคาดการณ์: GP006/);
       for (const term of ['UNVERIFIED', 'NOT VERIFIED', 'Human Review', 'ฐานกฎหมายและอำนาจฉบับปัจจุบัน', 'แยกข้อกล่าวหาจากข้อเท็จจริงที่ตรวจยืนยันแล้ว', 'ห้ามวินิจฉัยความผิดอัตโนมัติ']) assert.ok(r.prompt.includes(term), term);
       assert.ok(r.prompt.includes(disciplineFacts));
       assert.doesNotMatch(r.prompt, /GP_TORT_LEVEL1_HANDOFF_V1|Primary workflow: gov.legal/);
@@ -113,6 +114,9 @@ try {
       assert.match(r.route, /กฎหมาย/);
       assert.match(r.specialistHref, /gp002/i);
       assert.match(r.prompt, /Primary workflow: gov.legal/);
+      assert.match(r.prompt, /หมวดเบื้องต้น: GP002|หมวดที่ระบบคาดการณ์: GP002/);
+      assert.match(r.prompt, /ชิ้นงานที่ควรส่งมอบ: tort-level1-document/);
+      assert.match(r.prompt, /- รูปแบบ: official-document/);
       assert.doesNotMatch(r.prompt, /Primary workflow: gov.hr/);
       assert.ok(r.prompt.includes(incident)); assert.ok(!r.prompt.includes(disciplineFacts));
       for (const term of ['GP_TORT_LEVEL1_HANDOFF_V1', 'ร่างเอกสาร 7 ส่วน', 'NOT VERIFIED', 'UNVERIFIED', 'Human Review', 'ว66/ว141', 'Authority Gate ยังไม่ VERIFIED', 'ห้ามแสดงรูปแบบคำสั่ง', 'SAFETY ACCEPTANCE ส่วนที่ 6', '[ยังไม่ได้ดำเนินการ]', 'FALSE FILE COMPLETION GUARD', 'ปกปิดข้อมูลส่วนบุคคล']) assert.ok(r.prompt.includes(term), term);

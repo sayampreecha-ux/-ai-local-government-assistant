@@ -385,6 +385,7 @@
     const route = explicitTort ? Object.freeze({
       ...detectedRoute,
       moduleId: 'GP002',
+      primaryModule: 'GP002',
       assistant: core.PROMPT_REGISTRY.find(item => item.moduleId === 'GP002'),
       transactionType: 'legal',
       modules: Object.freeze(['GP002']),
@@ -395,6 +396,7 @@
     }) : explicitDiscipline ? Object.freeze({
       ...detectedRoute,
       moduleId: 'GP006',
+      primaryModule: 'GP006',
       assistant: core.PROMPT_REGISTRY.find(item => item.moduleId === 'GP006'),
       transactionType: 'human-resources',
       modules: Object.freeze(['GP006']),
