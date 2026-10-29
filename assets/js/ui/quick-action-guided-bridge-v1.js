@@ -121,7 +121,10 @@
         Object.freeze({ label: 'บรรจุ / แต่งตั้ง', prompt: 'ช่วยวิเคราะห์และจัดทำงานเกี่ยวกับการบรรจุหรือแต่งตั้ง โดยถามข้อเท็จจริงสำคัญก่อน' }),
         Object.freeze({ label: 'เลื่อนขั้น / ประเมิน / โบนัส', prompt: 'ช่วยตรวจหลักเกณฑ์และขั้นตอนเรื่องเลื่อนขั้น ประเมิน หรือโบนัสตามข้อเท็จจริงที่ให้' }),
         Object.freeze({ label: 'โอน / ย้าย / เปลี่ยนตำแหน่ง', prompt: 'ช่วยวิเคราะห์ขั้นตอนและเงื่อนไขการโอน ย้าย หรือเปลี่ยนตำแหน่ง' }),
-        Object.freeze({ label: 'วินัยและการดำเนินการทางบุคคล', prompt: 'ช่วยแยกข้อเท็จจริง ประเด็น ขั้นตอน ความเสี่ยง และหลักฐานที่ต้องตรวจในเรื่องวินัยหรือการดำเนินการทางบุคคล' })
+        Object.freeze({ label: '⚖️ วินัย / ละเมิด', prompt: 'เลือกงานวินัยหรือความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.', choices: Object.freeze([
+          Object.freeze({ label: 'งานวินัย', disciplineIntent: true, prompt: 'งานวินัยของเจ้าหน้าที่ อปท.' }),
+          Object.freeze({ label: 'งานความรับผิดทางละเมิด', tortIntent: true, prompt: 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.' })
+        ]) })
       ])
     }),
     Object.freeze({
@@ -290,6 +293,7 @@
   const RESULT_FORCE_INTAKE_KEY = 'govprompt.forceGuidedIntake.v1';
   const RESULT_TRUSTED_INTERNAL_KEY = 'govprompt.resultPromptTrustedInternal.v1';
   const RESULT_TORT_INTENT_KEY = 'govprompt.resultTortIntent.v1';
+  const RESULT_DISCIPLINE_INTENT_KEY = 'govprompt.resultDisciplineIntent.v1';
 
   function openResultPage(prompt, options = {}) {
     const value = String(prompt || '').trim();
@@ -299,6 +303,7 @@
       sessionStorage.setItem(RESULT_FORCE_INTAKE_KEY, options.forceIntake === false ? 'false' : 'true');
       sessionStorage.setItem(RESULT_TRUSTED_INTERNAL_KEY, options.trustedInternal === true ? 'true' : 'false');
       sessionStorage.setItem(RESULT_TORT_INTENT_KEY, options.tortIntent === true ? 'true' : 'false');
+      sessionStorage.setItem(RESULT_DISCIPLINE_INTENT_KEY, options.disciplineIntent === true ? 'true' : 'false');
       const target = new URL(window.location.href);
       target.searchParams.set('view', 'result');
       target.searchParams.set('run', String(Date.now()));
@@ -465,6 +470,8 @@
       item.className = 'work-catalog-task';
       item.dataset.prompt = String(choice.prompt || '').trim();
       if (choice.intake) item.dataset.localIntake = String(choice.intake);
+      if (choice.tortIntent) item.dataset.tortIntent = 'true';
+      if (choice.disciplineIntent) item.dataset.disciplineIntent = 'true';
       item.textContent = String(choice.label || choice.prompt || 'เลือก');
       root.append(item);
     });
@@ -610,7 +617,7 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     if (dialog?.open && dialog.contains(button)) dialog.close();
-    openResultPage(button.dataset.tortIntent === 'true' ? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.' : prompt, { trustedInternal: true, tortIntent: button.dataset.tortIntent === 'true', forceIntake: button.dataset.tortIntent === 'true' ? false : true });
+    openResultPage(button.dataset.tortIntent === 'true' ? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.' : prompt, { trustedInternal: true, tortIntent: button.dataset.tortIntent === 'true', disciplineIntent: button.dataset.disciplineIntent === 'true', forceIntake: button.dataset.tortIntent === 'true' || button.dataset.disciplineIntent === 'true' ? false : true });
   }, true);
 
   addCatalogStyles();

@@ -83,7 +83,9 @@ test('single legal-category tort Level-1 button preserves HR discipline entry an
   assert.match(audit, /label: '⚖️ งานความรับผิดทางละเมิด', tortIntent: true, prompt:/);
   assert.doesNotMatch(audit, /fillOnly: true/);
   assert.equal((source.match(/label: '⚖️ งานความรับผิดทางละเมิด'/g) || []).length, 1);
-  assert.match(hr, /label: 'วินัยและการดำเนินการทางบุคคล'/);
+  assert.match(hr, /label: '⚖️ วินัย \/ ละเมิด'/);
+  assert.match(hr, /label: 'งานวินัย', disciplineIntent: true/);
+  assert.match(hr, /label: 'งานความรับผิดทางละเมิด', tortIntent: true/);
   assert.doesNotMatch(hr, /label: '⚖️ งานความรับผิดทางละเมิด'/);
   assert.match(audit, /งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. \(ทุกประเภทเหตุ\)/);
   assert.match(audit, /โปรดให้ผู้ใช้เล่าเหตุการณ์จริง/);
@@ -212,4 +214,18 @@ test('tort release contract: ten executable output and search scenarios', async 
   assert.notEqual(window.GovPromptCore.routeOutput('ขอวิเคราะห์ข้อกฎหมายทั่วไป', genericLegal, {}).id, 'tort-level1-document');
   const procurement = window.GovPromptCore.createOfficialSearchPlan('ขอจัดซื้อวัสดุ', { module: 'GP003' });
   assert.ok(procurement.query.includes('จัดซื้อจัดจ้าง พัสดุภาครัฐ'));
+});
+
+test('HR discipline/tort menu uses existing choice flow without adding a category', () => {
+  assert.match(source, /label: '⚖️ วินัย \/ ละเมิด'/);
+  assert.match(source, /label: 'งานวินัย'/);
+  assert.match(source, /label: 'งานความรับผิดทางละเมิด'/);
+  const hrBlock = source.split("id: 'hr', title: 'งานบุคคล'")[1]?.split("id: 'engineering'")[0] || '';
+  assert.match(hrBlock, /choices: Object\.freeze\(\[/);
+  assert.match(source, /function openTaskChoices\(button\)/);
+  assert.match(source, /button\.dataset\.taskChoices = JSON\.stringify\(task\.choices\)/);
+  assert.match(hrBlock, /disciplineIntent: true/);
+  assert.match(hrBlock, /tortIntent: true/);
+  assert.match(source, /item\.dataset\.tortIntent = 'true'/);
+  assert.match(source, /item\.dataset\.disciplineIntent = 'true'/);
 });

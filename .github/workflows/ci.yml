@@ -148,6 +148,14 @@ jobs:
         run: node scripts/verify-workflow-mobile-e2e.mjs
       - name: Verify FAT discipline and regression cases in real desktop and mobile UI
         run: FAT_UI_ROOT=dist node scripts/verify-fat-ui.mjs
+      - name: HR discipline and shared legal tort browser acceptance
+        run: node scripts/verify-hr-discipline-tort-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hr-discipline-tort-browser-evidence
+          path: artifacts/hr-discipline-tort/
+          if-no-files-found: error
       - name: GP001 PR-head browser acceptance (desktop and mobile)
         run: node tests/e2e/gp001-browser-acceptance.mjs
       - name: Document handoff and all-category release acceptance with no live AI

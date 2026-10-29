@@ -13,6 +13,7 @@
   const resultForceIntakeKey = 'govprompt.forceGuidedIntake.v1';
   const resultTrustedInternalKey = 'govprompt.resultPromptTrustedInternal.v1';
   const resultTortIntentKey = 'govprompt.resultTortIntent.v1';
+  const resultDisciplineIntentKey = 'govprompt.resultDisciplineIntent.v1';
   let resultRoute = new URLSearchParams(window.location.search).get('view') === 'result';
 
   function enterResultPage() {
@@ -353,11 +354,11 @@
     ].join('\n');
     return Object.freeze({ ...promptBundle, prompt: promptBundle.prompt + block, serviceContractNaturalPerson: true });
   }
-  async function preparePrompt(text, workflowId, caseFacts = text, explicitTort = false) {
+  async function preparePrompt(text, workflowId, caseFacts = text, explicitTort = false, explicitDiscipline = false) {
     const core = requireCore();
     const safeAttachments = sanitizedAttachmentMetadata(core);
     // GP223 must return before ANY shared retrieval or budget/workflow search path.
-    if (!explicitTort && core.isGP223Request({ question: text, workflowId })) {
+    if (!explicitTort && !explicitDiscipline && core.isGP223Request({ question: text, workflowId })) {
       if (typeof core.createGP223WorkflowPlan !== 'function') throw new Error('GP223 workflow is unavailable');
       const context = core.createSharedContext({ facts: caseFacts, desiredOutput: text,
         documents: safeAttachments.map(file => file.name).join(', '), specialFlags: ['GP223'] });
@@ -371,12 +372,20 @@
     // Install the scoped vehicle guardrail before routing or building quality gates.
     // This import does not access the network for legal research.
     await import('./core/vehicle-regulation-routing-guardrail-v1.js?v=1.0.0');
-    const workflowRuntimePromise = explicitTort ? Promise.resolve({ view: null, status: 'tort-intake' }) : prepareWorkflowRuntime(text);
+    const workflowRuntimePromise = explicitTort ? Promise.resolve({ view: null, status: 'tort-intake', block: '- Primary workflow: gov.legal' }) : explicitDiscipline ? Promise.resolve({ view: null, status: 'discipline-intake', block: [
+      'งานวินัย — ข้อกำหนดเฉพาะจากเมนูที่ผู้ใช้เลือก',
+      '- Primary workflow: gov.hr',
+      'แยกข้อกล่าวหาจากข้อเท็จจริงที่ตรวจยืนยันแล้ว ตรวจพยานหลักฐาน ประเด็นสอบสวน ขั้นตอน ฐานกฎหมายและอำนาจฉบับปัจจุบัน',
+      'ข้อมูลแจ้งเหตุเป็น UNVERIFIED; ฐานอำนาจและกฎหมายที่ยังตรวจไม่ได้เป็น NOT VERIFIED ต้องตรวจ Official Source → Authority → Version → Evidence → Reasoning → Human Review ก่อนใช้จริง',
+      'จัดทำร่างเอกสารพร้อมข้อมูลที่ขาด [รอตรวจสอบ] ห้ามวินิจฉัยความผิดอัตโนมัติ ห้ามสมมติผลสอบหรือออกคำสั่งลงโทษที่มีผลบังคับ ให้ผู้มีอำนาจตรวจทานก่อนลงนาม',
+      'แยกกระบวนการวินัยออกจากกระบวนการชดใช้ค่าเสียหาย; คง Decision Lock ว66/ว141 ห้ามกำหนดสัดส่วนรับผิดหรือออกคำสั่งเรียกชดใช้ ปกปิดข้อมูลส่วนบุคคลก่อนส่ง AI ภายนอก'
+    ].join('\n') }) : prepareWorkflowRuntime(text);
     const context = core.createSharedContext({ facts: text, desiredOutput: text, documents: safeAttachments.map(file => file.name).join(', ') });
     const detectedRoute = core.routeTransaction(context);
     const route = explicitTort ? Object.freeze({
       ...detectedRoute,
       moduleId: 'GP002',
+      primaryModule: 'GP002',
       assistant: core.PROMPT_REGISTRY.find(item => item.moduleId === 'GP002'),
       transactionType: 'legal',
       modules: Object.freeze(['GP002']),
@@ -384,6 +393,15 @@
       fallback: false,
       ambiguous: false,
       reason: 'explicit-legal-tort-quick-action'
+    }) : explicitDiscipline ? Object.freeze({
+      ...detectedRoute,
+      moduleId: 'GP006',
+      primaryModule: 'GP006',
+      assistant: core.PROMPT_REGISTRY.find(item => item.moduleId === 'GP006'),
+      transactionType: 'human-resources',
+      modules: Object.freeze(['GP006']),
+      shouldRedirect: false, fallback: false, ambiguous: false,
+      reason: 'explicit-hr-discipline-quick-action'
     }) : detectedRoute;
     const promptBundleBase = core.createGovernmentPrompt({
       question: text,
@@ -448,7 +466,7 @@
 
     // Vehicle regulation 2569: scoped enhancement to the existing procurement workflow.
     // Keep all legal verification in the user's destination AI, not GP's live search.
-    const vehicleRequest = !explicitTort && Boolean(core.isVehicleRegulationRequest?.(text));
+    const vehicleRequest = !explicitTort && !explicitDiscipline && Boolean(core.isVehicleRegulationRequest?.(text));
     if (vehicleRequest && !promptBundle.gp223) {
       const vehicleInstructions = [
         'งานยานพาหนะองค์กรปกครองส่วนท้องถิ่น พ.ศ. 2569 — วิเคราะห์ในหมวดพัสดุและทรัพย์สินเดิม',
@@ -723,11 +741,11 @@
     return prompt.endsWith(completion) ? prompt : prompt + completion;
   }
 
-  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime, originalRequest = '', documentSource = originalRequest, explicitTortIntent = false }) {
+  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime, originalRequest = '', documentSource = originalRequest, explicitTortIntent = false, explicitDisciplineIntent = false }) {
     if (workflowRuntime && !promptBundle.gp223) {
       promptBundle = { ...promptBundle, prompt: completeDocumentHandoff(promptBundle.prompt, originalRequest) };
     }
-    promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, explicitTortIntent ? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. ' + originalRequest : originalRequest) };
+    if (!explicitDisciplineIntent) promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, explicitTortIntent ? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. ' + originalRequest : originalRequest) };
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
@@ -898,7 +916,8 @@
 
   async function submitPrompt(text, userSource = null) {
     const explicitTort = form.dataset.tortIntent === 'true';
-    const intake = explicitTort ? { question: 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.\nข้อมูลแจ้งเหตุ (UNVERIFIED): ' + text, workflowId: null, caseFacts: text, state: null } : window.GovPromptCore.prepareGP223IntakeTurn({ text, state: gp223IntakeState, attachments });
+    const explicitDiscipline = !explicitTort && form.dataset.disciplineIntent === 'true';
+    const intake = explicitTort ? { question: 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.\nข้อมูลแจ้งเหตุ (UNVERIFIED): ' + text, workflowId: null, caseFacts: text, state: null } : explicitDiscipline ? { question: 'งานวินัยของเจ้าหน้าที่ อปท.\nข้อมูลแจ้งเหตุ (UNVERIFIED): ' + text, workflowId: null, caseFacts: text, state: null } : window.GovPromptCore.prepareGP223IntakeTurn({ text, state: gp223IntakeState, attachments });
     gp223IntakeState = intake.state;
     window.GovPromptCore.gp223IntakeState = intake.state;
     enterResultPage();
@@ -908,7 +927,7 @@
     addUserMessage(text); addThinking();
     conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
     let prepared;
-    try { prepared = await preparePrompt(intake.question, intake.workflowId, intake.caseFacts, explicitTort); }
+    try { prepared = await preparePrompt(intake.question, intake.workflowId, intake.caseFacts, explicitTort, explicitDiscipline); }
     catch {
       document.getElementById('thinkingMessage')?.remove();
       window.GovPrompt?.toast('ระบบวิเคราะห์หรือค้นข้อมูลยังไม่พร้อม กรุณาลองใหม่อีกครั้ง');
@@ -918,7 +937,7 @@
     }
     await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 250));
     document.getElementById('thinkingMessage')?.remove();
-    addRouteResult({ ...prepared, originalRequest: text, explicitTortIntent: explicitTort, documentSource: userSource?.unavailable ? null : userSource ? [userSource.original,...userSource.answers].join('\n\n') : text }); saveHistory(text, prepared.route); clearAttachments();
+    addRouteResult({ ...prepared, originalRequest: text, explicitTortIntent: explicitTort, explicitDisciplineIntent: explicitDiscipline, documentSource: userSource?.unavailable ? null : userSource ? [userSource.original,...userSource.answers].join('\n\n') : text }); saveHistory(text, prepared.route); clearAttachments();
     if (prepared.promptBundle.gp223) document.documentElement.classList.add('result-intake');
     document.querySelector('.result-page-header strong').textContent = prepared.budgetSourceRuntime ? 'ผลลัพธ์พร้อมใช้งาน' : 'คำสั่งพร้อมส่งต่อ AI';
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -1020,19 +1039,23 @@
     let forceGuidedIntake = false;
     let trustedInternalPrompt = false;
     let tortIntent = false;
+    let disciplineIntent = false;
     try {
       pendingPrompt = sessionStorage.getItem(resultPromptKey) || '';
       forceGuidedIntake = sessionStorage.getItem(resultForceIntakeKey) === 'true';
       trustedInternalPrompt = sessionStorage.getItem(resultTrustedInternalKey) === 'true';
       tortIntent = sessionStorage.getItem(resultTortIntentKey) === 'true';
+      disciplineIntent = !tortIntent && sessionStorage.getItem(resultDisciplineIntentKey) === 'true';
       sessionStorage.removeItem(resultPromptKey);
       sessionStorage.removeItem(resultForceIntakeKey);
       sessionStorage.removeItem(resultTrustedInternalKey);
       sessionStorage.removeItem(resultTortIntentKey);
+      sessionStorage.removeItem(resultDisciplineIntentKey);
     } catch {}
     if (pendingPrompt) {
       if (forceGuidedIntake) form.dataset.forceGuidedIntake = 'true';
-      if (trustedInternalPrompt) form.dataset.trustedInternalPrompt = 'true';
+      // Editable incident intake is user input, never a trusted catalog prompt.
+      if (trustedInternalPrompt && !tortIntent && !disciplineIntent) form.dataset.trustedInternalPrompt = 'true';
       if (tortIntent) {
         form.dataset.tortIntent = 'true';
         const guidance = document.createElement('section');
@@ -1045,10 +1068,24 @@
         guidance.append(title, note);
         conversation.append(guidance);
       }
+      if (disciplineIntent) {
+        form.dataset.disciplineIntent = 'true';
+        const guidance = document.createElement('section');
+        guidance.className = 'guided-intake-message';
+        guidance.dataset.disciplineIntake = 'true';
+        const title = document.createElement('strong');
+        title.textContent = '⚖️ ข้อเท็จจริงสำหรับงานวินัย';
+        const note = document.createElement('p');
+        note.textContent = 'เล่าข้อกล่าวหาและข้อเท็จจริงเท่าที่มี ระบบจะเตรียมร่างให้ผู้มีอำนาจตรวจทาน';
+        guidance.append(title, note);
+        conversation.append(guidance);
+      }
       input.value = tortIntent ? '' : pendingPrompt;
+      if (disciplineIntent) input.value = '';
       input.placeholder = tortIntent ? 'เช่น ทรัพย์สินราชการเสียหาย ประชาชนได้รับความเสียหาย หรือเกิดเหตุระหว่างการปฏิบัติงาน' : 'พิมพ์ข้อมูลเพิ่มเติมที่จำเป็น...';
       input.dispatchEvent(new Event('input', { bubbles: true }));
-      if (!tortIntent) form.requestSubmit();
+      if (disciplineIntent) input.placeholder = 'เล่าข้อกล่าวหา ข้อเท็จจริง และหลักฐานที่มี โดยไม่ใส่ข้อมูลส่วนบุคคลที่ไม่จำเป็น';
+      if (!tortIntent && !disciplineIntent) form.requestSubmit();
       else input.focus();
     }
     else {
