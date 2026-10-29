@@ -12,6 +12,8 @@
   const resultPromptKey = 'govprompt.resultPrompt.v1';
   const resultForceIntakeKey = 'govprompt.forceGuidedIntake.v1';
   const resultTrustedInternalKey = 'govprompt.resultPromptTrustedInternal.v1';
+  const resultTortIntentKey = 'govprompt.resultTortIntent.v1';
+  const resultDisciplineIntentKey = 'govprompt.resultDisciplineIntent.v1';
   let resultRoute = new URLSearchParams(window.location.search).get('view') === 'result';
 
   function enterResultPage() {
@@ -352,11 +354,11 @@
     ].join('\n');
     return Object.freeze({ ...promptBundle, prompt: promptBundle.prompt + block, serviceContractNaturalPerson: true });
   }
-  async function preparePrompt(text, workflowId, caseFacts = text) {
+  async function preparePrompt(text, workflowId, caseFacts = text, explicitTort = false, explicitDiscipline = false) {
     const core = requireCore();
     const safeAttachments = sanitizedAttachmentMetadata(core);
     // GP223 must return before ANY shared retrieval or budget/workflow search path.
-    if (core.isGP223Request({ question: text, workflowId })) {
+    if (!explicitTort && !explicitDiscipline && core.isGP223Request({ question: text, workflowId })) {
       if (typeof core.createGP223WorkflowPlan !== 'function') throw new Error('GP223 workflow is unavailable');
       const context = core.createSharedContext({ facts: caseFacts, desiredOutput: text,
         documents: safeAttachments.map(file => file.name).join(', '), specialFlags: ['GP223'] });
@@ -370,9 +372,35 @@
     // Install the scoped vehicle guardrail before routing or building quality gates.
     // This import does not access the network for legal research.
     await import('./core/vehicle-regulation-routing-guardrail-v1.js?v=1.0.0');
-    const workflowRuntimePromise = prepareWorkflowRuntime(text);
+    const workflowRuntimePromise = explicitTort ? Promise.resolve({ view: null, status: 'tort-intake', block: '- Primary workflow: gov.legal' }) : explicitDiscipline ? Promise.resolve({ view: null, status: 'discipline-intake', block: [
+      'งานวินัย — ข้อกำหนดเฉพาะจากเมนูที่ผู้ใช้เลือก',
+      '- Primary workflow: gov.hr',
+      'แยกข้อกล่าวหาจากข้อเท็จจริงที่ตรวจยืนยันแล้ว ตรวจพยานหลักฐาน ประเด็นสอบสวน ขั้นตอน ฐานกฎหมายและอำนาจฉบับปัจจุบัน',
+      'ข้อมูลแจ้งเหตุเป็น UNVERIFIED; ฐานอำนาจและกฎหมายที่ยังตรวจไม่ได้เป็น NOT VERIFIED ต้องตรวจ Official Source → Authority → Version → Evidence → Reasoning → Human Review ก่อนใช้จริง',
+      'จัดทำร่างเอกสารพร้อมข้อมูลที่ขาด [รอตรวจสอบ] ห้ามวินิจฉัยความผิดอัตโนมัติ ห้ามสมมติผลสอบหรือออกคำสั่งลงโทษที่มีผลบังคับ ให้ผู้มีอำนาจตรวจทานก่อนลงนาม',
+      'แยกกระบวนการวินัยออกจากกระบวนการชดใช้ค่าเสียหาย; คง Decision Lock ว66/ว141 ห้ามกำหนดสัดส่วนรับผิดหรือออกคำสั่งเรียกชดใช้ ปกปิดข้อมูลส่วนบุคคลก่อนส่ง AI ภายนอก'
+    ].join('\n') }) : prepareWorkflowRuntime(text);
     const context = core.createSharedContext({ facts: text, desiredOutput: text, documents: safeAttachments.map(file => file.name).join(', ') });
-    const route = core.routeTransaction(context);
+    const detectedRoute = core.routeTransaction(context);
+    const route = explicitTort ? Object.freeze({
+      ...detectedRoute,
+      moduleId: 'GP002',
+      assistant: core.PROMPT_REGISTRY.find(item => item.moduleId === 'GP002'),
+      transactionType: 'legal',
+      modules: Object.freeze(['GP002']),
+      shouldRedirect: false,
+      fallback: false,
+      ambiguous: false,
+      reason: 'explicit-legal-tort-quick-action'
+    }) : explicitDiscipline ? Object.freeze({
+      ...detectedRoute,
+      moduleId: 'GP006',
+      assistant: core.PROMPT_REGISTRY.find(item => item.moduleId === 'GP006'),
+      transactionType: 'human-resources',
+      modules: Object.freeze(['GP006']),
+      shouldRedirect: false, fallback: false, ambiguous: false,
+      reason: 'explicit-hr-discipline-quick-action'
+    }) : detectedRoute;
     const promptBundleBase = core.createGovernmentPrompt({
       question: text,
       route,
@@ -436,7 +464,7 @@
 
     // Vehicle regulation 2569: scoped enhancement to the existing procurement workflow.
     // Keep all legal verification in the user's destination AI, not GP's live search.
-    const vehicleRequest = Boolean(core.isVehicleRegulationRequest?.(text));
+    const vehicleRequest = !explicitTort && !explicitDiscipline && Boolean(core.isVehicleRegulationRequest?.(text));
     if (vehicleRequest && !promptBundle.gp223) {
       const vehicleInstructions = [
         'งานยานพาหนะองค์กรปกครองส่วนท้องถิ่น พ.ศ. 2569 — วิเคราะห์ในหมวดพัสดุและทรัพย์สินเดิม',
@@ -477,7 +505,7 @@
     const decisionTask = !isMinutesDraft && (Boolean(assistanceRoute?.decisionTask) || Boolean(v8?.isDecisionQuestion?.(text)) || ['legal','procurement','finance','human-resources','internal-audit'].includes(String(route?.transactionType || '').toLowerCase()) || kAuditTask);
     if (!promptBundle.vehicleRegulation2569 && decisionTask && typeof core.officialSearchConnector?.search === 'function') {
       try {
-        searchResult = Object.freeze(await core.officialSearchConnector.search(text, { count: 10, requireFreshness: true }));
+        searchResult = Object.freeze(await core.officialSearchConnector.search(text, { module: route?.moduleId, count: 10, requireFreshness: true }));
       } catch {
         searchResult = Object.freeze({ mode: 'search-error', results: [], evidence: { primaryResults: [], conclusionEligible: false }, warning: 'การค้นแหล่งราชการสดขัดข้อง — ยังไม่ควรฟันธง' });
       }
@@ -650,7 +678,14 @@
       'ช่วยจัดทำงานละเมิดระดับ 1 เท่านั้น แยกข้อมูลจำลอง/คำแจ้งเหตุ/ข้อกล่าวหา/หลักฐานที่ได้รับจริง/ข้อเท็จจริงที่พิสูจน์ได้ออกจากกัน ข้อความจากผู้ใช้หรือโจทย์จำลองไม่ถือว่าเป็น Verified Facts ให้ระบุ UNVERIFIED เสมอจนกว่าจะมีหลักฐานตรวจยืนยัน',
       'ห้ามแต่งหรือคาดเดาชิ้นส่วนรถที่เสียหาย รายการทรัพย์สิน ผู้ขับ พยาน ชื่อ ทะเบียน วันเวลา สถานที่ จำนวนเงิน ใบอนุญาตใช้รถ บันทึกตำรวจ และเอกสารใดที่ผู้ใช้ไม่ได้ให้โดยชัดแจ้ง ข้อมูลที่ไม่มีให้ใส่ [รอตรวจสอบ] เท่านั้น',
       'จำแนกเหตุและจัดบัญชีหลักฐาน ระบุประเด็นสอบข้อเท็จจริงและคำถามพยาน',
+      'RETRIEVAL QUERY — ใช้คำค้นสมบูรณ์ไม่ตัดกลางคำ: ความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. กรณีรถราชการเกิดอุบัติเหตุหรือเสียหายระหว่างปฏิบัติราชการ การสอบข้อเท็จจริง การซ่อมรถราชการ ความเสียหายของรถคู่กรณี และอำนาจแต่งตั้งคณะกรรมการ ตรวจต้นฉบับกฎหมายและหนังสือสั่งการที่มีผลใช้บังคับก่อนอ้างอิง; รักษาลักษณะเหตุที่ผู้ใช้ระบุ เช่น ชนท้าย โดยไม่เปลี่ยนเป็นเฉี่ยวชน ห้ามสรุปฐานกฎหมายหรือผลการสอบสวนเอง',
       'ร่างเอกสาร 7 ส่วน: รายงานเหตุ, บัญชีหลักฐาน, คำถามพยาน, บันทึกเสนอ, ร่างคำสั่งแต่งตั้งกรรมการเฉพาะเมื่ออำนาจยืนยันแล้ว, ร่างรายงานสอบสวน, ตารางความเสียหายไม่ระบุร้อยละ',
+      'SAFETY ACCEPTANCE ส่วนที่ 4: เมื่อฐานอำนาจยัง UNVERIFIED/CONFLICT ห้ามเสนอให้ลงนามหรืออนุมัติร่างคำสั่งแต่งตั้งทันที ให้ใช้ข้อเสนอ: จึงเรียนมาเพื่อโปรดพิจารณามอบหมายให้หน่วยงานที่เกี่ยวข้องและนิติกรตรวจสอบข้อเท็จจริง หลักเกณฑ์ที่ใช้บังคับ และอำนาจในการแต่งตั้งคณะกรรมการ ก่อนเสนอการดำเนินการตามขั้นตอนของกฎหมายต่อไป',
+      'SAFETY ACCEPTANCE ส่วนที่ 5: หาก Authority Gate ยังไม่ VERIFIED ให้แสดงหัวข้อ แบบข้อมูลประกอบการพิจารณาจัดทำคำสั่งแต่งตั้งคณะกรรมการ — ยังไม่ใช่คำสั่ง เท่านั้น โดยมีเฉพาะเหตุแจ้ง ความเสียหายที่รอตรวจ ฐานกฎหมายและผู้มีอำนาจที่ต้องตรวจ ประเด็นสอบสวน และข้อมูลบุคคลที่ต้องตรวจ ห้ามแสดงรูปแบบคำสั่ง เลขคำสั่ง คำขึ้นต้นว่า จึงแต่งตั้ง หรือ ให้แต่งตั้ง ข้อความ สั่ง ณ วันที่ หรือ ทั้งนี้ ตั้งแต่บัดนี้เป็นต้นไป ช่องลงนาม รายชื่อ/จำนวนกรรมการที่สมมติ หรือกำหนดเวลาสอบสวนที่ยังไม่มีหลักฐาน',
+      'SAFETY ACCEPTANCE ส่วนที่ 5: เฉพาะเมื่อแสดงหลักฐานต้นฉบับทางการ ฉบับใช้บังคับกับ อปท. ณ วันเกิดเหตุ เงื่อนไข และฐานอำนาจของผู้แต่งตั้งครบ จึงอาจเสนอร่างคำสั่งเพื่อ Human Review ได้ แต่ไม่ให้มีผลโดย AI หรือออกคำสั่งอัตโนมัติ',
+      'SAFETY ACCEPTANCE ส่วนที่ 6: ยังไม่มีการแต่งตั้ง/สอบสวนจริง ให้เป็นแบบฟอร์มว่างเท่านั้น ข้อค้นพบ คำพยาน ข้อสรุป และมติทุกช่องต้องเป็น [ยังไม่ได้ดำเนินการ] ห้ามสรุปว่าได้สอบสวนหรือประชุมแล้ว',
+      'FALSE FILE COMPLETION GUARD: กล่าวว่าสร้างไฟล์ Word/PDF หรือแนบไฟล์แล้วได้ต่อเมื่อเครื่องมือได้สร้างไฟล์จริงและมีไฟล์/ลิงก์ที่ตรวจสอบได้ในคำตอบ หากส่งได้เพียงข้อความต้องแจ้งว่าเป็นร่างข้อความพร้อมคัดลอก ไม่มีไฟล์แนบ ห้ามสร้างลิงก์ดาวน์โหลดปลอม',
+      'FINAL NEGATIVE REVIEW: ก่อนส่งเอกสารทั้ง 7 ส่วนให้ค้นหาข้อความ จึงแต่งตั้ง ให้แต่งตั้ง สั่ง ณ วันที่ ช่องลงนาม จำนวนกรรมการและระยะเวลาที่สมมติในส่วนที่ 5 เมื่อ Authority ยังไม่ VERIFIED; ค้นหาคำสั่งให้ลงนามในส่วนที่ 4 ผลสอบสวนที่แต่งในส่วนที่ 6 และคำอ้างสร้างไฟล์โดยไม่มีไฟล์จริง หากพบต้องแก้ก่อนส่ง; การบอกว่าแก้แล้วไม่เท่ากับหลักฐานผ่านจริง',
       'ร่างคำสั่งแต่งตั้งและร่างรายงานคณะกรรมการต้องระบุชัดว่า ยังไม่แต่งตั้ง/ยังไม่ได้สอบสวน/ยังไม่รับฟังพยาน หากไม่มีหลักฐานยืนยัน ห้ามใช้ถ้อยคำว่า คณะกรรมการได้สอบสวนแล้ว หรือพยานหลักฐานยืนยันแล้ว ห้ามปลอมผลการประชุมและลายมือชื่อ',
       'การใช้รถระหว่างได้รับแจ้งว่าปฏิบัติงานยังไม่ใช่ข้อวินิจฉัยว่าเป็นการกระทำในการปฏิบัติหน้าที่ตามกฎหมาย ห้ามสรุปความประมาท ความประมาทเลินเล่ออย่างร้ายแรง ความรับผิด หรือผู้มีอำนาจแต่งตั้งก่อนตรวจหลักฐานและกฎหมาย',
       'ตรวจชื่อเต็มกฎหมายและระเบียบให้ตรงต้นฉบับทางการ พร้อมฉบับแก้ไขและผลใช้บังคับกับ อบจ. ห้ามตั้งชื่อระเบียบขึ้นเอง ห้ามคำนวณวันเริ่มนับอายุความหรือบอกว่าเริ่มนับแล้วจากโจทย์ที่ไม่มีวันรู้เหตุและผู้รับผิด หากตรวจไม่ได้ระบุ NOT VERIFIED',
@@ -704,11 +739,11 @@
     return prompt.endsWith(completion) ? prompt : prompt + completion;
   }
 
-  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime, originalRequest = '', documentSource = originalRequest }) {
+  function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime, originalRequest = '', documentSource = originalRequest, explicitTortIntent = false, explicitDisciplineIntent = false }) {
     if (workflowRuntime && !promptBundle.gp223) {
       promptBundle = { ...promptBundle, prompt: completeDocumentHandoff(promptBundle.prompt, originalRequest) };
     }
-    promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, originalRequest) };
+    if (!explicitDisciplineIntent) promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, explicitTortIntent ? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. ' + originalRequest : originalRequest) };
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
@@ -878,7 +913,9 @@
   }
 
   async function submitPrompt(text, userSource = null) {
-    const intake = window.GovPromptCore.prepareGP223IntakeTurn({ text, state: gp223IntakeState, attachments });
+    const explicitTort = form.dataset.tortIntent === 'true';
+    const explicitDiscipline = !explicitTort && form.dataset.disciplineIntent === 'true';
+    const intake = explicitTort ? { question: 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.\nข้อมูลแจ้งเหตุ (UNVERIFIED): ' + text, workflowId: null, caseFacts: text, state: null } : explicitDiscipline ? { question: 'งานวินัยของเจ้าหน้าที่ อปท.\nข้อมูลแจ้งเหตุ (UNVERIFIED): ' + text, workflowId: null, caseFacts: text, state: null } : window.GovPromptCore.prepareGP223IntakeTurn({ text, state: gp223IntakeState, attachments });
     gp223IntakeState = intake.state;
     window.GovPromptCore.gp223IntakeState = intake.state;
     enterResultPage();
@@ -888,7 +925,7 @@
     addUserMessage(text); addThinking();
     conversation.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
     let prepared;
-    try { prepared = await preparePrompt(intake.question, intake.workflowId, intake.caseFacts); }
+    try { prepared = await preparePrompt(intake.question, intake.workflowId, intake.caseFacts, explicitTort, explicitDiscipline); }
     catch {
       document.getElementById('thinkingMessage')?.remove();
       window.GovPrompt?.toast('ระบบวิเคราะห์หรือค้นข้อมูลยังไม่พร้อม กรุณาลองใหม่อีกครั้ง');
@@ -898,7 +935,7 @@
     }
     await new Promise(resolve => setTimeout(resolve, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 250));
     document.getElementById('thinkingMessage')?.remove();
-    addRouteResult({ ...prepared, originalRequest: text, documentSource: userSource?.unavailable ? null : userSource ? [userSource.original,...userSource.answers].join('\n\n') : text }); saveHistory(text, prepared.route); clearAttachments();
+    addRouteResult({ ...prepared, originalRequest: text, explicitTortIntent: explicitTort, explicitDisciplineIntent: explicitDiscipline, documentSource: userSource?.unavailable ? null : userSource ? [userSource.original,...userSource.answers].join('\n\n') : text }); saveHistory(text, prepared.route); clearAttachments();
     if (prepared.promptBundle.gp223) document.documentElement.classList.add('result-intake');
     document.querySelector('.result-page-header strong').textContent = prepared.budgetSourceRuntime ? 'ผลลัพธ์พร้อมใช้งาน' : 'คำสั่งพร้อมส่งต่อ AI';
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -999,21 +1036,55 @@
     let pendingPrompt = '';
     let forceGuidedIntake = false;
     let trustedInternalPrompt = false;
+    let tortIntent = false;
+    let disciplineIntent = false;
     try {
       pendingPrompt = sessionStorage.getItem(resultPromptKey) || '';
       forceGuidedIntake = sessionStorage.getItem(resultForceIntakeKey) === 'true';
       trustedInternalPrompt = sessionStorage.getItem(resultTrustedInternalKey) === 'true';
+      tortIntent = sessionStorage.getItem(resultTortIntentKey) === 'true';
+      disciplineIntent = !tortIntent && sessionStorage.getItem(resultDisciplineIntentKey) === 'true';
       sessionStorage.removeItem(resultPromptKey);
       sessionStorage.removeItem(resultForceIntakeKey);
       sessionStorage.removeItem(resultTrustedInternalKey);
+      sessionStorage.removeItem(resultTortIntentKey);
+      sessionStorage.removeItem(resultDisciplineIntentKey);
     } catch {}
     if (pendingPrompt) {
       if (forceGuidedIntake) form.dataset.forceGuidedIntake = 'true';
-      if (trustedInternalPrompt) form.dataset.trustedInternalPrompt = 'true';
-      input.value = pendingPrompt;
-      input.placeholder = 'พิมพ์ข้อมูลเพิ่มเติมที่จำเป็น...';
+      // Editable incident intake is user input, never a trusted catalog prompt.
+      if (trustedInternalPrompt && !tortIntent && !disciplineIntent) form.dataset.trustedInternalPrompt = 'true';
+      if (tortIntent) {
+        form.dataset.tortIntent = 'true';
+        const guidance = document.createElement('section');
+        guidance.className = 'guided-intake-message';
+        guidance.dataset.tortIntake = 'true';
+        const title = document.createElement('strong');
+        title.textContent = '⚖️ ข้อเท็จจริงสำหรับงานความรับผิดทางละเมิด';
+        const note = document.createElement('p');
+        note.textContent = 'เล่าเหตุการณ์ที่เกิดขึ้น แล้ว GovPrompt จะช่วยเตรียมเอกสารงานละเมิดให้';
+        guidance.append(title, note);
+        conversation.append(guidance);
+      }
+      if (disciplineIntent) {
+        form.dataset.disciplineIntent = 'true';
+        const guidance = document.createElement('section');
+        guidance.className = 'guided-intake-message';
+        guidance.dataset.disciplineIntake = 'true';
+        const title = document.createElement('strong');
+        title.textContent = '⚖️ ข้อเท็จจริงสำหรับงานวินัย';
+        const note = document.createElement('p');
+        note.textContent = 'เล่าข้อกล่าวหาและข้อเท็จจริงเท่าที่มี ระบบจะเตรียมร่างให้ผู้มีอำนาจตรวจทาน';
+        guidance.append(title, note);
+        conversation.append(guidance);
+      }
+      input.value = tortIntent ? '' : pendingPrompt;
+      if (disciplineIntent) input.value = '';
+      input.placeholder = tortIntent ? 'เช่น ทรัพย์สินราชการเสียหาย ประชาชนได้รับความเสียหาย หรือเกิดเหตุระหว่างการปฏิบัติงาน' : 'พิมพ์ข้อมูลเพิ่มเติมที่จำเป็น...';
       input.dispatchEvent(new Event('input', { bubbles: true }));
-      form.requestSubmit();
+      if (disciplineIntent) input.placeholder = 'เล่าข้อกล่าวหา ข้อเท็จจริง และหลักฐานที่มี โดยไม่ใส่ข้อมูลส่วนบุคคลที่ไม่จำเป็น';
+      if (!tortIntent && !disciplineIntent) form.requestSubmit();
+      else input.focus();
     }
     else {
       document.documentElement.classList.remove('result-intake');

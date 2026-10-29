@@ -14,6 +14,19 @@ for(const size of cases){
  page.on('pageerror',e=>errors.push(e.message));
  try {
    await page.goto(origin,{waitUntil:'domcontentloaded',timeout:30000});
+   const retrievalQuestion='รถราชการชนท้ายรถคู่กรณีระหว่างเดินทางไปปฏิบัติราชการ ขอขั้นตอนสอบละเมิด การซ่อมรถ และการตรวจสอบอำนาจแต่งตั้งกรรมการ';
+   const retrieval = await page.evaluate(question => {
+     const core=window.GovPromptCore;
+     const route={moduleId:'GP002',reason:'explicit-legal-tort-quick-action'};
+     const plan=core.createOfficialSearchPlan(question,{module:route.moduleId});
+     const output=core.routeOutput(question,route,{facts:question});
+     return {plan,output:{id:output.id,format:output.format,instructions:output.instructions},policy:core.OFFICIAL_SEARCH_USER_AI_ONLY};
+   },retrievalQuestion);
+   if(retrieval.plan.originalQuery!==retrievalQuestion || !retrieval.plan.query.includes(retrievalQuestion))throw Error('Retrieval query truncated or lost reported collision facts');
+   if(retrieval.plan.routedModules[0]!=='GP002' || retrieval.plan.query.includes('จัดซื้อจัดจ้าง พัสดุภาครัฐ'))throw Error('Tort retrieval routed to procurement');
+   if(retrieval.output.id!=='tort-level1-document' || !retrieval.output.instructions.some(t=>t.includes('7 ส่วน')))throw Error('Tort output not seven-part document');
+   if(retrieval.policy!==true)throw Error('Retrieval policy must delegate live lookup to selected user AI');
+   console.log('PASS browser retrieval and seven-part output',size.name);
    await page.locator('#promptInput').fill('สอบละเมิดเจ้าหน้าที่ กรณีรถราชการชนคู่กรณี ใช้ข้อมูลจำลอง ขอรายการหลักฐานและร่างเอกสาร');
    await page.locator('#chatForm button[type=submit]').click();
    await page.locator('#conversation .message.assistant details pre').first().waitFor({state:'attached',timeout:20000});

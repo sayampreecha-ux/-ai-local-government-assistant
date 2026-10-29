@@ -144,6 +144,22 @@
       context?.facts
     ].filter(Boolean).join(' '));
 
+    // Explicit tort quick-action route is a seven-part legal document handoff, not generic analysis.
+    if (route?.reason === 'explicit-legal-tort-quick-action' && route?.moduleId === 'GP002') {
+      return Object.freeze({
+        id: 'tort-level1-document',
+        label: 'เอกสารงานละเมิดระดับ 1 ครบ 7 ส่วน',
+        format: 'official-document',
+        confidence: 1,
+        reason: 'explicit-legal-tort-level1-document',
+        instructions: Object.freeze([
+          'จัดทำร่างงานละเมิดระดับ 1 ครบ 7 ส่วน: รายงานเหตุ บัญชีหลักฐาน คำถามพยาน บันทึกเสนอ ข้อมูลประกอบการแต่งตั้งกรรมการ ร่างรายงานสอบสวน และตารางความเสียหาย',
+          'Authority UNVERIFIED: ห้ามเสนออนุมัติหรือสร้างคำสั่งแต่งตั้งพร้อมลงนาม ส่วนรายงานสอบสวนที่ยังไม่มีผลให้เป็นแบบฟอร์มว่าง',
+          'รักษาข้อเท็จจริงต้นฉบับ เช่น ชนท้าย; ห้ามแต่งชื่อ วันเวลา จำนวนเงิน หรือผลสอบสวน; คง Decision Lock ว66/ว141, PDPA และ Human Review'
+        ])
+      });
+    }
+
     // Explicit correspondence drafting takes precedence over subject-matter
     // engineering output. Do not infer this from 'หนังสือ' alone.
     if (/^(?:กรุณา|โปรด|ช่วย)?\s*(?:ร่าง|เขียน|จัดทำ|ทำ)\s*(?:หนังสือ(?:ตอบ|หารือ|ชี้แจง|แจ้ง)?|บันทึกข้อความ|คำชี้แจง(?:เป็นหนังสือ)?)/i.test(normalize(input))) {
