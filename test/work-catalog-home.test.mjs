@@ -136,7 +136,7 @@ test('tort Level-1 safety acceptance locks unverified appointment, inquiry and f
 
 test('explicit tort quick action pins the full legal module route, not only transaction type', () => {
   const home = readFileSync('assets/js/home-v3.js', 'utf8');
-  const routeBlock = home.match(/const route = explicitTort \? Object\.freeze\(\{([\s\S]*?)\}\) : detectedRoute;/)?.[1] || '';
+  const routeBlock = home.split('const route = explicitTort ? Object.freeze({')[1]?.split('}) : explicitDiscipline ? Object.freeze({')[0] || '';
   assert.ok(routeBlock, 'explicit tort route override missing');
   for (const expected of [
     "moduleId: 'GP002'",
@@ -148,6 +148,9 @@ test('explicit tort quick action pins the full legal module route, not only tran
   assert.match(home, /const detectedRoute = core\.routeTransaction\(context\)/);
   assert.match(home, /const route = explicitTort \?/);
   assert.match(home, /: detectedRoute;/);
+  assert.match(home, /explicitDiscipline \? Object\.freeze/);
+  assert.match(home, /moduleId: 'GP006'/);
+  assert.match(home, /reason: 'explicit-hr-discipline-quick-action'/);
 });
 
 test('explicit tort output is a seven-part document without changing generic legal analysis', () => {
