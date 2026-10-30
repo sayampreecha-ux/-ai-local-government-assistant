@@ -27,7 +27,7 @@ for (const id of cases) {
   if(id==='GP10-C'||id==='GP10-D') assert.match(actual,/เริ่มสอบสวน/);
  });
 }
-for (const input of ['สวัสดี','ขอคำอธิบายรายได้คืออะไร','ทำไมต้องมีบันทึกข้อความ','ต้องตรวจสอบกฎหมายอะไร','มีอำนาจจัดอบรมไหม']) {
+for (const input of ['สวัสดี','ขอคำอธิบายรายได้คืออะไร','ทำไมต้องมีบันทึกข้อความ','ต้องตรวจสอบกฎหมายอะไร','มีอำนาจจัดอบรมไหม','เขียนข่าวประชาสัมพันธ์กิจกรรมท้องถิ่น']) {
  test('non-creation prompts stay unchanged: '+input,()=>assert.equal(quality('BASE',input),'BASE'));
 }
 test('does not invent output file or imply it was reviewed',()=>{
