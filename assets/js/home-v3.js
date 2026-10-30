@@ -708,6 +708,26 @@
     ].join('\n');
   }
 
+  function enforceHandoffQuality(prompt, originalRequest) {
+    const request = String(originalRequest || '');
+    const source = String(prompt || '');
+    if (/^(?:ทำไม|เพราะอะไร|เหตุใด|อธิบาย|ขอ(?:ทราบ|วิธี|คำแนะนำ))/.test(request)) return source;
+    if (!/(?:จัดทำ|ทำ|สร้าง|ร่าง|เขียน|เตรียม|ช่วยจัด|ช่วยทำ|เอา(?:ตาราง|กำหนดการ)|ขอ(?:ตาราง|กำหนดการ|รายงาน))/i.test(request) || !/(?:บันทึก|ห้องประชุม|XLSX|Excel|ตาราง|อบรม|กำหนดการ|รณรงค์|ประกาศ|ข้อร้องเรียน|รับชำระ|รายได้)/i.test(request)) return source;
+    if (source.includes('[GP_HANDOFF_QUALITY_V1]')) return source;
+    const rules = [
+      '[GP_HANDOFF_QUALITY_V1]',
+      'แยกข้อมูลต้นทางที่ยืนยันได้ ออกจากข้อเสนอเสริมของ AI อย่างชัดเจน: กิจกรรม หัวข้ออบรม สถานที่ วิทยากร อุปกรณ์ พิธีการ เวลา และวิธีประเมินที่ผู้ใช้ไม่ได้ให้ เป็นเพียงข้อเสนอรอตรวจสอบ ไม่ใช่ข้อเท็จจริงหรือรายการที่อนุมัติแล้ว',
+      'ถ้าข้อมูลสำคัญขาดให้ใช้ [รอตรวจสอบ] ห้ามเขียนว่าหน่วยงานได้กำหนดจัด รับเรื่อง เริ่มสอบสวน ตรวจหลักฐาน รับชำระเงิน หรืออนุมัติแล้วโดยไม่มีหลักฐาน ข้อเสนอห้ามปลอมเป็นสถานะปฏิบัติจริง',
+      'ตรวจผลกับเงื่อนไขเชิงปฏิเสธของผู้ใช้ เช่น ไม่ทำสไลด์ ไม่แข่งขัน ไม่ใช้ชื่อจริง ไม่กล่าวอ้างผลการรักษา และไม่คำนวณภาษี',
+      'ก่อนส่งไฟล์ DOCX ให้ตรวจข้อความ ช่องลงนาม รูปแบบ และรายละเอียดเพิ่มว่าไม่ถูกนำไปอ้างเป็นคำขอหรือข้อเท็จจริงจริง; ห้ามอ้างว่าพร้อมลงนามโดยไม่มีการตรวจทาน'
+    ];
+    if (/(?:XLSX|Excel|ตาราง|รับชำระ|รายได้)/i.test(request)) rules.push(
+      'ตารางการเงิน: ตรวจจำนวน หน่วย ราคา ผลคูณ และยอดรวมจากข้อมูลต้นทาง แยกยอดเงินตามรายการจำลองจากยอดรับเงินจริง และห้ามแต่งสถานะเอกสารหรือการชำระเงิน',
+      'หากสร้าง XLSX ที่ใช้สูตร ให้ตรวจค่าผลลัพธ์ที่แสดงทันทีและ cached formula values/recalculation เท่าที่เครื่องมือรองรับ ถ้าตรวจไฟล์จริงไม่ได้ให้แจ้ง NOT VERIFIED พร้อมตารางตัวเลขตรวจทานได้ ห้ามเปลี่ยนสูตรเป็นค่าคงที่โดยไม่บอก'
+    );
+    return source + '\\n\\n' + rules.join('\\n');
+  }
+
   function completeDocumentHandoff(prompt, originalRequest) {
     const request = String(originalRequest || '').trim();
     // Bounded creation intents only: ordinary questions and explicit refusals stay unchanged.
@@ -749,6 +769,7 @@
       promptBundle = { ...promptBundle, prompt: completeDocumentHandoff(promptBundle.prompt, originalRequest) };
     }
     if (!explicitDisciplineIntent) promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, explicitTortIntent ? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. ' + originalRequest : originalRequest) };
+    promptBundle = { ...promptBundle, prompt: enforceHandoffQuality(promptBundle.prompt, originalRequest) };
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
