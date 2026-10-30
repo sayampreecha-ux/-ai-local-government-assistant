@@ -747,7 +747,7 @@
   function enforceHandoffQuality(prompt, originalRequest) {
     const request = String(originalRequest || '');
     const source = String(prompt || '');
-    if (!/(?:บันทึก|ห้องประชุม|XLSX|Excel|ตาราง|อบรม|กำหนดการ|รณรงค์|ประชาสัมพันธ์|ประกาศ|ข้อร้องเรียน|รับชำระ|รายได้)/i.test(request)) return source;
+    if (!/(?:จัดทำ|ทำ|สร้าง|ร่าง|เขียน|เตรียม|ช่วยจัด|ช่วยทำ|เอา(?:ตาราง|กำหนดการ)|ขอ(?:ตาราง|กำหนดการ|รายงาน))/i.test(request) || !/(?:บันทึก|ห้องประชุม|XLSX|Excel|ตาราง|อบรม|กำหนดการ|รณรงค์|ประชาสัมพันธ์|ประกาศ|ข้อร้องเรียน|รับชำระ|รายได้)/i.test(request)) return source;
     if (source.includes('[GP_HANDOFF_QUALITY_V1]')) return source;
     const rules = [
       '[GP_HANDOFF_QUALITY_V1]',
