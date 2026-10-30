@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 const home = readFileSync('assets/js/home-v3.js','utf8');
 const start = home.indexOf('  function enforceHandoffQuality(');
-const end = home.indexOf('  function addRouteResult(', start);
+const end = home.indexOf('  function completeDocumentHandoff(', start);
 assert.ok(start !== -1 && end > start);
 const quality = vm.runInNewContext('(' + home.slice(start,end).trim() + ')');
 const fixture = JSON.parse(readFileSync('tests/fixtures/acceptance-65-20261026.json','utf8'));
