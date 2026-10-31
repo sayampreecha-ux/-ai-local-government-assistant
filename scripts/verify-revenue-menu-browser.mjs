@@ -65,6 +65,42 @@ try {
     // The normal form is still the only send path. Selecting a revenue task
     // never bypasses the user's explicit submit action.
     assert.equal(await page.locator('#chatForm button[type="submit"]').count(),1);
+    // Tort follows the same result-page route as other legal actions, not revenue fill-only behavior.
+    const legal = page.locator('.work-catalog-group[data-category-id="audit"]');
+    await legal.locator('.work-catalog-category-toggle').click();
+    const tort = legal.locator('.work-catalog-task', {hasText:'⚖️ งานความรับผิดทางละเมิด'});
+    assert.equal(await tort.count(),1);
+    assert.equal(await page.locator('.work-catalog-task', {hasText:'⚖️ งานความรับผิดทางละเมิด'}).count(),1);
+    assert.equal(await tort.getAttribute('data-revenue-prompt'),null);
+    const before = await page.locator('#conversation .message').count();
+    await Promise.all([
+      page.waitForURL(url => url.searchParams.get('view') === 'result'),
+      tort.click()
+    ]);
+    assert.equal(new URL(page.url()).searchParams.get('view'),'result');
+    await page.locator('body').waitFor({state:'visible'});
+    assert.ok((await page.locator('body').innerText()).length > 30,'result page must render');
+    const intakeGuide = page.locator('[data-tort-intake="true"]');
+    await intakeGuide.waitFor({state:'visible'});
+    assert.match(await intakeGuide.innerText(),/เล่าเหตุการณ์ที่เกิดขึ้น/);
+    assert.equal(await page.locator('#chatForm').getAttribute('data-tort-intent'),'true');
+    const seeded = await page.locator('#promptInput').inputValue();
+    assert.equal(seeded,'','tort incident composer must start blank');
+    assert.doesNotMatch(seeded,/กรณีรถราชการชนหรือเสียหายระหว่าง/);
+    assert.equal(await page.locator('#conversation .message').count(),0,'tort must not auto-submit');
+    await page.locator('#promptInput').fill('ประชาชนแจ้งว่าได้รับความเสียหายจากการปฏิบัติงาน ยังไม่ทราบวันเวลา');
+    assert.match(await page.locator('#promptInput').inputValue(),/ยังไม่ทราบวันเวลา/);
+    await page.locator('#chatForm').evaluate(form => form.requestSubmit());
+    await page.locator('.route-label').waitFor({state:'visible',timeout:30000});
+    assert.match(await page.locator('.route-label').innerText(),/กฎหมาย/);
+    assert.doesNotMatch(await page.locator('.route-label').innerText(),/พัสดุ|สารบรรณ/);
+    const previews = await page.locator('.answer-card details pre').allTextContents();
+    assert.ok(previews.some(s => s.includes('[GP_TORT_LEVEL1_HANDOFF_V1]')), 'tort Level-1 marker missing in assembled prompts: '+ JSON.stringify(previews.map(s => s.slice(-180))));
+    assert.ok(previews.some(s => s.includes('Decision Lock')));
+    assert.ok(previews.some(s => s.includes('UNVERIFIED')));
+    assert.ok(previews.some(s => s.includes('ประชาชนแจ้งว่าได้รับความเสียหาย')));
+
+    console.log((viewport.width<=390?'mobile':'desktop')+' tort legal normal result navigation PASS');
     await page.close();
   }
   console.log('Revenue eight-menu Chromium mobile/desktop E2E PASS');

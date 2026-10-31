@@ -1,0 +1,150 @@
+{
+  "module": "tort-liability",
+  "release_status": "BLOCKED_LEGAL_SOURCE_VERIFICATION",
+  "reviewed_on": "2026-10-27",
+  "source_records": [
+    {
+      "id": "ACT2539",
+      "title": "พระราชบัญญัติความรับผิดทางละเมิดของเจ้าหน้าที่ พ.ศ. 2539",
+      "status": "PARTIAL_TEXT_REVIEWED",
+      "current_version_verified": false,
+      "source_url": "https://www.offo.or.th/sites/default/files/files/regulations/add/ph.r.b._khwaamrabphidthaanglaemidkhngecchaahnaathii_ph.s._2539_0.pdf"
+    },
+    {
+      "id": "REG2539",
+      "title": "ระเบียบสำนักนายกรัฐมนตรีฯ พ.ศ. 2539",
+      "status": "LISTED",
+      "current_version_verified": false,
+      "source_url": "https://www.dgr.go.th/law/th/newsAll/318/4806"
+    },
+    {
+      "id": "REG2559",
+      "title": "ระเบียบสำนักนายกรัฐมนตรีฯ ฉบับที่ 2 พ.ศ. 2559",
+      "status": "TEXT_INSPECTED",
+      "current_version_verified": false,
+      "verified_amendments": [
+        "12",
+        "12/1",
+        "18",
+        "repeal 19"
+      ],
+      "source_url": "https://www.admincourt.go.th/law/law-about/55950824-9456-11f0-ac78-3e879acfe27a"
+    },
+    {
+      "id": "C56",
+      "title": "กค 0406.7/ว 56",
+      "status": "HISTORICAL_ORIGINAL_9_PAGES_SOURCE_TEXT_INSPECTED_CURRENT_VERSION_NOT_VERIFIED",
+      "full_text_verified": true,
+      "source_url": "https://hr.customs.go.th/data_files/267e1dccccc8bbe7f969a298837b569d.pdf"
+    },
+    {
+      "id": "C66",
+      "title": "กค 0406.2/ว 66",
+      "status": "HISTORICAL_ORIGINAL_8_PAGES_VISUALLY_INSPECTED_CURRENT_VERSION_NOT_VERIFIED",
+      "full_text_verified": false,
+      "all_tables_verified": false,
+      "approved_percentages": [],
+      "source_url": "https://infocenter.oic.go.th/upload/cms/1768213152_8393.pdf",
+      "original_pages_inspected": 8,
+      "annex_pages_inspected": 6,
+      "original_tables_inspected": true
+    },
+    {
+      "id": "C75",
+      "title": "กค 0406.2/ว 75",
+      "status": "ORIGINAL_THREE_PAGES_VISUALLY_INSPECTED_CURRENT_VERSION_NOT_VERIFIED",
+      "full_text_verified": true,
+      "source_url": "https://alro.go.th/uploads/org/central_admin/download/article/article_20160601111930.pdf",
+      "original_pages_inspected": 3,
+      "current_version_verified": false
+    },
+    {
+      "id": "C217",
+      "title": "กค 0410.2/ว 217",
+      "status": "ORIGINAL_THREE_PAGES_VISUALLY_INSPECTED_CURRENT_VERSION_NOT_VERIFIED",
+      "full_text_verified": true,
+      "source_url": "https://alro.go.th/uploads/org/central_admin/download/article/article_20160601111958.pdf",
+      "official_registry_url": "https://www.cgd.go.th/cs/internet/internet/%28%E0%B8%AA%E0%B8%A3%E0%B8%9E%29%E0%B8%AB%E0%B8%99%E0%B8%B1%E0%B8%87%E0%B8%AA%E0%B8%B7%E0%B8%AD%E0%B9%80%E0%B8%A7%E0%B8%B5%E0%B8%A2%E0%B8%99.html?adv_search=&date_end=&date_start=&keyword=&page=1&page_locale=th_TH&perpage=500",
+      "original_pages_inspected": 3,
+      "current_version_verified": false,
+      "caution": "Historical item 1 cites original regulation clause 12; 2559 amendment changed clause 12 and inserted 12/1; do not apply old appointment rule mechanically."
+    },
+    {
+      "id": "C141",
+      "title": "กค 0410.2/ว 141 ลงวันที่ 6 ธันวาคม 2555 ซักซ้อมแนวทางกำหนดสัดส่วนความรับผิด",
+      "status": "OFFICIAL_INDEX_ONLY",
+      "full_text_verified": false,
+      "current_version_verified": false,
+      "source_url": "https://audit.dmh.go.th/books/reds.asp?id=16"
+    },
+    {
+      "id": "MI785",
+      "title": "มท 0804.4/ว 785 ลงวันที่ 8 กุมภาพันธ์ 2564 แนวทางรายงานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.",
+      "status": "OFFICIAL_PAO_HOSTED_ORIGINAL_AND_TWO_ANNEXES_VISUALLY_INSPECTED_CURRENT_VERSION_NOT_VERIFIED",
+      "full_text_verified": true,
+      "current_version_verified": false,
+      "source_url": "https://pathumpao.go.th/wp-content/uploads/2024/07/1.16-%E0%B8%84%E0%B8%B9%E0%B9%88%E0%B8%A1%E0%B8%B7%E0%B8%AD%E0%B8%9B%E0%B8%8F%E0%B8%B4%E0%B8%9A%E0%B8%B1%E0%B8%95%E0%B8%B4%E0%B8%87%E0%B8%B2%E0%B8%99%E0%B8%84%E0%B8%A7%E0%B8%B2%E0%B8%A1%E0%B8%A3%E0%B8%B1%E0%B8%9A%E0%B8%9C%E0%B8%B4.pdf",
+      "caution": "Historical 2564 letter and two annexes located in official PAO-hosted 79-page compiled PDF, pages 46–50; not proof of unchanged current status, reporting threshold, PAO signatory authority or referral exception. All runtime decisions and local-government gate remain locked pending later amendment review and human approval.",
+      "source_page_indices": [
+        46,
+        47,
+        48,
+        49,
+        50
+      ],
+      "annexes_inspected": 2,
+      "original_listing_url": "https://sanklangcm.go.th/article-detail/335/"
+    },
+    {
+      "id": "OCS1175_2568",
+      "title": "สำนักงานคณะกรรมการกฤษฎีกา เรื่องเสร็จที่ 1175/2568 กรณี อบจ.เพชรบูรณ์",
+      "status": "OFFICIAL_ORIGINAL_OPINION_SCOPED_READ_CURRENT_APPLICABILITY_REQUIRES_HUMAN_REVIEW",
+      "source_url": "https://comment.ocs.go.th/main/download/1759717674/pdf/%E0%B9%80%E0%B8%A3%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%87%E0%B9%80%E0%B8%AA%E0%B8%A3%E0%B9%87%E0%B8%88%E0%B8%97%E0%B8%B5%E0%B9%88_1175-2568",
+      "source_pages": 8,
+      "pages_visually_reviewed": [
+        1,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "current_version_verified": false,
+      "auto_authority_allowed": false,
+      "caution": "Case-specific opinion; does not automatically validate PAO signatory, committee appointment or liability conclusions."
+    }
+  ],
+  "release_gates": {
+    "legal_version": false,
+    "source_to_claim": false,
+    "c66_all_tables": false,
+    "runtime_integration": false,
+    "human_approval": false,
+    "browser_prod": false,
+    "c141_review": false,
+    "local_government_reporting": false
+  },
+  "notes": "MI785 historical primary+annexes and C217 originals inspected; current-version and human approval gates still locked. No automatic referral thresholds or numeric liability percentages authorized. OCS 1175/2568 fact-bound PAO opinion inspected; no change to legal_version, authority, human_approval or percentage locks.",
+  "verified_automated_acceptance": {
+    "evidence_basis": "GitHub Actions for PR head a34d3b689e3f0f028cfe5aed4392e5a41b85b38e",
+    "workflow_total": 12,
+    "workflow_success": 12,
+    "focused_tort_tests": "PASS",
+    "branch_browser_mobile_desktop": "PASS",
+    "copy_handoff": "PASS_IN_BRANCH_BROWSER",
+    "production_browser": "NOT_VERIFIED",
+    "downstream_free_ai_seven_documents": "NOT_VERIFIED",
+    "internal_seven_part_draft": "PASS_INTERNAL_ONLY",
+    "scope": "STAGING_CODE_AND_BROWSER_ONLY_NOT_LEGAL_OR_PRODUCTION_ACCEPTANCE"
+  },
+  "human_review_package": {
+    "status": "AWAITING_NAMED_APPROVER",
+    "requires": [
+      "final current-version official law validation",
+      "PAO appointing/reporting authority decision for intended case types",
+      "independent full-document evaluation from externally pasted free-AI prompt",
+      "explicit human release approval"
+    ],
+    "release_decision": "DRAFT_DO_NOT_MERGE_OR_DEPLOY"
+  }
+}

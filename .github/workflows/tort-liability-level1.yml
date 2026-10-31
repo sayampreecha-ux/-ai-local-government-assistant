@@ -1,0 +1,20 @@
+name: Tort Liability Level-1 Focused Tests
+on:
+  push:
+    branches:
+      - docs/tort-liability-evidence-register-20261026
+  workflow_dispatch:
+jobs:
+  tort-level1:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Tort intake, source-gate, staged 30 cases and home handoff tests
+        run: node --test tests/unit/tort-liability-*.test.js
+      - name: Browser entrypoint syntax validation
+        run: node --check assets/js/home-v3.js && node --check assets/js/core/prompt-composer.js
