@@ -62,7 +62,8 @@ for (const [i, input] of fixtures.entries()) {
   });
 }
 test('all handoffs and preview use the same final prompt with the existing workflow', () => {
-  assert.match(home, /workflowRuntime && !promptBundle.gp223/);
+  assert.match(home, /if \(!promptBundle\.gp223\) \{/);
+  assert.doesNotMatch(home, /if \(workflowRuntime && !promptBundle\.gp223\)/);
   assert.match(home, /prompt: completeDocumentHandoff\(promptBundle.prompt, originalRequest\)/);
   assert.match(home, /originalRequest: text/);
   assert.match(home, /prepareExternalPrompt\(promptBundle.prompt\)/);

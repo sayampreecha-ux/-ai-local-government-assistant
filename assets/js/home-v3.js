@@ -731,13 +731,13 @@
   function completeDocumentHandoff(prompt, originalRequest) {
     const request = String(originalRequest || '').trim();
     // Bounded creation intents only: ordinary questions and explicit refusals stay unchanged.
-    if (/^(?:ทำไม|เพราะอะไร|เหตุใด)/.test(request) || /ไม่(?:ต้อง|ให้)\s*(?:จัดทำ|ร่าง|สร้าง|เขียน|ทำ)\s*(?:เอกสาร|หนังสือ|บันทึก|รายงาน|ไฟล์|DOCX|Word|อะไร|งานทั้งหมด)/i.test(request)) return prompt;
+    if (/^(?:ทำไม|เพราะอะไร|เหตุใด)/.test(request) || /ไม่(?:ต้อง|ให้)\s*(?:จัดทำ|ร่าง|สร้าง|เขียน|ทำ)\s*(?:ความเห็น|แผน|กำหนดการ|เอกสาร|หนังสือ|บันทึก|รายงาน|ไฟล์|DOCX|Word|อะไร|งานทั้งหมด)/i.test(request)) return prompt;
     // A leading refusal followed by an explanation-only request is not an artifact order.
     // Do not suppress a separate positive DOCX request merely because slides are declined.
     if (/^ไม่(?:ต้อง|ให้)\s*(?:จัดทำ|ร่าง|สร้าง|เขียน|ทำ)\s*(?:Excel|XLSX|DOCX|Word|PowerPoint|PPTX|สไลด์|ตาราง|เอกสาร|หนังสือ|บันทึก|รายงาน)/i.test(request) && /ขอ(?:เพียง)?(?:คำอธิบาย|อธิบาย|ความหมาย)|เท่านั้น/.test(request)) return prompt;
     if (/^(?:ช่วย)?(?:อธิบาย|แนะนำ|สอบถาม|ขอ(?:ทราบ|คำแนะนำ|แนวทาง|วิธี|อธิบาย))/.test(request)) return prompt;
     const documentIntent = /(?:จัดทำ|ร่าง|ทำ|เขียน).{0,30}(?:บันทึกข้อความ|บันทึกขอห้อง|หนังสือราชการ)/i.test(request);
-    const deliverableIntent = /(?:จัดทำ|ร่าง|สร้าง|เขียน|ทำ(?!ไม)|ออกแบบ|เตรียม|ขอ).{0,35}(?:รายงาน|TOR\b|BOQ\b|ตาราง|Excel\b|XLSX\b|DOCX\b|Word\b|PowerPoint\b|PPTX\b|สไลด์)/i.test(request);
+    const deliverableIntent = /(?:จัดทำ|ร่าง|สร้าง|เขียน|ทำ(?!ไม)|ออกแบบ|เตรียม|ขอ).{0,35}(?:ความเห็น|แผน|กำหนดการ|รายงาน|TOR\b|BOQ\b|ตาราง|Excel\b|XLSX\b|DOCX\b|Word\b|PowerPoint\b|PPTX\b|สไลด์)/i.test(request);
     if (!documentIntent && !deliverableIntent) return prompt;
     if (!documentIntent) {
       const completion = '\n\n[GP_DELIVERABLE_HANDOFF_V1]\n' + [
@@ -765,7 +765,7 @@
   }
 
   function addRouteResult({ route, promptBundle, searchResult, workflowRuntime, budgetSourceRuntime, originalRequest = '', documentSource = originalRequest, explicitTortIntent = false, explicitDisciplineIntent = false }) {
-    if (workflowRuntime && !promptBundle.gp223) {
+    if (!promptBundle.gp223) {
       promptBundle = { ...promptBundle, prompt: completeDocumentHandoff(promptBundle.prompt, originalRequest) };
     }
     if (!explicitDisciplineIntent) promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, explicitTortIntent ? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. ' + originalRequest : originalRequest) };
