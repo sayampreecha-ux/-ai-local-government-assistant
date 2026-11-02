@@ -53,10 +53,13 @@
     const byId = new Map(records.map(r => [r.id, r]));
     function search(query = '', options = {}) {
       const needle = key(query), category = key(options.category), agency = key(options.agency);
+      const year = normalize(options.year), status = key(options.status);
       const offset = Math.max(0, Math.trunc(Number(options.offset) || 0));
       const limit = Math.min(100, Math.max(1, Math.trunc(Number(options.limit) || 20)));
       const matches = records.filter(r => (!category || key(r.category) === category)
         && (!agency || key(r.issuingAgency) === agency)
+        && (!status || r.status === status)
+        && (!year || r.documentDate.startsWith(year + '-'))
         && (!needle || [r.documentNumber, r.documentTitle, r.issuingAgency, r.category, ...r.keywords]
           .some(field => key(field).includes(needle))));
       return Object.freeze({ total: matches.length, items: Object.freeze(matches.slice(offset, offset + limit)) });
@@ -65,8 +68,11 @@
       const r = byId.get(normalize(id));
       if (!r) return Object.freeze({ decision: 'NOT_FOUND', conclusionEligible: false });
       const today = date(asOf);
-      const related = records.filter(other => other.supersedesDocumentId === r.id
-        || other.repealedBy.includes(r.id) || other.amendedBy.includes(r.id));
+      const related = records.filter(other => other.id !== r.id && (
+        other.supersedesDocumentId === r.id || other.supersededByDocumentId === r.id
+        || other.amendedBy.includes(r.id) || other.repealedBy.includes(r.id)
+        || r.supersededByDocumentId === other.id || r.amendedBy.includes(other.id)
+        || r.repealedBy.includes(other.id)));
       const issues = [];
       if (r.reviewStatus !== 'approved') issues.push('HUMAN_REVIEW_REQUIRED');
       if (!r.lastVerifiedAt) issues.push('VERIFICATION_DATE_MISSING');
