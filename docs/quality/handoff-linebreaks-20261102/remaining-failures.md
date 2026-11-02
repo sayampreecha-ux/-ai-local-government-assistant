@@ -23,7 +23,7 @@ that this is not zero cost or proof of available resources/equipment/personnel.
 Any proposed additional resources must be outside the memo and marked pending
 verification. Existing ordinary sample prompts remain byte-identical.
 
-Validation: targeted tests 41/41; npm test 1,612/1,612 plus the subsequent 10-case
+Validation: targeted tests 42/42; npm test 1,613/1,613 plus the subsequent 10-case
 adversarial suite; existing 18 final-copyable prompt scenarios byte-identical;
 9 original QA60 fixtures plus the original memo example and privacy blocks on
 both device widths. See the final report for exact CI IDs and observed outputs.
@@ -34,3 +34,5 @@ asserting available old resources. Actual fresh Gemini GP04-A response supplied
 and an honest FILE NOT VERIFIED fallback. It added an unnecessary memo heading;
 this is not a claim of perfect output formatting. Actual downloadable file
 acceptance is still blocked by the available provider sessions. No merge/deploy.
+
+A subsequent GP01-E live retest treated edits to user instructions as a completed booking/cancellation story. Add a correction-specific rule: retain the latest selected facts, but do not invent earlier reservations, cancellations, committees, or room capacity. The original fixture is retained and a regression checks this distinction.

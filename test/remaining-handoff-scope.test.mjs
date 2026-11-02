@@ -29,3 +29,5 @@ for(const wording of ['ไม่ใช้งบเพิ่ม','ไม่ขอ
 });
 
 test('explicit tort intake never becomes arithmetic-only',()=>assert.equal(box.isArithmeticSimulationOnly('งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.\nข้อมูลแจ้งเหตุ (UNVERIFIED): '+fixture),false));
+
+test('GP01-E correction is not a completed booking or cancellation',()=>{const q=JSON.parse(readFileSync('tests/fixtures/acceptance-65-20261026.json')).find(x=>x.id==='GP01-E').input;const p=quality('BASE',q);assert.match(p,/ไม่ใช่หลักฐานว่าเคยจองห้อง/);assert.match(p,/ใช้ค่าล่าสุด/);assert.match(p,/ห้ามแต่งคณะทำงาน/);});
