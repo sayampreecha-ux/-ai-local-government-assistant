@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url);
-const { createCircularRegistry, normalizeRecord } = require('../../assets/js/core/circular-watch-registry.js');
+import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
+const context = { window: {} };
+runInNewContext(readFileSync(new URL('../../assets/js/core/circular-watch-registry.js', import.meta.url), 'utf8'), context);
+const { createCircularRegistry, normalizeRecord } = context.window.GovPromptCore.CircularWatch;
 const sample = (overrides = {}) => ({
   id: 'c1', documentTitle: 'Example only — not an official circular',
   documentNumber: 'TEST/001', issuingAgency: 'Test Agency',
