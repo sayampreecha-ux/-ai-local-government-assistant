@@ -27,3 +27,5 @@ for(const wording of ['ไม่ใช้งบเพิ่ม','ไม่ขอ
  const q='จัดทำบันทึกข้อความขอใช้ห้องประชุม 20 คน '+wording;
  const out=quality('BASE',q);assert.match(out,/ห้ามแปลงเป็นไม่มีค่าใช้จ่าย/);assert.match(out,/ห้ามเติมว่าจะใช้ของเดิม/);assert.match(out,/ข้อเสนอรอตรวจสอบ/);
 });
+
+test('explicit tort intake never becomes arithmetic-only',()=>assert.equal(box.isArithmeticSimulationOnly('งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.\nข้อมูลแจ้งเหตุ (UNVERIFIED): '+fixture),false));

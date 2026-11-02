@@ -23,7 +23,7 @@ that this is not zero cost or proof of available resources/equipment/personnel.
 Any proposed additional resources must be outside the memo and marked pending
 verification. Existing ordinary sample prompts remain byte-identical.
 
-Validation: targeted tests 40/40; npm test 1,611/1,611 plus the subsequent 10-case
+Validation: targeted tests 41/41; npm test 1,612/1,612 plus the subsequent 10-case
 adversarial suite; existing 18 final-copyable prompt scenarios byte-identical;
 9 original QA60 fixtures plus the original memo example and privacy blocks on
 both device widths. See the final report for exact CI IDs and observed outputs.

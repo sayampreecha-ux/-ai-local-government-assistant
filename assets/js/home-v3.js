@@ -284,7 +284,7 @@
     if (attachments.length || !/จำลอง/.test(source) || !/(?:XLSX|Excel|ตาราง)/i.test(source)
       || !/ไม่รับรองสิทธิเบิก/.test(source) || !/\d/.test(source) || !/(?:ละ|ราคาต่อหน่วย)/.test(source)) return false;
     const remainder = source.replace(/ไม่รับรองสิทธิเบิก|ค่าใช้จ่าย/g, '');
-    return !/(?:กฎหมาย|ระเบียบ|สิทธิ|เบิก|อนุมัติ|จ่าย|จัดซื้อ|จัดจ้าง|ราคากลาง|ภาษี|จริง|หนังสือ|โอน|วินัย|คำสั่ง|แทนที่|ละเลย|ignore|override)/i.test(remainder);
+    return !/(?:กฎหมาย|ระเบียบ|สิทธิ|เบิก|อนุมัติ|จ่าย|จัดซื้อ|จัดจ้าง|ราคากลาง|ภาษี|จริง|หนังสือ|โอน|วินัย|ละเมิด|สอบสวน|แต่งตั้ง|ร้องเรียน|รถราชการ|คำสั่ง|แทนที่|ละเลย|ignore|override)/i.test(remainder);
   }
 
   function enrichPromptWithWorkflow(promptBundle, workflowRuntime, sourceText = '') {
