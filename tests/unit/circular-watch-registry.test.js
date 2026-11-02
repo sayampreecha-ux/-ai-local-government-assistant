@@ -44,3 +44,18 @@ test('repealed status is never conclusion eligible', () => {
   assert.equal(r.conclusionEligible,false);
   assert.ok(r.issues.includes('NOT_CURRENT'));
 });
+
+test('year and status filters work without fetching all records', () => {
+  const reg = createCircularRegistry([
+    sample({status:'current'}), sample({id:'c2',documentNumber:'TEST/002',documentDate:'2025-10-01'})
+  ]);
+  assert.equal(reg.search('',{year:'2026'}).total,1);
+  assert.equal(reg.search('',{status:'current'}).total,1);
+});
+test('supersession relationships trigger review rather than declaring current', () => {
+  const reg = createCircularRegistry([
+    sample({status:'current',reviewStatus:'approved',lastVerifiedAt:'2026-10-31T12:00:00Z',evidence:['reviewed']}),
+    sample({id:'c2',documentNumber:'TEST/002',supersedesDocumentId:'c1'})
+  ]);
+  assert.ok(reg.assess('c1','2026-11-02').issues.includes('RELATED_VERSION_REQUIRES_REVIEW'));
+});
