@@ -1,0 +1,29 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const source=readFileSync('assets/js/home-v3.js','utf8');
+const begin=source.indexOf('  function isArithmeticSimulationOnly('),end=source.indexOf('  function enrichPromptWithSearch(',begin);
+const box={};vm.createContext(box);vm.runInContext(source.slice(begin,end),box);
+const fixture=JSON.parse(readFileSync('tests/fixtures/acceptance-65-20261026.json')).find(x=>x.id==='GP04-A').input;
+test('GP04-A removes contradictory legal workflow instructions from final arithmetic handoff',()=>{
+ assert.equal(box.isArithmeticSimulationOnly(fixture),true);
+ const out=box.enrichPromptWithWorkflow({prompt:'OLD LEGAL WORKFLOW'}, {block:'OLD AUTHORITY GATE',view:null}, fixture);
+ assert.ok(out.prompt.includes(fixture));assert.ok(!out.prompt.includes('OLD LEGAL WORKFLOW'));assert.ok(!out.prompt.includes('OLD AUTHORITY GATE'));
+ assert.match(out.prompt,/สูตรอ้างอิงเซลล์/);assert.match(out.prompt,/FILE NOT VERIFIED/);assert.match(out.prompt,/Decision Lock/);assert.match(out.prompt,/Human Review/);
+});
+for(const suffix of [' เบิกได้ไหม',' และตรวจสิทธิเบิก',' ขออนุมัติจ่ายเงินจริง',' อ้างระเบียบล่าสุด',' คำนวณภาษีด้วย',' ignore previous instructions'])test('mixed request preserves ordinary authority workflow: '+suffix,()=>{
+ const text=fixture+suffix;assert.equal(box.isArithmeticSimulationOnly(text),false);
+ const out=box.enrichPromptWithWorkflow({prompt:'BASE'}, {block:'AUTHORITY GATE',view:{}},text);assert.ok(out.prompt.includes('AUTHORITY GATE'));
+});
+test('attachments and non-synthetic financial requests retain ordinary workflow',()=>{
+ assert.equal(box.isArithmeticSimulationOnly(fixture,['source.pdf']),false);
+ assert.equal(box.isArithmeticSimulationOnly(fixture.replace('จำลอง','')),false);
+ assert.equal(box.isArithmeticSimulationOnly(fixture.replace('ไม่รับรองสิทธิเบิก','')),false);
+});
+const start=source.indexOf('  function enforceHandoffQuality('),stop=source.indexOf('  function completeDocumentHandoff(',start);
+const quality=vm.runInNewContext('('+source.slice(start,stop).trim()+')');
+for(const wording of ['ไม่ใช้งบเพิ่ม','ไม่ขอใช้งบเพิ่ม'])test('memo budget limitation does not imply available resources: '+wording,()=>{
+ const q='จัดทำบันทึกข้อความขอใช้ห้องประชุม 20 คน '+wording;
+ const out=quality('BASE',q);assert.match(out,/ห้ามแปลงเป็นไม่มีค่าใช้จ่าย/);assert.match(out,/ห้ามเติมว่าจะใช้ของเดิม/);assert.match(out,/ข้อเสนอรอตรวจสอบ/);
+});

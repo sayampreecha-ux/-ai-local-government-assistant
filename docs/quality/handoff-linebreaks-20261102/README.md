@@ -1,3 +1,7 @@
+# PR #365: Handoff quality and bounded task scope
+
+See [remaining-failures.md](remaining-failures.md) for the current implementation and validation. The section below records the original formatting-only checkpoint and is historical, not the final scope.
+
 # Handoff quality line breaks — 2 November 2026
 
 Baseline main: `4b78a656fdf1f4efdc946df4f35b24548fb5a23f`.

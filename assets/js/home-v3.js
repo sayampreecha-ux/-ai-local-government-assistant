@@ -279,7 +279,27 @@
     }
   }
 
+  function isArithmeticSimulationOnly(text, attachments = []) {
+    const source = String(text || '');
+    if (attachments.length || !/จำลอง/.test(source) || !/(?:XLSX|Excel|ตาราง)/i.test(source)
+      || !/ไม่รับรองสิทธิเบิก/.test(source) || !/\d/.test(source) || !/(?:ละ|ราคาต่อหน่วย)/.test(source)) return false;
+    const remainder = source.replace(/ไม่รับรองสิทธิเบิก|ค่าใช้จ่าย/g, '');
+    return !/(?:กฎหมาย|ระเบียบ|สิทธิ|เบิก|อนุมัติ|จ่าย|จัดซื้อ|จัดจ้าง|ราคากลาง|ภาษี|จริง|หนังสือ|โอน|วินัย|คำสั่ง|แทนที่|ละเลย|ignore|override)/i.test(remainder);
+  }
+
   function enrichPromptWithWorkflow(promptBundle, workflowRuntime, sourceText = '') {
+    if (isArithmeticSimulationOnly(sourceText, promptBundle.attachmentNames || [])) {
+      const prompt = [
+        'งานคำนวณตารางจำลองจากข้อมูลที่ให้เท่านั้น — ไม่ใช่การวินิจฉัยสิทธิเบิก',
+        'คำถามและข้อมูลจากผู้ใช้\n' + sourceText,
+        'ส่งตารางฉบับเต็มก่อนคำอธิบาย แสดงจำนวน หน่วย ราคาต่อหน่วย ผลคูณรายรายการ และยอดรวม ตรวจเลขกับข้อมูลต้นทาง ห้ามแต่งราคาและสถานะรับเงินจริง',
+        'ขอบเขตงานนี้ไม่ร้องขอข้อกฎหมาย จึงไม่เพิ่มชื่อระเบียบ ปี เลขข้อ หรือคำวินิจฉัยสิทธิ หากมีคำขอวินิจฉัยจริงต้องกลับไปตรวจ Official Source → Authority → Version → Evidence ก่อนสรุป และคง Decision Lock จนหลักฐานครบ',
+        'หากมีเครื่องมือให้สร้าง XLSX จริงพร้อมสูตรผลคูณและ SUM ตรวจผลรวมและ cached values/recalculation เมื่อเปิดไฟล์ หากไม่มีเครื่องมือ ให้ส่งตารางพร้อมสูตรอ้างอิงเซลล์ที่คัดลอกลง Excel ได้ ระบุว่าไม่ได้สร้างไฟล์และ FILE NOT VERIFIED ห้ามอ้างว่าตรวจไฟล์แล้วหรือทำลิงก์ปลอม',
+        'คง Human Review และ Privacy; ข้อมูลเป็นข้อมูลจำลอง ไม่ใช่การอนุมัติหรือรับรองสิทธิเบิก ห้ามอนุมัติ ลงนาม จ่ายเงิน หรือดำเนินรายการจริง ต้องมี Identity/Permission/Scope/Runtime Check/Approval/Audit/Kill Switch ก่อน action ที่มีผลจริง'
+      ].join('\n\n');
+      return Object.freeze({ ...promptBundle, prompt, workflowRuntime: workflowRuntime?.view });
+    }
+
     if (!workflowRuntime?.block) return promptBundle;
     if (workflowRuntime.view?.meetingMinutes?.mode === 'draft-from-recorded-facts') {
       // Use the existing minutes contract as the handoff authority for factual drafts.
@@ -372,7 +392,7 @@
     // Install the scoped vehicle guardrail before routing or building quality gates.
     // This import does not access the network for legal research.
     await import('./core/vehicle-regulation-routing-guardrail-v1.js?v=1.0.0');
-    const workflowRuntimePromise = explicitTort ? Promise.resolve({ view: null, status: 'tort-intake', block: '- Primary workflow: gov.legal' }) : explicitDiscipline ? Promise.resolve({ view: null, status: 'discipline-intake', block: [
+    const workflowRuntimePromise = isArithmeticSimulationOnly(text, safeAttachments) ? Promise.resolve({ view: null, status: 'arithmetic-simulation', block: 'งานตารางคำนวณจำลอง' }) : explicitTort ? Promise.resolve({ view: null, status: 'tort-intake', block: '- Primary workflow: gov.legal' }) : explicitDiscipline ? Promise.resolve({ view: null, status: 'discipline-intake', block: [
       'งานวินัย — ข้อกำหนดเฉพาะจากเมนูที่ผู้ใช้เลือก',
       '- Primary workflow: gov.hr',
       'แยกข้อกล่าวหาจากข้อเท็จจริงที่ตรวจยืนยันแล้ว ตรวจพยานหลักฐาน ประเด็นสอบสวน ขั้นตอน ฐานกฎหมายและอำนาจฉบับปัจจุบัน',
@@ -721,6 +741,9 @@
       'ตรวจผลกับเงื่อนไขเชิงปฏิเสธของผู้ใช้ เช่น ไม่ทำสไลด์ ไม่แข่งขัน ไม่ใช้ชื่อจริง ไม่กล่าวอ้างผลการรักษา และไม่คำนวณภาษี',
       'ก่อนส่งไฟล์ DOCX ให้ตรวจข้อความ ช่องลงนาม รูปแบบ และรายละเอียดเพิ่มว่าไม่ถูกนำไปอ้างเป็นคำขอหรือข้อเท็จจริงจริง; ห้ามอ้างว่าพร้อมลงนามโดยไม่มีการตรวจทาน'
     ];
+    if (/ไม่(?:ขอ)?(?:ใช้|ขอใช้)?งบ(?:ประมาณ)?เพิ่ม/.test(request)) rules.push(
+      'คงข้อความไม่ขอใช้งบเพิ่มตามต้นทาง ห้ามแปลงเป็นไม่มีค่าใช้จ่าย ไม่มีผลกระทบงบประมาณ หรือมีทรัพยากร อุปกรณ์ ห้อง หรือบุคลากรพร้อม ห้ามเติมว่าจะใช้ของเดิมเป็นข้อเท็จจริง; หากเสนอเพิ่มให้แยกไว้นอกเอกสารเป็นข้อเสนอรอตรวจสอบเท่านั้น'
+    );
     if (/(?:XLSX|Excel|ตาราง|รับชำระ|รายได้)/i.test(request)) rules.push(
       'ตารางการเงิน: ตรวจจำนวน หน่วย ราคา ผลคูณ และยอดรวมจากข้อมูลต้นทาง แยกยอดเงินตามรายการจำลองจากยอดรับเงินจริง และห้ามแต่งสถานะเอกสารหรือการชำระเงิน',
       'หากสร้าง XLSX ที่ใช้สูตร ให้ตรวจค่าผลลัพธ์ที่แสดงทันทีและ cached formula values/recalculation เท่าที่เครื่องมือรองรับ ถ้าตรวจไฟล์จริงไม่ได้ให้แจ้ง NOT VERIFIED พร้อมตารางตัวเลขตรวจทานได้ ห้ามเปลี่ยนสูตรเป็นค่าคงที่โดยไม่บอก'
