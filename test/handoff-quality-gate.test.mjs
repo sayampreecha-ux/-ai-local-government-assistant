@@ -17,6 +17,8 @@ for (const id of cases) {
   const actual=quality(original,input);
   assert.ok(actual.startsWith(original),'original request preserved');
   assert.match(actual,/\[GP_HANDOFF_QUALITY_V1\]/);
+  assert.ok(actual.startsWith(original+'\n\n[GP_HANDOFF_QUALITY_V1]\n'),'quality block starts on a new line');
+  assert.ok(!actual.slice(original.length).includes('\\n'),'quality rules use real line breaks');
   assert.match(actual,/\[รอตรวจสอบ\]/);
   assert.match(actual,/ข้อเสนอ/);
   assert.equal(quality(actual,input),actual,'idempotent');
