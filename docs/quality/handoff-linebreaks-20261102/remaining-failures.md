@@ -53,3 +53,6 @@ recorded separately in the updated report; this source note does not certify
 them. No merge/deploy.
 
 The 3 November exact-head CI browser jobs failed before tests because ubuntu-latest resolved to Ubuntu 26.04, unsupported by the pinned Playwright 1.55.0. Pin the five affected browser workflows to ubuntu-24.04. Keep their steps, assertions, dependencies and gates unchanged. Evidence: Engineering run 41603069114 job 125806182854.
+
+### Narrow-scope negative controls (2026-11-03)
+The first room-only predicate also matched an unrelated tort report mentioning a meeting room. Two negative controls reproduced the failure. Restrict the predicate to a room-request memo/letter and exclude mixed legal/rights/procurement requests. Explicit accessory/food requests remain unchanged. Targeted tests: 47/47; complete Node regression and static build pass. Live guest ChatGPT outputs for both original room-request cases contain no added equipment/services; actual DOCX remains unavailable and is not FILE PASS.
