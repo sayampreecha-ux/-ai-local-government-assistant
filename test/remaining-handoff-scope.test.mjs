@@ -31,3 +31,7 @@ for(const wording of ['ไม่ใช้งบเพิ่ม','ไม่ขอ
 test('explicit tort intake never becomes arithmetic-only',()=>assert.equal(box.isArithmeticSimulationOnly('งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท.\nข้อมูลแจ้งเหตุ (UNVERIFIED): '+fixture),false));
 
 test('GP01-E correction is not a completed booking or cancellation',()=>{const q=JSON.parse(readFileSync('tests/fixtures/acceptance-65-20261026.json')).find(x=>x.id==='GP01-E').input;const p=quality('BASE',q);assert.match(p,/ไม่ใช่หลักฐานว่าเคยจองห้อง/);assert.match(p,/ใช้ค่าล่าสุด/);assert.match(p,/ห้ามแต่งคณะทำงาน/);});
+
+test('room-only scope applies to both original memo inputs',()=>{for(const q of ['จัดทำบันทึกข้อความขอใช้ห้องประชุม 20 คน ไม่ขอใช้งบเพิ่ม',JSON.parse(readFileSync('tests/fixtures/acceptance-65-20261026.json')).find(x=>x.id==='GP01-E').input])assert.match(quality('BASE',q),/ห้ามเพิ่มคำขออุปกรณ์/);});
+test('explicit accessory requests retain their requested scope',()=>{for(const q of ['ร่างบันทึกขอใช้ห้องประชุมและอุปกรณ์เครื่องเสียง','จัดทำบันทึกขอห้องประชุมพร้อมอาหารและเครื่องดื่ม'])assert.doesNotMatch(quality('BASE',q),/ขอใช้ห้องประชุมเท่านั้น/);});
+test('room advice does not become a drafting scope contract',()=>assert.equal(quality('BASE','ขอวิธีจองห้องประชุม'),'BASE'));

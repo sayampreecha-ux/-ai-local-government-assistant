@@ -36,3 +36,18 @@ this is not a claim of perfect output formatting. Actual downloadable file
 acceptance is still blocked by the available provider sessions. No merge/deploy.
 
 A subsequent GP01-E live retest treated edits to user instructions as a completed booking/cancellation story. Add a correction-specific rule: retain the latest selected facts, but do not invent earlier reservations, cancellations, committees, or room capacity. The original fixture is retained and a regression checks this distinction.
+
+## 3 November: room-only scope follow-up
+
+The observed ChatGPT GP01-E output still inserted an equipment request inside
+the memo's proposal section. The general suggestion/pending-verification rule
+left the scope of the actual request ambiguous. Add one bounded rule for room
+memo requests with no accessory terms: the main request is room-only, including
+its consideration/proposal sections; optional additions belong outside the
+memo under a pending-proposal heading. Explicit accessory/food requests and
+ordinary advice are negative controls and retain their intended scope.
+
+Targeted 45/45 and Node 1,616/1,616 plus subsequent 10/10 passed locally. Live
+model outputs, browser evidence, exact-head CI and actual file acceptance are
+recorded separately in the updated report; this source note does not certify
+them. No merge/deploy.
