@@ -51,5 +51,16 @@ test('room memo keeps the supplied purpose and marks missing details',()=>{
  assert.match(p,/รายละเอียดขาดให้ใส่ \[รอตรวจสอบ\]/);
  assert.match(p,/ไม่กล่าวถึงเวลาที่ไม่ได้ระบุ/);
 });
+test('room handoff resolves conflicting template placeholders without rewriting the user text',()=>{
+ const q='ร่างบันทึกขอห้อง โดยยกตัวอย่างข้อความ [ระบุ...]';
+ const template='โดยใช้ [ระบุ...] เฉพาะช่องที่ขาด\n'+q+'\nใช้ [ระบุข้อมูลที่ต้องยืนยัน] เฉพาะจุด';
+ const p=quality(template,q);assert.ok(p.includes(q));
+ assert.ok(p.startsWith('โดยใช้ [รอตรวจสอบ] เฉพาะช่องที่ขาด\n'));
+ assert.match(p,/ใช้ \[รอตรวจสอบ\] เฉพาะจุด/);
+});
+test('placeholder reconciliation does not rewrite unrelated or mixed legal templates',()=>{
+ const p='ใช้ [ระบุ...] และ [ระบุข้อมูลที่ต้องยืนยัน]';
+ for(const q of ['ร่างรายงานสอบละเมิดรถชนห้องประชุม','ร่างบันทึกขอห้อง และตรวจสิทธิเบิก'])assert.ok(quality(p,q).startsWith(p));
+});
 test('mentioning a meeting room in an unrelated legal report is not a room request',()=>assert.doesNotMatch(quality('BASE','ร่างรายงานสอบละเมิดรถชนอาคารห้องประชุม'),/ขอใช้ห้องประชุมเท่านั้น/));
 test('mixed room request and legal review retains its full scope',()=>assert.doesNotMatch(quality('BASE','ร่างบันทึกขอห้องประชุม และวินิจฉัยสิทธิเบิกค่าใช้จ่าย'),/ขอใช้ห้องประชุมเท่านั้น/));
