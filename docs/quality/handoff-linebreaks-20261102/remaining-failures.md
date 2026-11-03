@@ -51,3 +51,5 @@ Targeted 45/45 and Node 1,616/1,616 plus subsequent 10/10 passed locally. Live
 model outputs, browser evidence, exact-head CI and actual file acceptance are
 recorded separately in the updated report; this source note does not certify
 them. No merge/deploy.
+
+The 3 November exact-head CI browser jobs failed before tests because ubuntu-latest resolved to Ubuntu 26.04, unsupported by the pinned Playwright 1.55.0. Pin the five affected browser workflows to ubuntu-24.04. Keep their steps, assertions, dependencies and gates unchanged. Evidence: Engineering run 41603069114 job 125806182854.
