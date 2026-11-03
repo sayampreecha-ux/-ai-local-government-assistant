@@ -64,3 +64,19 @@ test('placeholder reconciliation does not rewrite unrelated or mixed legal templ
 });
 test('mentioning a meeting room in an unrelated legal report is not a room request',()=>assert.doesNotMatch(quality('BASE','ร่างรายงานสอบละเมิดรถชนอาคารห้องประชุม'),/ขอใช้ห้องประชุมเท่านั้น/));
 test('mixed room request and legal review retains its full scope',()=>assert.doesNotMatch(quality('BASE','ร่างบันทึกขอห้องประชุม และวินิจฉัยสิทธิเบิกค่าใช้จ่าย'),/ขอใช้ห้องประชุมเท่านั้น/));
+
+const completionStart=source.indexOf('  function completeDocumentHandoff('),completionEnd=source.indexOf('  function addRouteResult(',completionStart);
+const complete=vm.runInNewContext('('+source.slice(completionStart,completionEnd).trim()+')');
+test('room memo completion supplies literal missing fields instead of a heading-only invitation to elaborate',()=>{
+ for(const q of ['จัดทำบันทึกข้อความขอใช้ห้องประชุมทบทวนขั้นตอนบริการ 20 คน ไม่ใช้งบเพิ่ม',JSON.parse(readFileSync('tests/fixtures/acceptance-65-20261026.json')).find(x=>x.id==='GP01-E').input]){
+  const p=complete('BASE\n'+q,q);assert.ok(p.startsWith('BASE\n'+q));
+  assert.match(p,/\[GP_ROOM_MEMO_SCAFFOLD_V1\]/);
+  for(const label of ['ส่วนราชการ','ที่','วันที่','เรียน','เรื่องเดิม','ข้อเท็จจริง','ข้อพิจารณา','ลงชื่อ','ตำแหน่ง'])assert.ok(p.includes(label+'\n[รอตรวจสอบ]'));
+  assert.match(p,/เรื่องเดิม\/ข้อพิจารณาขาดให้คง \[รอตรวจสอบ\]/);assert.match(p,/ห้ามอนุมานหรือทวนคำขอห้องแทน/);
+  assert.match(p,/รวมชื่อและตำแหน่งผู้ลงนาม/);assert.match(p,/ห้ามแทนด้วยจุดไข่ปลา/);
+  for(const gate of ['Evidence Gate','Decision Lock','Legal Version Gate','Human Review'])assert.ok(p.includes(gate));
+ }
+});
+test('room scaffold preserves explicit accessories and mixed authority requests',()=>{
+ for(const q of ['ร่างบันทึกขอห้องประชุมพร้อมอุปกรณ์และอาหาร','ร่างบันทึกขอห้องประชุม และตรวจสิทธิเบิก','ร่างบันทึกขอห้องประชุม และทำแผนอบรม','ร่างบันทึกขอห้องประชุม และทำสไลด์','ร่างรายงานสอบละเมิดรถชนห้องประชุม','ขอวิธีจองห้องประชุม'])assert.doesNotMatch(complete('BASE',q),/GP_ROOM_MEMO_SCAFFOLD_V1/);
+});
