@@ -45,5 +45,11 @@ test('GP01-E correction is not a completed booking or cancellation',()=>{const q
 test('room-only scope applies to both original memo inputs',()=>{for(const q of ['จัดทำบันทึกข้อความขอใช้ห้องประชุม 20 คน ไม่ขอใช้งบเพิ่ม',JSON.parse(readFileSync('tests/fixtures/acceptance-65-20261026.json')).find(x=>x.id==='GP01-E').input])assert.match(quality('BASE',q),/ห้ามเพิ่มคำขออุปกรณ์/);});
 test('explicit accessory requests retain their requested scope',()=>{for(const q of ['ร่างบันทึกขอใช้ห้องประชุมและอุปกรณ์เครื่องเสียง','จัดทำบันทึกขอห้องประชุมพร้อมอาหารและเครื่องดื่ม'])assert.doesNotMatch(quality('BASE',q),/ขอใช้ห้องประชุมเท่านั้น/);});
 test('room advice does not become a drafting scope contract',()=>assert.equal(quality('BASE','ขอวิธีจองห้องประชุม'),'BASE'));
+test('room memo keeps the supplied purpose and marks missing details',()=>{
+ const p=quality('BASE','จัดทำบันทึกข้อความขอใช้ห้องประชุมทบทวนขั้นตอนบริการ');
+ assert.match(p,/ห้ามขยายวัตถุประสงค์หรือเพิ่มกิจกรรม/);
+ assert.match(p,/รายละเอียดขาดให้ใส่ \[รอตรวจสอบ\]/);
+ assert.match(p,/ไม่กล่าวถึงเวลาที่ไม่ได้ระบุ/);
+});
 test('mentioning a meeting room in an unrelated legal report is not a room request',()=>assert.doesNotMatch(quality('BASE','ร่างรายงานสอบละเมิดรถชนอาคารห้องประชุม'),/ขอใช้ห้องประชุมเท่านั้น/));
 test('mixed room request and legal review retains its full scope',()=>assert.doesNotMatch(quality('BASE','ร่างบันทึกขอห้องประชุม และวินิจฉัยสิทธิเบิกค่าใช้จ่าย'),/ขอใช้ห้องประชุมเท่านั้น/));

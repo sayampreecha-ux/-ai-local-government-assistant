@@ -60,3 +60,5 @@ The first room-only predicate also matched an unrelated tort report mentioning a
 ## Final quantity-unit correction
 
 The real GP04-A ChatGPT response at d4633436 summed 20 reams and 50 pens into 70. The simulation-only handoff requested a total without distinguishing money from unlike quantity units. Reproduce with the original response and a failing regression, then append one sentence to that adapter: sum money, forbid unlike quantity units, allow same-unit quantities. Mixed entitlement requests retain the authority workflow. No router/governance changes.
+
+A further live memo retest added an unrequested exchange-of-opinions purpose; GP01-E used unspecified-time wording and varied placeholders. Tighten the existing room-only sentence to source-only purpose/activities, missing details as [รอตรวจสอบ], and no reference to an unspecified time. Preserve all room/accessory/mixed-workflow negative controls.
