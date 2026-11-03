@@ -6,6 +6,16 @@ const source=readFileSync('assets/js/home-v3.js','utf8');
 const begin=source.indexOf('  function isArithmeticSimulationOnly('),end=source.indexOf('  function enrichPromptWithSearch(',begin);
 const box={};vm.createContext(box);vm.runInContext(source.slice(begin,end),box);
 const fixture=JSON.parse(readFileSync('tests/fixtures/acceptance-65-20261026.json')).find(x=>x.id==='GP04-A').input;
+test('synthetic arithmetic totals money without adding unlike quantity units',()=>{
+ const p=box.enrichPromptWithWorkflow({prompt:'BASE'},{block:'AUTHORITY',view:null},fixture).prompt;
+ assert.match(p,/ห้ามรวมจำนวนต่างหน่วย/);
+ assert.match(p,/จำนวนหน่วยเดียวกันรวมได้/);
+ assert.match(p,/รวมยอดเงิน/);
+});
+test('quantity-unit rule does not replace mixed legal authority workflow',()=>{
+ const p=box.enrichPromptWithWorkflow({prompt:'BASE'},{block:'AUTHORITY',view:{}},fixture+' และตรวจสิทธิเบิก').prompt;
+ assert.match(p,/AUTHORITY/);assert.doesNotMatch(p,/ห้ามรวมจำนวนต่างหน่วย/);
+});
 test('GP04-A removes contradictory legal workflow instructions from final arithmetic handoff',()=>{
  assert.equal(box.isArithmeticSimulationOnly(fixture),true);
  const out=box.enrichPromptWithWorkflow({prompt:'OLD LEGAL WORKFLOW'}, {block:'OLD AUTHORITY GATE',view:null}, fixture);

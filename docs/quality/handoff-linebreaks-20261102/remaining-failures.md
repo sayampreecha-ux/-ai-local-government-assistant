@@ -56,3 +56,7 @@ The 3 November exact-head CI browser jobs failed before tests because ubuntu-lat
 
 ### Narrow-scope negative controls (2026-11-03)
 The first room-only predicate also matched an unrelated tort report mentioning a meeting room. Two negative controls reproduced the failure. Restrict the predicate to a room-request memo/letter and exclude mixed legal/rights/procurement requests. Explicit accessory/food requests remain unchanged. Targeted tests: 47/47; complete Node regression and static build pass. Live guest ChatGPT outputs for both original room-request cases contain no added equipment/services; actual DOCX remains unavailable and is not FILE PASS.
+
+## Final quantity-unit correction
+
+The real GP04-A ChatGPT response at d4633436 summed 20 reams and 50 pens into 70. The simulation-only handoff requested a total without distinguishing money from unlike quantity units. Reproduce with the original response and a failing regression, then append one sentence to that adapter: sum money, forbid unlike quantity units, allow same-unit quantities. Mixed entitlement requests retain the authority workflow. No router/governance changes.
