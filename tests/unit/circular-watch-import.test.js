@@ -17,6 +17,8 @@ test('manual import writes local review queue but never publishes', () => {
   const result = JSON.parse(readFileSync(output,'utf8'));
   assert.equal(result.publishable,false);
   assert.equal(result.summary.NEW,1);
+  assert.equal(result.officialSourceGate.pass,false);
+  assert.equal(result.officialSourceGate.decision,'DECISION_LOCK');
   assert.equal(JSON.parse(readFileSync(manifest,'utf8')).records.length,0);
 });
 test('manual import refuses implicit publish and duplicates', () => {
