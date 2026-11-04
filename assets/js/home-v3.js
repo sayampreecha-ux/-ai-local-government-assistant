@@ -833,6 +833,25 @@
     }
     if (!explicitDisciplineIntent) promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, explicitTortIntent ? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. ' + originalRequest : originalRequest) };
     promptBundle = { ...promptBundle, prompt: enforceHandoffQuality(promptBundle.prompt, originalRequest, route.moduleId) };
+    // Compact only the final document handoff for a routed, low-risk GP001 draft.
+    // Do not touch shared governance, retrieval, other modules or mixed/high-risk requests.
+    const compactGP001Draft = route.moduleId === 'GP001'
+      && /(?:จัดทำ|ร่าง|เขียน|ทำ).{0,45}(?:บันทึกข้อความ|หนังสือราชการ)/i.test(originalRequest)
+      && !/(?:ขอ(?:ใช้)?ห้อง|ห้องประชุม|งบ|เงิน|ค่าใช้จ่าย|กฎหมาย|ระเบียบ|มาตรา|วินิจฉัย|สิทธิ|เบิก|จัดซื้อ|จัดจ้าง|พัสดุ|ละเมิด|สอบสวน|วินัย|ป\\.ป\\.ช\\.|สตง\\.|ร้องเรียน|ชี้แจง|โต้แย้ง|อุทธรณ์|บุคคล|XLSX|Excel|ตาราง|TOR|BOQ)/i.test(originalRequest);
+    if (compactGP001Draft && promptBundle.prompt.includes('[GP_DOCUMENT_HANDOFF_V1]')) {
+      const full = promptBundle.prompt;
+      const marker = '[GP_DOCUMENT_HANDOFF_V1]';
+      const start = full.lastIndexOf('\\n\\n' + marker);
+      const nextSection = start < 0 ? -1 : full.indexOf('\\n\\n[GP_HANDOFF_QUALITY_V1]', start);
+      if (start >= 0 && nextSection > start) {
+        const concise = '\\n\\n' + marker + '\\n' + [
+          'ส่งร่างหนังสือราชการฉบับเต็มตามประเภทที่ขอก่อนคำอธิบาย ใช้ข้อมูลต้นทางเท่านั้น ข้อมูลขาดใส่ [รอตรวจสอบ]',
+          'คง Evidence Gate, Decision Lock, Legal Version Gate, PDPA และ Human Review ก่อนลงนาม ห้ามแต่งบุคคล เลขหนังสือ วันที่ กฎหมาย งบประมาณ การอนุมัติ หรือสถานะดำเนินการ',
+          'หากมีเครื่องมือให้สร้างและตรวจ DOCX จริง มิฉะนั้นส่งร่างพร้อมคัดลอกและแจ้งข้อจำกัด ห้ามอ้างไฟล์หรือการอนุมัติที่ไม่มีจริง'
+        ].join('\\n');
+        promptBundle = { ...promptBundle, prompt: full.slice(0, start) + concise + full.slice(nextSection) };
+      }
+    }
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
