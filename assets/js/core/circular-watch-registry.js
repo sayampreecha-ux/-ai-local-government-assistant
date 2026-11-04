@@ -84,7 +84,8 @@
       // "Approved" is only an internal review flag; no claim of live source verification.
       return Object.freeze({
         decision: issues.length ? 'DECISION_LOCK' : 'REVIEWED_RECORD',
-        conclusionEligible: issues.length === 0,
+        // A reviewed offline record is not sufficient evidence for a legal conclusion.
+        conclusionEligible: false,
         verifiedLatest: false,
         checkedLive: false,
         issues: Object.freeze(issues),
