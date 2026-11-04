@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "purpose": "OFFICIAL_SOURCE_DISCOVERY_ONLY",
+  "warning": "Landing pages are discovery endpoints, not verified documents or proof of current legal force. No automatic scraping, PDF verification, or publishing.",
+  "sources": [
+    {
+      "id": "dla-official-doc",
+      "agency": "กรมส่งเสริมการปกครองท้องถิ่น",
+      "url": "https://www.dla.go.th/land/officialDoc.do",
+      "mode": "MANUAL_REVIEW",
+      "scope": "หนังสือราชการ",
+      "limitations": "Search listing requires document-level link, original attachment and version checks; no supported public API verified."
+    },
+    {
+      "id": "moi-circular",
+      "agency": "สำนักงานปลัดกระทรวงมหาดไทย",
+      "url": "https://cmsmoi.moi.go.th/",
+      "mode": "MANUAL_REVIEW",
+      "scope": "หนังสือเวียน",
+      "limitations": "Landing page links to circular section; no authenticated official machine-readable feed verified."
+    },
+    {
+      "id": "ratchakitcha-search",
+      "agency": "ราชกิจจานุเบกษา",
+      "url": "https://ratchakitcha.soc.go.th/search-result/",
+      "mode": "MANUAL_REVIEW",
+      "scope": "กฎหมายและประกาศ",
+      "limitations": "Search results alone cannot prove current legal force or repeal status; no stable public API verified."
+    }
+  ]
+}
