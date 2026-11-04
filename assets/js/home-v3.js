@@ -737,13 +737,13 @@
     // Scope lock: compact quality appendix only for uncomplicated GP001 correspondence drafts.
     // Legal, finance, procurement, disciplinary, complaint and cross-domain requests retain full gates.
     const simpleCorrespondence = /(?:จัดทำ|ร่าง|เขียน|ทำ).{0,45}(?:บันทึกข้อความ|หนังสือราชการ)/i.test(request)
-      && !/(?:กฎหมาย|ระเบียบ|มาตรา|วินิจฉัย|สิทธิ|เบิก|งบประมาณ|ค่าใช้จ่าย|จัดซื้อ|จัดจ้าง|พัสดุ|ละเมิด|สอบสวน|วินัย|ป\.ป\.ช\.|สตง\.|ร้องเรียน|ชี้แจง|โต้แย้ง|อุทธรณ์|XLSX|Excel|ตาราง|TOR|BOQ)/i.test(request);
+      && !/(?:ขอ(?:ใช้)?ห้อง|ห้องประชุม|ไม่(?:ขอ)?(?:ใช้|ขอใช้)?งบ(?:ประมาณ)?เพิ่ม|กฎหมาย|ระเบียบ|มาตรา|วินิจฉัย|สิทธิ|เบิก|งบประมาณ|ค่าใช้จ่าย|จัดซื้อ|จัดจ้าง|พัสดุ|ละเมิด|สอบสวน|วินัย|ป\.ป\.ช\.|สตง\.|ร้องเรียน|ชี้แจง|โต้แย้ง|อุทธรณ์|XLSX|Excel|ตาราง|TOR|BOQ)/i.test(request);
     if (simpleCorrespondence) {
-      return source + '\\n\\n[GP_HANDOFF_QUALITY_V1]\\n' + [
+      return source + '\n\n[GP_HANDOFF_QUALITY_V1]\n' + [
         'ร่างหนังสือราชการฉบับเต็มก่อน; ใช้ข้อมูลที่ยืนยันแล้วเท่านั้น ข้อมูลขาดใส่ [รอตรวจสอบ] และแยกข้อเสนอเสริมออกจากข้อเท็จจริง',
         'คง Evidence Gate, Decision Lock เฉพาะประเด็นที่ยังตรวจไม่ได้ และ Human Review ก่อนลงนาม; ห้ามแต่งเลขหนังสือ วันเวลา บุคคล กฎหมาย งบประมาณ หรือการอนุมัติ',
         'หากมีเครื่องมือให้สร้าง DOCX จริงและตรวจเนื้อหา/รูปแบบ; หากไม่มีให้ส่งร่างพร้อมคัดลอกและแจ้งข้อจำกัด ห้ามอ้างว่ามีไฟล์หรืออนุมัติแล้ว'
-      ].join('\\n');
+      ].join('\n');
     }
     const rules = [
       '[GP_HANDOFF_QUALITY_V1]',
