@@ -13,7 +13,8 @@ export function validateSourceCatalog(input) {
   const errors = [];
   if (input?.schemaVersion !== '1.0' || !Array.isArray(input.sources) || !input.sources.length) errors.push('INVALID_CATALOG');
   const seen = new Set();
-  for (const s of input?.sources || []) {
+  for (const s of (Array.isArray(input?.sources) ? input.sources : [])) {
+    if (!s || typeof s !== 'object' || Array.isArray(s)) { errors.push('INVALID_SOURCE_ENTRY'); continue; }
     if (!s.id || seen.has(s.id)) errors.push('DUPLICATE_OR_MISSING_SOURCE_ID');
     seen.add(s.id);
     if (!checkOfficialUrl(s.url)) errors.push('UNAPPROVED_SOURCE_URL');
@@ -25,8 +26,9 @@ export function validateReviewQueue(queue) {
   const errors = [];
   if (queue?.purpose !== 'LOCAL_REVIEW_ONLY' || queue.publishable !== false || !Array.isArray(queue.entries)) errors.push('INVALID_REVIEW_QUEUE');
   const identities = new Set();
-  for (const e of queue?.entries || []) {
-    const r = e.record || {};
+  for (const e of (Array.isArray(queue?.entries) ? queue.entries : [])) {
+    if (!e || typeof e !== 'object' || Array.isArray(e)) { errors.push('INVALID_REVIEW_ENTRY'); continue; }
+    const r = e.record && typeof e.record === 'object' && !Array.isArray(e.record) ? e.record : {};
     const identity = [r.issuingAgency, r.documentNumber].map(x => String(x || '').trim().toLowerCase()).join('|');
     if (!r.issuingAgency || !r.documentNumber || identities.has(identity)) errors.push('DUPLICATE_OR_MISSING_IDENTITY');
     identities.add(identity);
