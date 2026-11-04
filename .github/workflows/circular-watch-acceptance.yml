@@ -9,6 +9,8 @@ on:
       - 'tests/unit/circular-watch-registry.test.js'
       - 'tests/unit/circular-watch-import.test.js'
       - 'scripts/circular-watch-import.mjs'
+      - 'scripts/circular-watch-source-gate.mjs'
+      - 'tests/unit/circular-watch-source-gate.test.js'
       - 'scripts/benchmark-circular-watch.mjs'
       - 'tests/e2e/circular-watch-browser.mjs'
       - '.github/workflows/circular-watch-acceptance.yml'
@@ -30,7 +32,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Registry unit tests
-        run: node --test tests/unit/circular-watch-registry.test.js tests/unit/circular-watch-import.test.js
+        run: node --test tests/unit/circular-watch-registry.test.js tests/unit/circular-watch-import.test.js tests/unit/circular-watch-source-gate.test.js
+      - name: Validate official discovery sources
+        run: node scripts/circular-watch-source-gate.mjs
       - name: Benchmark 50k synthetic records
         run: node scripts/benchmark-circular-watch.mjs
       - name: Build static site
