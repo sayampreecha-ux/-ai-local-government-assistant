@@ -80,3 +80,16 @@ test('room memo completion supplies literal missing fields instead of a heading-
 test('room scaffold preserves explicit accessories and mixed authority requests',()=>{
  for(const q of ['ร่างบันทึกขอห้องประชุมพร้อมอุปกรณ์และอาหาร','ร่างบันทึกขอห้องประชุม และตรวจสิทธิเบิก','ร่างบันทึกขอห้องประชุม และทำแผนอบรม','ร่างบันทึกขอห้องประชุม และทำสไลด์','ร่างรายงานสอบละเมิดรถชนห้องประชุม','ขอวิธีจองห้องประชุม'])assert.doesNotMatch(complete('BASE',q),/GP_ROOM_MEMO_SCAFFOLD_V1/);
 });
+
+test('missing room rationale is a literal fixed value, not another editable memo slot',()=>{
+ for(const q of ['จัดทำบันทึกข้อความขอใช้ห้องประชุมทบทวนขั้นตอนบริการ 20 คน ไม่ใช้งบเพิ่ม',JSON.parse(readFileSync('tests/fixtures/acceptance-65-20261026.json')).find(x=>x.id==='GP01-E').input]){
+  const p=complete('BASE\n'+q,q);assert.ok(p.startsWith('BASE\n'+q));
+  assert.match(p,/เรื่องเดิม\/ข้อพิจารณาขาดให้คง \[รอตรวจสอบ\] เป็นค่าคงที่ คัดลอกตรง/);
+  assert.match(p,/รวมชื่อและตำแหน่งผู้ลงนามคัดลอกตามแบบ/);assert.match(p,/ห้ามแทนด้วยจุดไข่ปลาหรือเพิ่มเส้นลงนาม/);
+ }
+});
+test('explicitly supplied rationale remains available rather than being frozen as unknown',()=>{
+ for(const q of ['ร่างบันทึกขอห้องประชุม เหตุผล: ห้องเดิมปิดซ่อม','ร่างบันทึกขอห้องประชุม เรื่องเดิม: นัดทบทวนขั้นตอนบริการ','ร่างบันทึกขอห้องประชุม เนื่องจากต้องทบทวนขั้นตอนบริการ']){
+  const p=complete('BASE\n'+q,q);assert.ok(p.startsWith('BASE\n'+q));assert.match(p,/ใช้ต้นทาง/);assert.match(p,/เรื่องเดิม\/ข้อพิจารณาขาดให้คง/);assert.doesNotMatch(p,/เรื่องเดิมและข้อพิจารณาทุกกรณีเป็นค่าคงที่/);
+ }
+});
