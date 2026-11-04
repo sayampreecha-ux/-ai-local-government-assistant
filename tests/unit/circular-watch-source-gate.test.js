@@ -27,3 +27,16 @@ test('reject untrusted approvals, conflicts, duplicate records and forged source
   assert.equal(validateReviewQueue(queue([{change:'NEW',record},{change:'NEW',record}])).pass,false);
   assert.equal(validateReviewQueue(queue([{change:'NEW',record:{...record,sourceUrl:'https://dla.go.th.attacker.test/'}}])).pass,false);
 });
+
+test('malformed catalog and review queues fail closed without throwing', () => {
+  for (const sources of [null, 'invalid', {}, [null], [42]]) {
+    const result = validateSourceCatalog({schemaVersion:'1.0',sources});
+    assert.equal(result.pass,false);
+  }
+  for (const entries of [null, 'invalid', {}, [null], [42]]) {
+    const result = validateReviewQueue({purpose:'LOCAL_REVIEW_ONLY',publishable:false,entries});
+    assert.equal(result.pass,false);
+    assert.equal(result.decision,'DECISION_LOCK');
+    assert.equal(result.publishable,false);
+  }
+});
