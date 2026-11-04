@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-const context = { window: {} };
+const context = { window: {}, URL };
 runInNewContext(readFileSync(new URL('../../assets/js/core/circular-watch-registry.js', import.meta.url), 'utf8'), context);
 const { createCircularRegistry, normalizeRecord } = context.window.GovPromptCore.CircularWatch;
 const sample = (overrides = {}) => ({
@@ -21,6 +21,7 @@ test('approved records with evidence are only reviewed, not latest', () => {
   const r = createCircularRegistry([sample({status:'current',reviewStatus:'approved',lastVerifiedAt:'2026-10-31T12:00:00Z',evidence:['https://example.go.th/test.pdf']})]).assess('c1','2026-11-02');
   assert.equal(r.decision,'REVIEWED_RECORD');
   assert.equal(r.verifiedLatest,false);
+  assert.equal(r.conclusionEligible,false);
 });
 test('future-effective records are locked', () => {
   const r = createCircularRegistry([sample({status:'current',reviewStatus:'approved',lastVerifiedAt:'2026-10-31T12:00:00Z',evidence:['source reviewed'],effectiveDate:'2027-01-01'})]).assess('c1','2026-11-02');
