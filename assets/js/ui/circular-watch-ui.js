@@ -75,6 +75,33 @@
     if (!response.ok) throw new Error('HTTP ' + response.status);
     return response.json();
   }
+  async function loadOfficialSources() {
+    const target = byId('officialSources');
+    if (!target) return;
+    try {
+      const catalog = await fetchJson('knowledge/circulars/official-sources.json');
+      if (!Array.isArray(catalog.sources) || catalog.sources.length > 20) throw new TypeError('Invalid source catalog');
+      target.replaceChildren();
+      for (const source of catalog.sources) {
+        const url = new URL(source.url);
+        if (url.protocol !== 'https:' || url.username || url.password || url.port ||
+            !['www.dla.go.th', 'dla.go.th', 'cmsmoi.moi.go.th', 'moi.go.th', 'ratchakitcha.soc.go.th'].includes(url.hostname)) {
+          throw new TypeError('Unapproved official source URL');
+        }
+        if (source.mode !== 'MANUAL_REVIEW') throw new TypeError('Unsupported source mode');
+        const row = element('p');
+        const link = element('a', source.agency);
+        link.href = url.href;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        row.append(link, document.createTextNode(' — ค้นหาและตรวจต้นฉบับด้วยตนเอง (' + source.scope + ')'));
+        target.append(row);
+      }
+      target.append(element('p', 'ยังไม่มีการตรวจ PDF, การแก้ไขหรือยกเลิก และความเป็นปัจจุบันอัตโนมัติ', 'notice'));
+    } catch (error) {
+      target.textContent = 'ไม่สามารถยืนยันรายการแหล่งข้อมูล: ' + error.message;
+    }
+  }
   async function load() {
     if (!api) throw new Error('Circular Watch module is unavailable');
     const index = await fetchJson('knowledge/circulars/index.json');
@@ -145,5 +172,6 @@
       event.target.value = '';
     }
   });
+  loadOfficialSources();
   load().catch(error => { complete = false; status.textContent = 'ไม่สามารถโหลดทะเบียน: ' + error.message; });
 })();
