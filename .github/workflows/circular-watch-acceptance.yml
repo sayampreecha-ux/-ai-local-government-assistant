@@ -9,6 +9,7 @@ on:
       - 'tests/unit/circular-watch-registry.test.js'
       - 'tests/unit/circular-watch-import.test.js'
       - 'scripts/circular-watch-import.mjs'
+      - 'scripts/benchmark-circular-watch.mjs'
       - 'tests/e2e/circular-watch-browser.mjs'
       - '.github/workflows/circular-watch-acceptance.yml'
   workflow_dispatch:
@@ -30,6 +31,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Registry unit tests
         run: node --test tests/unit/circular-watch-registry.test.js tests/unit/circular-watch-import.test.js
+      - name: Benchmark 50k synthetic records
+        run: node scripts/benchmark-circular-watch.mjs
       - name: Build static site
         run: pnpm build
       - name: Install Chromium
