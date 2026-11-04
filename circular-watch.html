@@ -37,6 +37,7 @@ small{color:#4a6558}input[type=file]{width:100%;box-sizing:border-box}
 <div id="results" aria-live="polite"></div><div class="actions"><button type="button" id="previous" disabled>ก่อนหน้า</button><span id="pageStatus"></span><button type="button" id="next" disabled>ถัดไป</button></div>
 </section>
 <section class="panel" aria-label="รายละเอียดเอกสาร"><h2>รายละเอียดและหลักฐาน</h2><div id="details" aria-live="polite">เลือกเอกสารจากผลการค้นหา</div><div class="actions"><button id="handoff" type="button" disabled>คัดลอกคำถามไป ChatGPT / Gemini</button><a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer">เปิด ChatGPT</a><a href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer">เปิด Gemini</a></div></section>
+<section class="panel" aria-label="แหล่งข้อมูลราชการ"><h2>แหล่งข้อมูลราชการสำหรับค้นหาต้นฉบับ</h2><p class="notice">ลิงก์ต่อไปนี้เป็นจุดเริ่มต้นค้นหา ไม่ใช่หลักฐานยืนยันว่าหนังสือยังมีผลใช้บังคับ</p><div id="officialSources" aria-live="polite">กำลังโหลดรายชื่อแหล่งข้อมูล...</div></section>
 <section class="panel"><h2>นำเข้าข้อมูลสำหรับตรวจทาน (เฉพาะในเครื่อง)</h2>
 <p>เลือก JSON เพื่อดูตัวอย่างและตรวจรูปแบบเท่านั้น <strong>ไม่มีการอัปโหลด บันทึกเข้าทะเบียน หรืออนุมัติเอกสาร</strong> การเผยแพร่ต้องผ่าน GitHub PR และผู้มีสิทธิอนุมัติ</p>
 <label>ไฟล์ JSON สำหรับตรวจทาน<input id="importFile" type="file" accept=".json,application/json"></label><div id="importStatus" role="status"></div></section>
