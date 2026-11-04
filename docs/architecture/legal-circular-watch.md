@@ -53,3 +53,16 @@ Do not equate successful unit/browser checks with verified legal content or prod
 - 50k performance on real mobile hardware and complete shard retrieval are not verified.
 - Full end-to-end AI handoff inside the main composer remains separate: this feature copies a conservative prompt.
 - No production deployment or production browser acceptance has been performed.
+
+## Official source discovery and fail-closed review gate (PR #366 continuation)
+
+Official landing/search pages identified for **manual discovery**, not automated ingestion:
+- DLA official documents: https://www.dla.go.th/land/officialDoc.do
+- Ministry of Interior office portal: https://cmsmoi.moi.go.th/
+- Royal Gazette search: https://ratchakitcha.soc.go.th/search-result/
+
+Source catalog: `knowledge/circulars/official-sources.json`. The URLs above are discovery entry points; no public machine-readable API, content/PDF authenticity, publication completeness, amendment/repeal history, or current legal force has been independently verified.
+
+`scripts/circular-watch-source-gate.mjs` validates exact HTTPS hosts and manual-review-only source definitions. It can also validate staged queues: unknown hosts, duplicate identities, imported approval flags and version conflicts are blocked. **A passing validation does not authorize publication**, does not establish document authenticity and always returns `DECISION_LOCK` for queue entries. Run `node --test tests/unit/circular-watch-source-gate.test.js` and `node scripts/circular-watch-source-gate.mjs`.
+
+The repository's GitHub PR review is the proposed human approval checkpoint. There is still no authenticated document-level evidence verification, approval identity binding, or automated ingestion; the public registry remains empty. No legal conclusion may be inferred from the source catalog.
