@@ -728,7 +728,7 @@
     ].join('\n');
   }
 
-  function enforceHandoffQuality(prompt, originalRequest) {
+  function enforceHandoffQuality(prompt, originalRequest, moduleId) {
     const request = String(originalRequest || '');
     let source = String(prompt || '');
     if (/^(?:ทำไม|เพราะอะไร|เหตุใด|อธิบาย|ขอ(?:ทราบ|วิธี|คำแนะนำ))/.test(request)) return source;
@@ -736,7 +736,7 @@
     if (source.includes('[GP_HANDOFF_QUALITY_V1]')) return source;
     // Scope lock: compact quality appendix only for uncomplicated GP001 correspondence drafts.
     // Legal, finance, procurement, disciplinary, complaint and cross-domain requests retain full gates.
-    const simpleCorrespondence = /(?:จัดทำ|ร่าง|เขียน|ทำ).{0,45}(?:บันทึกข้อความ|หนังสือราชการ)/i.test(request)
+    const simpleCorrespondence = moduleId === 'GP001' && /(?:จัดทำ|ร่าง|เขียน|ทำ).{0,45}(?:บันทึกข้อความ|หนังสือราชการ)/i.test(request)
       && !/(?:ขอ(?:ใช้)?ห้อง|ห้องประชุม|ไม่(?:ขอ)?(?:ใช้|ขอใช้)?งบ(?:ประมาณ)?เพิ่ม|กฎหมาย|ระเบียบ|มาตรา|วินิจฉัย|สิทธิ|เบิก|งบประมาณ|ค่าใช้จ่าย|จัดซื้อ|จัดจ้าง|พัสดุ|ละเมิด|สอบสวน|วินัย|ป\.ป\.ช\.|สตง\.|ร้องเรียน|ชี้แจง|โต้แย้ง|อุทธรณ์|XLSX|Excel|ตาราง|TOR|BOQ)/i.test(request);
     if (simpleCorrespondence) {
       return source + '\n\n[GP_HANDOFF_QUALITY_V1]\n' + [
@@ -832,7 +832,7 @@
       promptBundle = { ...promptBundle, prompt: completeDocumentHandoff(promptBundle.prompt, originalRequest) };
     }
     if (!explicitDisciplineIntent) promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, explicitTortIntent ? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. ' + originalRequest : originalRequest) };
-    promptBundle = { ...promptBundle, prompt: enforceHandoffQuality(promptBundle.prompt, originalRequest) };
+    promptBundle = { ...promptBundle, prompt: enforceHandoffQuality(promptBundle.prompt, originalRequest, route.moduleId) };
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
