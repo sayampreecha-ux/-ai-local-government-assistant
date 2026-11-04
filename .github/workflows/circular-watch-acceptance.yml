@@ -1,0 +1,36 @@
+name: Circular Watch branch acceptance
+on:
+  pull_request:
+    paths:
+      - 'circular-watch.html'
+      - 'assets/js/core/circular-watch-registry.js'
+      - 'assets/js/ui/circular-watch-ui.js'
+      - 'knowledge/circulars/**'
+      - 'tests/unit/circular-watch-registry.test.js'
+      - 'tests/e2e/circular-watch-browser.mjs'
+      - '.github/workflows/circular-watch-acceptance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  circular-watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Registry unit tests
+        run: node --test tests/unit/circular-watch-registry.test.js
+      - name: Build static site
+        run: pnpm build
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Mobile and desktop browser E2E
+        run: node tests/e2e/circular-watch-browser.mjs
