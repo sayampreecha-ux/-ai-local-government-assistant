@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { createHash } from 'node:crypto';
+import { validateReviewQueue } from './circular-watch-source-gate.mjs';
 const context = { window: {}, URL };
 runInNewContext(readFileSync(new URL('../assets/js/core/circular-watch-registry.js', import.meta.url), 'utf8'), context);
 const { createCircularRegistry } = context.window.GovPromptCore.CircularWatch;
@@ -33,16 +34,18 @@ try {
     const change = !old ? 'NEW' : hash(old) === hash(record) ? 'UNCHANGED' : 'CHANGED_REVIEW_REQUIRED';
     return { change, documentId: record.id, record };
   });
+  const gate = validateReviewQueue({ purpose: 'LOCAL_REVIEW_ONLY', publishable: false, entries });
   const summary = Object.fromEntries(['NEW','UNCHANGED','CHANGED_REVIEW_REQUIRED'].map(x => [x, entries.filter(e => e.change === x).length]));
   const staged = {
     schemaVersion: '1.0', purpose: 'LOCAL_REVIEW_ONLY', publishable: false,
     warning: 'Do not publish without independent official source and human review',
-    inputDigestSha256: hash(raw), summary, entries
+    inputDigestSha256: hash(raw), summary, entries,
+    officialSourceGate: { pass: gate.pass, decision: gate.decision, errors: gate.errors }
   };
   const target = resolve(output);
   await mkdir(dirname(target), { recursive: true });
   await writeFile(target, JSON.stringify(staged, null, 2) + '\n', { flag: 'wx' });
-  console.log(JSON.stringify({ output: target, summary, published: false }));
+  console.log(JSON.stringify({ output: target, summary, officialSourceGate: gate.pass ? 'STAGED_ONLY' : 'DECISION_LOCK', published: false }));
 } catch (error) {
   console.error('Import blocked:', error.message);
   process.exitCode = 1;
