@@ -29,7 +29,7 @@ export function validateDocumentEvidence(record) {
   const required = ['id', 'documentTitle', 'documentNumber', 'issuingAgency', 'documentDate', 'sourceUrl'];
   for (const field of required) if (typeof record[field] !== 'string' || !record[field].trim()) errors.push('MISSING_' + field.toUpperCase());
   if (!checkOfficialUrl(record.sourceUrl)) errors.push('UNAPPROVED_DOCUMENT_URL');
-  const validDate = value => typeof value === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value + 'T00:00:00Z').toISOString().slice(0, 10) === value;
+  const validDate = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value + 'T00:00:00Z').toISOString().slice(0, 10) === value;
   if (record.documentDate && !validDate(record.documentDate)) errors.push('INVALID_DOCUMENT_DATE');
   if (record.effectiveDate && !validDate(record.effectiveDate)) errors.push('INVALID_EFFECTIVE_DATE');
   if (!Array.isArray(record.evidence) || !record.evidence.length || record.evidence.some(x => typeof x !== 'string' || !x.trim())) errors.push('DOCUMENT_EVIDENCE_REQUIRED');
