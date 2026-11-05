@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { checkOfficialUrl, validateSourceCatalog, validateReviewQueue } from '../../scripts/circular-watch-source-gate.mjs';
+import { checkOfficialUrl, validateSourceCatalog, validateReviewQueue, validateDocumentEvidence } from '../../scripts/circular-watch-source-gate.mjs';
 const catalog = JSON.parse(readFileSync('knowledge/circulars/official-sources.json','utf8'));
 test('official discovery catalog validates but is not an ingestion feed', () => {
   assert.equal(validateSourceCatalog(catalog).pass,true);
@@ -39,4 +39,20 @@ test('malformed catalog and review queues fail closed without throwing', () => {
     assert.equal(result.decision,'DECISION_LOCK');
     assert.equal(result.publishable,false);
   }
+});
+
+test('document-level evidence readiness fails closed for missing metadata and forged approval', () => {
+  const missing = validateDocumentEvidence({id:'x',documentTitle:'Test',documentNumber:'T1',issuingAgency:'Agency',sourceUrl:'https://www.dla.go.th/land/officialDoc.do',reviewStatus:'pending'});
+  assert.equal(missing.pass,false);
+  assert.ok(missing.errors.includes('MISSING_DOCUMENTDATE'));
+  assert.ok(missing.errors.includes('DOCUMENT_EVIDENCE_REQUIRED'));
+  assert.equal(missing.decision,'DECISION_LOCK');
+  const candidate = {id:'x',documentTitle:'Test',documentNumber:'T1',issuingAgency:'Agency',documentDate:'2026-01-01',sourceUrl:'https://www.dla.go.th/land/officialDoc.do',evidence:['manual PDF review pending'],excerptLocator:'page 1',lastVerifiedAt:'2026-01-01T00:00:00Z',reviewStatus:'pending',status:'unknown'};
+  const result=validateDocumentEvidence(candidate);
+  assert.equal(result.pass,true);
+  assert.equal(result.publishable,false);
+  assert.equal(result.decision,'DECISION_LOCK');
+  assert.equal(validateDocumentEvidence({...candidate,reviewStatus:'approved'}).pass,false);
+  assert.equal(validateDocumentEvidence({...candidate,status:'repealed'}).pass,false);
+  assert.equal(validateDocumentEvidence({...candidate,documentDate:'2026-02-30'}).pass,false);
 });
