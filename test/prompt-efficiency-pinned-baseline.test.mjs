@@ -110,3 +110,17 @@ test('efficiency review accepts only exact documented improvements and rejects d
     assert.equal(check({...row,before:{sha256:'different-baseline'}}),false);
   }
 });
+
+test('later unchanged GP001 prompts pass the retained contract without requiring another reduction', () => {
+  const workflow=readFileSync('.github/workflows/ci.yml','utf8');
+  const condition=workflow.match(/if \((!gp001[^\n]+)\) \{ console.error\('GP001 compact contract\/reduction regression'/)[1];
+  const fails=vm.runInNewContext('(gp001,gp001After)=>'+condition);
+  const terms=['[GP_DOCUMENT_HANDOFF_V1]','ชิ้นงานฉบับเต็ม','เนื้อหาฉบับเต็ม','[รอตรวจสอบ]','Legal Version Gate','Decision Lock','Human Review','ห้ามทำลิงก์ดาวน์โหลดปลอม'];
+  const after={prompt:terms.join('\n')};
+  assert.equal(fails({deltaUtf8Bytes:0,sha256Equal:true},after),false,'byte-identical accepted main is a valid no-regression result');
+  assert.equal(fails({deltaUtf8Bytes:0,sha256Equal:false},after),true);
+  assert.equal(fails({deltaUtf8Bytes:1,sha256Equal:false},after),true);
+  assert.equal(fails({deltaUtf8Bytes:1,sha256Equal:true},after),true);
+  assert.equal(fails({deltaUtf8Bytes:-1,sha256Equal:false},after),false);
+  for(const term of terms) assert.equal(fails({deltaUtf8Bytes:0,sha256Equal:true},{prompt:after.prompt.replace(term,'')}),true,term);
+});

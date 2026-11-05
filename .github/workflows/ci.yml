@@ -231,7 +231,7 @@ jobs:
           // Only the exact, tested semantic improvements above may differ.
           const gp001=rows.find(x=>x.scenario==='GP001');
           const gp001After=after.rows.find(x=>x.scenario==='GP001');
-          if (!gp001 || !gp001After || gp001.deltaUtf8Bytes>=0 || !gp001After.prompt.includes('[GP_DOCUMENT_HANDOFF_V1]') || !gp001After.prompt.includes('ชิ้นงานฉบับเต็ม') || !gp001After.prompt.includes('เนื้อหาฉบับเต็ม') || !gp001After.prompt.includes('[รอตรวจสอบ]') || !gp001After.prompt.includes('Legal Version Gate') || !gp001After.prompt.includes('Decision Lock') || !gp001After.prompt.includes('Human Review') || !gp001After.prompt.includes('ห้ามทำลิงก์ดาวน์โหลดปลอม')) { console.error('GP001 compact contract/reduction regression'); process.exitCode=1; }
+          if (!gp001 || !gp001After || (gp001.deltaUtf8Bytes>0 || (gp001.deltaUtf8Bytes===0 && !gp001.sha256Equal)) || !gp001After.prompt.includes('[GP_DOCUMENT_HANDOFF_V1]') || !gp001After.prompt.includes('ชิ้นงานฉบับเต็ม') || !gp001After.prompt.includes('เนื้อหาฉบับเต็ม') || !gp001After.prompt.includes('[รอตรวจสอบ]') || !gp001After.prompt.includes('Legal Version Gate') || !gp001After.prompt.includes('Decision Lock') || !gp001After.prompt.includes('Human Review') || !gp001After.prompt.includes('ห้ามทำลิงก์ดาวน์โหลดปลอม')) { console.error('GP001 compact contract/reduction regression'); process.exitCode=1; }
           const changed=rows.filter(x=>!x.before.sha256||!x.after.sha256||(!x.sha256Equal&&!isReviewedChange(x)));
           if(changed.length){console.error('Browser-final prompt SHA-256 mismatch:',changed.map(x=>x.scenario));process.exitCode=1;}
           const growth=rows.filter(x=>x.deltaUtf8Bytes>0&&!isReviewedChange(x));
