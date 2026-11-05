@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "1.0",
+  "purpose": "LOCAL_REVIEW_ONLY",
+  "publishable": false,
+  "stagedAt": "2026-11-05T15:09:59.455Z",
+  "warning": "Do not publish without independent official source and human review",
+  "summary": {
+    "NEW": 1,
+    "UNCHANGED": 0,
+    "CHANGED_REVIEW_REQUIRED": 0
+  },
+  "lifecycleCounts": {
+    "DISCOVERED": 1,
+    "STAGED": 0,
+    "VERIFIED": 0,
+    "PUBLISHED": 0
+  },
+  "entries": [
+    {
+      "change": "NEW",
+      "documentId": "dla-discovery-0815-3-w79-2568",
+      "lifecycle": "DISCOVERED",
+      "record": {
+        "id": "dla-discovery-0815-3-w79-2568",
+        "documentTitle": "แผนการปฏิบัติงานและแผนการใช้จ่ายงบประมาณประจำปีงบประมาณ พ.ศ.2569",
+        "issuingAgency": "กรมส่งเสริมการปกครองท้องถิ่น",
+        "documentNumber": "มท0815.3/ว79",
+        "documentDate": "2025-10-06",
+        "effectiveDate": "",
+        "category": "",
+        "keywords": [],
+        "sourceUrl": "https://www.dla.go.th/land/tempOfficialDoc.do?cmd=goView&tokenId=mtmtt0t1gd03j1nssc6361nedlrr1c1gvfu6u591cty",
+        "status": "unknown",
+        "reviewStatus": "pending",
+        "publicationStatus": "DISCOVERED",
+        "documentSha256": "",
+        "lastVerifiedAt": "",
+        "discoveredAt": "2026-11-05T15:09:59.391860Z",
+        "discoveryMethod": "SEARCH_INDEX_ONLY",
+        "authorityEvidence": "",
+        "versionEvidence": "",
+        "supersedesDocumentId": "",
+        "supersededByDocumentId": "",
+        "amendedBy": [],
+        "repealedBy": [],
+        "evidence": [
+          "Search index of official DLA detail page; original page and PDF unavailable in this session. Metadata is a lead only, not verified original content."
+        ],
+        "contentExcerpt": "",
+        "excerptLocator": "Indexed official detail fields: เลขที่หนังสือ / หนังสือลงวันที่ / เรื่อง. Search reference turn2search0."
+      },
+      "issues": [
+        "ORIGINAL_DOCUMENT_HASH_REQUIRED",
+        "ORIGINAL_NOT_VERIFIED",
+        "AUTHORITY_REVIEW_REQUIRED",
+        "VERSION_REVIEW_REQUIRED"
+      ],
+      "decision": "DECISION_LOCK",
+      "publishable": false,
+      "documentEvidenceGate": {
+        "pass": false,
+        "decision": "DECISION_LOCK",
+        "publishable": false,
+        "errors": [
+          "VERIFICATION_TIMESTAMP_REQUIRED"
+        ]
+      }
+    }
+  ],
+  "inputDigestSha256": "b88bce5d5162ad52d5b0fe0ba272f20492b75801b027a04f5d6ad03db513ccdc",
+  "officialSourceGate": {
+    "pass": true,
+    "decision": "DECISION_LOCK",
+    "errors": []
+  },
+  "documentEvidenceSummary": {
+    "readyForIndependentReview": 0,
+    "blocked": 1
+  }
+}

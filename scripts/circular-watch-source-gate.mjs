@@ -56,7 +56,8 @@ export function validateReviewQueue(queue) {
     if (!checkOfficialUrl(r.sourceUrl)) errors.push('OFFICIAL_SOURCE_NOT_VERIFIED');
     if (r.reviewStatus === 'approved') errors.push('UNTRUSTED_APPROVAL_IN_IMPORT');
     if (e.change === 'CHANGED_REVIEW_REQUIRED') errors.push('VERSION_CONFLICT_REQUIRES_REVIEW');
-    if (!['NEW','UNCHANGED','CHANGED_REVIEW_REQUIRED'].includes(e.change)) errors.push('INVALID_CHANGE');
+    if (e.change === 'BASELINE_NOT_VERIFIED') errors.push('BASELINE_NOT_VERIFIED');
+    if (!['NEW','UNCHANGED','CHANGED_REVIEW_REQUIRED','BASELINE_NOT_VERIFIED'].includes(e.change)) errors.push('INVALID_CHANGE');
   }
   return { pass: errors.length === 0, decision: 'DECISION_LOCK', publishable: false, errors };
 }
