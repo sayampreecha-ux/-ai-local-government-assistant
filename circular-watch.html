@@ -23,7 +23,7 @@ small{color:#4a6558}input[type=file]{width:100%;box-sizing:border-box}
 </style></head>
 <body><header><a href="index.html">← GovPrompt Thailand</a></header>
 <main><h1>📚 ทะเบียนหนังสือเวียนและระเบียบ</h1>
-<p>คลังข้อมูลอ้างอิงสำหรับเจ้าหน้าที่ — แยกข้อมูลที่ตรวจรับแล้วออกจากข้อมูลที่ยังต้องตรวจสอบ</p>
+<p>ช่วยค้นทะเบียนและเปิดแหล่งราชการเพื่อให้เจ้าหน้าที่ตรวจต้นฉบับได้สะดวก ข้อมูลที่ยังไม่ยืนยันจะไม่ใช้เป็นข้อยุติ</p>
 <p class="notice" role="status"><strong>ข้อจำกัดสำคัญ:</strong> ระบบนี้อ่านทะเบียนที่เผยแพร่ไว้เท่านั้น ไม่ใช่การค้นเว็บสด และไม่รับรองว่าหนังสือฉบับใดเป็นฉบับล่าสุด ต้องตรวจต้นฉบับและผู้มีอำนาจก่อนนำไปใช้ตัดสินใจ</p>
 <section class="panel" aria-label="ค้นหาทะเบียน">
 <h2>ค้นหาหนังสือเวียน</h2>
@@ -39,7 +39,7 @@ small{color:#4a6558}input[type=file]{width:100%;box-sizing:border-box}
 <section class="panel" aria-label="รายละเอียดเอกสาร"><h2>รายละเอียดและหลักฐาน</h2><div id="details" aria-live="polite">เลือกเอกสารจากผลการค้นหา</div><div class="actions"><button id="handoff" type="button" disabled>คัดลอกคำถามไป ChatGPT / Gemini</button><a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer">เปิด ChatGPT</a><a href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer">เปิด Gemini</a></div></section>
 <section class="panel" aria-label="แหล่งข้อมูลราชการ"><h2>แหล่งข้อมูลราชการสำหรับค้นหาต้นฉบับ</h2><p class="notice">ลิงก์ต่อไปนี้เป็นจุดเริ่มต้นค้นหา ไม่ใช่หลักฐานยืนยันว่าหนังสือยังมีผลใช้บังคับ</p><div id="officialSources" aria-live="polite">กำลังโหลดรายชื่อแหล่งข้อมูล...</div></section>
 <section class="panel"><h2>นำเข้าข้อมูลสำหรับตรวจทาน (เฉพาะในเครื่อง)</h2>
-<p>เลือก JSON เพื่อดูตัวอย่างและตรวจรูปแบบเท่านั้น <strong>ไม่มีการอัปโหลด บันทึกเข้าทะเบียน หรืออนุมัติเอกสาร</strong> การเผยแพร่ต้องผ่าน GitHub PR และผู้มีสิทธิอนุมัติ</p>
+<p>เลือก JSON เพื่อดูตัวอย่างและตรวจรูปแบบเท่านั้น <strong>ไม่มีการอัปโหลด บันทึกเข้าทะเบียน หรืออนุมัติเอกสาร</strong> การเผยแพร่ต้องตรวจหลักฐานต้นฉบับและผ่านการควบคุมการเปลี่ยนแปลงของโครงการ</p>
 <label>ไฟล์ JSON สำหรับตรวจทาน<input id="importFile" type="file" accept=".json,application/json"></label><div id="importStatus" role="status"></div></section>
 </main><script src="assets/js/core/circular-watch-registry.js?v=1" defer></script>
 <script src="assets/js/ui/circular-watch-ui.js?v=1" defer></script></body></html>
