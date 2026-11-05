@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { assessReviewEvidence } from '../../scripts/circular-watch-review-gate.mjs';
+const hash='a'.repeat(64);
+const record={sourceUrl:'https://www.dla.go.th/a.pdf',documentSha256:hash,evidence:['page 1'],excerptLocator:'page 1',lastVerifiedAt:'2026-11-05T02:00:00Z'};
+const review={reviewerLogin:'reviewer-1',reviewUrl:'https://github.com/owner/repo/pull/366#pullrequestreview-123',reviewedAt:'2026-11-05T03:00:00Z',documentSha256:hash,decision:'APPROVED'};
+test('complete but untrusted review remains decision locked',()=>{const r=assessReviewEvidence(record,review);assert.equal(r.pass,true);assert.equal(r.publishable,false);assert.equal(r.authenticated,false);assert.equal(r.decision,'DECISION_LOCK');});
+test('missing or forged document hash fails',()=>{for(const h of ['', 'fake', 'b'.repeat(64)])assert.equal(assessReviewEvidence({...record,documentSha256:h},review).pass,false);});
+test('forged review URL and identity fail',()=>{for(const u of ['https://github.com.evil.test/x/y/pull/366','http://github.com/x/y/pull/366','https://example.com/'])assert.equal(assessReviewEvidence(record,{...review,reviewUrl:u}).pass,false);assert.equal(assessReviewEvidence(record,{...review,reviewerLogin:'bad name'}).pass,false);});
+test('invalid timestamps, absent evidence, rejected review fail closed',()=>{assert.equal(assessReviewEvidence({...record,lastVerifiedAt:'not-date'},review).pass,false);assert.equal(assessReviewEvidence({...record,evidence:[]},review).pass,false);assert.equal(assessReviewEvidence(record,{...review,decision:'REJECTED'}).pass,false);});
+test('malformed objects do not throw or unlock',()=>{for(const x of [null,undefined,[],{},'x']){const r=assessReviewEvidence(x,x);assert.equal(r.publishable,false);assert.equal(r.pass,false);}});
