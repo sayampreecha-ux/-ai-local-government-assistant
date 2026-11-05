@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ทะเบียนหนังสือเวียนและระเบียบ | GovPrompt Thailand</title>
+<link rel="stylesheet" href="assets/css/govprompt.css">
+<style>
+:root{color-scheme:light}body{margin:0;background:#f5f8f6;color:#153d30;font-family:system-ui,"Noto Sans Thai",sans-serif;line-height:1.55}
+header{background:#12372a;color:white;padding:16px max(18px,calc((100% - 1050px)/2))}
+header a{color:white}main{max-width:1050px;margin:0 auto;padding:22px 16px 80px}
+h1{font-size:clamp(1.4rem,4vw,2rem);margin:8px 0}h2{font-size:1.12rem}
+.panel{background:white;border:1px solid #d7e2dc;border-radius:15px;padding:16px;margin:16px 0;box-shadow:0 2px 8px #12372a08}
+.notice{border-left:4px solid #a86e20;padding:10px 14px;background:#fff8e9;color:#644315}
+.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px}
+label{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:.93rem}
+input,select,button{font:inherit;border:1px solid #9eb8aa;border-radius:9px;padding:9px;max-width:100%}
+button{cursor:pointer;background:#176245;color:white}button:disabled{opacity:.5;cursor:not-allowed}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.result{border-top:1px solid #dce7df;padding:13px 0}
+.result button{background:white;color:#145139;border:1px solid #8ab19c}
+.meta{color:#4a6558;font-size:.89rem;overflow-wrap:anywhere}
+#details{white-space:pre-wrap;overflow-wrap:anywhere}a{overflow-wrap:anywhere}
+small{color:#4a6558}input[type=file]{width:100%;box-sizing:border-box}
+:focus-visible{outline:3px solid #d29b40;outline-offset:2px}
+</style></head>
+<body><header><a href="index.html">← GovPrompt Thailand</a></header>
+<main><h1>📚 ทะเบียนหนังสือเวียนและระเบียบ</h1>
+<p>ช่วยค้นทะเบียนและเปิดแหล่งราชการเพื่อให้เจ้าหน้าที่ตรวจต้นฉบับได้สะดวก ข้อมูลที่ยังไม่ยืนยันจะไม่ใช้เป็นข้อยุติ</p>
+<p class="notice" role="status"><strong>ข้อจำกัดสำคัญ:</strong> ระบบนี้อ่านทะเบียนที่เผยแพร่ไว้เท่านั้น ไม่ใช่การค้นเว็บสด และไม่รับรองว่าหนังสือฉบับใดเป็นฉบับล่าสุด ต้องตรวจต้นฉบับและผู้มีอำนาจก่อนนำไปใช้ตัดสินใจ</p>
+<section class="panel" aria-label="ค้นหาทะเบียน">
+<h2>ค้นหาหนังสือเวียน</h2>
+<form id="searchForm"><div class="filters">
+<label>เลข ว / ชื่อเรื่อง / คำสำคัญ<input id="query" type="search" maxlength="150" placeholder="เช่น ว 1234"></label>
+<label>ปี ค.ศ. <input id="year" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="2026"></label>
+<label>หมวดงาน<input id="category" maxlength="80" placeholder="การเงิน"></label>
+<label>หน่วยงาน<input id="agency" maxlength="80" placeholder="กรมส่งเสริมฯ"></label>
+<label>สถานะ<select id="status"><option value="">ทุกสถานะ</option><option value="current">CURRENT</option><option value="amended">AMENDED</option><option value="repealed">REPEALED</option><option value="superseded">SUPERSEDED</option><option value="unknown">UNKNOWN</option></select></label>
+</div><div class="actions"><button type="submit">ค้นหา</button><button type="button" id="clear" style="background:#52695e">ล้างตัวกรอง</button><small id="loading" role="status">กำลังโหลดทะเบียน...</small></div></form>
+<div id="results" aria-live="polite"></div><div class="actions"><button type="button" id="previous" disabled>ก่อนหน้า</button><span id="pageStatus"></span><button type="button" id="next" disabled>ถัดไป</button></div>
+</section>
+<section class="panel" aria-label="รายละเอียดเอกสาร"><h2>รายละเอียดและหลักฐาน</h2><div id="details" aria-live="polite">เลือกเอกสารจากผลการค้นหา</div><div class="actions"><button id="handoff" type="button" disabled>คัดลอกคำถามไป ChatGPT / Gemini</button><a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer">เปิด ChatGPT</a><a href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer">เปิด Gemini</a></div></section>
+<section class="panel" aria-label="แหล่งข้อมูลราชการ"><h2>แหล่งข้อมูลราชการสำหรับค้นหาต้นฉบับ</h2><p class="notice">ลิงก์ต่อไปนี้เป็นจุดเริ่มต้นค้นหา ไม่ใช่หลักฐานยืนยันว่าหนังสือยังมีผลใช้บังคับ</p><div id="officialSources" aria-live="polite">กำลังโหลดรายชื่อแหล่งข้อมูล...</div></section>
+<section class="panel"><h2>นำเข้าข้อมูลสำหรับตรวจทาน (เฉพาะในเครื่อง)</h2>
+<p>เลือก JSON เพื่อดูตัวอย่างและตรวจรูปแบบเท่านั้น <strong>ไม่มีการอัปโหลด บันทึกเข้าทะเบียน หรืออนุมัติเอกสาร</strong> การเผยแพร่ต้องตรวจหลักฐานต้นฉบับและผ่านการควบคุมการเปลี่ยนแปลงของโครงการ</p>
+<label>ไฟล์ JSON สำหรับตรวจทาน<input id="importFile" type="file" accept=".json,application/json"></label><div id="importStatus" role="status"></div></section>
+</main><script src="assets/js/core/circular-watch-registry.js?v=1" defer></script>
+<script src="assets/js/ui/circular-watch-ui.js?v=1" defer></script></body></html>
