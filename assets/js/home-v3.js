@@ -843,7 +843,9 @@
       const marker = '[GP_DOCUMENT_HANDOFF_V1]';
       const start = full.lastIndexOf('\n\n' + marker);
       const nextSection = start < 0 ? -1 : full.indexOf('\n\n[GP_HANDOFF_QUALITY_V1]', start);
-      if (start >= 0 && nextSection > start) {
+      // The quality appendix is optional for ordinary letters; the document handoff may be the last section.
+      const end = nextSection > start ? nextSection : full.length;
+      if (start >= 0 && end > start) {
         const concise = '\n\n' + marker + '\n' + [
           'ส่งชิ้นงานฉบับเต็มและเนื้อหาฉบับเต็มก่อนคำอธิบาย ใช้ข้อมูลต้นทางเท่านั้น ข้อมูลขาดใส่ [รอตรวจสอบ]',
           /บันทึกข้อความ/.test(originalRequest)
@@ -852,7 +854,7 @@
           'คง Evidence Gate, Decision Lock, Legal Version Gate, PDPA และ Human Review ก่อนลงนาม ห้ามแต่งบุคคล เลขหนังสือ วันที่ กฎหมาย งบประมาณ การอนุมัติ หรือสถานะดำเนินการ',
           'หากมีเครื่องมือให้สร้างและตรวจ DOCX จริง หากไม่มีเครื่องมือหรือหมดโควตา ให้ส่งเนื้อหาฉบับเต็มพร้อมคัดลอกลง Word แจ้งว่าไม่ได้สร้างไฟล์ ห้ามทำลิงก์ดาวน์โหลดปลอม ห้ามอ้างไฟล์หรือการอนุมัติที่ไม่มีจริง ไม่บังคับซื้อบริการหรือเรียก API เพิ่ม'
         ].join('\n');
-        promptBundle = { ...promptBundle, prompt: full.slice(0, start) + concise + full.slice(nextSection) };
+        promptBundle = { ...promptBundle, prompt: full.slice(0, start) + concise + full.slice(end) };
       }
     }
     const article = document.createElement('article');
