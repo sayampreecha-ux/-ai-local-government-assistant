@@ -1,36 +1,33 @@
-# PR #366 — GitHub Review evidence binding (design; fail closed)
+# PR #366 — Lean acceptance and document evidence policy
 
-Status: **DESIGN ONLY / NOT AUTHENTICATED / NO PUBLISHING**. This file does not approve any record.
+## Scope: simple search assistant, not a legal certification service
 
-## Authority and separation of duties
+Users ask once, find official circular metadata and links, and pass a source-grounded handoff to their AI of choice. The assistant must distinguish verified evidence from unverified claims and direct staff to inspect the official original before relying on legal conclusions.
 
-- The repository owner `sayampreecha-ux` currently has GitHub `admin` permission. This is not evidence of an independent review.
-- A document approval requires a GitHub `APPROVED` pull-request review by a **different authorized reviewer** with verified `write` or `maintain` or `admin` permission, subject to repository rules and applicable separation-of-duties policy.
-- Never infer permission from a user-supplied JSON field. Query GitHub collaborator permission and review API at acceptance time.
-- Review must be on the exact PR and commit HEAD being accepted, not dismissed or outdated. A review of a changed document hash is invalid.
-- An approved code PR does not itself prove a PDF is authentic, current, or legally effective.
+**No additional GitHub reviewer account is required for technical acceptance.** GitHub Actions and documented manual tests are the technical evidence. This does not assert independent legal approval.
 
-## Per-document binding contract (proposed)
+## Minimum user experience
 
-A review manifest for each candidate document must bind:
+1. Search by keyword, agency, year, category, and status.
+2. Display document title/number/date, source link, evidence locator, and limitations.
+3. Copy a concise AI handoff asking the downstream AI to check the official source, authority, version, amendments/repeals, and evidence.
+4. If official freshness or source content is unverified, say **NOT VERIFIED** and retain **DECISION_LOCK** for legal conclusions.
 
-- `documentId`, `issuingAgency`, `documentNumber`, `sourceUrl`
-- `documentSha256`: SHA-256 of **downloaded official PDF bytes**, not a text field or URL hash
-- `sourceCheckedAt`, `excerptLocator`, `evidence`, `effectiveDate`, `versionLinks`, `versionCheckedAt`
-- `repository`, `pullNumber`, `reviewedHeadSha`, `reviewId`, `reviewerLogin`, `reviewSubmittedAt`
-- `reviewedDocumentSha256` equal to `documentSha256`
+## Evidence policy (no unnecessary approval workflow)
 
-The system must independently retrieve the official PDF, calculate its hash, and verify source/version/effective dates. Review identity, permission, state, head binding, and dismissal must be independently retrieved from GitHub API; never trust a staged approval field. Reject self-review, stale SHA, missing permission, mismatched hashes, invalid official source, unverified legal status, and changed documents.
+- A source URL alone does not prove a document exists or is the latest version.
+- For any actual legal document added to the registry, a responsible staff member must inspect the official original, record source and evidence, and check amendments/repeals before relying on the result.
+- No additional GitHub account, per-document GitHub review, or automated publisher is required for this **read-only assistant** scope.
+- Existing offline review-gate helpers remain conservative compatibility safeguards, not mandatory interactive steps for search users. Never interpret JSON `approved` as authoritative evidence.
+- No paid API or automatic legal certification.
 
-## Execution / acceptance gate
+## Technical acceptance criteria
 
-1. Keep all imported documents in a local-only staging queue. No automatic publish.
-2. Verify official source, PDF bytes, and latest amendment/repeal relations; record evidence.
-3. Verify independent GitHub reviewer and permissions, approved review and current HEAD, document hashes.
-4. Run targeted unit tests, security, P0, full regression, and browser checks on exact HEAD.
-5. Human acceptance records evidence per document. Only a separately implemented trusted publisher may consider release after all gates; **the current code never unlocks**.
-6. On any missing or ambiguous evidence return `DECISION_LOCK`, `publishable:false`, `authenticated:false`.
+- Circular Watch focused tests, security checks, P0/regression and browser checks succeed on the same PR HEAD.
+- Empty registry is explicitly disclosed; do not claim live official circular coverage while `knowledge/circulars/index.json` has no records.
+- No fake legal documents, no production deployment and no automatic unlocking.
+- If CI passes but official documents have not been checked, status is **TECHNICAL ACCEPTED — LEGAL CONTENT NOT VERIFIED**, subject to human review and release authorization.
 
-## Current gap
+## Current boundaries
 
-`scripts/circular-watch-review-gate.mjs` is an **offline preflight only**. It does not call GitHub, download PDFs, verify reviewer permissions or implement publishing. The static registry remains empty. CI success is not evidence of legal-document authenticity. No Merge/Deploy is authorized.
+This PR does not implement live official-site ingestion, original-PDF authentication, legal freshness verification, or independent legal sign-off. Such features are not prerequisites to accepting the **technical read-only assistant**, but they are prerequisites to asserting verified legal coverage. No Merge/Deploy is authorized.
