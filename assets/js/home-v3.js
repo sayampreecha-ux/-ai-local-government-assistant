@@ -728,12 +728,23 @@
     ].join('\n');
   }
 
-  function enforceHandoffQuality(prompt, originalRequest) {
+  function enforceHandoffQuality(prompt, originalRequest, moduleId) {
     const request = String(originalRequest || '');
     let source = String(prompt || '');
     if (/^(?:ทำไม|เพราะอะไร|เหตุใด|อธิบาย|ขอ(?:ทราบ|วิธี|คำแนะนำ))/.test(request)) return source;
     if (!/(?:จัดทำ|ทำ|สร้าง|ร่าง|เขียน|เตรียม|ช่วยจัด|ช่วยทำ|เอา(?:ตาราง|กำหนดการ)|ขอ(?:ตาราง|กำหนดการ|รายงาน))/i.test(request) || !/(?:บันทึก|ห้องประชุม|XLSX|Excel|ตาราง|อบรม|กำหนดการ|รณรงค์|ประกาศ|ข้อร้องเรียน|รับชำระ|รายได้)/i.test(request)) return source;
     if (source.includes('[GP_HANDOFF_QUALITY_V1]')) return source;
+    // Scope lock: compact quality appendix only for uncomplicated GP001 correspondence drafts.
+    // Legal, finance, procurement, disciplinary, complaint and cross-domain requests retain full gates.
+    const simpleCorrespondence = moduleId === 'GP001' && /(?:จัดทำ|ร่าง|เขียน|ทำ).{0,45}(?:บันทึกข้อความ|หนังสือราชการ)/i.test(request)
+      && !/(?:ขอ(?:ใช้)?ห้อง|ห้องประชุม|ไม่(?:ขอ)?(?:ใช้|ขอใช้)?งบ(?:ประมาณ)?เพิ่ม|กฎหมาย|ระเบียบ|มาตรา|วินิจฉัย|สิทธิ|เบิก|งบประมาณ|ค่าใช้จ่าย|จัดซื้อ|จัดจ้าง|พัสดุ|ละเมิด|สอบสวน|วินัย|ป\.ป\.ช\.|สตง\.|ร้องเรียน|ชี้แจง|โต้แย้ง|อุทธรณ์|XLSX|Excel|ตาราง|TOR|BOQ)/i.test(request);
+    if (simpleCorrespondence) {
+      return source + '\n\n[GP_HANDOFF_QUALITY_V1]\n' + [
+        'ร่างหนังสือราชการฉบับเต็มก่อน; ใช้ข้อมูลที่ยืนยันแล้วเท่านั้น ข้อมูลขาดใส่ [รอตรวจสอบ] และแยกข้อเสนอเสริมออกจากข้อเท็จจริง',
+        'คง Evidence Gate, Decision Lock เฉพาะประเด็นที่ยังตรวจไม่ได้ และ Human Review ก่อนลงนาม; ห้ามแต่งเลขหนังสือ วันเวลา บุคคล กฎหมาย งบประมาณ หรือการอนุมัติ',
+        'หากมีเครื่องมือให้สร้าง DOCX จริงและตรวจเนื้อหา/รูปแบบ; หากไม่มีให้ส่งร่างพร้อมคัดลอกและแจ้งข้อจำกัด ห้ามอ้างว่ามีไฟล์หรืออนุมัติแล้ว'
+      ].join('\n');
+    }
     const rules = [
       '[GP_HANDOFF_QUALITY_V1]',
       'แยกข้อมูลต้นทางที่ยืนยันได้ ออกจากข้อเสนอเสริมของ AI อย่างชัดเจน: กิจกรรม หัวข้ออบรม สถานที่ วิทยากร อุปกรณ์ พิธีการ เวลา และวิธีประเมินที่ผู้ใช้ไม่ได้ให้ เป็นเพียงข้อเสนอรอตรวจสอบ ไม่ใช่ข้อเท็จจริงหรือรายการที่อนุมัติแล้ว',
@@ -821,7 +832,31 @@
       promptBundle = { ...promptBundle, prompt: completeDocumentHandoff(promptBundle.prompt, originalRequest) };
     }
     if (!explicitDisciplineIntent) promptBundle = { ...promptBundle, prompt: completeTortLevel1Handoff(promptBundle.prompt, explicitTortIntent ? 'งานความรับผิดทางละเมิดของเจ้าหน้าที่ อปท. ' + originalRequest : originalRequest) };
-    promptBundle = { ...promptBundle, prompt: enforceHandoffQuality(promptBundle.prompt, originalRequest) };
+    promptBundle = { ...promptBundle, prompt: enforceHandoffQuality(promptBundle.prompt, originalRequest, route.moduleId) };
+    // Compact only the final document handoff for a routed, low-risk GP001 draft.
+    // Do not touch shared governance, retrieval, other modules or mixed/high-risk requests.
+    const compactGP001Draft = route.moduleId === 'GP001'
+      && /(?:จัดทำ|ร่าง|เขียน|ทำ).{0,45}(?:บันทึกข้อความ|หนังสือราชการ)/i.test(originalRequest)
+      && !/(?:ขอ(?:ใช้)?ห้อง|ห้องประชุม|งบ|เงิน|ค่าใช้จ่าย|กฎหมาย|ระเบียบ|มาตรา|วินิจฉัย|สิทธิ|เบิก|จัดซื้อ|จัดจ้าง|พัสดุ|ละเมิด|สอบสวน|วินัย|ป\.ป\.ช\.|สตง\.|ร้องเรียน|ชี้แจง|โต้แย้ง|อุทธรณ์|บุคคล|XLSX|Excel|ตาราง|TOR|BOQ)/i.test(originalRequest);
+    if (compactGP001Draft && promptBundle.prompt.includes('[GP_DOCUMENT_HANDOFF_V1]')) {
+      const full = promptBundle.prompt;
+      const marker = '[GP_DOCUMENT_HANDOFF_V1]';
+      const start = full.lastIndexOf('\n\n' + marker);
+      const nextSection = start < 0 ? -1 : full.indexOf('\n\n[GP_HANDOFF_QUALITY_V1]', start);
+      // The quality appendix is optional for ordinary letters; the document handoff may be the last section.
+      const end = nextSection > start ? nextSection : full.length;
+      if (start >= 0 && end > start) {
+        const concise = '\n\n' + marker + '\n' + [
+          'ส่งชิ้นงานฉบับเต็มและเนื้อหาฉบับเต็มก่อนคำอธิบาย ใช้ข้อมูลต้นทางเท่านั้น ข้อมูลขาดใส่ [รอตรวจสอบ]',
+          /บันทึกข้อความ/.test(originalRequest)
+            ? 'บันทึกข้อความ: ส่วนราชการ ที่ วันที่ เรื่อง เรียน เรื่องเดิม ข้อเท็จจริง ข้อพิจารณา ข้อเสนอ'
+            : 'หนังสือราชการตามชนิดที่ขอ อย่าเปลี่ยนเป็นบันทึกข้อความ',
+          'คง Evidence Gate, Decision Lock, Legal Version Gate, PDPA และ Human Review ก่อนลงนาม ห้ามแต่งบุคคล เลขหนังสือ วันที่ กฎหมาย งบประมาณ การอนุมัติ หรือสถานะดำเนินการ',
+          'หากมีเครื่องมือให้สร้างและตรวจ DOCX จริง หากไม่มีเครื่องมือหรือหมดโควตา ให้ส่งเนื้อหาฉบับเต็มพร้อมคัดลอกลง Word แจ้งว่าไม่ได้สร้างไฟล์ ห้ามทำลิงก์ดาวน์โหลดปลอม ห้ามอ้างไฟล์หรือการอนุมัติที่ไม่มีจริง ไม่บังคับซื้อบริการหรือเรียก API เพิ่ม'
+        ].join('\n');
+        promptBundle = { ...promptBundle, prompt: full.slice(0, start) + concise + full.slice(end) };
+      }
+    }
     const article = document.createElement('article');
     const content = document.createElement('div');
     const label = document.createElement('span');
