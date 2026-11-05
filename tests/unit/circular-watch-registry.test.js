@@ -101,3 +101,8 @@ test('offline queue never labels an unknown public baseline NEW',()=>{
   assert.equal(q.entries[0].lifecycle,'DISCOVERED');
   assert.ok(q.entries[0].issues.includes('BASELINE_NOT_VERIFIED'));
 });
+test('document-number spacing and Thai digits cannot evade duplicate or changed-version detection',()=>{
+  assert.throws(()=>createCircularRegistry([sample(),sample({id:'c2',documentNumber:'TEST / ๐๐๑'})]),/Duplicate/);
+  const q=stageReviewQueue([ready({documentNumber:' TEST / ๐๐๑ ',documentSha256:'b'.repeat(64)})],[ready()]);
+  assert.equal(q.entries[0].change,'CHANGED_REVIEW_REQUIRED');
+});

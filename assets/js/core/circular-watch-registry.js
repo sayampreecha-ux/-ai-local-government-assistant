@@ -9,6 +9,7 @@
   const REVIEW = Object.freeze(['pending', 'approved', 'rejected']);
   const normalize = value => String(value ?? '').trim();
   const key = value => normalize(value).normalize('NFKC').toLocaleLowerCase('th');
+  const numberKey = value => key(value).replace(/[๐-๙]/g, digit => String('๐๑๒๓๔๕๖๗๘๙'.indexOf(digit))).replace(/[\s\u200b-\u200d\ufeff]/g, '');
   const date = value => {
     const s = normalize(value);
     if (!s) return '';
@@ -56,7 +57,7 @@
     const records = Object.freeze(inputs.map(normalizeRecord));
     const ids = new Set(), identities = new Set();
     for (const record of records) {
-      const identity = [key(record.issuingAgency), key(record.documentNumber)].join('|');
+      const identity = [key(record.issuingAgency), numberKey(record.documentNumber)].join('|');
       if (ids.has(record.id) || identities.has(identity)) throw new TypeError('Duplicate circular ID or agency/document number');
       ids.add(record.id); identities.add(identity);
     }
@@ -106,7 +107,7 @@
     }
     return Object.freeze({ records, get: id => byId.get(normalize(id)), search, assess });
   }
-  const identity = r => [key(r.issuingAgency), key(r.documentNumber)].join('|');
+  const identity = r => [key(r.issuingAgency), numberKey(r.documentNumber)].join('|');
   function candidateIssues(record) {
     const issues = [];
     if (!officialUrl(record.sourceUrl)) issues.push('OFFICIAL_SOURCE_NOT_VERIFIED');

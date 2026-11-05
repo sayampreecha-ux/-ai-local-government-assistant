@@ -12,7 +12,7 @@
       "reviewStatus": "pending",
       "publicationStatus": "DISCOVERED",
       "discoveryMethod": "SEARCH_INDEX_ONLY",
-      "discoveredAt": "2026-11-05T15:09:59.391860Z",
+      "discoveredAt": "2026-11-05T15:16:58Z",
       "evidence": [
         "Search index of official DLA detail page; original page and PDF unavailable in this session. Metadata is a lead only, not verified original content."
       ],
