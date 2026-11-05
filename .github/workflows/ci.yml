@@ -237,6 +237,9 @@ jobs:
           const growth=rows.filter(x=>x.deltaUtf8Bytes>0&&!isReviewedChange(x));
           if(growth.length){console.error('Browser-final prompt growth requires human review and verified exception:',growth.map(x=>x.scenario));process.exitCode=1;}
           NODE
+          if [ "${{ github.head_ref }}" = "fix/gp001-simple-handoff-compact-20261104" ]; then
+            node scripts/verify-pr367-gp001-acceptance.mjs
+          fi
       - name: Preserve final runtime prompt evidence
         if: always()
         uses: actions/upload-artifact@v4
