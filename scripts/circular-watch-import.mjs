@@ -5,7 +5,7 @@ import { dirname, resolve } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { createHash } from 'node:crypto';
-import { validateReviewQueue } from './circular-watch-source-gate.mjs';
+import { validateReviewQueue, validateDocumentEvidence } from './circular-watch-source-gate.mjs';
 const context = { window: {}, URL };
 runInNewContext(readFileSync(new URL('../assets/js/core/circular-watch-registry.js', import.meta.url), 'utf8'), context);
 const { createCircularRegistry } = context.window.GovPromptCore.CircularWatch;
@@ -32,7 +32,7 @@ try {
   const entries = candidates.map(record => {
     const old = byIdentity.get([record.issuingAgency, record.documentNumber].join('|'));
     const change = !old ? 'NEW' : hash(old) === hash(record) ? 'UNCHANGED' : 'CHANGED_REVIEW_REQUIRED';
-    return { change, documentId: record.id, record };
+    return { change, documentId: record.id, record, documentEvidenceGate: validateDocumentEvidence(record) };
   });
   const gate = validateReviewQueue({ purpose: 'LOCAL_REVIEW_ONLY', publishable: false, entries });
   const summary = Object.fromEntries(['NEW','UNCHANGED','CHANGED_REVIEW_REQUIRED'].map(x => [x, entries.filter(e => e.change === x).length]));
@@ -40,7 +40,8 @@ try {
     schemaVersion: '1.0', purpose: 'LOCAL_REVIEW_ONLY', publishable: false,
     warning: 'Do not publish without independent official source and human review',
     inputDigestSha256: hash(raw), summary, entries,
-    officialSourceGate: { pass: gate.pass, decision: gate.decision, errors: gate.errors }
+    officialSourceGate: { pass: gate.pass, decision: gate.decision, errors: gate.errors },
+    documentEvidenceSummary: { readyForIndependentReview: entries.filter(e => e.documentEvidenceGate.pass).length, blocked: entries.filter(e => !e.documentEvidenceGate.pass).length }
   };
   const target = resolve(output);
   await mkdir(dirname(target), { recursive: true });
