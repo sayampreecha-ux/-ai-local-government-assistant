@@ -165,7 +165,7 @@
       const rows = Array.isArray(parsed) ? parsed : parsed.records;
       if (!Array.isArray(rows) || rows.length > 100) throw new Error('ต้องเป็น JSON array ไม่เกิน 100 รายการ');
       const preview = api.createCircularRegistry(rows);
-      output.textContent = 'ตรวจรูปแบบผ่าน ' + preview.records.length + ' รายการ — เป็นเพียง Preview ในเครื่อง ยังไม่เผยแพร่หรืออนุมัติ ต้องเปิด PR และ Human Review';
+      output.textContent = 'ตรวจรูปแบบผ่าน ' + preview.records.length + ' รายการ — เป็นเพียง Preview ในเครื่อง ยังไม่เผยแพร่หรืออนุมัติ ต้องตรวจหลักฐานต้นฉบับก่อนนำไปใช้';
     } catch (error) {
       output.textContent = 'นำเข้าตัวอย่างไม่ได้: ' + error.message;
     } finally {
