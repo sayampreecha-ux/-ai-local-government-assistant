@@ -13,6 +13,7 @@ on:
       - 'scripts/circular-watch-review-gate.mjs'
       - 'tests/unit/circular-watch-source-gate.test.js'
       - 'tests/unit/circular-watch-review-gate.test.js'
+      - 'tests/unit/circular-watch-no-review-publish.test.js'
       - 'scripts/benchmark-circular-watch.mjs'
       - 'tests/e2e/circular-watch-browser.mjs'
       - '.github/workflows/circular-watch-acceptance.yml'
@@ -34,7 +35,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Registry unit tests
-        run: node --test tests/unit/circular-watch-registry.test.js tests/unit/circular-watch-import.test.js tests/unit/circular-watch-source-gate.test.js tests/unit/circular-watch-review-gate.test.js
+        run: node --test tests/unit/circular-watch-registry.test.js tests/unit/circular-watch-import.test.js tests/unit/circular-watch-source-gate.test.js tests/unit/circular-watch-review-gate.test.js tests/unit/circular-watch-no-review-publish.test.js
       - name: Validate official discovery sources
         run: node scripts/circular-watch-source-gate.mjs
       - name: Benchmark 50k synthetic records
