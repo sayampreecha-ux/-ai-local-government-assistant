@@ -33,8 +33,11 @@ export function validateDocumentEvidence(record) {
   if (record.documentDate && !validDate(record.documentDate)) errors.push('INVALID_DOCUMENT_DATE');
   if (record.effectiveDate && !validDate(record.effectiveDate)) errors.push('INVALID_EFFECTIVE_DATE');
   if (!Array.isArray(record.evidence) || !record.evidence.length || record.evidence.some(x => typeof x !== 'string' || !x.trim())) errors.push('DOCUMENT_EVIDENCE_REQUIRED');
-  if (!record.excerptLocator || typeof record.excerptLocator !== 'string') errors.push('EVIDENCE_LOCATOR_REQUIRED');
-  if (!record.lastVerifiedAt || Number.isNaN(Date.parse(record.lastVerifiedAt))) errors.push('VERIFICATION_TIMESTAMP_REQUIRED');
+  if (typeof record.excerptLocator !== 'string' || !record.excerptLocator.trim()) errors.push('EVIDENCE_LOCATOR_REQUIRED');
+  if (typeof record.documentSha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(record.documentSha256)) errors.push('DOCUMENT_HASH_REQUIRED');
+  if (typeof record.lastVerifiedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(record.lastVerifiedAt) || !validDate(record.lastVerifiedAt.slice(0, 10)) || !Number.isFinite(Date.parse(record.lastVerifiedAt))) errors.push('VERIFICATION_TIMESTAMP_REQUIRED');
+  if (typeof record.authorityEvidence !== 'string' || !record.authorityEvidence.trim()) errors.push('AUTHORITY_REVIEW_REQUIRED');
+  if (typeof record.versionEvidence !== 'string' || !record.versionEvidence.trim() || !['current', 'amended', 'repealed', 'superseded'].includes(record.status)) errors.push('VERSION_REVIEW_REQUIRED');
   if (record.reviewStatus === 'approved') errors.push('APPROVAL_CANNOT_BE_IMPORTED');
   if (['repealed', 'superseded', 'amended'].includes(record.status)) {
     const links = [record.supersedesDocumentId, record.supersededByDocumentId, ...(Array.isArray(record.amendedBy) ? record.amendedBy : []), ...(Array.isArray(record.repealedBy) ? record.repealedBy : [])];
