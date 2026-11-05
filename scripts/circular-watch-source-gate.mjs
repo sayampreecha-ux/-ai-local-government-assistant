@@ -22,6 +22,27 @@ export function validateSourceCatalog(input) {
   }
   return { pass: errors.length === 0, errors };
 }
+// Document-level readiness is advisory only: metadata cannot authenticate a PDF or confer approval.
+export function validateDocumentEvidence(record) {
+  const errors = [];
+  if (!record || typeof record !== 'object' || Array.isArray(record)) return { pass: false, decision: 'DECISION_LOCK', errors: ['INVALID_DOCUMENT'] };
+  const required = ['id', 'documentTitle', 'documentNumber', 'issuingAgency', 'documentDate', 'sourceUrl'];
+  for (const field of required) if (typeof record[field] !== 'string' || !record[field].trim()) errors.push('MISSING_' + field.toUpperCase());
+  if (!checkOfficialUrl(record.sourceUrl)) errors.push('UNAPPROVED_DOCUMENT_URL');
+  const validDate = value => typeof value === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value + 'T00:00:00Z').toISOString().slice(0, 10) === value;
+  if (record.documentDate && !validDate(record.documentDate)) errors.push('INVALID_DOCUMENT_DATE');
+  if (record.effectiveDate && !validDate(record.effectiveDate)) errors.push('INVALID_EFFECTIVE_DATE');
+  if (!Array.isArray(record.evidence) || !record.evidence.length || record.evidence.some(x => typeof x !== 'string' || !x.trim())) errors.push('DOCUMENT_EVIDENCE_REQUIRED');
+  if (!record.excerptLocator || typeof record.excerptLocator !== 'string') errors.push('EVIDENCE_LOCATOR_REQUIRED');
+  if (!record.lastVerifiedAt || Number.isNaN(Date.parse(record.lastVerifiedAt))) errors.push('VERIFICATION_TIMESTAMP_REQUIRED');
+  if (record.reviewStatus === 'approved') errors.push('APPROVAL_CANNOT_BE_IMPORTED');
+  if (['repealed', 'superseded', 'amended'].includes(record.status)) {
+    const links = [record.supersedesDocumentId, record.supersededByDocumentId, ...(Array.isArray(record.amendedBy) ? record.amendedBy : []), ...(Array.isArray(record.repealedBy) ? record.repealedBy : [])];
+    if (!links.some(x => typeof x === 'string' && x.trim())) errors.push('VERSION_RELATION_EVIDENCE_REQUIRED');
+  }
+  // Even a fully populated candidate remains unverified until an authorized reviewer checks the original.
+  return { pass: errors.length === 0, decision: 'DECISION_LOCK', publishable: false, errors };
+}
 export function validateReviewQueue(queue) {
   const errors = [];
   if (queue?.purpose !== 'LOCAL_REVIEW_ONLY' || queue.publishable !== false || !Array.isArray(queue.entries)) errors.push('INVALID_REVIEW_QUEUE');
