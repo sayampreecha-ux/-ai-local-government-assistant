@@ -10,6 +10,8 @@ test('official discovery catalog validates but is not an ingestion feed', () => 
 test('reject lookalike hosts, HTTP, credentials, ports and third-party sources', () => {
   for (const url of ['http://www.dla.go.th/land/officialDoc.do','https://dla.go.th.evil.test/','https://bad@dla.go.th/','https://dla.go.th:8443/','https://example.com/']) assert.equal(checkOfficialUrl(url),false,url);
   assert.equal(checkOfficialUrl('https://www.dla.go.th/land/officialDoc.do'),true);
+  assert.equal(checkOfficialUrl('https://anticor1.moi.go.th/test.pdf'), true);
+  assert.equal(checkOfficialUrl('https://anticor1.moi.go.th.example.com/test.pdf'), false);
 });
 test('catalog fails closed for automatic ingestion and duplicate IDs', () => {
   assert.equal(validateSourceCatalog({...catalog,sources:[catalog.sources[0],catalog.sources[0]]}).pass,false);
@@ -47,7 +49,16 @@ test('document-level evidence readiness fails closed for missing metadata and fo
   assert.ok(missing.errors.includes('MISSING_DOCUMENTDATE'));
   assert.ok(missing.errors.includes('DOCUMENT_EVIDENCE_REQUIRED'));
   assert.equal(missing.decision,'DECISION_LOCK');
-  const candidate = {id:'x',documentTitle:'Test',documentNumber:'T1',issuingAgency:'Agency',documentDate:'2026-01-01',sourceUrl:'https://www.dla.go.th/land/officialDoc.do',evidence:['manual PDF review pending'],excerptLocator:'page 1',lastVerifiedAt:'2026-01-01T00:00:00Z',reviewStatus:'pending',status:'unknown'};
+  const candidate = {id:'x',documentTitle:'Test',documentNumber:'T1',issuingAgency:'Agency',documentDate:'2026-01-01',sourceUrl:'https://www.dla.go.th/land/officialDoc.do',evidence:['Synthetic evidence'],excerptLocator:'page 1',lastVerifiedAt:'2026-01-01T00:00:00Z',reviewStatus:'pending',status:'current',documentSha256:'a'.repeat(64),authorityEvidence:'Synthetic authority',versionEvidence:'Synthetic version'};
+  for (const [fields, error] of [
+    [{ documentSha256: '' }, 'DOCUMENT_HASH_REQUIRED'],
+    [{ authorityEvidence: ' ' }, 'AUTHORITY_REVIEW_REQUIRED'],
+    [{ versionEvidence: '' }, 'VERSION_REVIEW_REQUIRED'],
+    [{ status: 'unknown' }, 'VERSION_REVIEW_REQUIRED'],
+    [{ lastVerifiedAt: '2026-01-01' }, 'VERIFICATION_TIMESTAMP_REQUIRED'],
+    [{ lastVerifiedAt: '2026-02-30T00:00:00Z' }, 'VERIFICATION_TIMESTAMP_REQUIRED'],
+    [{ excerptLocator: ' ' }, 'EVIDENCE_LOCATOR_REQUIRED'],
+  ]) assert.ok(validateDocumentEvidence({...candidate, ...fields}).errors.includes(error), error);
   const result=validateDocumentEvidence(candidate);
   assert.equal(result.pass,true);
   assert.equal(result.publishable,false);

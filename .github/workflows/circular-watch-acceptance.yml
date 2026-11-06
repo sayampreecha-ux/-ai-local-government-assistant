@@ -26,6 +26,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: pnpm/action-setup@v4
         with:
           version: 11.9.0
@@ -34,8 +36,14 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Record immutable tested source
+        run: |
+          mkdir -p artifacts/circular-watch
+          git rev-parse HEAD > artifacts/circular-watch/tested-head.txt
       - name: Registry unit tests
-        run: node --test tests/unit/circular-watch-registry.test.js tests/unit/circular-watch-import.test.js tests/unit/circular-watch-source-gate.test.js tests/unit/circular-watch-review-gate.test.js tests/unit/circular-watch-no-review-publish.test.js
+        run: |
+          set -o pipefail
+          node --test tests/unit/circular-watch*.test.js | tee artifacts/circular-watch/unit.log
       - name: Validate official discovery sources
         run: node scripts/circular-watch-source-gate.mjs
       - name: Benchmark 50k synthetic records
@@ -45,4 +53,12 @@ jobs:
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Mobile and desktop browser E2E
-        run: node tests/e2e/circular-watch-browser.mjs
+        run: |
+          set -o pipefail
+          node tests/e2e/circular-watch-browser.mjs | tee artifacts/circular-watch/browser.log
+      - name: Preserve branch acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: circular-watch-acceptance-${{ github.event.pull_request.head.sha || github.sha }}
+          path: artifacts/circular-watch/

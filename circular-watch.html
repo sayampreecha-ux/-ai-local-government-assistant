@@ -11,7 +11,7 @@ h1{font-size:clamp(1.4rem,4vw,2rem);margin:8px 0}h2{font-size:1.12rem}
 .notice{border-left:4px solid #a86e20;padding:10px 14px;background:#fff8e9;color:#644315}
 .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px}
 label{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:.93rem}
-input,select,button{font:inherit;border:1px solid #9eb8aa;border-radius:9px;padding:9px;max-width:100%}
+input,select,textarea,button{font:inherit;border:1px solid #9eb8aa;border-radius:9px;padding:9px;max-width:100%}
 button{cursor:pointer;background:#176245;color:white}button:disabled{opacity:.5;cursor:not-allowed}
 .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
 .result{border-top:1px solid #dce7df;padding:13px 0}
@@ -19,6 +19,7 @@ button{cursor:pointer;background:#176245;color:white}button:disabled{opacity:.5;
 .meta{color:#4a6558;font-size:.89rem;overflow-wrap:anywhere}
 #details{white-space:pre-wrap;overflow-wrap:anywhere}a{overflow-wrap:anywhere}
 small{color:#4a6558}input[type=file]{width:100%;box-sizing:border-box}
+textarea{box-sizing:border-box;width:100%;min-height:180px}#reviewQueue{overflow-wrap:anywhere}
 :focus-visible{outline:3px solid #d29b40;outline-offset:2px}
 </style></head>
 <body><header><a href="index.html">← GovPrompt Thailand</a></header>
@@ -29,7 +30,7 @@ small{color:#4a6558}input[type=file]{width:100%;box-sizing:border-box}
 <h2>ค้นหาหนังสือเวียน</h2>
 <form id="searchForm"><div class="filters">
 <label>เลข ว / ชื่อเรื่อง / คำสำคัญ<input id="query" type="search" maxlength="150" placeholder="เช่น ว 1234"></label>
-<label>ปี ค.ศ. <input id="year" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="2026"></label>
+<label>ปี พ.ศ. / ค.ศ. <input id="year" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="2569 หรือ 2026"></label>
 <label>หมวดงาน<input id="category" maxlength="80" placeholder="การเงิน"></label>
 <label>หน่วยงาน<input id="agency" maxlength="80" placeholder="กรมส่งเสริมฯ"></label>
 <label>สถานะ<select id="status"><option value="">ทุกสถานะ</option><option value="current">CURRENT</option><option value="amended">AMENDED</option><option value="repealed">REPEALED</option><option value="superseded">SUPERSEDED</option><option value="unknown">UNKNOWN</option></select></label>
@@ -40,6 +41,11 @@ small{color:#4a6558}input[type=file]{width:100%;box-sizing:border-box}
 <section class="panel" aria-label="แหล่งข้อมูลราชการ"><h2>แหล่งข้อมูลราชการสำหรับค้นหาต้นฉบับ</h2><p class="notice">ลิงก์ต่อไปนี้เป็นจุดเริ่มต้นค้นหา ไม่ใช่หลักฐานยืนยันว่าหนังสือยังมีผลใช้บังคับ</p><div id="officialSources" aria-live="polite">กำลังโหลดรายชื่อแหล่งข้อมูล...</div></section>
 <section class="panel"><h2>นำเข้าข้อมูลสำหรับตรวจทาน (เฉพาะในเครื่อง)</h2>
 <p>เลือก JSON เพื่อดูตัวอย่างและตรวจรูปแบบเท่านั้น <strong>ไม่มีการอัปโหลด บันทึกเข้าทะเบียน หรืออนุมัติเอกสาร</strong> การเผยแพร่ต้องตรวจหลักฐานต้นฉบับและผ่านการควบคุมการเปลี่ยนแปลงของโครงการ</p>
-<label>ไฟล์ JSON สำหรับตรวจทาน<input id="importFile" type="file" accept=".json,application/json"></label><div id="importStatus" role="status"></div></section>
-</main><script src="assets/js/core/circular-watch-registry.js?v=1" defer></script>
-<script src="assets/js/ui/circular-watch-ui.js?v=1" defer></script></body></html>
+<label>ไฟล์ JSON สำหรับตรวจทาน<input id="importFile" type="file" accept=".json,application/json"></label><label>หรือวาง JSON จากเจ้าหน้าที่<textarea id="importJson" maxlength="1048576" placeholder='{"records": []}'></textarea></label>
+<label>ไฟล์ PDF ต้นฉบับ (กรณีข้อมูลหนึ่งรายการ สูงสุด 20 MB)<input id="originalFile" type="file" accept=".pdf,application/pdf"></label>
+<p>Hash ยืนยันเพียงว่าเป็นไฟล์เดียวกัน ไม่ยืนยันผู้ลงนาม ความแท้จริง หรือกฎหมายฉบับล่าสุด</p>
+<div class="actions"><button id="stageJson" type="button">ตรวจและเข้าคิวในเครื่อง</button><button id="exportQueue" type="button" disabled>ดาวน์โหลดคิวตรวจรับ JSON</button><button id="template" type="button">ดาวน์โหลดโครงข้อมูลเปล่า</button><button id="clearQueue" type="button">ล้างคิวในเครื่อง</button></div>
+<div id="importStatus" role="status"></div><div id="reviewQueue" aria-live="polite"></div>
+<p class="notice">DISCOVERED = ยังขาดหลักฐาน · STAGED = พร้อมส่งให้คนตรวจ · VERIFIED = ผ่านผู้ตรวจที่รับผิดชอบ · PUBLISHED = เผยแพร่แล้ว ระบบนำเข้านี้ออกได้เพียงสองสถานะแรก และใช้ DECISION LOCK เสมอ การเปลี่ยนเป็น VERIFIED/PUBLISHED ต้องตรวจต้นฉบับและอนุมัติแยกต่างหาก</p></section>
+</main><script src="assets/js/core/circular-watch-registry.js?v=2" defer></script>
+<script src="assets/js/ui/circular-watch-ui.js?v=2" defer></script></body></html>

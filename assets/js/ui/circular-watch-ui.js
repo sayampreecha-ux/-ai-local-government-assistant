@@ -4,7 +4,7 @@
   const byId = id => document.getElementById(id);
   const status = byId('loading'), results = byId('results'), details = byId('details');
   const PAGE_SIZE = 20, MAX_SHARDS = 8;
-  let registry = api?.createCircularRegistry([]), offset = 0, selected = null, complete = true;
+  let registry = api?.createCircularRegistry([]), offset = 0, selected = null, complete = true, comparisonComplete = false;
   const element = (tag, value, className = '') => {
     const node = document.createElement(tag);
     if (value !== undefined) node.textContent = String(value);
@@ -18,11 +18,13 @@
       offset, limit: PAGE_SIZE
     };
   }
-  function showDetails(id) {
-    const record = registry.get(id);
+  let reviewQueue = null, selectedRegistry = registry;
+  function showDetails(id, sourceRegistry = registry) {
+    selectedRegistry = sourceRegistry;
+    const record = sourceRegistry.get(id);
     if (!record) return;
     selected = record;
-    const gate = registry.assess(id);
+    const gate = sourceRegistry.assess(id);
     details.replaceChildren();
     const lines = [
       record.documentTitle, 'เลขที่: ' + record.documentNumber,
@@ -30,6 +32,8 @@
       'วันที่ออก: ' + (record.documentDate || 'ไม่ระบุ'),
       'วันที่มีผล: ' + (record.effectiveDate || 'ไม่ระบุ'),
       'Version: ' + record.status.toUpperCase(),
+      'Publication: ' + record.publicationStatus,
+      'Document SHA256: ' + (record.documentSha256 || 'ไม่มีไฟล์ต้นฉบับ'),
       'Human Review: ' + record.reviewStatus.toUpperCase(),
       'Evidence Gate: ' + gate.decision,
       'ประเด็นที่ยังต้องตรวจ: ' + (gate.issues.join(', ') || 'ต้องตรวจความเป็นปัจจุบันจากต้นฉบับอีกครั้ง'),
@@ -106,7 +110,8 @@
     if (!api) throw new Error('Circular Watch module is unavailable');
     const index = await fetchJson('knowledge/circulars/index.json');
     if (!Array.isArray(index.records) || !Array.isArray(index.shards)) throw new TypeError('Invalid registry manifest');
-    const year = byId('year').value.trim();
+    const enteredYear = byId('year').value.trim();
+    const year = +enteredYear >= 2400 ? String(+enteredYear - 543) : enteredYear;
     const matching = index.shards.filter(shard => !year || String(shard.year || '') === year);
     complete = matching.length <= MAX_SHARDS;
     const batches = await Promise.all(matching.slice(0, MAX_SHARDS).map(async shard => {
@@ -114,28 +119,39 @@
       if (!Array.isArray(data.records)) throw new TypeError('Invalid shard');
       return data.records;
     }));
-    registry = api.createCircularRegistry([...index.records, ...batches.flat()]);
+    const all = api.createCircularRegistry([...index.records, ...batches.flat()]).records;
+    const published = all.filter(api.isPublishedRecord);
+    registry = api.createCircularRegistry(published);
+    const hiddenCount = all.length - published.length;
+    comparisonComplete = complete && matching.length === index.shards.length;
     offset = 0; selected = null; byId('handoff').disabled = true;
     details.textContent = 'เลือกเอกสารจากผลการค้นหา';
     status.textContent = complete ? 'ทะเบียนที่โหลด: ' + registry.records.length + ' รายการ (ไม่ใช่ผลค้นเว็บสด)' : '⚠️ โหลดข้อมูลบางส่วน: โปรดกรองปีเพื่อลดจำนวน Shard';
+    if (hiddenCount) status.textContent += ' — ซ่อน ' + hiddenCount + ' รายการที่ยังไม่ผ่านการตรวจรับเพื่อเผยแพร่';
     render();
+  }
+  function loadError(error) {
+    complete = false; comparisonComplete = false; selected = null; registry = api.createCircularRegistry([]);
+    byId('handoff').disabled = true; byId('previous').disabled = true; byId('next').disabled = true;
+    details.textContent = 'ไม่สามารถยืนยันทะเบียนได้'; results.replaceChildren();
+    byId('pageStatus').textContent = ''; status.textContent = 'ไม่สามารถโหลดทะเบียน: ' + error.message;
   }
   byId('searchForm').addEventListener('submit', event => {
     event.preventDefault();
     if (byId('year').value && !/^\d{4}$/.test(byId('year').value)) {
-      status.textContent = 'ปีต้องเป็น ค.ศ. 4 หลัก'; return;
+      status.textContent = 'ปีต้องเป็น พ.ศ. หรือ ค.ศ. 4 หลัก'; return;
     }
-    load().catch(error => { complete = false; status.textContent = 'ไม่สามารถโหลดทะเบียน: ' + error.message; results.replaceChildren(); });
+    load().catch(loadError);
   });
   byId('clear').addEventListener('click', () => {
     for (const id of ['query', 'year', 'category', 'agency', 'status']) byId(id).value = '';
-    load().catch(error => { status.textContent = 'โหลดทะเบียนไม่สำเร็จ: ' + error.message; });
+    load().catch(loadError);
   });
   byId('previous').addEventListener('click', () => { offset = Math.max(0, offset - PAGE_SIZE); render(); });
   byId('next').addEventListener('click', () => { offset += PAGE_SIZE; render(); });
   byId('handoff').addEventListener('click', async () => {
     if (!selected) return;
-    const gate = registry.assess(selected.id);
+    const gate = selectedRegistry.assess(selected.id);
     const prompt = [
       'โปรดค้นและตรวจสอบแหล่งราชการล่าสุดก่อนวิเคราะห์ ห้ามสรุปจากทะเบียนนี้เพียงอย่างเดียว',
       'หนังสือ: ' + selected.documentNumber + ' — ' + selected.documentTitle,
@@ -155,23 +171,60 @@
       status.textContent = 'คัดลอกอัตโนมัติไม่ได้ โปรดใช้เบราว์เซอร์ที่อนุญาต Clipboard';
     }
   });
+  const download = (name, data) => {
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}));
+    const link = element('a'); link.href = url; link.download = name; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  function clearQueue() {
+    reviewQueue = null; byId('exportQueue').disabled = true; byId('reviewQueue').replaceChildren();
+    selected = null; byId('handoff').disabled = true; details.textContent = 'เลือกเอกสารจากผลการค้นหา';
+  }
+  async function stage(parsed) {
+    clearQueue();
+    const rows = Array.isArray(parsed) ? parsed : parsed.records || parsed.entries?.map(e => e.record);
+    if (!Array.isArray(rows) || rows.length > 100) throw new Error('ต้องเป็น JSON array ไม่เกิน 100 รายการ');
+    const original = byId('originalFile').files?.[0];
+    if (original) {
+      if (rows.length !== 1 || original.size > 20 * 1024 * 1024) throw new Error('ไฟล์ต้นฉบับต้องคู่กับหนึ่งรายการและไม่เกิน 20 MB');
+      const bytes = await original.arrayBuffer();
+      if (new TextDecoder().decode(bytes.slice(0,5)) !== '%PDF-') throw new Error('ต้องเป็นไฟล์ PDF');
+      const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))].map(b => b.toString(16).padStart(2,'0')).join('');
+      if (rows[0].documentSha256 && rows[0].documentSha256 !== digest) throw new Error('Hash ไม่ตรงกับไฟล์ต้นฉบับ');
+      rows[0] = {...rows[0], documentSha256: digest};
+    }
+    reviewQueue = api.stageReviewQueue(rows, comparisonComplete ? registry.records : null);
+    const preview = api.createCircularRegistry(reviewQueue.entries.map(e => e.record));
+    for (const entry of reviewQueue.entries) {
+      const row = element('div', undefined, 'result');
+      const button = element('button', entry.record.documentNumber + ' — ' + entry.lifecycle);
+      button.type = 'button'; button.addEventListener('click', () => showDetails(entry.documentId, preview));
+      row.append(button, element('p', entry.change + ' · DECISION_LOCK · ' + (entry.issues.join(', ') || 'HUMAN_REVIEW_REQUIRED')));
+      byId('reviewQueue').append(row);
+    }
+    byId('exportQueue').disabled = false;
+    byId('importStatus').textContent = 'Preview / คิวในเครื่อง ' + rows.length + ' รายการ — DISCOVERED ' + reviewQueue.lifecycleCounts.DISCOVERED + ' / STAGED ' + reviewQueue.lifecycleCounts.STAGED + ' / VERIFIED 0 / PUBLISHED 0; ยังไม่เผยแพร่หรืออนุมัติ';
+  }
+  const importError = error => { clearQueue(); byId('importStatus').textContent = 'นำเข้าไม่ได้: ' + error.message; };
   byId('importFile').addEventListener('change', async event => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const output = byId('importStatus');
+    const file = event.target.files?.[0]; if (!file) return;
     try {
       if (file.size > 1024 * 1024) throw new Error('ไฟล์เกิน 1 MB');
-      const parsed = JSON.parse(await file.text());
-      const rows = Array.isArray(parsed) ? parsed : parsed.records;
-      if (!Array.isArray(rows) || rows.length > 100) throw new Error('ต้องเป็น JSON array ไม่เกิน 100 รายการ');
-      const preview = api.createCircularRegistry(rows);
-      output.textContent = 'ตรวจรูปแบบผ่าน ' + preview.records.length + ' รายการ — เป็นเพียง Preview ในเครื่อง ยังไม่เผยแพร่หรืออนุมัติ ต้องตรวจหลักฐานต้นฉบับก่อนนำไปใช้';
-    } catch (error) {
-      output.textContent = 'นำเข้าตัวอย่างไม่ได้: ' + error.message;
-    } finally {
-      event.target.value = '';
-    }
+      await stage(JSON.parse(await file.text()));
+    } catch (error) { importError(error); }
+    finally { event.target.value = ''; }
   });
+  byId('stageJson').addEventListener('click', async () => {
+    try { await stage(JSON.parse(byId('importJson').value)); } catch (error) { importError(error); }
+  });
+  byId('clearQueue').addEventListener('click', () => { clearQueue(); byId('importStatus').textContent = 'ล้างคิวแล้ว'; byId('originalFile').value = ''; });
+  byId('exportQueue').addEventListener('click', () => { if (reviewQueue) download('circular-review-queue.json', reviewQueue); });
+  byId('template').addEventListener('click', () => download('circular-import-template.json', {records:[{
+    id:'', documentNumber:'', documentTitle:'', issuingAgency:'', documentDate:'', effectiveDate:'',
+    sourceUrl:'', documentSha256:'', evidence:[], excerptLocator:'', contentExcerpt:'',
+    authorityEvidence:'', versionEvidence:'', lastVerifiedAt:'', status:'unknown', reviewStatus:'pending',
+    publicationStatus:'DISCOVERED', keywords:[], amendedBy:[], repealedBy:[], supersedesDocumentId:'', supersededByDocumentId:''
+  }]}));
   loadOfficialSources();
-  load().catch(error => { complete = false; status.textContent = 'ไม่สามารถโหลดทะเบียน: ' + error.message; });
+  load().catch(loadError);
 })();

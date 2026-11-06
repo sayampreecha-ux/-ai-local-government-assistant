@@ -2,7 +2,7 @@
 // Offline, fail-closed official-source and review-queue validation. No network, no publishing.
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-const allowed = new Set(['dla.go.th','www.dla.go.th','moi.go.th','cmsmoi.moi.go.th','ratchakitcha.soc.go.th']);
+const allowed = new Set(['dla.go.th','www.dla.go.th','moi.go.th','cmsmoi.moi.go.th','anticor1.moi.go.th','ratchakitcha.soc.go.th']);
 export function checkOfficialUrl(value) {
   try {
     const u = new URL(value);
@@ -33,8 +33,11 @@ export function validateDocumentEvidence(record) {
   if (record.documentDate && !validDate(record.documentDate)) errors.push('INVALID_DOCUMENT_DATE');
   if (record.effectiveDate && !validDate(record.effectiveDate)) errors.push('INVALID_EFFECTIVE_DATE');
   if (!Array.isArray(record.evidence) || !record.evidence.length || record.evidence.some(x => typeof x !== 'string' || !x.trim())) errors.push('DOCUMENT_EVIDENCE_REQUIRED');
-  if (!record.excerptLocator || typeof record.excerptLocator !== 'string') errors.push('EVIDENCE_LOCATOR_REQUIRED');
-  if (!record.lastVerifiedAt || Number.isNaN(Date.parse(record.lastVerifiedAt))) errors.push('VERIFICATION_TIMESTAMP_REQUIRED');
+  if (typeof record.excerptLocator !== 'string' || !record.excerptLocator.trim()) errors.push('EVIDENCE_LOCATOR_REQUIRED');
+  if (typeof record.documentSha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(record.documentSha256)) errors.push('DOCUMENT_HASH_REQUIRED');
+  if (typeof record.lastVerifiedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(record.lastVerifiedAt) || !validDate(record.lastVerifiedAt.slice(0, 10)) || !Number.isFinite(Date.parse(record.lastVerifiedAt))) errors.push('VERIFICATION_TIMESTAMP_REQUIRED');
+  if (typeof record.authorityEvidence !== 'string' || !record.authorityEvidence.trim()) errors.push('AUTHORITY_REVIEW_REQUIRED');
+  if (typeof record.versionEvidence !== 'string' || !record.versionEvidence.trim() || !['current', 'amended', 'repealed', 'superseded'].includes(record.status)) errors.push('VERSION_REVIEW_REQUIRED');
   if (record.reviewStatus === 'approved') errors.push('APPROVAL_CANNOT_BE_IMPORTED');
   if (['repealed', 'superseded', 'amended'].includes(record.status)) {
     const links = [record.supersedesDocumentId, record.supersededByDocumentId, ...(Array.isArray(record.amendedBy) ? record.amendedBy : []), ...(Array.isArray(record.repealedBy) ? record.repealedBy : [])];
@@ -56,7 +59,8 @@ export function validateReviewQueue(queue) {
     if (!checkOfficialUrl(r.sourceUrl)) errors.push('OFFICIAL_SOURCE_NOT_VERIFIED');
     if (r.reviewStatus === 'approved') errors.push('UNTRUSTED_APPROVAL_IN_IMPORT');
     if (e.change === 'CHANGED_REVIEW_REQUIRED') errors.push('VERSION_CONFLICT_REQUIRES_REVIEW');
-    if (!['NEW','UNCHANGED','CHANGED_REVIEW_REQUIRED'].includes(e.change)) errors.push('INVALID_CHANGE');
+    if (e.change === 'BASELINE_NOT_VERIFIED') errors.push('BASELINE_NOT_VERIFIED');
+    if (!['NEW','UNCHANGED','CHANGED_REVIEW_REQUIRED','BASELINE_NOT_VERIFIED'].includes(e.change)) errors.push('INVALID_CHANGE');
   }
   return { pass: errors.length === 0, decision: 'DECISION_LOCK', publishable: false, errors };
 }

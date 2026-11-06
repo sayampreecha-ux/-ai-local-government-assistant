@@ -1,0 +1,26 @@
+{
+  "records": [
+    {
+      "id": "dla-discovery-0815-3-w79-2568",
+      "documentNumber": "มท0815.3/ว79",
+      "documentTitle": "แผนการปฏิบัติงานและแผนการใช้จ่ายงบประมาณประจำปีงบประมาณ พ.ศ.2569",
+      "issuingAgency": "กรมส่งเสริมการปกครองท้องถิ่น",
+      "documentDate": "2025-10-06",
+      "effectiveDate": "",
+      "sourceUrl": "https://www.dla.go.th/land/tempOfficialDoc.do?cmd=goView&tokenId=mtmtt0t1gd03j1nssc6361nedlrr1c1gvfu6u591cty",
+      "status": "unknown",
+      "reviewStatus": "pending",
+      "publicationStatus": "DISCOVERED",
+      "discoveryMethod": "SEARCH_INDEX_ONLY",
+      "discoveredAt": "2026-11-05T15:16:58Z",
+      "evidence": [
+        "Search index of official DLA detail page; original page and PDF unavailable in this session. Metadata is a lead only, not verified original content."
+      ],
+      "excerptLocator": "Indexed official detail fields: เลขที่หนังสือ / หนังสือลงวันที่ / เรื่อง. Search reference turn2search0.",
+      "lastVerifiedAt": "",
+      "documentSha256": "",
+      "authorityEvidence": "",
+      "versionEvidence": ""
+    }
+  ]
+}

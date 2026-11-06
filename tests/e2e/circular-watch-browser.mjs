@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
+import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 
 const root = process.cwd();
@@ -19,15 +20,18 @@ const server = createServer(async (req, res) => {
 await new Promise(done => server.listen(0, '127.0.0.1', done));
 const origin = 'http://127.0.0.1:' + server.address().port;
 let browser;
+const evidence=[];
+await mkdir('artifacts/circular-watch',{recursive:true});
 const fixture = {
   schemaVersion: '1.0',
   shards: [],
   records: [{
     id: 'synthetic-test-1', documentTitle: '<img src=x onerror=alert(1)> TEST ONLY',
     documentNumber: 'TEST/999', issuingAgency: 'Test Agency',
-    sourceUrl: 'https://example.go.th/synthetic.pdf',
+    sourceUrl: 'https://www.dla.go.th/synthetic-test-only.pdf',
     documentDate: '2026-10-01', effectiveDate: '2026-10-02',
-    category: 'test', keywords: ['synthetic'], status: 'unknown', reviewStatus: 'pending'
+    category: 'test', keywords: ['synthetic'], status: 'current', reviewStatus: 'approved', publicationStatus:'PUBLISHED',
+    documentSha256:'a'.repeat(64), evidence:['Synthetic fixture only'], excerptLocator:'page 1', lastVerifiedAt:'2026-11-01T00:00:00Z', authorityEvidence:'Synthetic fixture', versionEvidence:'Synthetic fixture', supersededByDocumentId:'not-loaded-version'
   }]
 };
 try {
@@ -49,13 +53,50 @@ try {
     assert.equal(await page.locator('#details img').count(), 0, 'No untrusted HTML injection');
     await page.locator('#handoff').click();
     assert.match(await page.evaluate(() => navigator.clipboard.readText()), /verifiedLatest=false/);
-    const sample = JSON.stringify({ records: [fixture.records[0]] });
+    const sample = JSON.stringify({ records: [{...fixture.records[0], reviewStatus:'pending', publicationStatus:'DISCOVERED'}] });
     await page.locator('#importFile').setInputFiles({ name: 'review.json', mimeType: 'application/json', buffer: Buffer.from(sample) });
     assert.match(await page.locator('#importStatus').innerText(), /Preview/);
+    assert.match(await page.locator('#reviewQueue').innerText(), /STAGED/);
+    const downloading=page.waitForEvent('download'); await page.locator('#exportQueue').click();
+    const downloaded=await downloading;
+    const queue=JSON.parse(await readFile(await downloaded.path(),'utf8'));
+    assert.equal(queue.publishable,false); assert.equal(queue.lifecycleCounts.PUBLISHED,0);
+    // Actual local PDF hash round-trip, without claiming authenticity of synthetic bytes.
+    const pdf=Buffer.from('%PDF-1.4\nSynthetic browser fixture only\n%%EOF');
+    await page.locator('#originalFile').setInputFiles({name:'synthetic.pdf',mimeType:'application/pdf',buffer:pdf});
+    const candidate={...fixture.records[0],reviewStatus:'pending',publicationStatus:'DISCOVERED',documentSha256:''};
+    await page.locator('#importJson').fill(JSON.stringify({records:[candidate]}));
+    await page.locator('#stageJson').click();
+    await page.locator('#reviewQueue button').waitFor();
+    await page.locator('#reviewQueue button').click();
+    const digest=createHash('sha256').update(pdf).digest('hex');
+    assert.match(await page.locator('#details').innerText(),new RegExp(digest));
+    assert.match(await page.locator('#details').innerText(),/PENDING/);
+    await page.screenshot({path:'artifacts/circular-watch/review-'+width+'.png',fullPage:true});
+    await page.locator('#originalFile').setInputFiles([]);
+    await page.locator('#importJson').fill(JSON.stringify({records:[fixture.records[0]]}));
+    await page.locator('#stageJson').click();
+    assert.match(await page.locator('#importStatus').innerText(),/cannot be imported/);
+    assert.equal(await page.locator('#exportQueue').isDisabled(),true);
+    // Malicious/pending records must be hidden even if delivered by a public manifest.
+    await page.route('**/knowledge/circulars/index.json', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({...fixture,records:[{...fixture.records[0],reviewStatus:'pending'}]})}));
+    await page.locator('#searchForm button[type=submit]').click();
+    await page.locator('#loading').filter({hasText:'ซ่อน 1'}).waitFor();
+    assert.equal(await page.locator('#results button').count(),0);
+    // A registry outage clears selected evidence/copy action; never retain stale details.
+    await page.route('**/knowledge/circulars/index.json', route => route.fulfill({status:503,body:'unavailable'}));
+    await page.locator('#searchForm button[type=submit]').click();
+    await page.locator('#loading').filter({hasText:'ไม่สามารถโหลดทะเบียน'}).waitFor();
+    assert.equal(await page.locator('#handoff').isDisabled(),true);
+    assert.equal(await page.locator('#results button').count(),0);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth),true,'No horizontal overflow');
     assert.equal(errors.length, 0, 'No browser JS exceptions: ' + errors.join('; '));
+    evidence.push({width,status:'PASS',syntheticFixturesOnly:true,pdfHash:digest,queueExport:true,forgedApprovalBlocked:true,unapprovedHidden:true,outageLocksCopy:true,noHorizontalOverflow:true,pageErrors:errors});
     console.log('Circular Watch E2E PASS', width, 'px');
     await context.close();
   }
+  assert.equal(evidence.length,2);
+  await writeFile('artifacts/circular-watch/browser-results.json',JSON.stringify({status:'PASS',realOfficialPdfVerified:false,cases:evidence},null,2));
 } finally {
   if (browser) await browser.close();
   await new Promise(done => server.close(done));
