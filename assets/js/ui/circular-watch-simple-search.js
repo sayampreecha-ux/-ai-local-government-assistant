@@ -61,7 +61,7 @@
     }));
     registry = api.createCircularRegistry([...manifest.records,...shards.flat()].filter(api.isPublishedRecord));
     loaded = true;
-    $('loading').textContent = 'ดัชนี GP ที่ตรวจรับแล้ว: ' + registry.records.length + ' รายการ' + (partial ? ' (ข้อมูลบางส่วน)' : '');
+    $('loading').textContent = 'ทะเบียนที่โหลด (ดัชนี GP ที่ตรวจรับแล้ว): ' + registry.records.length + ' รายการ' + (partial ? ' (ข้อมูลบางส่วน)' : '');
     render();
   }
   $('searchForm').addEventListener('submit', e => { e.preventDefault(); offset = 0; render(); });
