@@ -44,7 +44,7 @@ try {
     await page.route('**/knowledge/circulars/index.json', route => route.fulfill({
       status: 200, contentType: 'application/json', body: JSON.stringify(fixture)
     }));
-    await page.goto(origin + '/circular-watch.html');
+    await page.goto(origin + '/circular-watch-review.html');
     await page.locator('#loading').filter({ hasText: 'ทะเบียนที่โหลด' }).waitFor();
     await page.locator('#query').fill('TEST/999');
     await page.locator('#searchForm button[type=submit]').click();
@@ -91,6 +91,29 @@ try {
     assert.equal(await page.locator('#results button').count(),0);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth),true,'No horizontal overflow');
     assert.equal(errors.length, 0, 'No browser JS exceptions: ' + errors.join('; '));
+    // Public simplified search is tested in addition to the complete legacy review workflow.
+    const publicPage = await context.newPage();
+    const publicErrors = [];
+    publicPage.on('pageerror', error => publicErrors.push(error.message));
+    await publicPage.route('**/knowledge/circulars/index.json', route => route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify(fixture)
+    }));
+    await publicPage.goto(origin + '/circular-watch.html');
+    await publicPage.locator('#loading').filter({hasText:'ทะเบียนที่โหลด'}).waitFor();
+    assert.equal(await publicPage.locator('#query').count(),1);
+    assert.equal(await publicPage.locator('#handoff, #importFile, #reviewQueue').count(),0);
+    await publicPage.locator('#query').fill('TEST/999');
+    await publicPage.locator('#searchForm button[type=submit]').click();
+    assert.match(await publicPage.locator('#results').innerText(),/TEST\/999/);
+    assert.equal(await publicPage.locator('#results img').count(),0);
+    assert.match(await publicPage.locator('#results a').first().getAttribute('href'),/^https:\/\/www\.dla\.go\.th\//);
+    await publicPage.locator('#results button').click();
+    assert.match(await publicPage.locator('#details').innerText(),/สถานะกฎหมายล่าสุด: ยังต้องตรวจ/);
+    assert.equal(await publicPage.locator('#details img').count(),0);
+    await publicPage.screenshot({path:'artifacts/circular-watch/public-'+width+'.png',fullPage:true});
+    assert.equal(await publicPage.evaluate(()=>document.documentElement.scrollWidth <= innerWidth),true);
+    assert.equal(publicErrors.length,0,'Public page errors: '+publicErrors.join('; '));
+    await publicPage.close();
     evidence.push({width,status:'PASS',syntheticFixturesOnly:true,pdfHash:digest,queueExport:true,forgedApprovalBlocked:true,unapprovedHidden:true,outageLocksCopy:true,noHorizontalOverflow:true,pageErrors:errors});
     console.log('Circular Watch E2E PASS', width, 'px');
     await context.close();
