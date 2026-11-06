@@ -54,7 +54,7 @@
     if (!Array.isArray(manifest.records) || !Array.isArray(manifest.shards)) throw new Error('Invalid manifest');
     partial = manifest.shards.length > 8;
     const shards = await Promise.all(manifest.shards.slice(0,8).map(async s => {
-      if (typeof s.path !== 'string' || !/^[a-zA-Z0-9_/-]+\\.json$/.test(s.path) || s.path.startsWith('/') || s.path.split('/').includes('..')) throw new Error('Invalid shard path');
+      if (typeof s.path !== 'string' || !/^[a-zA-Z0-9_/-]+\.json$/.test(s.path) || s.path.startsWith('/') || s.path.split('/').includes('..')) throw new Error('Invalid shard path');
       const file = await fetchJson(new URL(s.path, new URL('knowledge/circulars/', document.baseURI)).href);
       if (!Array.isArray(file.records)) throw new Error('Invalid shard records');
       return file.records;
