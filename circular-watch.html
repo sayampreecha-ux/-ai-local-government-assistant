@@ -23,30 +23,16 @@ textarea{box-sizing:border-box;width:100%;min-height:180px}#reviewQueue{overflow
 :focus-visible{outline:3px solid #d29b40;outline-offset:2px}
 </style></head>
 <body><header><a href="index.html">← GovPrompt Thailand</a></header>
-<main><h1>📚 ทะเบียนหนังสือเวียนและระเบียบ</h1>
+<main><h1>📚 ค้นหนังสือเวียนราชการ</h1>
 <p>ช่วยค้นทะเบียนและเปิดแหล่งราชการเพื่อให้เจ้าหน้าที่ตรวจต้นฉบับได้สะดวก ข้อมูลที่ยังไม่ยืนยันจะไม่ใช้เป็นข้อยุติ</p>
-<p class="notice" role="status"><strong>ข้อจำกัดสำคัญ:</strong> ระบบนี้อ่านทะเบียนที่เผยแพร่ไว้เท่านั้น ไม่ใช่การค้นเว็บสด และไม่รับรองว่าหนังสือฉบับใดเป็นฉบับล่าสุด ต้องตรวจต้นฉบับและผู้มีอำนาจก่อนนำไปใช้ตัดสินใจ</p>
-<section class="panel" aria-label="ค้นหนังสือเวียนจากแหล่งทางการ"><h2>ต้องการค้นหนังสือเวียนจริงจาก สถ.?</h2><p>เปิดเว็บไซต์กรมส่งเสริมการปกครองท้องถิ่นเพื่อค้นหนังสือราชการจากต้นทางโดยตรง ไม่ต้องนำเข้าไฟล์หรือบันทึกทะเบียนก่อน</p><p><a href="https://www.dla.go.th/land/officialDoc.do" target="_blank" rel="noopener noreferrer">🔎 เปิดค้นหนังสือราชการ สถ. (เว็บไซต์ทางการ)</a></p><small>ผลค้นบนเว็บไซต์ สถ. ไม่ได้ถูกนำเข้าทะเบียน GovPrompt อัตโนมัติ และต้องตรวจต้นฉบับกับสถานะการแก้ไขหรือยกเลิกก่อนใช้อ้างอิง</small></section>
+<p class="notice" role="status"><strong>ข้อมูลจากแหล่งทางการ:</strong> ระบบค้นในดัชนี GP ที่ผ่านการตรวจรับแล้วเท่านั้น หากยังไม่มีข้อมูล ให้เปิดค้นต่อที่เว็บไซต์หน่วยงานราชการ ไม่ใช่การค้นเว็บสด และไม่ยืนยันสถานะกฎหมายล่าสุด</p>
 <section class="panel" aria-label="ค้นหาทะเบียน">
 <h2>ค้นหาหนังสือเวียน</h2>
-<form id="searchForm"><div class="filters">
-<label>เลข ว / ชื่อเรื่อง / คำสำคัญ<input id="query" type="search" maxlength="150" placeholder="เช่น ว 1234"></label>
-<label>ปี พ.ศ. / ค.ศ. <input id="year" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="2569 หรือ 2026"></label>
-<label>หมวดงาน<input id="category" maxlength="80" placeholder="การเงิน"></label>
-<label>หน่วยงาน<input id="agency" maxlength="80" placeholder="กรมส่งเสริมฯ"></label>
-<label>สถานะ<select id="status"><option value="">ทุกสถานะ</option><option value="current">CURRENT</option><option value="amended">AMENDED</option><option value="repealed">REPEALED</option><option value="superseded">SUPERSEDED</option><option value="unknown">UNKNOWN</option></select></label>
-</div><div class="actions"><button type="submit">ค้นหา</button><button type="button" id="clear" style="background:#52695e">ล้างตัวกรอง</button><small id="loading" role="status">กำลังโหลดทะเบียน...</small></div></form>
+<form id="searchForm"><label>เลข ว / ชื่อเรื่อง / คำสำคัญ<input id="query" type="search" maxlength="150" placeholder="เช่น ว 831 หรือ จัดซื้อจัดจ้าง"></label><div class="actions"><button type="submit">🔎 ค้นหา</button><button type="button" id="clear" style="background:#52695e">ล้าง</button><small id="loading" role="status">กำลังโหลดดัชนี...</small></div></form>
 <div id="results" aria-live="polite"></div><div class="actions"><button type="button" id="previous" disabled>ก่อนหน้า</button><span id="pageStatus"></span><button type="button" id="next" disabled>ถัดไป</button></div>
 </section>
-<section class="panel" aria-label="รายละเอียดเอกสาร"><h2>รายละเอียดและหลักฐาน</h2><div id="details" aria-live="polite">เลือกเอกสารจากผลการค้นหา</div><div class="actions"><button id="handoff" type="button" disabled>คัดลอกคำถามไป ChatGPT / Gemini</button><a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer">เปิด ChatGPT</a><a href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer">เปิด Gemini</a></div></section>
+<section class="panel" aria-label="รายละเอียดเอกสาร"><h2>รายละเอียดและต้นฉบับ</h2><div id="details" aria-live="polite">เลือกเอกสารจากผลค้น</div></section>
 <section class="panel" aria-label="แหล่งข้อมูลราชการ"><h2>แหล่งข้อมูลราชการสำหรับค้นหาต้นฉบับ</h2><p class="notice">ลิงก์ต่อไปนี้เป็นจุดเริ่มต้นค้นหา ไม่ใช่หลักฐานยืนยันว่าหนังสือยังมีผลใช้บังคับ</p><div id="officialSources" aria-live="polite">กำลังโหลดรายชื่อแหล่งข้อมูล...</div></section>
-<section class="panel"><h2>นำเข้าข้อมูลสำหรับตรวจทาน (เฉพาะในเครื่อง)</h2>
-<p>เลือก JSON เพื่อดูตัวอย่างและตรวจรูปแบบเท่านั้น <strong>ไม่มีการอัปโหลด บันทึกเข้าทะเบียน หรืออนุมัติเอกสาร</strong> การเผยแพร่ต้องตรวจหลักฐานต้นฉบับและผ่านการควบคุมการเปลี่ยนแปลงของโครงการ</p>
-<label>ไฟล์ JSON สำหรับตรวจทาน<input id="importFile" type="file" accept=".json,application/json"></label><label>หรือวาง JSON จากเจ้าหน้าที่<textarea id="importJson" maxlength="1048576" placeholder='{"records": []}'></textarea></label>
-<label>ไฟล์ PDF ต้นฉบับ (กรณีข้อมูลหนึ่งรายการ สูงสุด 20 MB)<input id="originalFile" type="file" accept=".pdf,application/pdf"></label>
-<p>Hash ยืนยันเพียงว่าเป็นไฟล์เดียวกัน ไม่ยืนยันผู้ลงนาม ความแท้จริง หรือกฎหมายฉบับล่าสุด</p>
-<div class="actions"><button id="stageJson" type="button">ตรวจและเข้าคิวในเครื่อง</button><button id="exportQueue" type="button" disabled>ดาวน์โหลดคิวตรวจรับ JSON</button><button id="template" type="button">ดาวน์โหลดโครงข้อมูลเปล่า</button><button id="clearQueue" type="button">ล้างคิวในเครื่อง</button></div>
-<div id="importStatus" role="status"></div><div id="reviewQueue" aria-live="polite"></div>
-<p class="notice">DISCOVERED = ยังขาดหลักฐาน · STAGED = พร้อมส่งให้คนตรวจ · VERIFIED = ผ่านผู้ตรวจที่รับผิดชอบ · PUBLISHED = เผยแพร่แล้ว ระบบนำเข้านี้ออกได้เพียงสองสถานะแรก และใช้ DECISION LOCK เสมอ การเปลี่ยนเป็น VERIFIED/PUBLISHED ต้องตรวจต้นฉบับและอนุมัติแยกต่างหาก</p></section>
+
 </main><script src="assets/js/core/circular-watch-registry.js?v=2" defer></script>
-<script src="assets/js/ui/circular-watch-ui.js?v=2" defer></script></body></html>
+<script src="assets/js/ui/circular-watch-simple-search.js?v=1" defer></script></body></html>
