@@ -1,51 +1,54 @@
 <!doctype html>
-<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ทะเบียนหนังสือเวียนและระเบียบ | GovPrompt Thailand</title>
-<link rel="stylesheet" href="assets/css/govprompt.css">
-<style>
-:root{color-scheme:light}body{margin:0;background:#f5f8f6;color:#153d30;font-family:system-ui,"Noto Sans Thai",sans-serif;line-height:1.55}
-header{background:#12372a;color:white;padding:16px max(18px,calc((100% - 1050px)/2))}
-header a{color:white}main{max-width:1050px;margin:0 auto;padding:22px 16px 80px}
-h1{font-size:clamp(1.4rem,4vw,2rem);margin:8px 0}h2{font-size:1.12rem}
-.panel{background:white;border:1px solid #d7e2dc;border-radius:15px;padding:16px;margin:16px 0;box-shadow:0 2px 8px #12372a08}
-.notice{border-left:4px solid #a86e20;padding:10px 14px;background:#fff8e9;color:#644315}
-.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px}
-label{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:.93rem}
-input,select,textarea,button{font:inherit;border:1px solid #9eb8aa;border-radius:9px;padding:9px;max-width:100%}
-button{cursor:pointer;background:#176245;color:white}button:disabled{opacity:.5;cursor:not-allowed}
-.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
-.result{border-top:1px solid #dce7df;padding:13px 0}
-.result button{background:white;color:#145139;border:1px solid #8ab19c}
-.meta{color:#4a6558;font-size:.89rem;overflow-wrap:anywhere}
-#details{white-space:pre-wrap;overflow-wrap:anywhere}a{overflow-wrap:anywhere}
-small{color:#4a6558}input[type=file]{width:100%;box-sizing:border-box}
-textarea{box-sizing:border-box;width:100%;min-height:180px}#reviewQueue{overflow-wrap:anywhere}
-:focus-visible{outline:3px solid #d29b40;outline-offset:2px}
-</style></head>
-<body><header><a href="index.html">← GovPrompt Thailand</a></header>
-<main><h1>📚 ทะเบียนหนังสือเวียนและระเบียบ</h1>
-<p>ช่วยค้นทะเบียนและเปิดแหล่งราชการเพื่อให้เจ้าหน้าที่ตรวจต้นฉบับได้สะดวก ข้อมูลที่ยังไม่ยืนยันจะไม่ใช้เป็นข้อยุติ</p>
-<p class="notice" role="status"><strong>ข้อจำกัดสำคัญ:</strong> ระบบนี้อ่านทะเบียนที่เผยแพร่ไว้เท่านั้น ไม่ใช่การค้นเว็บสด และไม่รับรองว่าหนังสือฉบับใดเป็นฉบับล่าสุด ต้องตรวจต้นฉบับและผู้มีอำนาจก่อนนำไปใช้ตัดสินใจ</p>
-<section class="panel" aria-label="ค้นหาทะเบียน">
-<h2>ค้นหาหนังสือเวียน</h2>
-<form id="searchForm"><div class="filters">
-<label>เลข ว / ชื่อเรื่อง / คำสำคัญ<input id="query" type="search" maxlength="150" placeholder="เช่น ว 1234"></label>
-<label>ปี พ.ศ. / ค.ศ. <input id="year" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="2569 หรือ 2026"></label>
-<label>หมวดงาน<input id="category" maxlength="80" placeholder="การเงิน"></label>
-<label>หน่วยงาน<input id="agency" maxlength="80" placeholder="กรมส่งเสริมฯ"></label>
-<label>สถานะ<select id="status"><option value="">ทุกสถานะ</option><option value="current">CURRENT</option><option value="amended">AMENDED</option><option value="repealed">REPEALED</option><option value="superseded">SUPERSEDED</option><option value="unknown">UNKNOWN</option></select></label>
-</div><div class="actions"><button type="submit">ค้นหา</button><button type="button" id="clear" style="background:#52695e">ล้างตัวกรอง</button><small id="loading" role="status">กำลังโหลดทะเบียน...</small></div></form>
-<div id="results" aria-live="polite"></div><div class="actions"><button type="button" id="previous" disabled>ก่อนหน้า</button><span id="pageStatus"></span><button type="button" id="next" disabled>ถัดไป</button></div>
-</section>
-<section class="panel" aria-label="รายละเอียดเอกสาร"><h2>รายละเอียดและหลักฐาน</h2><div id="details" aria-live="polite">เลือกเอกสารจากผลการค้นหา</div><div class="actions"><button id="handoff" type="button" disabled>คัดลอกคำถามไป ChatGPT / Gemini</button><a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer">เปิด ChatGPT</a><a href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer">เปิด Gemini</a></div></section>
-<section class="panel" aria-label="แหล่งข้อมูลราชการ"><h2>แหล่งข้อมูลราชการสำหรับค้นหาต้นฉบับ</h2><p class="notice">ลิงก์ต่อไปนี้เป็นจุดเริ่มต้นค้นหา ไม่ใช่หลักฐานยืนยันว่าหนังสือยังมีผลใช้บังคับ</p><div id="officialSources" aria-live="polite">กำลังโหลดรายชื่อแหล่งข้อมูล...</div></section>
-<section class="panel"><h2>นำเข้าข้อมูลสำหรับตรวจทาน (เฉพาะในเครื่อง)</h2>
-<p>เลือก JSON เพื่อดูตัวอย่างและตรวจรูปแบบเท่านั้น <strong>ไม่มีการอัปโหลด บันทึกเข้าทะเบียน หรืออนุมัติเอกสาร</strong> การเผยแพร่ต้องตรวจหลักฐานต้นฉบับและผ่านการควบคุมการเปลี่ยนแปลงของโครงการ</p>
-<label>ไฟล์ JSON สำหรับตรวจทาน<input id="importFile" type="file" accept=".json,application/json"></label><label>หรือวาง JSON จากเจ้าหน้าที่<textarea id="importJson" maxlength="1048576" placeholder='{"records": []}'></textarea></label>
-<label>ไฟล์ PDF ต้นฉบับ (กรณีข้อมูลหนึ่งรายการ สูงสุด 20 MB)<input id="originalFile" type="file" accept=".pdf,application/pdf"></label>
-<p>Hash ยืนยันเพียงว่าเป็นไฟล์เดียวกัน ไม่ยืนยันผู้ลงนาม ความแท้จริง หรือกฎหมายฉบับล่าสุด</p>
-<div class="actions"><button id="stageJson" type="button">ตรวจและเข้าคิวในเครื่อง</button><button id="exportQueue" type="button" disabled>ดาวน์โหลดคิวตรวจรับ JSON</button><button id="template" type="button">ดาวน์โหลดโครงข้อมูลเปล่า</button><button id="clearQueue" type="button">ล้างคิวในเครื่อง</button></div>
-<div id="importStatus" role="status"></div><div id="reviewQueue" aria-live="polite"></div>
-<p class="notice">DISCOVERED = ยังขาดหลักฐาน · STAGED = พร้อมส่งให้คนตรวจ · VERIFIED = ผ่านผู้ตรวจที่รับผิดชอบ · PUBLISHED = เผยแพร่แล้ว ระบบนำเข้านี้ออกได้เพียงสองสถานะแรก และใช้ DECISION LOCK เสมอ การเปลี่ยนเป็น VERIFIED/PUBLISHED ต้องตรวจต้นฉบับและอนุมัติแยกต่างหาก</p></section>
-</main><script src="assets/js/core/circular-watch-registry.js?v=2" defer></script>
-<script src="assets/js/ui/circular-watch-ui.js?v=2" defer></script></body></html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ค้นหนังสือเวียนจากเว็บราชการ | GovPrompt Thailand</title>
+  <link rel="stylesheet" href="assets/css/govprompt.css">
+  <style>
+    :root { color-scheme: light; }
+    body { margin: 0; background: #f5f8f6; color: #153d30; font: 1rem/1.6 system-ui, "Noto Sans Thai", sans-serif; }
+    header { background: #12372a; padding: 16px max(16px, calc((100% - 680px) / 2)); }
+    header a { color: white; }
+    main { max-width: 680px; margin: 0 auto; padding: 24px 16px; }
+    h1 { font-size: clamp(1.45rem, 4vw, 2rem); margin: 0; }
+    h2 { font-size: 1.05rem; }
+    form { background: white; border: 1px solid #d7e2dc; border-radius: 15px; padding: 16px; }
+    label { display: block; font-weight: 700; margin-bottom: 6px; }
+    .search-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    input[type="search"] { box-sizing: border-box; flex: 1 1 220px; width: 100%; min-width: 0; }
+    input, button { font: inherit; border: 1px solid #9eb8aa; border-radius: 9px; padding: 10px; min-height: 44px; }
+    button { flex: 1 1 auto; cursor: pointer; background: #176245; color: white; font-weight: 700; }
+    .hint { color: #405d51; font-size: .9rem; margin-bottom: 0; }
+    .sources { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 0; list-style: none; }
+    .sources a { display: inline-flex; align-items: center; min-height: 44px; color: #145139; }
+    :focus-visible { outline: 3px solid #d29b40; outline-offset: 2px; }
+  </style>
+</head>
+<body>
+  <header><a href="index.html">← GovPrompt Thailand</a></header>
+  <main>
+    <h1>ค้นหนังสือเวียนจากเว็บราชการ</h1>
+    <p>พิมพ์เลข ว. หรือหัวเรื่อง แล้วเปิดผลค้นเพื่อหาต้นฉบับ</p>
+    <form action="https://www.google.com/search" method="get" target="_blank" rel="noopener noreferrer" role="search">
+      <label for="circularQuery">เลข ว. หรือหัวเรื่อง</label>
+      <div class="search-row">
+        <input id="circularQuery" name="q" type="search" required maxlength="150"
+          pattern=".*\S.*" placeholder="เช่น ว 727 จ้างเหมาบริการ" aria-describedby="searchHint">
+        <input type="hidden" name="as_sitesearch" value="go.th">
+        <button type="submit">ค้นต้นฉบับ</button>
+      </div>
+      <p class="hint" id="searchHint">เปิดผลค้น Google ในแท็บใหม่ พร้อมตัวกรอง .go.th ให้เลือกเปิดเฉพาะผลจากเว็บราชการ หากค้นไม่พบหรือเปิดไม่ได้ ให้ใช้ลิงก์ด้านล่าง ตรวจเลขที่ วันที่ และสถานะของหนังสือกับหน่วยงานก่อนนำไปใช้</p>
+    </form>
+    <section aria-labelledby="sourceHeading">
+      <h2 id="sourceHeading">หรือเปิดเว็บราชการโดยตรง</h2>
+      <ul class="sources">
+        <li><a href="https://www.cgd.go.th/">กรมบัญชีกลาง</a></li>
+        <li><a href="https://cpb.ddc.moph.go.th/ddc-pic/index.php?view=doc-center">คลังหนังสือเวียนงานพัสดุ กรมควบคุมโรค</a></li>
+        <li><a href="https://www.dla.go.th/land/officialDoc.do">กรมส่งเสริมการปกครองท้องถิ่น</a></li>
+        <li><a href="https://ratchakitcha.soc.go.th/search-result/">ราชกิจจานุเบกษา</a></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

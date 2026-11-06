@@ -5,7 +5,7 @@ import { resolve, extname, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 
-const root = process.cwd();
+const root = resolve(process.env.CIRCULAR_WATCH_SITE_ROOT || '.');
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json', '.css': 'text/css' };
 const server = createServer(async (req, res) => {
   try {
@@ -44,7 +44,7 @@ try {
     await page.route('**/knowledge/circulars/index.json', route => route.fulfill({
       status: 200, contentType: 'application/json', body: JSON.stringify(fixture)
     }));
-    await page.goto(origin + '/circular-watch.html');
+    await page.goto(origin + '/circular-watch-review.html');
     await page.locator('#loading').filter({ hasText: 'ทะเบียนที่โหลด' }).waitFor();
     await page.locator('#query').fill('TEST/999');
     await page.locator('#searchForm button[type=submit]').click();
@@ -91,6 +91,42 @@ try {
     assert.equal(await page.locator('#results button').count(),0);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth),true,'No horizontal overflow');
     assert.equal(errors.length, 0, 'No browser JS exceptions: ' + errors.join('; '));
+    // Intercept the external navigation so CI does not depend on Google uptime.
+    const publicPage = await context.newPage();
+    const queries = [];
+    await context.route('https://www.google.com/search?**', route => {
+      queries.push(new URL(route.request().url()).searchParams);
+      return route.fulfill({ status: 503, body: 'Simulated external search outage' });
+    });
+    await publicPage.goto(origin + '/circular-watch.html');
+    const query = publicPage.getByRole('searchbox');
+    const search = publicPage.getByRole('button', { name: 'ค้นต้นฉบับ' });
+    assert.equal(await query.count(), 1);
+    assert.equal(await publicPage.locator('#handoff, #importFile, #reviewQueue').count(), 0);
+    for (const blank of ['', '   ']) {
+      await query.fill(blank);
+      await search.click();
+      assert.equal(await query.evaluate(input => input.validity.valid), false);
+    }
+    assert.equal(queries.length, 0);
+    for (const term of ['ว. 727 จ้างเหมาบริการ', 'ว. 831 พัสดุที่เป็นมิตรกับสิ่งแวดล้อม']) {
+      await query.fill(term);
+      const popupPromise = publicPage.waitForEvent('popup');
+      await search.click();
+      const popup = await popupPromise;
+      await popup.getByText('Simulated external search outage').waitFor();
+      assert.equal(queries.at(-1).get('q'), term);
+      assert.equal(queries.at(-1).get('as_sitesearch'), 'go.th');
+      await popup.close();
+      assert.equal(await query.inputValue(), term);
+    }
+    assert.equal(queries.length, 2);
+    const officialLink = publicPage.getByRole('link', { name: 'กรมบัญชีกลาง' });
+    assert.equal(await officialLink.getAttribute('href'), 'https://www.cgd.go.th/');
+    await officialLink.waitFor();
+    await publicPage.screenshot({path:'artifacts/circular-watch/public-'+width+'.png',fullPage:true});
+    assert.equal(await publicPage.evaluate(()=>document.documentElement.scrollWidth <= innerWidth),true);
+    await publicPage.close();
     evidence.push({width,status:'PASS',syntheticFixturesOnly:true,pdfHash:digest,queueExport:true,forgedApprovalBlocked:true,unapprovedHidden:true,outageLocksCopy:true,noHorizontalOverflow:true,pageErrors:errors});
     console.log('Circular Watch E2E PASS', width, 'px');
     await context.close();

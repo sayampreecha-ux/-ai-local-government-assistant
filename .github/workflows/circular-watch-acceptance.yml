@@ -53,6 +53,8 @@ jobs:
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Mobile and desktop browser E2E
+        env:
+          CIRCULAR_WATCH_SITE_ROOT: dist
         run: |
           set -o pipefail
           node tests/e2e/circular-watch-browser.mjs | tee artifacts/circular-watch/browser.log
