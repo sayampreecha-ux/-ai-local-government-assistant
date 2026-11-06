@@ -4,7 +4,7 @@
   const STATUSES = Object.freeze(['current', 'amended', 'repealed', 'superseded', 'unknown']);
   const LIFECYCLE = Object.freeze(['DISCOVERED', 'STAGED', 'VERIFIED', 'PUBLISHED']);
   const officialUrl = value => {
-    try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password && !u.port && ['dla.go.th','www.dla.go.th','moi.go.th','cmsmoi.moi.go.th','ratchakitcha.soc.go.th'].includes(u.hostname); } catch { return false; }
+    try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password && !u.port && ['dla.go.th','www.dla.go.th','moi.go.th','cmsmoi.moi.go.th','anticor1.moi.go.th','ratchakitcha.soc.go.th'].includes(u.hostname); } catch { return false; }
   };
   const REVIEW = Object.freeze(['pending', 'approved', 'rejected']);
   const normalize = value => String(value ?? '').trim();

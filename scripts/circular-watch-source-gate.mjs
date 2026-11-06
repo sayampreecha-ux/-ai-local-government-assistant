@@ -2,7 +2,7 @@
 // Offline, fail-closed official-source and review-queue validation. No network, no publishing.
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-const allowed = new Set(['dla.go.th','www.dla.go.th','moi.go.th','cmsmoi.moi.go.th','ratchakitcha.soc.go.th']);
+const allowed = new Set(['dla.go.th','www.dla.go.th','moi.go.th','cmsmoi.moi.go.th','anticor1.moi.go.th','ratchakitcha.soc.go.th']);
 export function checkOfficialUrl(value) {
   try {
     const u = new URL(value);

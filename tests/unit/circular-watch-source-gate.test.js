@@ -10,6 +10,8 @@ test('official discovery catalog validates but is not an ingestion feed', () => 
 test('reject lookalike hosts, HTTP, credentials, ports and third-party sources', () => {
   for (const url of ['http://www.dla.go.th/land/officialDoc.do','https://dla.go.th.evil.test/','https://bad@dla.go.th/','https://dla.go.th:8443/','https://example.com/']) assert.equal(checkOfficialUrl(url),false,url);
   assert.equal(checkOfficialUrl('https://www.dla.go.th/land/officialDoc.do'),true);
+  assert.equal(checkOfficialUrl('https://anticor1.moi.go.th/test.pdf'), true);
+  assert.equal(checkOfficialUrl('https://anticor1.moi.go.th.example.com/test.pdf'), false);
 });
 test('catalog fails closed for automatic ingestion and duplicate IDs', () => {
   assert.equal(validateSourceCatalog({...catalog,sources:[catalog.sources[0],catalog.sources[0]]}).pass,false);

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 const context = { window: {}, URL };
 runInNewContext(readFileSync(new URL('../../assets/js/core/circular-watch-registry.js', import.meta.url), 'utf8'), context);
-const { createCircularRegistry, normalizeRecord } = context.window.GovPromptCore.CircularWatch;
+const { createCircularRegistry, normalizeRecord, officialUrl } = context.window.GovPromptCore.CircularWatch;
 const sample = (overrides = {}) => ({
   id: 'c1', documentTitle: 'Example only — not an official circular',
   documentNumber: 'TEST/001', issuingAgency: 'Test Agency',
@@ -105,4 +105,9 @@ test('document-number spacing and Thai digits cannot evade duplicate or changed-
   assert.throws(()=>createCircularRegistry([sample(),sample({id:'c2',documentNumber:'TEST / ๐๐๑'})]),/Duplicate/);
   const q=stageReviewQueue([ready({documentNumber:' TEST / ๐๐๑ ',documentSha256:'b'.repeat(64)})],[ready()]);
   assert.equal(q.entries[0].change,'CHANGED_REVIEW_REQUIRED');
+});
+
+test('official URL policy accepts the exact Ministry anti-corruption centre host', () => {
+  assert.equal(officialUrl('https://anticor1.moi.go.th/test.pdf'), true);
+  assert.equal(officialUrl('https://anticor1.moi.go.th.example.com/test.pdf'), false);
 });
